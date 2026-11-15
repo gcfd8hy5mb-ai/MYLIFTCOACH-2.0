@@ -17,8 +17,8 @@
 .home-rebuilt .reference-todays-workout{
  position:relative;isolation:isolate;overflow:hidden;display:block;min-height:260px;
  background:#073f46!important;
- border:1px solid #f1d598!important;border-radius:13px!important;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 22px rgba(0,24,28,.3)!important
+ border:1.5px solid #f0d397!important;border-radius:13px!important;
+ box-shadow:inset 0 1px 0 rgba(255,253,220,.25),inset 0 -1px 0 #02252b,0 7px 19px rgba(0,15,22,.48)!important
 }
 .home-rebuilt .reference-todays-workout .workout-photo{
  position:absolute;z-index:-1;inset:0 0 0 36%;
@@ -34,31 +34,38 @@
 .home-rebuilt .reference-todays-workout .hero-actions{display:flex;gap:12px}
 .home-rebuilt .reference-todays-workout .button-primary{
  display:flex;align-items:center;justify-content:center;gap:10px;width:330px;min-height:52px;
- background:linear-gradient(180deg,#fff7d7 0%,#f8dfa5 30%,#e2b775 100%)!important;
- color:#14353a!important;border:1px solid #ffeac0!important;border-radius:27px!important;
- box-shadow:inset 0 1px 0 #fffbef,0 5px 11px #001c2685!important;
- font-size:14px;font-weight:800;text-shadow:none!important
+ background:linear-gradient(180deg,#fff9df 0%,#ffefb8 17%,#f2d28d 47%,#daa85e 84%,#ba8240 100%)!important;
+ color:#15353a!important;border:1px solid #ffefbf!important;border-radius:25px!important;
+ box-shadow:inset 0 2px 2px rgba(255,255,255,.9),inset 0 -2px 2px rgba(90,54,12,.31),0 5px 11px rgba(0,16,23,.52)!important;
+ font-size:14px;font-weight:800;letter-spacing:.008em;text-shadow:0 1px rgba(255,248,218,.55)!important
 }
 .home-rebuilt .reference-todays-workout .button-primary:active{filter:brightness(.96);transform:translateY(1px)}
 .home-rebuilt .quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:760px;gap:12px;margin:16px 0}
 .home-rebuilt .quick-grid button{
  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
- min-height:105px;border:1px solid var(--home-border)!important;border-radius:12px!important;
- background:#0a555a!important;
- box-shadow:inset 0 1px 0 rgba(239,253,242,.13),0 5px 12px rgba(0,24,28,.25)!important;
- color:#fff3d8;padding:12px 7px
+ position:relative;overflow:hidden;
+ min-height:105px;border:1px solid rgba(239,216,164,.76)!important;border-radius:11px!important;
+ background:linear-gradient(140deg,#167278 0%,#0e5b61 48%,#05434b 100%)!important;
+ box-shadow:inset 0 1px 0 rgba(242,254,237,.28),inset 0 -8px 14px rgba(2,29,36,.20),0 4px 11px rgba(0,17,21,.40)!important;
+ color:#fff3d8;padding:12px 7px;transition:transform .16s,filter .16s
 }
-.home-rebuilt .quick-grid button strong{font:650 12px 'DM Sans',Arial,sans-serif;color:#fff8e9}
+.home-rebuilt .quick-grid button strong{font:650 12px 'DM Sans',Arial,sans-serif;color:#fff8e9;text-shadow:0 1px 2px rgba(0,18,24,.45)}
+.home-rebuilt .quick-grid button:active{transform:scale(.985);filter:brightness(1.08)}
 .home-rebuilt .quick-grid button:focus-visible{outline:2px solid #ffe6aa;outline-offset:2px}
 .home-rebuilt .quick-grid .shortcut-symbol{display:grid;place-items:center}
-.home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:29px;height:29px;stroke-width:1.9;color:#ffdda2}
+.home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:29px;height:29px;stroke-width:1.75;color:#ffe0a1;filter:drop-shadow(0 1px 2px rgba(0,20,26,.55))}
 .home-rebuilt .home-below-fold{max-width:1000px}
 .home-rebuilt .home-below-fold .section-top{margin:18px 0 12px}
-.home-rebuilt .home-below-fold .section-top h2{font:650 21px 'DM Sans',Arial,sans-serif;color:#fff0d6}
+.home-rebuilt .home-below-fold .section-top h2{font:600 21px 'Playfair Display',Georgia,serif;color:#fff0d6}
 .home-rebuilt .home-below-fold .metric{
- background:#06454b!important;border:1px solid rgba(213,235,219,.56)!important;
- box-shadow:0 5px 12px #001c2340!important
+ background:linear-gradient(145deg,rgba(11,84,90,.98),rgba(3,55,63,.99))!important;
+ border:1px solid rgba(227,212,162,.69)!important;
+ box-shadow:inset 0 1px 0 rgba(227,249,239,.16),0 5px 13px rgba(0,17,24,.38)!important;
+ border-radius:11px;
 }
+.home-rebuilt .home-below-fold .metric>strong{color:#ffe9bd!important;font-family:Georgia,serif;font-weight:600}
+.home-rebuilt .home-below-fold .metric>span{color:#f1dfb6!important}
+.home-rebuilt .home-below-fold .metric>small{color:#d1e3db!important}
 body.home-active .topbar{display:none!important}
 @media(min-width:761px){
  body.home-active .topbar{display:flex!important}
@@ -96,9 +103,9 @@ body.home-active .topbar{display:none!important}
  .home-rebuilt .reference-todays-workout .hero-meta{font-size:11px!important;margin:3px 0 12px!important}
  .home-rebuilt .reference-todays-workout .button-primary{width:100%;min-width:0;min-height:43px;height:43px;font-size:13px}
  .home-rebuilt .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 13px}
- .home-rebuilt .quick-grid button{min-height:67px;height:67px;gap:4px;padding:7px 4px;border-radius:10px!important}
- .home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:23px;height:23px}
- .home-rebuilt .quick-grid button strong{font-size:10px}
+ .home-rebuilt .quick-grid button{min-height:73px;height:73px;gap:4px;padding:7px 4px;border-radius:10px!important}
+ .home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:24px;height:24px}
+ .home-rebuilt .quick-grid button strong{font-size:11px}
  .home-rebuilt .home-below-fold .section-top{margin:6px 0 11px!important}
  .home-rebuilt .home-below-fold .section-top h2{font-size:18px!important}
  .home-rebuilt .home-below-fold .metrics{gap:7px}
