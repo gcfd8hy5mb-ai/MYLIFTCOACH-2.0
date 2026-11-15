@@ -1,55 +1,49 @@
-name: Import licensed photographic design assets
+name: Build source photographic app assets
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/import-photo-assets.yml'
+    paths: ['.github/workflows/import-photo-assets.yml']
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
-  import-assets:
+  build-assets:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-      - name: Download licensed photography into source assets
+      - name: Install source-image processor
+        run: python3 -m pip install --quiet Pillow
+      - name: Download license-verified photographic originals
         run: |
           set -euo pipefail
           mkdir -p assets
-          # Natural green/brown marble photographed by Engin Akyurt (Unsplash).
-          curl -fsSL --retry 4 --retry-delay 2 --max-time 90 \
-            'https://images.unsplash.com/photo-1756362845834-07eb8e3bc8c7?auto=format&fit=crop&w=1200&q=84&fm=jpg' \
-            -o assets/emerald-marble-photo.jpg
-          # Actual chrome/black dumbbells photographed by Jason Grant (Unsplash).
-          curl -fsSL --retry 4 --retry-delay 2 --max-time 90 \
-            'https://images.unsplash.com/photo-1734630341082-0fec0e10126c?auto=format&fit=crop&w=1200&q=84&fm=jpg' \
-            -o assets/hero-dumbbells-photo.jpg
-          # Alternative teal-and-gold source images, under the Unsplash License.
-          curl -fsSL --retry 3 --max-time 90 'https://images.unsplash.com/photo-1612958859598-110231d1f2da?auto=format&fit=crop&w=1100&q=83&fm=jpg' -o assets/marble-candidate-flyd.jpg
-          curl -fsSL --retry 3 --max-time 90 'https://images.unsplash.com/photo-1643021055747-965911b889be?auto=format&fit=crop&w=1100&q=83&fm=jpg' -o assets/marble-candidate-mahe.jpg
-          curl -fsSL --retry 3 --max-time 90 'https://images.unsplash.com/photo-1774387579627-8583d0715415?auto=format&fit=crop&w=1100&q=83&fm=jpg' -o assets/marble-candidate-voss.jpg
-          file assets/*-photo.jpg
-          python3 - <<'PY'
-          from pathlib import Path
-          for name in ('emerald-marble-photo.jpg','hero-dumbbells-photo.jpg'):
-              p=Path('assets')/name
-              b=p.read_bytes()
-              assert b[:3] == b'\xff\xd8\xff',f'{name}: not a JPEG'
-              assert 10_000 < len(b) < 4_000_000,f'{name}: unexpected size {len(b)}'
-              print(name,len(b))
-          PY
-      - name: Commit downloaded photography to app source
+          curl -fsSL --retry 4 --max-time 90 'https://images.unsplash.com/photo-1612958859598-110231d1f2da?auto=format&fit=crop&w=1500&q=87&fm=jpg' -o /tmp/emerald-original.jpg
+          curl -fsSL --retry 4 --max-time 90 'https://images.unsplash.com/photo-1734630341082-0fec0e10126c?auto=format&fit=crop&w=1300&q=86&fm=jpg' -o assets/hero-dumbbells-photo.jpg
+      - name: Color-grade emerald marble in the asset itself
         run: |
-          set -euo pipefail
+          python3 - <<'PY'
+          from PIL import Image,ImageChops,ImageEnhance
+          from pathlib import Path
+          im=Image.open('/tmp/emerald-original.jpg').convert('RGB')
+          # Lift shadows into teal: metallic gold remains embedded in the image,
+          # rather than rendered as an additional CSS overlay.
+          teal=Image.new('RGB',im.size,(17,77,80))
+          im=ImageChops.screen(im,teal)
+          im=ImageEnhance.Brightness(im).enhance(1.06)
+          im=ImageEnhance.Color(im).enhance(1.06)
+          im.save('assets/emerald-marble-photo.jpg','JPEG',quality=86,optimize=True,progressive=True)
+          for filename in ['assets/emerald-marble-photo.jpg','assets/hero-dumbbells-photo.jpg']:
+              b=Path(filename).read_bytes()
+              assert b[:3]==b'\xff\xd8\xff' and 10000<len(b)<4000000,(filename,len(b))
+              print(filename,len(b))
+          PY
+      - name: Commit final photographic assets
+        run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/emerald-marble-photo.jpg assets/hero-dumbbells-photo.jpg assets/marble-candidate-*.jpg
-          if git diff --cached --quiet; then
-            echo 'Photos already committed'
-          else
-            git commit -m 'Add locally hosted licensed realistic marble and gym photographs'
+          git add assets/emerald-marble-photo.jpg assets/hero-dumbbells-photo.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'Replace visual source assets with realistic teal marble and studio gym photography'
             git push origin HEAD:main
           fi
