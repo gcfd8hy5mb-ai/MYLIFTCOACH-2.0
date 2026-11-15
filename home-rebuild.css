@@ -67,10 +67,18 @@ body.home-active .topbar{display:none!important}
  .home-rebuilt .home-welcome h1{font-size:35px}
 }
 @media(max-width:760px){
- body.home-active{
-  background:#0e5357 url('./assets/approved-vertical-marble-sharp.webp?v=11') center top / auto 100dvh repeat-y fixed!important;
-
+ /* Match the Welcome screen's viewport-sized cover rendering.
+    Keep the wallpaper on a viewport-fixed surface, not the long scrolling body. */
+ body.home-active{background:#0e5357!important}
+ body.home-active::before{
+   content:"";
+   position:fixed;
+   inset:0;
+   z-index:0;
+   pointer-events:none;
+   background:#0e5357 url('./assets/approved-vertical-marble-sharp.webp?v=11') center center / cover no-repeat;
  }
+ body.home-active .app-shell{position:relative;z-index:1}
  body.home-active .content{padding:0 14px calc(82px + env(safe-area-inset-bottom))!important}
  .home-rebuilt{max-width:490px;margin:0 auto}
  .home-rebuilt .reference-home-header{min-height:49px;margin:0 0 9px}
