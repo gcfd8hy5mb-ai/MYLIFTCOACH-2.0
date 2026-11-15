@@ -74,6 +74,63 @@
 .home-rebuilt .home-below-fold .metric>strong{color:#ffe9bd!important;font-family:Georgia,serif;font-weight:600}
 .home-rebuilt .home-below-fold .metric>span{color:#f1dfb6!important}
 .home-rebuilt .home-below-fold .metric>small{color:#d1e3db!important}
+/* Home lower-section cards and controls: match the user-approved dark photo-backed gold-frame shortcut buttons. */
+#home .home-below-fold .preview-exercise,
+#home .home-below-fold .recent-item{
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url('./assets/hero-dumbbells-photo.jpg?v=7')!important;
+ background-position:center,center 46%!important;
+ background-size:cover!important;
+ border:1.5px solid #f1d394!important;
+ border-radius:11px!important;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.35),inset 0 -1px 0 rgba(0,21,25,.65),0 4px 10px rgba(0,15,22,.30)!important;
+ color:#fff7e9!important;
+ padding:12px 14px;
+ min-width:0;
+}
+#home .home-below-fold .preview-exercise small,
+#home .home-below-fold .recent-item small{color:#d9e6dc!important}
+#home .home-below-fold .preview-exercise>span,
+#home .home-below-fold .preview-exercise>strong{min-width:0}
+#home .home-below-fold .exercise-preview{gap:9px;margin:16px 0}
+#home .home-below-fold .micro-tag{
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url('./assets/hero-dumbbells-photo.jpg?v=7')!important;
+ background-position:center!important;background-size:cover!important;
+ border:1.5px solid #f1d394!important;
+ border-radius:11px!important;
+ box-shadow:inset 0 1px 0 rgba(255,247,209,.3),0 3px 7px rgba(0,15,22,.26)!important;
+ color:#ffe5b0!important;
+}
+#home .home-below-fold .text-action{
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ min-height:43px;
+ padding:10px 14px;
+ font-size:12px;
+ font-weight:750;
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url('./assets/hero-dumbbells-photo.jpg?v=7')!important;
+ background-position:center!important;background-size:cover!important;
+ border:1.5px solid #f1d394!important;
+ border-radius:11px!important;
+ color:#fff1cf!important;
+ box-shadow:inset 0 1px 0 rgba(255,247,209,.3),0 4px 11px rgba(0,15,22,.36)!important;
+ text-decoration:none;
+}
+#home .home-below-fold .text-action span{margin-left:0;color:#f9d799}
+#home .home-below-fold .text-action:active{filter:brightness(1.12);transform:scale(.99)}
+#home .home-below-fold .next-panel,
+#home .home-below-fold .activity-panel{overflow:hidden;border-radius:11px!important}
+#home .home-below-fold .recent-item{margin-bottom:7px}
+#home .home-below-fold .recent-item:last-child{border:1.5px solid #f1d394!important}
+@media(max-width:760px){
+ #home .home-below-fold .next-panel,
+ #home .home-below-fold .activity-panel{padding:18px 15px!important}
+ #home .home-below-fold .exercise-preview{margin:14px 0;gap:8px}
+ #home .home-below-fold .preview-exercise{padding:10px 12px;font-size:12px}
+ #home .home-below-fold .micro-tag{padding:7px 8px;font-size:9px}
+}
+
 body.home-active .topbar{display:none!important}
 @media(min-width:761px){
  body.home-active .topbar{display:flex!important}
