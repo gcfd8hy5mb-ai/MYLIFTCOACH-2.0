@@ -1,0 +1,51 @@
+name: Import licensed photographic design assets
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-photo-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download licensed photography into source assets
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          # Natural green/brown marble photographed by Engin Akyurt (Unsplash).
+          curl -fsSL --retry 4 --retry-delay 2 --max-time 90 \
+            'https://images.unsplash.com/photo-1756362845834-07eb8e3bc8c7?auto=format&fit=crop&w=1200&q=84&fm=jpg' \
+            -o assets/emerald-marble-photo.jpg
+          # Actual chrome/black dumbbells photographed by Jason Grant (Unsplash).
+          curl -fsSL --retry 4 --retry-delay 2 --max-time 90 \
+            'https://images.unsplash.com/photo-1734630341082-0fec0e10126c?auto=format&fit=crop&w=1200&q=84&fm=jpg' \
+            -o assets/hero-dumbbells-photo.jpg
+          file assets/*-photo.jpg
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('emerald-marble-photo.jpg','hero-dumbbells-photo.jpg'):
+              p=Path('assets')/name
+              b=p.read_bytes()
+              assert b[:3] == b'\xff\xd8\xff',f'{name}: not a JPEG'
+              assert 10_000 < len(b) < 4_000_000,f'{name}: unexpected size {len(b)}'
+              print(name,len(b))
+          PY
+      - name: Commit downloaded photography to app source
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/emerald-marble-photo.jpg assets/hero-dumbbells-photo.jpg
+          if git diff --cached --quiet; then
+            echo 'Photos already committed'
+          else
+            git commit -m 'Add locally hosted licensed realistic marble and gym photographs'
+            git push origin HEAD:main
+          fi
