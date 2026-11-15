@@ -12,12 +12,12 @@
 }
 html{background:#064348}
 body{
- background:#063f45 url("./assets/emerald-marble.svg") center top / cover fixed!important;
+ background:#063f45 url("./assets/emerald-marble-photo.jpg?v=7") center top / cover fixed!important;
  color:#fff6df;
 }
 .app-shell,.main-wrap,.content{background:transparent!important}
 .sidebar{
- background:#053f45 url("./assets/emerald-marble.svg") 25% center / cover!important;
+ background:#053f45 url("./assets/emerald-marble-photo.jpg?v=7") 25% center / cover!important;
  border-right:1px solid var(--metal)!important;
  box-shadow:inset -20px 0 45px rgba(1,23,27,.38);
 }
@@ -34,7 +34,7 @@ body{
 .hero{
  background:
  linear-gradient(88deg,rgba(1,43,47,.98) 0%,rgba(2,39,45,.74) 60%,rgba(4,48,51,.05) 100%),
- url("./assets/hero-dumbbell.svg") center / cover no-repeat!important;
+ url("./assets/hero-dumbbells-photo.jpg?v=7") center / cover no-repeat!important;
  border:1px solid rgba(247,205,131,.84)!important;
  box-shadow:0 0 0 1px rgba(0,0,0,.22),0 9px 25px rgba(0,0,0,.32)!important;
 }
@@ -125,7 +125,7 @@ body{
 .coach-links button{font-size:12px}
 .coach-links button span{color:#f6d38d}
 .modal-panel{
- background:#0b5056 url("./assets/emerald-marble.svg") center center / cover!important;
+ background:#0b5056 url("./assets/emerald-marble-photo.jpg?v=7") center center / cover!important;
  border:1px solid #f8d69e!important;
  box-shadow:0 12px 50px #001419a6;
 }
@@ -135,7 +135,7 @@ body{
 .modal-eyebrow{color:#ffe1a9!important}
 .rest-screen{
  position:fixed;inset:0;z-index:200;
- background:#064549 url("./assets/emerald-marble.svg") center center / cover;
+ background:#064549 url("./assets/emerald-marble-photo.jpg?v=7") center center / cover;
  display:flex;flex-direction:column;align-items:center;
  color:#fff5e3;padding:calc(28px + env(safe-area-inset-top)) 20px calc(27px + env(safe-area-inset-bottom));
  overflow-y:auto;
@@ -177,7 +177,7 @@ body{
 .rest-next small{font-size:13px;color:#d9e6dc}
 .rest-demo{font-size:11px;color:#ccdbd1;text-align:center;margin:22px 0 4px}
 @media(max-width:760px){
- html,body{background:#063f45 url("./assets/emerald-marble.svg") 51% top / auto 100vh fixed!important}
+ html,body{background:#063f45 url("./assets/emerald-marble-photo.jpg?v=7") 51% top / auto 100vh fixed!important}
  .topbar{
   background:rgba(2,51,56,.88)!important;
   backdrop-filter:blur(12px);
@@ -188,7 +188,7 @@ body{
  #home .hero{
   background:
     linear-gradient(90deg,#05373f 0%,rgba(2,41,45,.86) 59%,rgba(2,37,41,.22) 100%),
-    url("./assets/hero-dumbbell.svg") center right / auto 100% no-repeat!important;
+    url("./assets/hero-dumbbells-photo.jpg?v=7") center right / auto 100% no-repeat!important;
   min-height:145px!important;
  }
  #home .hero-copy{padding:15px 14px 14px!important}
@@ -230,7 +230,7 @@ body{
 .welcome-view .bottom-tabs,.welcome-view .topbar{display:none!important}
 .welcome-view .content{padding-top:0!important}
 .welcome-panel{
- background:#05363b url("./assets/emerald-marble.svg") center center /cover;
+ background:#05363b url("./assets/emerald-marble-photo.jpg?v=7") center center /cover;
  max-width:560px;min-height:min(850px,95dvh);width:100%;
  margin:0 auto;padding:34px 25px 30px;display:flex;flex-direction:column;
  align-items:center;text-align:center;
