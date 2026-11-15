@@ -96,7 +96,46 @@ body{
  border-radius:12px!important;
  box-shadow:inset 0 2px 2px rgba(255,255,255,.9),inset 0 -2px 2px rgba(90,54,12,.31),0 4px 10px rgba(0,16,23,.45)!important;
 }
-.sidebar .nav-item.selected{border-color:#f4ce88;color:#fff4d5;background:linear-gradient(145deg,#176d6f,#044a51)}
+/* Sidebar: same source card treatment as the six approved Home buttons. */
+.sidebar .side-nav{gap:10px}
+.sidebar .nav-item,
+.sidebar .nav-item:hover,
+.sidebar .nav-item.selected,
+.sidebar .nav-item:focus-visible{
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ background-position:center,center 46%!important;
+ background-size:cover!important;
+ background-repeat:no-repeat!important;
+ border:1.5px solid #f1d394!important;
+ border-radius:11px!important;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.35),inset 0 -1px 0 rgba(0,21,25,.65),0 5px 13px rgba(0,15,22,.43)!important;
+ color:#fff5df!important;
+ min-height:54px;
+ padding:12px 14px;
+ text-shadow:0 1px 2px rgba(0,15,21,.65);
+}
+.sidebar .nav-item span{color:#f8d79b!important}
+.sidebar .nav-item:hover{filter:brightness(1.12)}
+.sidebar .nav-item.selected{
+ background-image:linear-gradient(110deg,rgba(3,45,50,.75),rgba(7,68,73,.58)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.45),0 0 0 1px rgba(255,224,156,.23),0 5px 13px rgba(0,15,22,.43)!important;
+ color:#ffe6ac!important;
+}
+.sidebar .nav-item:focus-visible{outline:2px solid #ffedbe;outline-offset:2px}
+.sidebar .side-support{
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ background-position:center!important;background-size:cover!important;
+ border:1.5px solid #f1d394!important;border-radius:11px!important;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.25),0 4px 10px rgba(0,15,22,.35)!important;
+}
+@media(max-width:760px){
+ .sidebar{padding:27px 15px 18px}
+ .sidebar .wordmark{margin-bottom:45px}
+ .sidebar .side-nav{gap:9px}
+ .sidebar .nav-item{min-height:55px;padding:12px 13px}
+}
 .text-action{color:#ffe0a0!important}
 .preview-exercise{border-color:#448f8b!important}
 .account-brand{
