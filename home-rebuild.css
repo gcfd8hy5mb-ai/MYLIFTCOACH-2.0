@@ -68,7 +68,7 @@ body.home-active .topbar{display:none!important}
 }
 @media(max-width:760px){
  body.home-active{
-  background:#0e5357 url('./assets/approved-vertical-marble-sharp.webp?v=11') center top/cover no-repeat fixed!important;
+  background:#0e5357 url('./assets/approved-vertical-marble-sharp.webp?v=11') center top / auto 100dvh repeat-y fixed!important;
 
  }
  body.home-active .content{padding:0 14px calc(82px + env(safe-area-inset-bottom))!important}
