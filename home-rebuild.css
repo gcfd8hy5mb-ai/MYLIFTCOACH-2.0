@@ -16,13 +16,13 @@
 .home-rebuilt .muscle-symbol{font-size:.72em;vertical-align:middle}
 .home-rebuilt .reference-todays-workout{
  position:relative;isolation:isolate;overflow:hidden;display:block;min-height:260px;
- background:#063b42!important;
+ background:#073f46!important;
  border:1px solid #f1d598!important;border-radius:13px!important;
  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 22px rgba(0,24,28,.3)!important
 }
 .home-rebuilt .reference-todays-workout .workout-photo{
  position:absolute;z-index:-1;inset:0 0 0 36%;
- background:#063b42 url('./assets/hero-dumbbell.svg?v=6') 58% center/cover no-repeat;
+ background:#063b42 url('./assets/hero-dumbbells-photo.jpg?v=7') 53% center/cover no-repeat;
  opacity:.97
 }
 .home-rebuilt .reference-todays-workout .hero-copy{
@@ -68,7 +68,7 @@ body.home-active .topbar{display:none!important}
 }
 @media(max-width:760px){
  body.home-active{
-  background:#0e5357 url('./assets/emerald-marble.svg?v=6') center top/100% auto repeat-y fixed!important;
+  background:#0e5357 url('./assets/emerald-marble-photo.jpg?v=7') center center/cover no-repeat fixed!important;
  }
  body.home-active .content{padding:0 14px calc(82px + env(safe-area-inset-bottom))!important}
  .home-rebuilt{max-width:490px;margin:0 auto}
