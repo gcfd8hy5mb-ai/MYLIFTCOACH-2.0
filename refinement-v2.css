@@ -15,7 +15,7 @@ body{background-color:#08484b!important}
 .quick-grid button:focus-visible,.bottom-tabs button:focus-visible{outline:2px solid #ffe5a8;outline-offset:2px}
 @media (max-width:760px){
   html,body{
-    background:#064a4c url("./assets/emerald-marble.svg?v=2") center top / 100% auto repeat-y fixed!important;
+    background:#064a4c url("./assets/emerald-marble-photo.jpg?v=7") center center/cover no-repeat fixed!important;
   }
   .topbar{
     height:47px!important;min-height:47px!important;
@@ -48,6 +48,6 @@ body{background-color:#08484b!important}
   .sidebar-logo{filter:drop-shadow(0 0 4px rgba(247,214,151,.3))}
 }
 @media (min-width:761px){
-  body{background:#074449 url("./assets/emerald-marble.svg?v=2") center center / cover fixed!important}
+  body{background:#074449 url("./assets/emerald-marble-photo.jpg?v=7") center center / cover fixed!important}
   .mobile-brand{display:flex;margin:0 0 17px}
 }
