@@ -16,6 +16,7 @@ body{background-color:#08484b!important}
 @media (max-width:760px){
   html,body{
     background:#064a4c url("./assets/emerald-marble-photo.jpg?v=7") center center/cover no-repeat fixed!important;
+ background-image:url("./assets/approved-marble.jpg?v=8"),url("./assets/emerald-marble-photo.jpg?v=7") !important;
   }
   .topbar{
     height:47px!important;min-height:47px!important;
