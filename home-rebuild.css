@@ -43,16 +43,22 @@
 }
 .home-rebuilt .reference-todays-workout .button-primary:active{filter:brightness(.96);transform:translateY(1px)}
 .home-rebuilt .quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:760px;gap:12px;margin:16px 0}
-.home-rebuilt .quick-grid button{
+/* Same dark, photo-backed emerald surface and gold framing as Today's Workout.
+   These are real button backgrounds, not a separate overlay or cover stylesheet. */
+#home .quick-grid button{
  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
  position:relative;overflow:hidden;
- min-height:105px;border:1px solid rgba(246,225,174,.82)!important;border-radius:11px!important;
- background:linear-gradient(145deg,rgba(42,134,135,.97) 0%,rgba(19,111,116,.97) 17%,rgba(10,85,92,.98) 57%,rgba(3,56,64,.99) 100%)!important;
- box-shadow:inset 0 2px 0 rgba(243,255,236,.35),inset 1px 0 0 rgba(217,247,231,.18),inset 0 -9px 15px rgba(1,29,36,.29),0 4px 12px rgba(0,17,24,.43)!important;
+ min-height:105px;border:1.5px solid #f1d394!important;border-radius:11px!important;
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url('./assets/hero-dumbbells-photo.jpg?v=7')!important;
+ background-position:center,center 46%;
+ background-size:cover;
+ background-repeat:no-repeat;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.35),inset 0 -1px 0 rgba(0,21,25,.65),0 5px 13px rgba(0,15,22,.43)!important;
  color:#fff3d8;padding:12px 7px;transition:transform .16s,filter .16s
 }
-.home-rebuilt .quick-grid button strong{font:650 12px 'DM Sans',Arial,sans-serif;color:#fff8e9;text-shadow:0 1px 2px rgba(0,18,24,.45)}
-.home-rebuilt .quick-grid button:active{transform:scale(.985);filter:brightness(1.08)}
+#home .quick-grid button strong{font:650 12px 'DM Sans',Arial,sans-serif;color:#fff8e9;text-shadow:0 1px 3px rgba(0,10,17,.85)}
+#home .quick-grid button:active{transform:scale(.985);filter:brightness(1.14)}
 .home-rebuilt .quick-grid button:focus-visible{outline:2px solid #ffe6aa;outline-offset:2px}
 .home-rebuilt .quick-grid .shortcut-symbol{display:grid;place-items:center}
 .home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:29px;height:29px;stroke-width:1.75;color:#ffe0a1;filter:drop-shadow(0 1px 2px rgba(0,20,26,.55))}
