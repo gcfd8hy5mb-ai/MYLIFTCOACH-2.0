@@ -223,6 +223,7 @@ function bind(){
 
  $('menuBtn').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
  $('homeMenuBtn').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
+ $('sidebarClose').addEventListener('click',()=>$('sidebar').classList.remove('open'));
  $('homeAccountBtn').addEventListener('click',()=>setPage('settings'));
 
  $('heroStart').addEventListener('click',()=>openWorkout(nextPlan().id));
