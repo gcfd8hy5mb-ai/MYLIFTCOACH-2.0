@@ -12,13 +12,13 @@
 }
 html{background:#064348}
 body{
- background:#063f45 url("./assets/approved-vertical-marble.jpg?v=10") center top / cover fixed!important;
+ background:#063f45 url("./assets/approved-vertical-marble-sharp.webp?v=11") center top / cover fixed!important;
 
  color:#fff6df;
 }
 .app-shell,.main-wrap,.content{background:transparent!important}
 .sidebar{
- background:#053f45 url("./assets/approved-vertical-marble.jpg?v=10") 25% center / cover!important;
+ background:#053f45 url("./assets/approved-vertical-marble-sharp.webp?v=11") 25% center / cover!important;
 
  border-right:1px solid var(--metal)!important;
  box-shadow:inset -20px 0 45px rgba(1,23,27,.38);
@@ -127,7 +127,7 @@ body{
 .coach-links button{font-size:12px}
 .coach-links button span{color:#f6d38d}
 .modal-panel{
- background:#0b5056 url("./assets/approved-vertical-marble.jpg?v=10") center center / cover!important;
+ background:#0b5056 url("./assets/approved-vertical-marble-sharp.webp?v=11") center center / cover!important;
 
  border:1px solid #f8d69e!important;
  box-shadow:0 12px 50px #001419a6;
@@ -138,7 +138,7 @@ body{
 .modal-eyebrow{color:#ffe1a9!important}
 .rest-screen{
  position:fixed;inset:0;z-index:200;
- background:#064549 url("./assets/approved-vertical-marble.jpg?v=10") center center / cover;
+ background:#064549 url("./assets/approved-vertical-marble-sharp.webp?v=11") center center / cover;
 
  display:flex;flex-direction:column;align-items:center;
  color:#fff5e3;padding:calc(28px + env(safe-area-inset-top)) 20px calc(27px + env(safe-area-inset-bottom));
@@ -181,7 +181,7 @@ body{
 .rest-next small{font-size:13px;color:#d9e6dc}
 .rest-demo{font-size:11px;color:#ccdbd1;text-align:center;margin:22px 0 4px}
 @media(max-width:760px){
- html,body{background:#063f45 url("./assets/approved-vertical-marble.jpg?v=10") 51% top / auto 100vh fixed!important}
+ html,body{background:#063f45 url("./assets/approved-vertical-marble-sharp.webp?v=11") 51% top / auto 100vh fixed!important}
  .topbar{
   background:rgba(2,51,56,.88)!important;
   backdrop-filter:blur(12px);
@@ -234,7 +234,7 @@ body{
 .welcome-view .bottom-tabs,.welcome-view .topbar{display:none!important}
 .welcome-view .content{padding-top:0!important}
 .welcome-panel{
- background:#05363b url("./assets/approved-vertical-marble.jpg?v=10") center center /cover;
+ background:#05363b url("./assets/approved-vertical-marble-sharp.webp?v=11") center center /cover;
 
  max-width:560px;min-height:min(850px,95dvh);width:100%;
  margin:0 auto;padding:34px 25px 30px;display:flex;flex-direction:column;
