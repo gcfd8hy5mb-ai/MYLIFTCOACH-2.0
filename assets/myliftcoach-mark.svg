@@ -1,8 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
-<defs><linearGradient id="gold" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#b67c32"/><stop offset=".22" stop-color="#fff2bf"/><stop offset=".5" stop-color="#e6b85f"/><stop offset=".76" stop-color="#fff1b0"/><stop offset="1" stop-color="#a96f32"/></linearGradient><radialGradient id="green"><stop stop-color="#165b5c"/><stop offset="1" stop-color="#053339"/></radialGradient></defs>
-<circle cx="120" cy="113" r="90" fill="url(#green)" stroke="url(#gold)" stroke-width="5"/>
-<circle cx="120" cy="113" r="82" fill="none" stroke="#f4d28a" stroke-width="1.1" opacity=".65"/>
-<text x="120" y="159" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="117" fill="url(#gold)">M</text>
-<g fill="url(#gold)" stroke="#e9c787" stroke-width="1"><rect x="7" y="100" width="18" height="28" rx="4"/><rect x="27" y="91" width="12" height="46" rx="3"/><rect x="201" y="91" width="12" height="46" rx="3"/><rect x="215" y="100" width="18" height="28" rx="4"/></g>
-<path d="M39 114 H52 M188 114 H201" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="280" viewBox="0 0 280 280">
+<defs>
+ <radialGradient id="emerald" cx=".35" cy=".3" r=".89">
+  <stop offset="0" stop-color="#16777a"/>
+  <stop offset=".48" stop-color="#075259"/>
+  <stop offset="1" stop-color="#062b33"/>
+ </radialGradient>
+ <linearGradient id="gold" x1=".05" y1=".0" x2=".9" y2="1">
+  <stop offset="0" stop-color="#a66d2c"/>
+  <stop offset=".14" stop-color="#ffedb1"/>
+  <stop offset=".32" stop-color="#e6b76a"/>
+  <stop offset=".54" stop-color="#fff9cc"/>
+  <stop offset=".70" stop-color="#e7b873"/>
+  <stop offset=".88" stop-color="#b6813a"/>
+  <stop offset="1" stop-color="#ffebb5"/>
+ </linearGradient>
+ <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+  <stop stop-color="#b77b34"/><stop offset=".2" stop-color="#ffe8a6"/><stop offset=".42" stop-color="#c58e49"/><stop offset=".66" stop-color="#fff5b8"/><stop offset="1" stop-color="#ae7535"/>
+ </linearGradient>
+ <filter id="halo" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+</defs>
+<circle cx="140" cy="131" r="107" stroke="#e3b871" stroke-width="9" fill="none" opacity=".22" filter="url(#halo)"/>
+<circle cx="140" cy="131" r="103" fill="url(#emerald)" stroke="url(#gold)" stroke-width="4.2"/>
+<circle cx="140" cy="131" r="96" fill="none" stroke="#f4d08f" stroke-width=".9" opacity=".65"/>
+<path d="M71 200 Q140 225 209 200" fill="none" stroke="url(#gold)" stroke-width="2.3" stroke-linecap="round"/>
+<path d="M87 75 Q103 49 134 45" stroke="#ffe3a4" fill="none" stroke-width="1.4" opacity=".5"/>
+<text x="140" y="185" font-family="Georgia,'Times New Roman',serif" font-size="143" font-weight="500" text-anchor="middle" fill="#7b542b" opacity=".65" transform="translate(1.7 2)">M</text>
+<text x="140" y="185" font-family="Georgia,'Times New Roman',serif" font-size="143" font-weight="500" text-anchor="middle" fill="url(#gold)">M</text>
+<g fill="url(#bar)" stroke="#69481f" stroke-width=".65">
+ <rect x="4" y="123" width="16" height="21" rx="3"/>
+ <rect x="22" y="112" width="14" height="43" rx="3"/>
+ <rect x="38" y="102" width="12" height="63" rx="3"/>
+ <rect x="230" y="102" width="12" height="63" rx="3"/>
+ <rect x="244" y="112" width="14" height="43" rx="3"/>
+ <rect x="260" y="123" width="16" height="21" rx="3"/>
+</g>
+<path d="M50 133 H62 M218 133 H230" stroke="url(#bar)" stroke-width="7" stroke-linecap="round"/>
+<path d="M12 126v14M29 115v37M237 105v56M251 115v37M267 126v14" stroke="#fff1b1" stroke-width="1.2" opacity=".5"/>
 </svg>
