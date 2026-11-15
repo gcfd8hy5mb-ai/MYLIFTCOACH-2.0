@@ -50,20 +50,52 @@ body{
  text-shadow:0 1px 0 rgba(255,247,210,.75);
 }
 .quick-grid button,.coach-links button{
- background:linear-gradient(150deg,rgba(21,114,116,.95),rgba(3,53,59,.96))!important;
- border:1px solid rgba(198,232,220,.65)!important;
- box-shadow:inset 0 1px 0 rgba(241,250,220,.19),0 2px 7px #001f227a!important;
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ background-position:center,center 46%;
+ background-size:cover;
+ border:1.5px solid #f1d394!important;border-radius:11px!important;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.35),inset 0 -1px 0 rgba(0,21,25,.65),0 5px 13px rgba(0,15,22,.43)!important;
 }
 .quick-grid button .shortcut-symbol{color:#ffdc93;text-shadow:0 0 8px rgba(238,200,125,.16)}
 .metric,.panel,.workout-card,.library-card,.settings-panel,.log-card{
- background:linear-gradient(145deg,rgba(7,85,89,.97),rgba(3,55,62,.97))!important;
- border:1px solid rgba(192,234,221,.59)!important;
- box-shadow:inset 0 1px 0 rgba(213,243,231,.09),0 6px 14px rgba(0,17,22,.21)!important;
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.93),rgba(3,45,51,.85)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ background-position:center,center 46%;
+ background-size:cover;
+ border:1.5px solid #f1d394!important;border-radius:12px!important;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.33),inset 0 -1px 0 rgba(0,21,25,.65),0 6px 14px rgba(0,15,22,.39)!important;
 }
 .metric>strong{color:#fff5d8!important}
 .metric>span,.metric>small{color:#d1e3dc!important}
 .micro-tag{background:#155b60!important;color:#ffdf9e!important;border-color:#dab473!important}
 .panel h3,.workout-card h3,.library-card h3{color:#fff4d9!important}
+/* Approved Home shortcut surface is the shared design standard for other views.
+   Keep Home's already-approved specific styles untouched. */
+#workouts .workout-card,#library .library-card,#progress .metric,
+#progress .progress-chart-panel,#coaching .coach-card,#nutrition .panel,
+#settings .settings-panel,.account-menu button,.coach-links button{
+ color:#fff8e9;
+}
+#workouts .workout-card:active,#library .library-card:active,
+.account-menu button:active,.coach-links button:active{
+ filter:brightness(1.12);transform:scale(.995);
+}
+.button-outline,.button-ghost,.text-action,.log-card .button-outline,
+.settings-panel .button-outline,.welcome-preview-link{
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.82)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ background-position:center!important;background-size:cover!important;
+ border:1.5px solid #f1d394!important;border-radius:11px!important;
+ color:#fff0cf!important;
+ box-shadow:inset 0 1px 0 rgba(255,247,209,.28),0 3px 8px rgba(0,15,22,.32)!important;
+}
+.button-primary:not(#heroStart),.filter-chips button.selected{
+ background:linear-gradient(180deg,#fff9df 0%,#ffefb8 17%,#f2d28d 47%,#daa85e 84%,#ba8240 100%)!important;
+ color:#14353a!important;border:1px solid #ffefbf!important;
+ border-radius:12px!important;
+ box-shadow:inset 0 2px 2px rgba(255,255,255,.9),inset 0 -2px 2px rgba(90,54,12,.31),0 4px 10px rgba(0,16,23,.45)!important;
+}
 .sidebar .nav-item.selected{border-color:#f4ce88;color:#fff4d5;background:linear-gradient(145deg,#176d6f,#044a51)}
 .text-action{color:#ffe0a0!important}
 .preview-exercise{border-color:#448f8b!important}
@@ -77,8 +109,11 @@ body{
 .account-menu{display:grid;gap:7px;margin:0 0 21px}
 .account-menu button{
  display:flex;align-items:center;gap:13px;
- background:linear-gradient(130deg,rgba(15,105,109,.95),rgba(3,59,66,.95));
- color:#fdf4df;border:1px solid #7eb1aa;border-radius:10px;
+ background-color:#06333a;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.91),rgba(3,45,51,.81)),url("./assets/hero-dumbbells-photo.jpg?v=7");
+ background-position:center,center 46%;background-size:cover;
+ color:#fdf4df;border:1.5px solid #f1d394;border-radius:11px;
+ box-shadow:inset 0 1.5px 0 rgba(255,247,209,.3),0 4px 10px rgba(0,15,22,.32);
  min-height:55px;padding:8px 14px;text-align:left;font-size:14px;font-weight:550
 }
 .account-menu button span{width:25px;color:#ffdb8b;font-size:20px;text-align:center}
@@ -101,9 +136,11 @@ body{
 }
 .filter-chips::-webkit-scrollbar{display:none}
 .filter-chips button{
- flex:0 0 auto;background:rgba(6,55,59,.96);color:#f4f3e7;
- border:1px solid rgba(169,223,213,.7);border-radius:22px;
- font-size:12px;min-height:34px;padding:5px 15px
+ flex:0 0 auto;
+ background:linear-gradient(110deg,#063039,#083f45);color:#f4f3e7;
+ border:1.5px solid #f1d394;border-radius:11px;
+ box-shadow:inset 0 1px 0 rgba(255,247,209,.24),0 2px 6px rgba(0,14,20,.25);
+ font-size:12px;min-height:36px;padding:5px 15px
 }
 .filter-chips button.selected{
  color:#103b40;border-color:#ffe6aa;
@@ -173,8 +210,11 @@ body{
 .rest-controls button+button{background:rgba(1,53,60,.92);color:#ffe4ad;border:2px solid #b1d9c8}
 .rest-next{
  width:min(100%,480px);margin-top:auto;
- background:linear-gradient(135deg,rgba(25,117,120,.97),rgba(2,57,66,.96));
- border:1px solid #efca84;border-radius:13px;
+ background-color:#06333a;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.80)),url("./assets/hero-dumbbells-photo.jpg?v=7");
+ background-position:center;background-size:cover;
+ border:1.5px solid #f1d394;border-radius:12px;
+ box-shadow:inset 0 1px 0 rgba(255,247,209,.32),0 5px 13px rgba(0,15,22,.42);
  padding:18px 20px;display:grid;gap:8px
 }
 .rest-next strong{font-size:20px}
