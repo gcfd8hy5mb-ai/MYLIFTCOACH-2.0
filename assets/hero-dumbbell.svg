@@ -1,29 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 330" width="1240" height="660">
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="540" viewBox="0 0 980 540">
+<title>Premium gym dumbbell product artwork</title>
 <defs>
- <radialGradient id="bg" cx=".54" cy=".42" r=".8"><stop stop-color="#438c88"/><stop offset=".5" stop-color="#175960"/><stop offset="1" stop-color="#063b44"/></radialGradient>
- <linearGradient id="iron" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#172a32"/><stop offset=".21" stop-color="#435960"/><stop offset=".39" stop-color="#9eacaa"/><stop offset=".48" stop-color="#53646a"/><stop offset=".7" stop-color="#1c333b"/><stop offset="1" stop-color="#0b2028"/></linearGradient>
- <linearGradient id="plate" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#071f29"/><stop offset=".16" stop-color="#6c8288"/><stop offset=".24" stop-color="#172e35"/><stop offset=".65" stop-color="#3d565d"/><stop offset=".84" stop-color="#091b23"/><stop offset="1" stop-color="#172932"/></linearGradient>
- <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#849896"/><stop offset=".42" stop-color="#2d484f"/><stop offset=".8" stop-color="#071f26"/><stop offset="1" stop-color="#718386"/></linearGradient>
- <filter id="shadow"><feGaussianBlur stdDeviation="13"/></filter>
+ <radialGradient id="back" cx=".67" cy=".33" r=".86">
+  <stop stop-color="#29777a"/><stop offset=".47" stop-color="#0c484f"/><stop offset="1" stop-color="#052e36"/>
+ </radialGradient>
+ <linearGradient id="shaft" x1="0" y1="0" x2=".1" y2="1">
+  <stop stop-color="#10252e"/><stop offset=".14" stop-color="#5d747b"/><stop offset=".24" stop-color="#bfcbca"/><stop offset=".31" stop-color="#43585e"/>
+  <stop offset=".52" stop-color="#152b33"/><stop offset=".76" stop-color="#60767a"/><stop offset=".9" stop-color="#0b252e"/><stop offset="1" stop-color="#15272d"/>
+ </linearGradient>
+ <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+  <stop stop-color="#0b1e26"/><stop offset=".13" stop-color="#758b90"/><stop offset=".22" stop-color="#172f35"/>
+  <stop offset=".5" stop-color="#3a5258"/><stop offset=".76" stop-color="#0a2028"/><stop offset=".87" stop-color="#788e91"/><stop offset="1" stop-color="#13252e"/>
+ </linearGradient>
+ <linearGradient id="face" x1=".1" y1=".1" x2=".95" y2=".9">
+  <stop stop-color="#536a70"/><stop offset=".2" stop-color="#142d34"/><stop offset=".52" stop-color="#071921"/>
+  <stop offset=".78" stop-color="#1c353c"/><stop offset="1" stop-color="#758489"/>
+ </linearGradient>
+ <radialGradient id="highlight" cx=".18" cy=".17" r=".9">
+  <stop stop-color="#f1f8ea" stop-opacity=".25"/><stop offset=".26" stop-color="#94b8bb" stop-opacity=".09"/><stop offset="1" stop-color="#041820" stop-opacity="0"/>
+ </radialGradient>
+ <filter id="shadow" x="-45%" y="-45%" width="190%" height="190%"><feGaussianBlur stdDeviation="17"/></filter>
+ <filter id="shadowSoft"><feGaussianBlur stdDeviation="8"/></filter>
 </defs>
-<rect width="620" height="330" fill="url(#bg)"/>
-<ellipse cx="360" cy="290" rx="205" ry="24" fill="#001c25" opacity=".68" filter="url(#shadow)"/>
-<g transform="translate(367 160) rotate(-25)">
- <rect x="-178" y="-20" width="356" height="40" rx="13" fill="url(#iron)" stroke="#788b8f" stroke-width="2"/>
- <path d="M-66 -17H66M-66 16H66" stroke="#adb8b0" stroke-width="2" opacity=".45"/>
- <g stroke="#899c9d" stroke-width="2.3">
- <rect x="-183" y="-55" width="22" height="110" rx="6" fill="url(#rim)"/>
- <rect x="-161" y="-69" width="39" height="138" rx="9" fill="url(#plate)"/>
- <rect x="-124" y="-88" width="40" height="176" rx="11" fill="url(#plate)"/>
- <rect x="-86" y="-76" width="21" height="152" rx="7" fill="url(#rim)"/>
- <rect x="161" y="-55" width="22" height="110" rx="6" fill="url(#rim)"/>
- <rect x="122" y="-69" width="39" height="138" rx="9" fill="url(#plate)"/>
- <rect x="84" y="-88" width="40" height="176" rx="11" fill="url(#plate)"/>
- <rect x="65" y="-76" width="21" height="152" rx="7" fill="url(#rim)"/>
+<rect width="980" height="540" fill="url(#back)"/>
+<path d="M0 450 Q230 354 452 439T980 375" fill="none" stroke="#9ac8bb" stroke-opacity=".11" stroke-width="27" filter="url(#shadowSoft)"/>
+<ellipse cx="661" cy="456" rx="278" ry="31" fill="#001e29" opacity=".72" filter="url(#shadow)"/>
+<!-- Three-dimensional dumbbell; plate faces, bevels, and reflected light belong in the artwork itself -->
+<g transform="translate(665 259) rotate(-23)">
+ <rect x="-244" y="-23" width="488" height="46" rx="14" fill="url(#shaft)" stroke="#0a1d26" stroke-width="3"/>
+ <path d="M-130 -17L130 -17 M-130 16L130 16" fill="none" stroke="#dbe9e3" stroke-opacity=".48" stroke-width="3"/>
+ <path d="M-128 -10L129 -10" fill="none" stroke="#081c22" opacity=".68" stroke-width="2"/>
+ <g stroke-linejoin="round">
+  <rect x="-266" y="-81" width="21" height="162" rx="7" fill="url(#steel)" stroke="#5a777e" stroke-width="2"/>
+  <rect x="-246" y="-99" width="48" height="198" rx="11" fill="url(#steel)" stroke="#7d9697" stroke-width="3"/>
+  <rect x="-200" y="-122" width="54" height="244" rx="15" fill="url(#steel)" stroke="#768e94" stroke-width="3.5"/>
+  <rect x="-149" y="-112" width="29" height="224" rx="11" fill="url(#steel)" stroke="#829a9a" stroke-width="2.5"/>
+  <rect x="245" y="-81" width="21" height="162" rx="7" fill="url(#steel)" stroke="#5a777e" stroke-width="2"/>
+  <rect x="198" y="-99" width="48" height="198" rx="11" fill="url(#steel)" stroke="#7d9697" stroke-width="3"/>
+  <rect x="146" y="-122" width="54" height="244" rx="15" fill="url(#steel)" stroke="#768e94" stroke-width="3.5"/>
+  <rect x="120" y="-112" width="29" height="224" rx="11" fill="url(#steel)" stroke="#829a9a" stroke-width="2.5"/>
  </g>
- <path d="M-147 -56v112M-111 -73v146M110 -72v144M147 -54v108" stroke="#cad6ce" stroke-width="2.7" opacity=".29"/>
- <path d="M-176 -42V42M177 -42V42" stroke="#e0e9df" stroke-width="2" opacity=".5"/>
- <g stroke="#cad2c5" fill="none" opacity=".33"><ellipse cx="-104" cy="0" rx="17" ry="70"/><ellipse cx="104" cy="0" rx="17" ry="70"/></g>
+ <ellipse cx="-171" cy="0" rx="20" ry="106" fill="url(#face)" opacity=".72" stroke="#7a9093" stroke-width="2"/>
+ <ellipse cx="171" cy="0" rx="20" ry="106" fill="url(#face)" opacity=".72" stroke="#7a9093" stroke-width="2"/>
+ <path d="M-193 -96 Q-210 -48 -205 0T-193 95 M193 -96 Q210 -48 205 0T193 95" stroke="#d9e9df" stroke-opacity=".49" stroke-width="4" fill="none"/>
+ <path d="M-236 -76V76 M236 -76V76 M-139 -92V92 M139 -92V92" stroke="#dceae5" stroke-opacity=".32" stroke-width="3" fill="none"/>
+ <path d="M-196 100Q-150 116 -111 89 M196 100Q150 116 111 89" stroke="#041820" stroke-width="5" opacity=".8" fill="none"/>
+ <rect x="-268" y="-124" width="536" height="248" fill="url(#highlight)" opacity=".63"/>
 </g>
-<path d="M-20 309 C169 258 257 293 344 260 S520 237 643 198" stroke="#d9b986" stroke-opacity=".38" stroke-width="1.7" fill="none"/>
+<path d="M705 448Q812 429 917 444" stroke="#d3e6dc" opacity=".17" fill="none" stroke-width="5" filter="url(#shadowSoft)"/>
 </svg>
