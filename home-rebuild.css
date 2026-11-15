@@ -1,114 +1,111 @@
-/* MYLIFTCOACH 2.0 / design-locked Home screen v3.
-   Built against the user's approved 8-screen iPhone reference.
-   Dedicated layout, not iterative overrides of the prior Home mockup.
+/* MYLIFTCOACH 2.0 — HOME SOURCE STYLESHEET
+   This is the sole Home-specific stylesheet. Edit here, not in appended "cover" sheets.
+   The marble, workout artwork, and emblem live directly under /assets.
 */
-:root{--home-cream:#fae9bf;--home-gold:#f3c774;--home-deep:#033b3f}
-.home-rebuilt .reference-home-header{display:flex;align-items:center;justify-content:space-between}
-.home-rebuilt .reference-home-header button{display:grid;place-items:center;flex:0 0 34px;height:34px;border:0;background:transparent;color:var(--home-gold)}
-.home-rebuilt .reference-home-brand{display:flex;align-items:center;justify-content:center;gap:7px;color:#ffe4aa;font:500 21px Georgia,'Times New Roman',serif;letter-spacing:.012em}
-.home-rebuilt .reference-home-brand img{width:41px;height:41px;object-fit:contain;filter:drop-shadow(0 2px 6px #00191c)}
-.home-rebuilt .reference-home-brand small{font-size:13px}
-.home-rebuilt .home-welcome{color:#fdf3da}
-.home-rebuilt .home-welcome h1{font-family:'DM Sans',Arial,sans-serif;font-weight:750;color:#fff;letter-spacing:-.036em}
-.home-rebuilt .home-welcome .muscle-symbol{font-size:.7em;vertical-align:middle}
+:root{--home-gold:#f3cd84;--home-cream:#ffefc5;--home-border:rgba(218,236,221,.62)}
+.home-rebuilt{position:relative;max-width:1020px}
+.home-rebuilt .reference-home-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.home-rebuilt .reference-home-header button{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:0;background:transparent;color:var(--home-gold)}
+.home-rebuilt .reference-home-header button .app-icon{width:23px;height:23px}
+.home-rebuilt .reference-home-brand{display:flex;align-items:center;gap:6px;white-space:nowrap;font:600 20px 'Playfair Display',Georgia,serif;color:#ffe4a8;text-shadow:0 2px 4px #001b1e}
+.home-rebuilt .reference-home-brand img{width:46px;height:46px;object-fit:contain}
+.home-rebuilt .reference-home-brand small{font-size:12px}
+.home-rebuilt .home-welcome{font-size:13px;color:#fbf5eb}
+.home-rebuilt .home-welcome>span{color:#eee8dc}
+.home-rebuilt .home-welcome h1{font-family:'DM Sans',Arial,sans-serif;font-weight:750;color:#fff;letter-spacing:-.035em}
+.home-rebuilt .muscle-symbol{font-size:.72em;vertical-align:middle}
 .home-rebuilt .reference-todays-workout{
- position:relative;isolation:isolate;overflow:hidden;display:block;
- background:linear-gradient(110deg,#062e35 12%,#0c3d42 69%,#185c60 100%)!important;
- border:1px solid #edce8c!important;
- box-shadow:0 2px 0 rgba(255,255,255,.07) inset,0 6px 14px #001b1c75!important;
+ position:relative;isolation:isolate;overflow:hidden;display:block;min-height:260px;
+ background:#063b42!important;
+ border:1px solid #f1d598!important;border-radius:13px!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 22px rgba(0,24,28,.3)!important
 }
 .home-rebuilt .reference-todays-workout .workout-photo{
- position:absolute;z-index:-1;inset:0 0 0 39%;
- background:url('./assets/hero-dumbbell.svg') center center/cover no-repeat;
- mask-image:linear-gradient(90deg,transparent,black 30%,black);
- opacity:.94;
+ position:absolute;z-index:-1;inset:0 0 0 36%;
+ background:#063b42 url('./assets/hero-dumbbell.svg?v=6') 58% center/cover no-repeat;
+ opacity:.97
 }
-.home-rebuilt .reference-todays-workout .hero-copy{position:relative;z-index:1}
-.home-rebuilt .reference-todays-workout .hero-kicker{font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:#f6f4e7}
-.home-rebuilt .reference-todays-workout h1{font-family:'DM Sans',Arial,sans-serif;font-weight:750;color:#fff6e9}
-.home-rebuilt .reference-todays-workout .hero-meta{color:#e3dfd2;letter-spacing:0}
-.home-rebuilt .reference-todays-workout .hero-actions{width:100%;display:block}
+.home-rebuilt .reference-todays-workout .hero-copy{
+ position:relative;z-index:1;padding:32px;max-width:none
+}
+.home-rebuilt .reference-todays-workout .hero-kicker{font:600 13px 'DM Sans',Arial,sans-serif;letter-spacing:0;text-transform:none;color:#fff3da}
+.home-rebuilt .reference-todays-workout h1{font:750 36px 'DM Sans',Arial,sans-serif;letter-spacing:-.02em;color:#fff9ec;margin:8px 0}
+.home-rebuilt .reference-todays-workout .hero-meta{font-size:13px;color:#e7e2d2;margin:8px 0 18px}
+.home-rebuilt .reference-todays-workout .hero-actions{display:flex;gap:12px}
 .home-rebuilt .reference-todays-workout .button-primary{
- display:flex;align-items:center;justify-content:center;gap:9px;
- background:linear-gradient(180deg,#fff4c5 0%,#f9e2a8 24%,#e9c47a 71%,#d2a15f 100%)!important;
- border:1px solid #fff2be!important;border-radius:28px!important;
- color:#0d3034!important;font-weight:800;
- box-shadow:0 3px 10px rgba(0,0,0,.30),inset 0 1px 1px rgba(255,255,255,.75)!important;
- text-shadow:none!important;
+ display:flex;align-items:center;justify-content:center;gap:10px;width:330px;min-height:52px;
+ background:linear-gradient(180deg,#fff7d7 0%,#f8dfa5 30%,#e2b775 100%)!important;
+ color:#14353a!important;border:1px solid #ffeac0!important;border-radius:27px!important;
+ box-shadow:inset 0 1px 0 #fffbef,0 5px 11px #001c2685!important;
+ font-size:14px;font-weight:800;text-shadow:none!important
 }
-.home-rebuilt .reference-todays-workout .button-primary span{font-size:12px}
-.home-rebuilt .quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+.home-rebuilt .reference-todays-workout .button-primary:active{filter:brightness(.96);transform:translateY(1px)}
+.home-rebuilt .quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:760px;gap:12px;margin:16px 0}
 .home-rebuilt .quick-grid button{
- display:flex;flex-direction:column;align-items:center;justify-content:center;
- background:linear-gradient(148deg,rgba(15,98,101,.97),rgba(4,60,66,.98))!important;
- border:1px solid rgba(181,226,215,.7)!important;
- box-shadow:inset 0 1px 0 rgba(239,255,234,.16),0 4px 12px rgba(0,22,23,.25)!important;
- color:#fff3db;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+ min-height:105px;border:1px solid var(--home-border)!important;border-radius:12px!important;
+ background:#0a555a!important;
+ box-shadow:inset 0 1px 0 rgba(239,253,242,.13),0 5px 12px rgba(0,24,28,.25)!important;
+ color:#fff3d8;padding:12px 7px
 }
-.home-rebuilt .quick-grid .shortcut-symbol .app-icon{color:#f5d081;stroke-width:1.9}
-.home-rebuilt .quick-grid button strong{font-family:'DM Sans',Arial,sans-serif;font-weight:650;color:#fff8e9}
-.home-below-fold .metric{background:rgba(2,57,63,.94)!important}
-.home-rebuilt .home-below-fold{margin-top:0}
+.home-rebuilt .quick-grid button strong{font:650 12px 'DM Sans',Arial,sans-serif;color:#fff8e9}
+.home-rebuilt .quick-grid button:focus-visible{outline:2px solid #ffe6aa;outline-offset:2px}
+.home-rebuilt .quick-grid .shortcut-symbol{display:grid;place-items:center}
+.home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:29px;height:29px;stroke-width:1.9;color:#ffdda2}
+.home-rebuilt .home-below-fold{max-width:1000px}
+.home-rebuilt .home-below-fold .section-top{margin:18px 0 12px}
+.home-rebuilt .home-below-fold .section-top h2{font:650 21px 'DM Sans',Arial,sans-serif;color:#fff0d6}
+.home-rebuilt .home-below-fold .metric{
+ background:#06454b!important;border:1px solid rgba(213,235,219,.56)!important;
+ box-shadow:0 5px 12px #001c2340!important
+}
 body.home-active .topbar{display:none!important}
 @media(min-width:761px){
  body.home-active .topbar{display:flex!important}
  .home-rebuilt .reference-home-header{display:none}
- .home-rebuilt .home-welcome{margin:12px 0 0}
+ .home-rebuilt .home-welcome{margin:8px 0 0}
  .home-rebuilt .home-welcome h1{font-size:35px}
- .home-rebuilt .reference-todays-workout{min-height:270px;max-width:980px}
- .home-rebuilt .reference-todays-workout .hero-copy{max-width:650px;padding:36px 37px}
- .home-rebuilt .reference-todays-workout h1{font-size:38px}
- .home-rebuilt .reference-todays-workout .button-primary{width:320px;min-height:54px}
- .home-rebuilt .quick-grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:980px;gap:12px}
- .home-rebuilt .quick-grid button{min-height:118px;border-radius:14px}
- .home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:30px;height:30px}
- .home-rebuilt .home-below-fold{max-width:980px}
 }
 @media(max-width:760px){
- body.home-active .main-wrap{background:transparent}
- body.home-active .content{padding:0 15px calc(86px + env(safe-area-inset-bottom))!important}
- body.home-active{background:#073e43 url('./assets/emerald-marble.svg') center top/100% auto repeat-y fixed!important}
+ body.home-active{
+  background:#0e5357 url('./assets/emerald-marble.svg?v=6') center top/100% auto repeat-y fixed!important;
+ }
+ body.home-active .content{padding:0 14px calc(82px + env(safe-area-inset-bottom))!important}
  .home-rebuilt{max-width:490px;margin:0 auto}
- .home-rebuilt .reference-home-header{
-   padding-top:calc(13px + env(safe-area-inset-top)*0);
-   min-height:54px;margin-bottom:15px
- }
- .home-rebuilt .reference-home-brand{font-size:19px;gap:6px;white-space:nowrap}
- .home-rebuilt .reference-home-brand img{width:43px;height:43px}
+ .home-rebuilt .reference-home-header{min-height:49px;margin:0 0 9px}
+ .home-rebuilt .reference-home-brand{font-size:18px;gap:5px}
+ .home-rebuilt .reference-home-brand img{width:48px;height:48px}
  .home-rebuilt .reference-home-brand small{font-size:12px}
- .home-rebuilt .reference-home-header button{width:34px;height:34px}
- .home-rebuilt .reference-home-header button .app-icon{width:22px;height:22px}
- .home-rebuilt .home-welcome{margin:0 1px 14px;font-size:12px!important}
- .home-rebuilt .home-welcome>span{font-size:12px;letter-spacing:0;color:#f1eee6}
- .home-rebuilt .home-welcome h1{font-size:26px!important;margin:2px 0 0!important;line-height:1.12}
- .home-rebuilt .reference-todays-workout{
-   margin:0!important;min-height:0!important;border-radius:12px!important;
- }
- .home-rebuilt .reference-todays-workout .hero-copy{padding:16px 13px 14px!important}
- .home-rebuilt .reference-todays-workout .hero-kicker{font-size:11px!important}
- .home-rebuilt .reference-todays-workout h1{font-size:24px!important;margin:6px 0!important}
- .home-rebuilt .reference-todays-workout .hero-meta{font-size:11px!important;margin:3px 0 15px!important}
- .home-rebuilt .reference-todays-workout .button-primary{
-    width:100%;min-width:0;height:44px!important;min-height:44px;font-size:13px;
- }
- .home-rebuilt .quick-grid{gap:8px!important;margin:12px 0 17px!important}
- .home-rebuilt .quick-grid button{height:80px!important;min-height:80px!important;padding:10px 4px!important;border-radius:10px!important;gap:6px!important}
- .home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:25px;height:25px}
- .home-rebuilt .quick-grid button strong{font-size:11px!important}
- .home-rebuilt .home-below-fold{padding-top:7px}
- .home-rebuilt .home-below-fold .section-top{margin:0 0 15px!important}
- .home-rebuilt .home-below-fold .section-top h2{font-family:'DM Sans',Arial,sans-serif;font-size:18px!important}
- .home-rebuilt .home-below-fold .metric{min-height:120px}
+ .home-rebuilt .home-welcome{margin:0 1px 10px}
+ .home-rebuilt .home-welcome>span{font-size:12px}
+ .home-rebuilt .home-welcome h1{font-size:25px!important;line-height:1.12;margin:2px 0 0!important}
+ .home-rebuilt .reference-todays-workout{min-height:0!important;margin:0!important}
+ .home-rebuilt .reference-todays-workout .workout-photo{inset:0 0 13% 39%;background-position:55% center;background-size:cover}
+ .home-rebuilt .reference-todays-workout .hero-copy{padding:13px 13px 12px!important}
+ .home-rebuilt .reference-todays-workout .hero-kicker{font-size:12px!important}
+ .home-rebuilt .reference-todays-workout h1{font-size:24px!important;margin:5px 0!important}
+ .home-rebuilt .reference-todays-workout .hero-meta{font-size:11px!important;margin:3px 0 12px!important}
+ .home-rebuilt .reference-todays-workout .button-primary{width:100%;min-width:0;min-height:43px;height:43px;font-size:13px}
+ .home-rebuilt .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 13px}
+ .home-rebuilt .quick-grid button{min-height:67px;height:67px;gap:4px;padding:7px 4px;border-radius:10px!important}
+ .home-rebuilt .quick-grid .shortcut-symbol .app-icon{width:23px;height:23px}
+ .home-rebuilt .quick-grid button strong{font-size:10px}
+ .home-rebuilt .home-below-fold .section-top{margin:6px 0 11px!important}
+ .home-rebuilt .home-below-fold .section-top h2{font-size:18px!important}
+ .home-rebuilt .home-below-fold .metrics{gap:7px}
+ .home-rebuilt .home-below-fold .metric{min-height:100px;padding:10px 8px!important;border-radius:10px}
+ .home-rebuilt .home-below-fold .metric>span{font-size:8px!important;letter-spacing:.035em!important}
+ .home-rebuilt .home-below-fold .metric>strong{font-size:23px!important}
+ .home-rebuilt .home-below-fold .metric>small{font-size:9px!important}
  body.home-active .bottom-tabs{
-   min-height:60px;padding:5px 4px max(8px,env(safe-area-inset-bottom))!important;
-   border-top:1px solid rgba(244,217,163,.50)!important;
-   border-radius:0!important;background:rgba(2,49,53,.98)!important;
+   padding:5px 4px max(7px,env(safe-area-inset-bottom))!important;
+   background:#04363b!important;border-top:1px solid #d2b985!important
  }
- body.home-active .bottom-tabs button{min-height:51px!important;color:#e3eee4}
- body.home-active .bottom-tabs button.active{color:#ffe0a1}
+ body.home-active .bottom-tabs button.active{color:#ffdf9e}
 }
 @media(max-width:360px){
- .home-rebuilt .reference-home-brand{font-size:16px}
- .home-rebuilt .reference-home-brand img{width:37px}
- .home-rebuilt .quick-grid button{height:75px!important;min-height:75px!important}
+ .home-rebuilt .reference-home-brand{font-size:15px}
+ .home-rebuilt .reference-home-brand img{width:39px;height:39px}
+ .home-rebuilt .quick-grid button{height:63px;min-height:63px}
 }
+@media(prefers-reduced-motion:reduce){.home-rebuilt .button-primary{transition:none}}
