@@ -306,3 +306,129 @@ body{
  .welcome-features{margin-top:18px}
  .welcome-actions{margin-top:auto}
 }
+
+
+/* MATCHED DARK EMERALD CARD SYSTEM — all app views, 2026-11-15 */
+:root{
+ --mlc-card-ink:#03262e;
+ --mlc-card-gold:#f1d394;
+ --mlc-card-text:#fff6e7;
+ --mlc-card-shadow:inset 0 1.5px 0 rgba(255,247,209,.35),inset 0 -1px 0 rgba(0,21,25,.65),0 5px 13px rgba(0,15,22,.43);
+}
+/* Source style: exactly the dark, photographic teal and bright gold frame of the approved Home shortcuts. */
+#workouts .workout-card,
+#library .library-card,
+#progress .metric,
+#progress .panel,
+#coaching .coach-card,
+#nutrition .panel,
+#settings .settings-panel,
+#settings .account-menu button,
+#coaching .coach-links button,
+#home .home-below-fold .metric,
+#home .home-below-fold .panel,
+.modal-panel .log-card,
+.rest-next{
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ background-position:center,center 46%!important;
+ background-size:cover!important;
+ background-repeat:no-repeat!important;
+ border:1.5px solid var(--mlc-card-gold)!important;
+ border-radius:11px!important;
+ color:var(--mlc-card-text)!important;
+ box-shadow:var(--mlc-card-shadow)!important;
+}
+/* Keep exercise illustrations visible and cards legible. */
+#library .library-card .library-info,
+#workouts .workout-card h3,
+#library .library-card h3,
+#progress .panel h3,
+#coaching .coach-card h3,
+#nutrition .panel h3,
+#settings .settings-panel strong,
+#home .home-below-fold .panel h3{color:#fff3d8!important}
+#workouts .workout-card p,
+#library .library-card p,
+#progress .panel p,
+#coaching .coach-card p,
+#nutrition .panel p,
+#settings .setting-line p,
+#home .home-below-fold .panel p{color:#d8e8df!important}
+#workouts .workout-meta,#settings .setting-line{
+ border-color:rgba(241,211,148,.44)!important;
+}
+#workouts .workout-meta,
+#workouts .workout-card .number,
+#library .library-chevron,
+#progress .metric>strong,
+#home .home-below-fold .metric>strong,
+#coaching .coach-links button span,
+#settings .account-menu button span{color:#ffe0a0!important}
+/* Other button classes previously inherited lighter outlines and solid teal. */
+#library .filter-chips button:not(.selected),
+#settings .welcome-preview-link,
+#settings .button-outline,
+#coaching .coach-links button,
+#settings .account-menu button,
+#home .text-action,
+#workouts button.button-outline,
+#progress button.button-outline,
+.modal-panel .button-outline,
+.modal-panel .undo-set,
+#library button.button-outline{
+ background-color:#06333a!important;
+ background-image:linear-gradient(110deg,rgba(3,37,43,.90),rgba(3,45,51,.78)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
+ background-position:center,center 46%!important;
+ background-size:cover!important;
+ border:1.5px solid var(--mlc-card-gold)!important;
+ border-radius:11px!important;
+ box-shadow:var(--mlc-card-shadow)!important;
+ color:#fff3d8!important;
+ text-decoration:none;
+}
+#library .filter-chips button{
+ min-height:37px;
+}
+#library .filter-chips button.selected,
+#settings .button-primary,
+#workouts .button-primary,
+.modal-panel .button-primary{
+ background:linear-gradient(180deg,#fff9df 0%,#ffefb8 17%,#f2d28d 47%,#daa85e 84%,#ba8240 100%)!important;
+ border:1px solid #ffefbf!important;
+ border-radius:11px!important;
+ box-shadow:inset 0 2px 2px rgba(255,255,255,.9),inset 0 -2px 2px rgba(90,54,12,.31),0 4px 10px rgba(0,16,23,.45)!important;
+ color:#13363b!important;
+ font-weight:750;
+}
+/* Dark input surfaces match the same border system; no white entry fields. */
+#library .search-bar,
+.modal-panel .login-form input,
+.modal-panel .log-card input{
+ background:#06333a!important;
+ border:1.5px solid var(--mlc-card-gold)!important;
+ border-radius:11px!important;
+ color:#fff8ec!important;
+ box-shadow:inset 0 1px 0 rgba(255,247,209,.15)!important;
+}
+#library .search-bar input{color:#fff8ec!important;background:transparent!important}
+#library .search-bar input::placeholder,
+.modal-panel input::placeholder{color:#c7ddd8!important;opacity:1}
+#settings .account-menu button,
+#coaching .coach-links button{min-height:51px;transition:filter .16s,transform .16s}
+#settings .account-menu button:active,
+#coaching .coach-links button:active,
+#library .filter-chips button:active,
+#workouts .workout-card:active{filter:brightness(1.12);transform:scale(.99)}
+/* This is intentionally NOT applied to the approved Home hero, the six shortcuts,
+   the Welcome background or the gold rest timer ring. */
+@media(max-width:760px){
+ #workouts .workout-card,#library .library-card,
+ #progress .metric,#progress .panel,
+ #coaching .coach-card,#nutrition .panel,
+ #settings .settings-panel,
+ #home .home-below-fold .metric,#home .home-below-fold .panel{
+  border-radius:11px!important;
+ }
+ #library .filter-chips button{padding:7px 12px}
+}
