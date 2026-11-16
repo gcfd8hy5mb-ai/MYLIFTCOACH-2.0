@@ -113,6 +113,26 @@ try {
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
  await page.screenshot({path:'test-artifacts/mobile-nutrition.png',fullPage:true});
  // Account separation and offline recovery are tested with mocked Auth, not production data.
+ // Mocks all new 2.0 RPCs; no production Supabase writes.
+ // Real people must confirm before upload or restore; the test explicitly accepts.
+ page.on('dialog',dialog=>dialog.accept());
+ const cloudSaved=new Map();let commits=0;
+ await page.route('**/rest/v1/rpc/mlc2_v1_*',async route=>{
+  const url=new URL(route.request().url()),body=route.request().postDataJSON();
+  const owner='user-a';
+  if(url.pathname.endsWith('mlc2_v1_list_sessions')){
+   const rows=[...cloudSaved.values()].filter(x=>x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});return;
+  }
+  if(url.pathname.endsWith('mlc2_v1_commit')){
+   commits++;
+   const id=body.p_record_id;
+   if(cloudSaved.has(id)){await route.fulfill({status:409,contentType:'application/json',body:'{"code":"PT409","message":"MLC2_REVISION_CONFLICT"}'});return}
+   cloudSaved.set(id,{owner,type:body.p_type,id,revision:1,deleted:false,payload:body.p_payload});
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({owner,opId:body.p_op_id,revision:1})});return;
+  }
+  await route.fulfill({status:404,body:'{}'});
+ });
  let fakeOwner='user-a',failAuth=false,refreshCalls=0,recoveryCalls=0,logoutCalls=0;
  await page.route('**/auth/v1/**',async route=>{
   const url=new URL(route.request().url());
@@ -150,7 +170,7 @@ try {
  });
  await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
- assert.match(await page.locator('#cloudSyncStatus').innerText(),/not enabled/i);
+ assert.match(await page.locator('#cloudSyncStatus').innerText(),/Sign in to enable automatic workout sync/i);
  await page.locator('#authAction').click();
  // Original-app style forgot-password flow uses same verified PRISM Auth endpoint.
  await page.locator('#forgotPassword').click();
@@ -167,6 +187,9 @@ try {
  await page.locator('[data-addset="chest-press"]').click();
  await page.locator('#finishWorkout').click();
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
+ await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('Up to date'));
+ assert.equal(commits,1,'Completed signed-in session uploads automatically');
+ assert.equal(cloudSaved.size,1);
  await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
  await page.locator('#authAction').click(); // server logout + local isolation
@@ -223,34 +246,13 @@ try {
  await mobile.setOffline(false);
  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
  await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('a@example.test'));
- assert.match(await page.locator('#cloudSyncStatus').innerText(),/not yet enabled/i);
+ assert.match(await page.locator('#cloudSyncStatus').innerText(),/Automatic workout sync/i);
 
- // Manual cloud transfer uses only the new 2.0 RPCs; never original PRISM tables.
- // Real people must confirm before upload or restore; the test explicitly accepts.
- page.on('dialog',dialog=>dialog.accept());
- const cloudSaved=new Map();let commits=0;
- await page.route('**/rest/v1/rpc/mlc2_v1_*',async route=>{
-  const url=new URL(route.request().url()),body=route.request().postDataJSON();
-  const owner='user-a';
-  if(url.pathname.endsWith('mlc2_v1_list_sessions')){
-   const rows=[...cloudSaved.values()].filter(x=>x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
-   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});return;
-  }
-  if(url.pathname.endsWith('mlc2_v1_commit')){
-   commits++;
-   const id=body.p_record_id;
-   if(cloudSaved.has(id)){await route.fulfill({status:409,contentType:'application/json',body:'{"code":"PT409","message":"MLC2_REVISION_CONFLICT"}'});return}
-   cloudSaved.set(id,{owner,type:body.p_type,id,revision:1,deleted:false,payload:body.p_payload});
-   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({owner,opId:body.p_op_id,revision:1})});return;
-  }
-  await route.fulfill({status:404,body:'{}'});
- });
  await page.locator('#cloudUploadSessions').click();
- await page.waitForTimeout(1700);
+ await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('1 already saved'));
  const cloudDiagnostic=await page.locator('#cloudActionStatus').innerText();
  console.log('Manual cloud upload diagnostic:',cloudDiagnostic,'RPC commits:',commits);
- assert.match(cloudDiagnostic,/Cloud upload:/);
- assert.equal(commits,1);
+ assert.equal(commits,1,'Manual upload must not duplicate automatic sync');
  assert.equal(cloudSaved.size,1);
  await page.locator('#cloudUploadSessions').click();
  await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('1 already saved'));
