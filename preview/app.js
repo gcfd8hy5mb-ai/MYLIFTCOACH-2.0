@@ -424,9 +424,31 @@ async function manuallyRestoreWorkouts(){
    MYLIFTCOACH 2.0 sessions. Never uploads original PRISM records or guest data.
    Browser wake/online events schedule retries; there is no background-worker claim. */
 let autoSyncTimer=null,autoSyncActive=false,autoSyncAttempts=0,autoSyncState='Waiting for sign-in';
+const CLOUD_CHECK_KEY='mlc2-cloud-verified-v1:';
+function syncJournalSummary(){
+ if(!account?.id||!window.MLC2Sync)return {pending:0,lastVerified:null,unreadable:false};
+ try{
+  const journal=window.MLC2Sync.load(localStorage,account.id);
+  const pending=journal.items.length;
+  const raw=localStorage.getItem(CLOUD_CHECK_KEY+account.id);
+  const lastVerified=raw&&Number.isFinite(Date.parse(raw))?raw:null;
+  return {pending,lastVerified,unreadable:false};
+ }catch{return {pending:0,lastVerified:null,unreadable:true}}
+}
+function renderSyncHealth(){
+ const node=$('syncHealth');
+ if(!node)return;
+ if(!account?.id){node.textContent='Sign in to view cloud backup health.';return}
+ const state=syncJournalSummary();
+ if(state.unreadable){node.textContent='Sync queue needs attention. Your device workout history is untouched.';return}
+ const last=state.lastVerified?new Date(state.lastVerified).toLocaleString():'No successful cloud verification yet';
+ node.textContent=state.pending+' pending uploads · Last verified: '+last;
+}
+
 function setAutoSyncState(message){
  autoSyncState=message;
  const el=$('autoSyncStatus');if(el)el.textContent=message;
+ renderSyncHealth();
  const cloud=$('cloudSyncStatus');if(cloud&&!authChecking&&!authUnavailable)cloud.textContent=
   account?'Automatic workout sync · '+message:'Sign in to enable automatic workout sync';
 }
@@ -500,6 +522,7 @@ async function flushAutoSync(){
    scheduleAutoSync(2500);
   }else{
    autoSyncAttempts=0;
+   try{localStorage.setItem(CLOUD_CHECK_KEY+owner,new Date().toISOString())}catch{ /* Metadata is secondary to persisted workout records. */ }
    setAutoSyncState('Up to date · '+(already+(result.sent||0))+' workouts');
   }
  }catch(err){
@@ -523,6 +546,7 @@ function renderSettings(){
  $('cloudUploadSessions').disabled=authChecking||!account||cloudOperationBusy;
  $('cloudRestoreSessions').disabled=authChecking||!account||cloudOperationBusy;
  if($('autoSyncStatus'))$('autoSyncStatus').textContent=account?autoSyncState:'Waiting for sign-in';
+ renderSyncHealth();
  if($('connectivityStatus'))$('connectivityStatus').textContent=navigator.onLine?'Online · local device saving':'Offline · local device saving';
  if($('cloudSyncStatus'))$('cloudSyncStatus').textContent=authChecking?'Checking account…':authUnavailable?'Verification unavailable · local records safe':account?'Automatic workout sync · '+autoSyncState:'Sign in to enable automatic workout sync';
 }
