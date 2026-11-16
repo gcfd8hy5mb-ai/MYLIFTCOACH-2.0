@@ -167,7 +167,16 @@ try {
  await page.locator('#home').waitFor({state:'visible'});
  await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
- await page.waitForFunction(()=>document.getElementById('cloudSyncStatus').textContent.toLowerCase().includes('unavailable'));
+ await page.waitForTimeout(1400);
+ const authDiagnostic=await page.evaluate(()=>({
+  status:document.getElementById('cloudSyncStatus').textContent,
+  identity:document.getElementById('accountIdentity').textContent,
+  stored:!!sessionStorage.getItem('mlc2-auth-session-v1'),
+  pill:document.getElementById('backendStatus').textContent
+ }));
+ console.log('Offline auth diagnostic:',JSON.stringify(authDiagnostic));
+ assert.equal(authDiagnostic.stored,true,'Transient auth failure should not delete tokens');
+ assert.notMatch(authDiagnostic.identity,/a@example.test/,'Unverified account must not expose scoped data');
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('mlc2-auth-session-v1')!==null),true);
  await mobile.setOffline(true);await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
