@@ -289,7 +289,7 @@ function updateConnectivity(){
  const status=$('connectivityStatus');
  if(status)status.textContent=online?'Online · records saved on this device only':'Offline · records saved on this device only';
  const cloud=$('cloudSyncStatus');
- if(cloud)cloud.textContent=authChecking?'Checking account…':authUnavailable?'Account service unavailable · no cloud sync':account?'Account verified · cloud sync not enabled':'Cloud sync not enabled · preview only';
+ if(cloud)cloud.textContent=authChecking?'Checking account…':authUnavailable?'Account service unavailable · no cloud sync':account?'Automatic workout sync · '+autoSyncState:'Sign in to enable automatic workout sync';
  renderSettings();
 }
 function downloadPreviewBackup(){
@@ -420,6 +420,99 @@ async function manuallyRestoreWorkouts(){
  finally{cloudOperationBusy=false}
 }
 
+/* Automatic sync is account-only, local-first, and restricted to completed
+   MYLIFTCOACH 2.0 sessions. Never uploads original PRISM records or guest data.
+   Browser wake/online events schedule retries; there is no background-worker claim. */
+let autoSyncTimer=null,autoSyncActive=false,autoSyncAttempts=0,autoSyncState='Waiting for sign-in';
+function setAutoSyncState(message){
+ autoSyncState=message;
+ const el=$('autoSyncStatus');if(el)el.textContent=message;
+ const cloud=$('cloudSyncStatus');if(cloud&&!authChecking&&!authUnavailable)cloud.textContent=
+  account?'Automatic workout sync · '+message:'Sign in to enable automatic workout sync';
+}
+function cancelAutoSync(){
+ if(autoSyncTimer!==null){clearTimeout(autoSyncTimer);autoSyncTimer=null}
+ autoSyncAttempts=0;
+ setAutoSyncState('Waiting for sign-in');
+}
+function scheduleAutoSync(delay=1200){
+ if(!account?.id||!window.MLC2Sync||!window.MLC2SupabaseTransport)return;
+ if(autoSyncTimer!==null)clearTimeout(autoSyncTimer);
+ if(!navigator.onLine){setAutoSyncState('Offline · workouts safe on device');return}
+ const owner=account.id;
+ autoSyncTimer=setTimeout(()=>{
+  autoSyncTimer=null;
+  if(account?.id===owner)void flushAutoSync();
+ },Math.max(0,delay));
+}
+function queueCompletedWorkout(entry){
+ if(!account?.id||!validCloudSession(entry))return;
+ try{
+  const engine=window.MLC2Sync.create({owner:account.id,storage:localStorage});
+  if(!engine.list().items.some(op=>op.type==='session'&&op.id===entry.id)){
+   engine.enqueue('session',entry.id,entry,0);
+  }
+  setAutoSyncState(navigator.onLine?'Workout queued for cloud':'Offline · workout queued safely');
+ }catch(err){
+  // A successful completed workout is already committed locally; a failed
+  // journal write does not remove the workout. Online reconciliation retries.
+  setAutoSyncState('Saved locally · cloud queue needs retry');
+ }
+ scheduleAutoSync();
+}
+async function flushAutoSync(){
+ if(!account?.id)return;
+ if(autoSyncActive||cloudOperationBusy){scheduleAutoSync(8000);return}
+ if(!navigator.onLine){setAutoSyncState('Offline · workouts safe on device');return}
+ const selectedOwner=account.id;
+ autoSyncActive=true;cloudOperationBusy=true;renderSettings();
+ setAutoSyncState('Checking cloud…');
+ try{
+  const {owner,transport}=await verifiedCloudAccess();
+  if(owner!==selectedOwner||account?.id!==owner)throw Error('Account changed');
+  const remote=await listCloudSessions(transport,owner);
+  if(account?.id!==owner)throw Error('Account changed');
+  const cloudById=new Map(remote.map(row=>[row.id,row]));
+  const engine=window.MLC2Sync.create({owner,storage:localStorage,transport,enabled:true});
+  const pending=new Set(engine.list().items.filter(x=>x.type==='session').map(x=>x.id));
+  let changed=0,already=0;
+  for(const entry of loadDemo().filter(validCloudSession)){
+   const exists=cloudById.get(entry.id);
+   if(exists){
+    if(exists.deleted||JSON.stringify(canonicalCloudValue(exists.payload))!==JSON.stringify(canonicalCloudValue(entry))){
+     changed++;
+    }else already++;
+    continue;
+   }
+   if(!pending.has(entry.id)){engine.enqueue('session',entry.id,entry,0);pending.add(entry.id)}
+  }
+  const result=await engine.drain({verifiedOwner:owner,online:navigator.onLine,maxOperations:50});
+  if(account?.id!==owner)return;
+  const conflicts=engine.list().items.filter(x=>x.status==='conflict').length;
+  if(changed||conflicts||result.status==='conflict'){
+   setAutoSyncState('Needs review · cloud version differs ('+(changed+conflicts)+')');
+   return; // NEVER overwrite a remote workout automatically.
+  }
+  if(result.status==='retry'||result.status==='unverified-ack')throw Error('Cloud unavailable');
+  if(result.status==='pending'||result.pending>0){
+   setAutoSyncState('Uploading queued workouts · '+result.pending+' remaining');
+   autoSyncAttempts=0;
+   scheduleAutoSync(2500);
+  }else{
+   autoSyncAttempts=0;
+   setAutoSyncState('Up to date · '+(already+(result.sent||0))+' workouts');
+  }
+ }catch(err){
+  if(account?.id!==selectedOwner)return;
+  autoSyncAttempts=Math.min(autoSyncAttempts+1,6);
+  const delay=Math.min(300000,5000*Math.pow(2,autoSyncAttempts-1));
+  setAutoSyncState(navigator.onLine?'Upload paused · local workouts safe · retry scheduled':'Offline · local workouts safe');
+  if(navigator.onLine)scheduleAutoSync(delay);
+ }finally{
+  autoSyncActive=false;cloudOperationBusy=false;renderSettings();
+ }
+}
+
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (original training data not loaded)':authChecking?'Verifying your saved sign-in…':authUnavailable?'Account verification unavailable · preview records remain on this device':'Not signed in. You can still explore the demo.';
  $('backendStatus').textContent=account?'VERIFIED':authChecking?'CHECKING':authUnavailable?'OFFLINE':'NOT CONNECTED';
@@ -428,8 +521,9 @@ function renderSettings(){
  $('authAction').disabled=authChecking;
  $('cloudUploadSessions').disabled=authChecking||!account||cloudOperationBusy;
  $('cloudRestoreSessions').disabled=authChecking||!account||cloudOperationBusy;
+ if($('autoSyncStatus'))$('autoSyncStatus').textContent=account?autoSyncState:'Waiting for sign-in';
  if($('connectivityStatus'))$('connectivityStatus').textContent=navigator.onLine?'Online · local device saving':'Offline · local device saving';
- if($('cloudSyncStatus'))$('cloudSyncStatus').textContent=authChecking?'Checking account…':authUnavailable?'Verification unavailable · local records safe':account?'Signed in · cloud sync not yet enabled':'Cloud sync not enabled';
+ if($('cloudSyncStatus'))$('cloudSyncStatus').textContent=authChecking?'Checking account…':authUnavailable?'Verification unavailable · local records safe':account?'Automatic workout sync · '+autoSyncState:'Sign in to enable automatic workout sync';
 }
 
 /* Recovery foundation: a separate preview-only, account-scoped active-session journal.
@@ -515,7 +609,8 @@ function openWorkout(id,recoveredPlan=null){
   catch{demoSessions=previous;notice('Workout not finished: history could not be saved. Your draft remains available.');return;}
   try{localStorage.removeItem(draftKey());}catch{ /* completed ID prevents duplicate restoration */ }
   closeModal();renderHome();setPage('progress');
-  notice('Workout saved in this browser. Refresh to verify it remains in history.');
+  queueCompletedWorkout(entry);
+  notice('Workout saved on this device. Cloud sync will upload it when available.');
  });
 }
 function renderWorkoutLog(){
@@ -657,10 +752,11 @@ function saveAuth(data){
  const credentials={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Number.isFinite(Number(data.expires_at))&&Number(data.expires_at)>0?Number(data.expires_at):Math.floor(Date.now()/1000)+(Number(data.expires_in)||3600)};
  persistAuth(credentials);
  auth=credentials;account=data.user;authChecking=false;authUnavailable=false;
- if(previous!==account.id)refreshPreviewOwner();
- renderSettings();
+ if(previous!==account.id){cancelAutoSync();refreshPreviewOwner()}
+ renderSettings();scheduleAutoSync(900);
 }
 function clearAuth(){
+ cancelAutoSync();
  localStorage.removeItem(AUTH_KEY);sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;authChecking=false;authUnavailable=false;
  refreshPreviewOwner();renderSettings();
 }
@@ -789,10 +885,13 @@ function bind(){
  $('backupPreview').addEventListener('click',downloadPreviewBackup);
  $('cloudUploadSessions').addEventListener('click',()=>void manuallyUploadWorkouts());
  $('cloudRestoreSessions').addEventListener('click',()=>void manuallyRestoreWorkouts());
- window.addEventListener('online',()=>{updateConnectivity();if(!account&&readStoredAuth())validateStoredAuth()});
- window.addEventListener('offline',updateConnectivity);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&readStoredAuth()&&navigator.onLine)validateStoredAuth()}});
- window.addEventListener('storage',event=>{if(event.key&&event.key===previewKey(DEMO_KEY)){demoSessions=loadDemo();renderHome();renderProgress()}});
+ window.addEventListener('online',()=>{updateConnectivity();if(!account&&readStoredAuth())void validateStoredAuth();else scheduleAutoSync(400)});
+ window.addEventListener('offline',()=>{updateConnectivity();if(autoSyncTimer!==null){clearTimeout(autoSyncTimer);autoSyncTimer=null}setAutoSyncState('Offline · workouts safe on device')});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&readStoredAuth()&&navigator.onLine)void validateStoredAuth();else scheduleAutoSync(500)}});
+ window.addEventListener('storage',event=>{if(event.key&&event.key===previewKey(DEMO_KEY)){demoSessions=loadDemo();renderHome();renderProgress();scheduleAutoSync(1000)}});
+ // Browser timers may pause in the background. Rechecking here is a best-effort
+ // foreground retry, NOT a claim of persistent background execution.
+ setInterval(()=>{if(!document.hidden&&account?.id&&navigator.onLine)scheduleAutoSync(200)},90000);
 
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();$('measurementDate').value=localDayString();$('mealDate').value=localDayString();
