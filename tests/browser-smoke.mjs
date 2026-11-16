@@ -161,6 +161,8 @@ try {
  await page.locator('#loginForm input[name="email"]').fill('a@example.test');
  await page.locator('#loginForm input[name="password"]').fill('test-password');
  await page.locator('#loginSubmit').click();
+ await page.locator('#home').waitFor({state:'visible'});
+ await page.waitForFunction(()=>{try{return JSON.parse(sessionStorage.getItem('mlc2-auth-session-v1')).user.id==='user-a'}catch{return false}});
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
  failAuth=true; // Reopen while authentication endpoint is temporarily unavailable.
  await page.reload({waitUntil:'domcontentloaded'});
