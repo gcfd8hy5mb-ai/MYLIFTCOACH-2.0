@@ -420,6 +420,75 @@ async function manuallyRestoreWorkouts(){
  finally{cloudOperationBusy=false}
 }
 
+/* Optional non-session backup: each category is a distinct versioned snapshot.
+   Existing cloud data is NEVER overwritten. Restore fills only empty categories. */
+async function backupOtherFitnessData(){
+ if(cloudOperationBusy)return;
+ if(!account?.id){cloudActionMessage('Sign in first to back up other fitness data.');return}
+ if(!window.MLC2AuxData){cloudActionMessage('Fitness backup module unavailable.');return}
+ if(!confirm('Back up your current custom workouts, measurements, nutrition, water and weight entries to your private 2.0 cloud space? Existing cloud versions will not be replaced.'))return;
+ cloudOperationBusy=true;renderSettings();
+ const selectedOwner=account.id,helper=window.MLC2AuxData;
+ cloudActionMessage('Checking other fitness records without replacing cloud data…');
+ try{
+  const {owner,transport}=await verifiedCloudAccess();
+  if(owner!==selectedOwner)throw Error('Account changed');
+  const journal=window.MLC2Sync.create({owner,storage:localStorage,transport,enabled:true});
+  const pending=new Set(journal.list().items.map(x=>x.type+':'+x.id));
+  let skipped=0,conflicts=0,queued=0;
+  for(const config of helper.CONFIG){
+   if(account?.id!==owner)throw Error('Account changed');
+   const local=helper.loadLocal(localStorage,owner,config);
+   if(!local.exists||helper.empty(config,local.value)){skipped++;continue}
+   const cloud=await transport.read(config.type,helper.id,owner);
+   if(cloud){
+    const value=helper.validateRemote(config,cloud);
+    if(value!==null&&helper.equal(value,local.value)){skipped++;continue}
+    conflicts++;continue;
+   }
+   if(pending.has(config.type+':'+helper.id)){queued++;continue}
+   journal.enqueue(config.type,helper.id,helper.payload(local.value),0);queued++;
+  }
+  if(account?.id!==owner)throw Error('Account changed');
+  const result=await journal.drain({verifiedOwner:owner,online:navigator.onLine,maxOperations:50});
+  cloudActionMessage('Other data backup: '+(result.sent||0)+' uploaded, '+skipped+' unchanged/empty, '+conflicts+' conflicts, '+result.pending+' pending. '+(conflicts?'Existing cloud versions were not overwritten.':''));
+  if(result.status==='retry'||result.status==='unverified-ack')cloudActionMessage('Other data backup paused; entries remain on this device and queued for manual retry.');
+ }catch(e){cloudActionMessage('Other data backup paused: '+String(e.message||e).slice(0,120)+'. Device records preserved.')}
+ finally{cloudOperationBusy=false;renderSettings()}
+}
+async function recoverOtherFitnessData(){
+ if(cloudOperationBusy)return;
+ if(!account?.id){cloudActionMessage('Sign in first to recover other fitness records.');return}
+ if(!window.MLC2AuxData){cloudActionMessage('Fitness recovery module unavailable.');return}
+ cloudOperationBusy=true;renderSettings();
+ const selectedOwner=account.id,helper=window.MLC2AuxData;
+ cloudActionMessage('Checking private 2.0 fitness backups…');
+ try{
+  const {owner,transport}=await verifiedCloudAccess();
+  if(owner!==selectedOwner)throw Error('Account changed');
+  const records=[];
+  for(const config of helper.CONFIG){
+   const record=await transport.read(config.type,helper.id,owner);
+   if(record&&!record.deleted)records.push(record);
+  }
+  if(account?.id!==owner)throw Error('Account changed');
+  const toRecover=helper.CONFIG.filter(config=>{
+   const remote=records.find(x=>x.type===config.type&&x.id===helper.id);
+   if(!remote)return false;
+   const values=helper.validateRemote(config,remote);
+   const local=helper.loadLocal(localStorage,owner,config);
+   return (!local.exists||helper.empty(config,local.value))&&!helper.empty(config,values);
+  });
+  if(!toRecover.length){cloudActionMessage('No missing fitness categories found. Existing local data remains untouched.');return}
+  if(!confirm('Recover '+toRecover.map(x=>x.label).join(', ')+' from your 2.0 cloud backup? Only empty categories will be filled.')){cloudActionMessage('Fitness recovery canceled. Nothing changed.');return}
+  if(account?.id!==owner)throw Error('Account changed');
+  const names=helper.restoreMissing(localStorage,owner,records);
+  refreshPreviewOwner();
+  cloudActionMessage('Recovered '+names.join(', ')+'. Existing categories were not overwritten.');
+ }catch(e){cloudActionMessage('Fitness recovery paused: '+String(e.message||e).slice(0,125)+'. Local records preserved.')}
+ finally{cloudOperationBusy=false;renderSettings()}
+}
+
 /* Automatic sync is account-only, local-first, and restricted to completed
    MYLIFTCOACH 2.0 sessions. Never uploads original PRISM records or guest data.
    Browser wake/online events schedule retries; there is no background-worker claim. */
@@ -553,6 +622,8 @@ function renderSettings(){
  $('authAction').disabled=authChecking;
  $('cloudUploadSessions').disabled=authChecking||!account||cloudOperationBusy;
  $('cloudRestoreSessions').disabled=authChecking||!account||cloudOperationBusy;
+ $('backupOtherData').disabled=authChecking||!account||cloudOperationBusy;
+ $('recoverOtherData').disabled=authChecking||!account||cloudOperationBusy;
  if($('autoSyncStatus'))$('autoSyncStatus').textContent=account?autoSyncState:'Waiting for sign-in';
  renderSyncHealth();
  if($('connectivityStatus'))$('connectivityStatus').textContent=navigator.onLine?'Online · local device saving':'Offline · local device saving';
@@ -918,6 +989,8 @@ function bind(){
  $('backupPreview').addEventListener('click',downloadPreviewBackup);
  $('cloudUploadSessions').addEventListener('click',()=>void manuallyUploadWorkouts());
  $('cloudRestoreSessions').addEventListener('click',()=>void manuallyRestoreWorkouts());
+ $('backupOtherData').addEventListener('click',()=>void backupOtherFitnessData());
+ $('recoverOtherData').addEventListener('click',()=>void recoverOtherFitnessData());
  window.addEventListener('online',()=>{updateConnectivity();if(!account&&readStoredAuth())void validateStoredAuth();else scheduleAutoSync(400)});
  window.addEventListener('offline',()=>{updateConnectivity();if(autoSyncTimer!==null){clearTimeout(autoSyncTimer);autoSyncTimer=null}setAutoSyncState('Offline · workouts safe on device')});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&readStoredAuth()&&navigator.onLine)void validateStoredAuth();else scheduleAutoSync(500)}});
