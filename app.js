@@ -28,20 +28,99 @@ const plans=[
 const $=(id)=>document.getElementById(id);
 let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
 let demoSessions=loadDemo();
+const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
+let trackingEntries=loadLocalTracking();
+let originalSnapshot=null;
+
 let toastTimer;
 let muscleFilter='';
 let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{const a=JSON.parse(localStorage.getItem(DEMO_KEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&Array.isArray(x.sets)).slice(0,100):[]}catch{return []}}
 function storeDemo(){localStorage.setItem(DEMO_KEY,JSON.stringify(demoSessions))}
+// All original-app reads are opt-in and strictly read-only. Never call setItem
+// or removeItem with workoutHistoryV52, customWorkoutsV5 or dailyTrackingV1.
+function safeOriginal(key,kind){
+ try{
+  const raw=localStorage.getItem(key);
+  if(!raw||raw.length>5_000_000)return kind==='array'?[]:{};
+  const value=JSON.parse(raw);
+  return kind==='array'?(Array.isArray(value)?value.slice(0,1000):[]):(value&&typeof value==='object'&&!Array.isArray(value)?value:{});
+ }catch{return kind==='array'?[]:{}}
+}
+function getOriginalSnapshot(){
+ const rawSessions=safeOriginal('workoutHistoryV52','array');
+ const rawPlans=safeOriginal('customWorkoutsV5','array');
+ const rawTracking=safeOriginal('dailyTrackingV1','object');
+ const sessions=rawSessions.filter(x=>x&&typeof x==='object'&&Array.isArray(x.exercises)).map(x=>({
+  title:String(x.workoutTitle||x.title||'Workout').slice(0,110),
+  date:String(x.date||x.created||'').slice(0,35),
+  exercises:x.exercises.filter(y=>y&&Array.isArray(y.sets)).map(y=>({
+   name:String(y.name||y.id||'Exercise').slice(0,110),
+   sets:y.sets.filter(z=>z&&Number.isFinite(Number(z.weight))&&Number.isFinite(Number(z.reps))&&Number(z.weight)>=0&&Number(z.reps)>0).slice(0,20).map(z=>({weight:Number(z.weight),reps:Number(z.reps)}))
+  })).slice(0,55)
+ }));
+ const plans=rawPlans.filter(x=>x&&typeof x==='object'&&Array.isArray(x.exercises)).slice(0,100).map(x=>({
+  title:String(x.name||x.title||'Custom workout').slice(0,110),
+  exercises:x.exercises.slice(0,80).map(v=>String(v).slice(0,80))
+ }));
+ const water=Array.isArray(rawTracking.water)?rawTracking.water.filter(x=>x&&typeof x==='object'&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0).slice(0,1000).map(x=>({day:String(x.day||'').slice(0,10),amount:Number(x.amount)})):[];
+ const weight=Array.isArray(rawTracking.weight)?rawTracking.weight.filter(x=>x&&typeof x==='object'&&Number.isFinite(Number(x.value))&&Number(x.value)>0).slice(0,1000).map(x=>({day:String(x.day||'').slice(0,10),value:Number(x.value)})):[];
+ return {sessions,plans,water,weight};
+}
+function localDayString(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function loadLocalTracking(){
+ try{const data=JSON.parse(localStorage.getItem(TRACK_KEY)||'[]');return Array.isArray(data)?data.filter(x=>x&&['water','weight'].includes(x.type)&&Number.isFinite(Number(x.value))&&Number(x.value)>0&&/^\d{4}-\d\d-\d\d$/.test(x.day)).slice(0,400):[]}catch{return []}
+}
+function persistLocalTracking(){localStorage.setItem(TRACK_KEY,JSON.stringify(trackingEntries))}
+function formatDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString():String(value||'Unknown date')}
+function renderHistory(){
+ const original=originalSnapshot?.sessions||[];
+ const demo=demoSessions||[];
+ $('legacyHistoryStatus').textContent=originalSnapshot?original.length+' original sessions available on this browser (read-only).':'Not loaded. Tap View original records to check this browser.';
+ const setCount=original.reduce((n,x)=>n+x.exercises.reduce((m,e)=>m+e.sets.length,0),0);
+ $('originalHistorySummary').textContent=originalSnapshot?original.length+' workouts · '+setCount+' sets':'';
+ $('originalHistoryList').innerHTML=originalSnapshot?(original.length?original.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.date))+' · '+x.exercises.length+' movements</small></summary>'+x.exercises.map(y=>'<div class="history-exercise"><b>'+escapeHTML(y.name)+'</b><small>'+y.sets.map(t=>escapeHTML(String(t.weight))+' lb × '+escapeHTML(String(t.reps))).join(' · ')+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No original session records found in this browser. Your original app or Supabase may store them elsewhere; no data was changed.</p>'):'';
+ $('detailedDemoHistory').innerHTML=demo.length?demo.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.created))+' · '+x.sets.length+' sets</small></summary>'+x.sets.map(y=>'<div class="history-exercise"><span>'+escapeHTML(exercises.find(e=>e.id===y.exerciseId)?.name||y.exerciseId||'Exercise')+'</span><small>'+escapeHTML(String(y.weight||0))+' lb × '+escapeHTML(String(y.reps||0))+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No 2.0 practice sessions yet. Completing a workout will add it here.</p>';
+}
+function renderOriginalPlans(){
+ const el=$('originalPlansList');if(!el)return;
+ if(!originalSnapshot){el.innerHTML='';return}
+ el.innerHTML=originalSnapshot.plans.length?originalSnapshot.plans.map(p=>'<details class="history-entry"><summary><strong>'+escapeHTML(p.title)+'</strong><small>'+p.exercises.length+' exercises</small></summary><p>'+p.exercises.map(v=>escapeHTML(v)).join(' · ')+'</p></details>').join(''):'<p class="empty-note">No original custom workouts were found on this browser.</p>';
+}
+function renderTracking(){
+ const water=trackingEntries.filter(x=>x.type==='water');
+ const weight=trackingEntries.filter(x=>x.type==='weight');
+ const today=localDayString();
+ const total=water.filter(x=>x.day===today).reduce((n,x)=>n+Number(x.value),0);
+ $('localTrackingSummary').textContent='Today: '+Math.round(total)+' mL water · '+weight.length+' weight entries';
+ $('localTrackingList').innerHTML=trackingEntries.length?trackingEntries.slice(0,40).map(x=>'<div class="history-entry tracking-row"><div><strong>'+escapeHTML(x.type==='water'?'Water':'Body weight')+'</strong><small>'+escapeHTML(x.day)+' · '+escapeHTML(String(x.value))+(x.type==='water'?' mL':' lb')+'</small></div><button type="button" class="tracking-delete" data-remove-track="'+escapeHTML(x.id)+'" aria-label="Remove this 2.0 entry">Remove</button></div>').join(''):'<p class="empty-note">No 2.0 daily entries yet.</p>';
+ $('legacyTrackingStatus').textContent=originalSnapshot?'Original device data loaded read-only.':'Not loaded';
+ if(!originalSnapshot){$('originalTrackingSummary').textContent='';$('originalTrackingList').innerHTML='';return}
+ $('originalTrackingSummary').textContent=originalSnapshot.water.length+' water entries · '+originalSnapshot.weight.length+' weight entries';
+ const combined=[...originalSnapshot.water.map(x=>({...x,type:'water'})),...originalSnapshot.weight.map(x=>({...x,type:'weight'}))].sort((a,b)=>b.day.localeCompare(a.day)).slice(0,60);
+ $('originalTrackingList').innerHTML=combined.length?combined.map(x=>'<div class="history-entry tracking-row"><div><strong>'+escapeHTML(x.type==='water'?'Water':'Body weight')+'</strong><small>'+escapeHTML(x.day)+' · '+escapeHTML(String(x.type==='water'?Math.round(x.amount):x.value))+(x.type==='water'?' mL':' lb')+'</small></div><span class="micro-tag">ORIGINAL</span></div>').join(''):'<p class="empty-note">No original daily tracking records found on this browser. Cloud data was not queried or altered.</p>';
+}
+function viewOriginal(){originalSnapshot=getOriginalSnapshot();renderHistory();renderTracking();renderOriginalPlans();notice('Original records checked locally. No original records were changed.')}
+function logDaily(event,type){
+ event.preventDefault();
+ const form=new FormData(event.currentTarget);
+ const day=String(form.get('day')||'');
+ const value=Number(form.get(type==='water'?'amount':'value'));
+ if(!/^\d{4}-\d\d-\d\d$/.test(day)||!Number.isFinite(value)||value<=0||(type==='water'&&value>5000)||(type==='weight'&&value>1500)){notice('Enter a valid date and amount.');return}
+ const item={id:'mlc2-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),type,day,value};
+ trackingEntries.unshift(item);trackingEntries=trackingEntries.slice(0,400);
+ try{persistLocalTracking();renderTracking();event.currentTarget.querySelector('input[type="number"]').value='';notice('Saved in 2.0 on this device only.')}catch{trackingEntries.shift();notice('Could not save in this browser.')}
+}
+
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notice(message){const t=$('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
-function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition'].includes(next))return;page=next;
+function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking'].includes(next))return;page=next;
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
- $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition'})[next];
+ $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
  $('sidebar').classList.remove('open');document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
- if(next==='progress')renderProgress();if(next==='settings')renderSettings();
+ if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
 function nextPlan(){return plans[demoSessions.length%plans.length]}
@@ -230,6 +309,15 @@ function bind(){
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
  $('todayStart').addEventListener('click',()=>openWorkout(nextPlan().id));
  $('workoutGrid').addEventListener('click',e=>{const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
+ ['loadOriginalHistory','loadOriginalTracking','loadOriginalPlans'].forEach(id=>$(id).addEventListener('click',viewOriginal));
+ $('waterForm').addEventListener('submit',e=>logDaily(e,'water'));
+ $('weightForm').addEventListener('submit',e=>logDaily(e,'weight'));
+ $('localTrackingList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-remove-track]');if(!b)return;
+  const old=trackingEntries;trackingEntries=trackingEntries.filter(x=>x.id!==b.dataset.removeTrack);
+  try{persistLocalTracking();renderTracking();notice('2.0 entry removed. Original data unchanged.')}catch{trackingEntries=old;notice('Could not remove local entry.')}
+ });
+
  $('exerciseSearch').addEventListener('input',renderLibrary);
  $('libraryChips').addEventListener('click',event=>{const el=event.target.closest('[data-muscle]');if(!el)return;muscleFilter=el.dataset.muscle;renderLibrary()});
  document.querySelectorAll('[data-account-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.accountPage)));
@@ -244,5 +332,6 @@ function bind(){
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
+$('waterDay').value=localDayString();$('weightDay').value=localDayString();
 document.body.classList.add('home-active');bind();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
 })();
