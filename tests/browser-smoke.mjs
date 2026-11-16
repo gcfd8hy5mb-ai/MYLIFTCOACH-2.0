@@ -116,7 +116,7 @@ try {
  // Mocks all new 2.0 RPCs; no production Supabase writes.
  // Real people must confirm before upload or restore; the test explicitly accepts.
  page.on('dialog',dialog=>dialog.accept());
- const cloudSaved=new Map();let commits=0;
+ const cloudSaved=new Map();let commits=0,failNextCommit=false;const triedOpIds=[];
  await page.route('**/rest/v1/rpc/mlc2_v1_*',async route=>{
   const url=new URL(route.request().url()),body=route.request().postDataJSON();
   const owner='user-a';
@@ -126,6 +126,11 @@ try {
   }
   if(url.pathname.endsWith('mlc2_v1_commit')){
    commits++;
+   triedOpIds.push(body.p_op_id);
+   if(failNextCommit){
+    failNextCommit=false;
+    await route.fulfill({status:503,contentType:'application/json',body:'{"message":"Temporary service outage"}'});return;
+   }
    const id=body.p_record_id;
    if(cloudSaved.has(id)){await route.fulfill({status:409,contentType:'application/json',body:'{"code":"PT409","message":"MLC2_REVISION_CONFLICT"}'});return}
    cloudSaved.set(id,{owner,type:body.p_type,id,revision:1,deleted:false,payload:body.p_payload});
@@ -190,7 +195,11 @@ try {
  await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('Up to date'));
  assert.equal(commits,1,'Completed signed-in session uploads automatically');
  assert.equal(cloudSaved.size,1);
+ await page.locator('#homeMenuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+ assert.match(await page.locator('#syncHealth').innerText(),/0 pending uploads · Last verified:/);
  await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="home"]').click();
  await page.locator('#sidebar [data-page="settings"]').click();
  await page.locator('#authAction').click(); // server logout + local isolation
  await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('Not signed in'));
@@ -292,6 +301,27 @@ try {
  await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('Up to date'));
  assert.equal(commits,2,'Reload must not duplicate cloud workouts');
+
+ assert.match(await page.locator('#syncHealth').innerText(),/0 pending uploads/);
+ // A temporary server outage must preserve the exact operation ID and all sets.
+ failNextCommit=true;
+ await page.locator('#homeMenuBtn').click();
+ await page.locator('#sidebar [data-page="workouts"]').click();
+ await page.locator('#workoutGrid [data-workout="upper-a"]').click();
+ await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('90');
+ await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('7');
+ await page.locator('[data-addset="chest-press"]').click();
+ await page.locator('#finishWorkout').click();
+ await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('retry scheduled'));
+ const failedOp=triedOpIds.at(-1);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-sync-journal-v1:user-a')).items.length),1);
+ assert.equal(cloudSaved.size,2,'Failed upload must not mark workout as cloud-saved');
+ await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+ await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('Up to date'));
+ assert.equal(triedOpIds.at(-1),failedOp,'Retry must keep the same operation ID');
+ assert.equal(cloudSaved.size,3);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-sync-journal-v1:user-a')).items.length),0);
+
  await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
 
