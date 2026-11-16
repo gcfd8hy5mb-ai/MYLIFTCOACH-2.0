@@ -4,7 +4,7 @@ Status: development, verified against the existing **gcfd8hy5mb-ai/workout-track
 
 ## Source of truth
 
-The original workout-tracker has 27 primary section IDs:
+The original workout-tracker has 28 primary section IDs:
 `welcomeScreen`, `onboardingScreen`, `goalReviewScreen`, `setupScreen`, `home`,
 `workoutsScreen`, `workoutDetailScreen`, `exerciseInfoScreen`, `profileScreen`,
 `prismProScreen`, `helpScreen`, `manageWorkoutScreen`, `workoutScreen`,
@@ -13,7 +13,7 @@ The original workout-tracker has 27 primary section IDs:
 `measurementsScreen`, `photosScreen`, `globalHistoryScreen`,
 `globalTimerScreen`, `waterScreen`, `foodScreen`, `goalsScreen`, `weightScreen`.
 
-The source array above contains **28** IDs when counted literally; the structural count must be re-verified after normalized section parsing. Do not infer 1:1 feature parity from the count: several original features are implemented in modules or subviews.
+The source contains **28** primary section IDs, counted directly from the original HTML. Do not infer 1:1 feature parity from the count: several original features are implemented in modules or subviews.
 
 ## Batch 1 — committed to MYLIFTCOACH-2.0 main
 
@@ -30,7 +30,7 @@ The source array above contains **28** IDs when counted literally; the structura
 
 ## Not finished
 
-- Full port of original 27+ sections and their behaviors; 2.0 is **not** functionally complete.
+- Full port of original 28 primary sections and their behaviors; 2.0 is **not** functionally complete.
 - Original Supabase training tables are **not** read from or written to in 2.0; device-local read-only inspection is not cloud synchronization.
 - Original account onboarding, goal-derived plans, unrestricted custom workout builder, all exercises/illustrations, session recovery, saved PRs/measurements/photos, nutrition, calorie and macro tools, advanced coaching and entitlements have not been ported.
 - Original records found via the device browser may be empty if the original used a different browser/device, the data only exists in Supabase, or the currently authenticated account differs.
