@@ -495,6 +495,12 @@ async function flushAutoSync(){
   const remote=await listCloudSessions(transport,owner);
   if(account?.id!==owner)throw Error('Account changed');
   const cloudById=new Map(remote.map(row=>[row.id,row]));
+  // A new browser/device can inspect signed-in cloud history without copying
+  // anything into its local records until the user confirms recovery.
+  const localRecords=loadDemo().filter(validCloudSession);
+  const localIds=new Set(localRecords.map(row=>row.id));
+  const availableToRestore=remote.filter(row=>!row.deleted&&!localIds.has(row.id)&&
+    validCloudSession(row.payload)&&row.payload.id===row.id).length;
   const engine=window.MLC2Sync.create({owner,storage:localStorage,transport,enabled:true});
   const pending=new Set(engine.list().items.filter(x=>x.type==='session').map(x=>x.id));
   let changed=0,already=0;
@@ -523,7 +529,9 @@ async function flushAutoSync(){
   }else{
    autoSyncAttempts=0;
    try{localStorage.setItem(CLOUD_CHECK_KEY+owner,new Date().toISOString())}catch{ /* Metadata is secondary to persisted workout records. */ }
-   setAutoSyncState('Up to date · '+(already+(result.sent||0))+' workouts');
+   setAutoSyncState(availableToRestore?
+    availableToRestore+' cloud workouts available · select Check for workouts to restore':
+    'Up to date · '+(already+(result.sent||0))+' workouts');
   }
  }catch(err){
   if(account?.id!==selectedOwner)return;
