@@ -363,6 +363,21 @@ try {
  await page.waitForFunction(()=>document.getElementById('previewUpdateStatus').textContent.includes('Fix 16 is available'));
  assert.equal(page.url(),priorUrl,'Preview update check must not interrupt the current screen');
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-food-goals-v1:user:user-a')).protein),140);
+
+ // Update opening must be blocked while there is an unfinished active workout.
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="workouts"]').click();
+ await page.locator('#workoutGrid [data-workout="upper-a"]').click();
+ await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('70');
+ await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('9');
+ await page.locator('[data-addset="chest-press"]').click();
+ const draftBeforeUpdate=await page.evaluate(()=>localStorage.getItem('mlc2-active-workout-v1:user:user-a'));
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+ await page.locator('#checkPreviewUpdate').click();
+ assert.equal(page.url(),priorUrl,'Never leave app while a workout is active');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-active-workout-v1:user:user-a')),draftBeforeUpdate,'Update must not change the saved workout draft');
+
  const desktop=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1});
  const desk=await desktop.newPage();
  desk.on('pageerror',e=>errors.push(e.message));
