@@ -1,0 +1,18 @@
+/* Use a viewport-backed marble layer on every 2.0 screen, mirroring Home.
+   Avoid background-attachment:fixed on the scrolling body (iOS Safari).
+   The logo, content, tabs, drawer and modal keep their existing stacking. */
+body:not(.home-active){
+  background:#0e5357!important;
+}
+body:not(.home-active)::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:#0e5357 url("../assets/approved-vertical-marble-sharp.webp?v=11") center center / cover no-repeat;
+}
+body:not(.home-active) .app-shell{position:relative;z-index:1}
+@media(min-width:761px){
+ body:not(.home-active)::before{background-position:center center}
+}

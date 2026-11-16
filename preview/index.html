@@ -14,7 +14,9 @@
 <link rel="stylesheet" href="../home-rebuild.css?v=19">
 <link rel="stylesheet" href="./sidebar-only.css?v=1">
 <link rel="stylesheet" href="./extras-restoration.css?v=1">
-<link rel="stylesheet" href="./button-finish.css?v=3">
+<link rel="stylesheet" href="./button-finish.css?v=1">
+<link rel="stylesheet" href="./wallpaper-all-pages.css?v=1">
+<link rel="stylesheet" href="./feature-restoration.css?v=1">
 <style id="preview-live-visual-fix">
 /* Preview visual correction in document, last in cascade: not dependent on a cached stylesheet. */
 #home .home-below-fold .metric,
@@ -105,7 +107,7 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
 </style>
 </head>
 <body>
-<div id="previewRevision">PREVIEW FIX 05</div>
+<div id="previewRevision">PREVIEW FIX 06</div>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
  <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 6.5v11M4 9v6M2 10v4m20-4v4m-2-5v6m-2.5-8.5v11M6.5 12h11" /></symbol>
  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7c-2-2-5-2.5-9-2v14c4-.5 7 0 9 2 2-2 5-2.5 9-2V5c-4-.5-7 0-9 2Zm0 0v14" /></symbol>
@@ -126,19 +128,19 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
     <details class="nav-group" open><summary>TRAINING <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
       <button type="button" data-page="workouts" class="nav-item"><span aria-hidden="true">▤</span> Workouts &amp; plans</button>
       <button type="button" data-page="library" class="nav-item"><span aria-hidden="true">▦</span> Exercise library</button>
-      <span class="nav-item nav-pending"><span aria-hidden="true">＋</span> Manage/custom workouts <small>Restoration pending</small></span>
+      <button type="button" data-page="manage" class="nav-item"><span aria-hidden="true">＋</span> Manage workouts</button>
       <button type="button" id="sidebarTimer" class="nav-item"><span aria-hidden="true">◷</span> Timer · 90 seconds</button>
     </div></details>
     <details class="nav-group" open><summary>PROGRESS <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
       <button type="button" data-page="progress" class="nav-item"><span aria-hidden="true">▥</span> Progress</button>
       <button type="button" data-page="history" class="nav-item"><span aria-hidden="true">◷</span> Workout history</button>
       <button type="button" data-page="calendar" class="nav-item"><span aria-hidden="true">▦</span> Calendar &amp; records</button>
-      <span class="nav-item nav-pending"><span aria-hidden="true">▤</span> Measurements &amp; photos <small>Restoration pending</small></span>
+      <button type="button" data-page="measurements" class="nav-item"><span aria-hidden="true">▤</span> Measurements</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">▣</span> Progress photos <small>Restoration pending</small></span>
     </div></details>
     <details class="nav-group"><summary>DAILY TRACKING <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
       <button type="button" data-page="tracking" class="nav-item"><span aria-hidden="true">◈</span> Daily tracking</button>
-      <button type="button" data-page="nutrition" class="nav-item"><span aria-hidden="true">◉</span> Nutrition</button>
-      <span class="nav-item nav-pending"><span aria-hidden="true">◎</span> Complete original logs <small>Restoration pending</small></span>
+      <button type="button" data-page="nutrition" class="nav-item"><span aria-hidden="true">◉</span> Food &amp; macro log</button>
     </div></details>
     <details class="nav-group" open><summary>ACCOUNT &amp; EXTRAS <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
       <button type="button" data-page="coaching" class="nav-item"><span aria-hidden="true">✧</span> Coaching</button>
@@ -208,7 +210,19 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
   </div>
  </section>
  <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Training plan</h1><p>Four purposeful sessions. Select one to open its exercise list and record a practice workout.</p></div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
- <section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>A focused starter collection of machine-friendly movements.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button></div><div class="library-grid" id="libraryGrid"></div></section>
+ <section id="manage" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">YOUR ROUTINES</div><h1>Manage workouts</h1><p>Create, edit, and practice custom training plans. Preview plans remain separate from original workout data.</p></div>
+ <article class="panel"><h3>My custom workouts</h3><div id="customWorkoutList" class="legacy-list"></div></article>
+ <article class="panel"><h3 id="customEditorTitle">Create a workout</h3><form id="customWorkoutForm" class="mlc-form">
+  <input type="hidden" name="editId" id="customEditId">
+  <label for="customWorkoutName">Workout name</label><input id="customWorkoutName" name="title" maxlength="65" placeholder="My strength session" required>
+  <label for="customWorkoutDesc">Description (optional)</label><input id="customWorkoutDesc" name="description" maxlength="160" placeholder="Focus for this session">
+  <fieldset class="mlc-exercise-picker"><legend>Choose exercises (1–12)</legend><div id="customExerciseOptions" class="mlc-picker-grid"></div></fieldset>
+  <button type="submit" class="button-primary">Save custom workout</button><button type="button" id="cancelCustomEdit" class="button-outline">Clear editor</button>
+ </form></article>
+ <p class="tracking-footnote">Saved in the MYLIFTCOACH 2.0 browser preview only. Original workout plans are never overwritten.</p>
+</section>
+<section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>A focused starter collection of machine-friendly movements.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button></div><div class="library-grid" id="libraryGrid"></div></section>
  <section id="progress" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div></section>
  <section id="history" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">TRAINING ARCHIVE</div><h1>Workout history</h1><p>Review completed sessions and exercise records. Original-app records are shown read-only; 2.0 practice sessions remain separate.</p></div>
@@ -227,6 +241,21 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
  </article>
  <article class="panel"><div class="panel-heading"><h3>Personal records</h3><span class="micro-tag">CALCULATED FROM SAVED SETS</span></div><div id="calendarRecords" class="legacy-list"></div></article>
  <article class="panel"><div class="panel-heading"><h3>Original device records</h3><span class="micro-tag">READ-ONLY</span></div><p>Original workout data is never changed or imported into 2.0.</p><button id="calendarLoadOriginal" type="button" class="button-outline">Load original device history</button><p id="calendarOriginalStatus" role="status" class="legacy-status"></p></article>
+</section>
+<section id="measurements" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">BODY PROGRESS</div><h1>Body measurements</h1><p>Keep dated measurements and review trends. This preview log stays on your device.</p></div>
+ <article class="panel"><h3>Record measurements</h3><form id="measurementsForm" class="mlc-form">
+   <label for="measurementDate">Date</label><input type="date" id="measurementDate" name="day" required>
+   <div class="mlc-fields-two">
+    <label>Waist (in)<input name="waist" type="number" min="1" max="100" step=".1" inputmode="decimal"></label>
+    <label>Chest (in)<input name="chest" type="number" min="1" max="100" step=".1" inputmode="decimal"></label>
+    <label>Hips (in)<input name="hips" type="number" min="1" max="100" step=".1" inputmode="decimal"></label>
+    <label>Upper arm (in)<input name="arm" type="number" min="1" max="60" step=".1" inputmode="decimal"></label>
+    <label>Thigh (in)<input name="thigh" type="number" min="1" max="80" step=".1" inputmode="decimal"></label>
+   </div><button type="submit" class="button-primary">Save measurements</button>
+  </form></article>
+ <article class="panel"><h3>Measurement history</h3><div id="measurementHistory" class="legacy-list"></div></article>
+ <p class="tracking-footnote">Measurements are saved locally under a separate MYLIFTCOACH 2.0 key, not in your original app or cloud account.</p>
 </section>
 <section id="tracking" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">YOUR DAILY LOG</div><h1>Daily tracking</h1><p>Track hydration and body weight while retaining the original app's records safely.</p></div>
@@ -254,7 +283,29 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
     <button type="button" data-coach-link="settings">♡ &nbsp; Recovery &amp; Readiness <span>›</span></button>
   </div>
  </section>
- <section id="nutrition" class="page" hidden><div class="page-heading"><div class="eyebrow">FUEL & RECOVER</div><h1>Nutrition &amp; Hydration</h1><p>The full nutrition, water, weight, and macro-tracking features from your original app will return here after data compatibility testing.</p></div><article class="panel"><h3>Coming from your original app</h3><p>Daily water, food logs, calorie goals, saved meals, and weight history. No entries are being written to your production data.</p></article></section>
+ <section id="nutrition" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">FUEL &amp; RECOVER</div><h1>Nutrition &amp; hydration</h1><p>Record meals, calories, protein, carbs, and fats alongside your separate daily water and weight logs.</p></div>
+ <article class="panel"><h3>Daily calorie &amp; protein goals</h3>
+  <form id="nutritionGoalForm" class="mlc-form mlc-fields-two">
+   <label>Calories per day<input type="number" name="calories" min="500" max="8000" step="1" required></label>
+   <label>Protein (g) per day<input type="number" name="protein" min="0" max="600" step="1" required></label>
+   <button type="submit" class="button-primary">Save daily goals</button>
+  </form>
+ </article>
+ <article class="panel"><h3>Log a meal</h3><form id="mealForm" class="mlc-form">
+  <label>Meal description<input type="text" name="name" maxlength="80" placeholder="Lunch — chicken and rice" required></label>
+  <label>Date<input type="date" id="mealDate" name="day" required></label>
+  <div class="mlc-fields-two">
+   <label>Calories<input type="number" name="calories" min="0" max="10000" step="1" required></label>
+   <label>Protein (g)<input type="number" name="protein" min="0" max="1000" step=".1" required></label>
+   <label>Carbs (g)<input type="number" name="carbs" min="0" max="1000" step=".1" required></label>
+   <label>Fat (g)<input type="number" name="fat" min="0" max="1000" step=".1" required></label>
+  </div><button type="submit" class="button-primary">Save meal</button>
+ </form></article>
+ <article class="panel"><h3>Today's nutrition</h3><div id="nutritionSummary" class="legacy-summary"></div><div id="nutritionHistory" class="legacy-list"></div></article>
+ <article class="panel"><h3>Hydration &amp; body weight</h3><p>Your existing daily log is available separately.</p><button type="button" data-page="tracking" class="button-outline">Open water &amp; weight log</button></article>
+ <p class="tracking-footnote">Nutrition estimates are entered by you; the app does not verify food labels or calculate them automatically. Preview entries stay in this browser.</p>
+</section>
  <section id="settings" class="page" hidden><div class="account-brand"><img src="../assets/myliftcoach-mark.svg?v=6" alt=""><h2>My Account</h2><p>Manage your profile, training and settings</p></div><div class="account-menu" aria-label="Additional training tools"><button type="button" data-account-page="library"><span>▣</span> Exercise Library <b>›</b></button><button type="button" data-account-page="history"><span>▤</span> Workout History <b>›</b></button><button type="button" data-account-page="tracking"><span>◉</span> Daily Tracking <b>›</b></button><button type="button" data-account-page="coaching"><span>✦</span> Coaching &amp; Guidance <b>›</b></button></div><div class="page-heading"><div class="eyebrow">YOUR ACCOUNT</div><h1>Settings</h1><p>Sign in with your existing MYLIFTCOACH account. Training data import remains off until validated.</p></div><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen design ↗</button><article class="panel settings-panel"><div class="setting-line"><div><strong>Supabase account</strong><p id="accountIdentity">Not signed in</p></div><span class="micro-tag" id="backendStatus">NOT CONNECTED</span></div><div class="setting-line"><div><strong>Data protection</strong><p>Existing workout records are read-only and are not yet imported into 2.0.</p></div><span class="micro-tag">ISOLATED</span></div><div class="setting-line"><div><strong>Demo session history</strong><p>Saved to this browser only, separate from your original workout app.</p></div><button id="clearDemo" type="button" class="button-outline">Clear demo</button></div><button id="authAction" type="button" class="button-primary">Sign in</button></article></section>
 </main>
 <footer class="site-footer"><span>MYLIFTCOACH 2.0</span><span>STRONGER BY DESIGN · PREVIEW</span></footer>
@@ -269,6 +320,6 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
  <p class="rest-demo">Practice timer · no workout data is changed</p>
 </div>
 <div id="toast" role="status" class="toast" hidden></div>
-<script defer src="./app.js?v=3"></script>
+<script defer src="./app.js?v=6"></script>
 </body>
 </html>

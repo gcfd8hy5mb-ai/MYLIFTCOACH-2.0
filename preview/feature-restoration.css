@@ -1,0 +1,30 @@
+/* Scoped new functional pages; visual system follows the approved dark/gold cards. */
+#manage .mlc-form,#measurements .mlc-form,#nutrition .mlc-form{display:grid;gap:12px}
+#manage .mlc-form label,#measurements .mlc-form label,#nutrition .mlc-form label{display:grid;gap:5px;color:#ffe5ae;font-size:12px}
+#manage .mlc-form input,#measurements .mlc-form input,#nutrition .mlc-form input{
+ width:100%;min-width:0;min-height:44px;padding:10px 12px;border-radius:11px;
+ border:1px solid #d6ab70;background:#0a171d;color:#fff6e8;font-size:14px;color-scheme:dark;
+}
+#manage .mlc-exercise-picker{border:1px solid #b88f58;border-radius:11px;padding:12px}
+#manage .mlc-exercise-picker legend{font-size:12px;color:#f9d99b}
+#manage .mlc-picker-grid{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+#manage .mlc-option{display:flex!important;flex-direction:row!important;align-items:center;gap:9px!important;border:1px solid #6a5b49;border-radius:10px;padding:9px;background:#0e2025;color:#fff0d9}
+#manage .mlc-option input{width:17px;height:17px;min-height:17px;accent-color:#dcb273}
+#manage .mlc-list-row,#measurements .mlc-list-row,#nutrition .mlc-list-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;margin:8px 0;border:1px solid #cba46d;border-radius:11px;background:linear-gradient(150deg,#19282b,#0c171b)}
+#manage .mlc-list-row>div:first-child,#measurements .mlc-list-row>div:first-child,#nutrition .mlc-list-row>div:first-child{display:grid;gap:6px;min-width:0;overflow-wrap:anywhere}
+#manage .mlc-list-row small,#measurements .mlc-list-row small,#nutrition .mlc-list-row small{font-size:11px;color:#decbaa}
+.mlc-mini-actions{display:flex;gap:5px;flex-wrap:wrap}
+#manage .mlc-list-row button,#measurements .mlc-list-row button,#nutrition .mlc-list-row button{
+ min-height:36px;padding:8px 10px;background:linear-gradient(155deg,#17272d,#09161b);border:1px solid #d5ac70;border-radius:9px;color:#fff1d6;
+}
+#manage .panel,#measurements .panel,#nutrition .panel{
+ background:linear-gradient(150deg,#17272d,#08151b)!important;border:1.5px solid #d5ac70!important;color:#fff1d6!important;
+ box-shadow:inset 0 1px 0 #ffffff1a,0 5px 13px #0007!important;
+}
+#manage .mlc-form button,#measurements .mlc-form button,#nutrition .mlc-form button{
+ min-height:45px;border:1.5px solid #d5ac70;border-radius:11px;
+ background:linear-gradient(150deg,#17272d,#08151b);color:#fff1d6;
+}
+#manage .mlc-form button:focus-visible,#measurements .mlc-form button:focus-visible,#nutrition .mlc-form button:focus-visible{outline:2px solid #f8dfa8;outline-offset:3px}
+#manage .mlc-fields-two,#measurements .mlc-fields-two,#nutrition .mlc-fields-two{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:460px){#manage .mlc-picker-grid{grid-template-columns:1fr}.mlc-mini-actions{justify-content:flex-end}}

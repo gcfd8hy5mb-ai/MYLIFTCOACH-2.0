@@ -31,6 +31,13 @@ let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
+const CUSTOM_KEY='mlc2-custom-plans-v1',MEASUREMENT_KEY='mlc2-measurements-v1',NUTRITION_KEY='mlc2-food-log-v1',GOALS_KEY='mlc2-food-goals-v1';
+const readPreview=(key,fallback)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback}catch{return fallback}};
+let customPlans=readPreview(CUSTOM_KEY,[]);if(!Array.isArray(customPlans))customPlans=[];
+let measurements=readPreview(MEASUREMENT_KEY,[]);if(!Array.isArray(measurements))measurements=[];
+let meals=readPreview(NUTRITION_KEY,[]);if(!Array.isArray(meals))meals=[];
+let nutritionGoals=readPreview(GOALS_KEY,{calories:2000,protein:140});
+const allPlans=()=>[...plans,...customPlans];
 
 let toastTimer;
 let muscleFilter='';
@@ -154,17 +161,17 @@ function logDaily(event,type){
 
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notice(message){const t=$('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
-function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking','calendar'].includes(next))return;page=next;
+function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking','calendar','manage','measurements'].includes(next))return;page=next;
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
- $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking',calendar:'Calendar & records'})[next];
+ $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking',calendar:'Calendar & records',manage:'Manage workouts',measurements:'Measurements'})[next];
  // A sidebar navigation click must move keyboard focus to the destination before
  // the mobile drawer becomes inert, rather than leaving focus in a hidden menu.
  const fromSidebar=$('sidebar').contains(document.activeElement);
  if(fromSidebar){const target=$(next);target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}
  $('sidebar').classList.remove('open');$('sidebarScrim').classList.remove('open');document.body.classList.remove('sidebar-is-open');['menuBtn','homeMenuBtn','moreMenuBtn'].forEach(id=>$(id).setAttribute('aria-expanded','false'));$('sidebar').inert=window.matchMedia('(max-width:760px)').matches;document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
- if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();if(next==='calendar')renderCalendar();
+ if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();if(next==='calendar')renderCalendar();if(next==='manage')renderCustomPlans();if(next==='measurements')renderMeasurements();if(next==='nutrition')renderNutrition();
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
 function nextPlan(){return plans[demoSessions.length%plans.length]}
@@ -175,8 +182,66 @@ function renderHome(){
  $('todayExercises').innerHTML=plan.ids.map(id=>{const e=exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
+/* Device-only functionality. These namespaces are separate from the original app. */
+function renderCustomPlans(){
+ const list=$('customWorkoutList');
+ list.innerHTML=customPlans.length?customPlans.map(p=>'<div class="history-entry mlc-list-row"><div><strong>'+escapeHTML(p.title)+'</strong><small>'+p.ids.length+' exercises</small></div><div class="mlc-mini-actions"><button type="button" data-custom-run="'+escapeHTML(p.id)+'">Start</button><button type="button" data-custom-edit="'+escapeHTML(p.id)+'">Edit</button><button type="button" data-custom-delete="'+escapeHTML(p.id)+'">Delete</button></div></div>').join(''):'<p class="empty-note">No custom workouts yet. Build one below.</p>';
+ $('customExerciseOptions').innerHTML=exercises.map(e=>'<label class="mlc-option"><input type="checkbox" name="exercise" value="'+escapeHTML(e.id)+'"><span>'+escapeHTML(e.name)+'</span></label>').join('');
+}
+function clearCustomEditor(){
+ $('customWorkoutForm').reset();$('customEditId').value='';$('customEditorTitle').textContent='Create a workout';
+}
+function saveCustomWorkout(e){
+ e.preventDefault();const form=e.currentTarget,values=new FormData(form),title=String(values.get('title')||'').trim(),ids=values.getAll('exercise').filter(id=>exercises.some(x=>x.id===id));
+ if(!title||title.length>65||ids.length<1||ids.length>12){notice('Give the workout a name and choose 1–12 exercises.');return}
+ const editId=String(values.get('editId')||''),existing=customPlans.find(x=>x.id===editId),id=existing?.id||'custom-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+ const item={id,title,kind:'Custom',description:String(values.get('description')||'').trim().slice(0,160)||'My custom training session.',ids};
+ const previous=[...customPlans];customPlans=existing?customPlans.map(x=>x.id===id?item:x):[...customPlans,item];
+ try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(customPlans));clearCustomEditor();renderCustomPlans();renderWorkouts();notice('Custom workout saved in this preview.')}catch{customPlans=previous;notice('Could not save the custom workout.')}
+}
+function editCustomPlan(id){
+ const p=customPlans.find(x=>x.id===id);if(!p)return;
+ renderCustomPlans();$('customEditId').value=p.id;$('customWorkoutName').value=p.title;$('customWorkoutDesc').value=p.description;
+ document.querySelectorAll('#customExerciseOptions input').forEach(x=>x.checked=p.ids.includes(x.value));
+ $('customEditorTitle').textContent='Edit custom workout';$('customWorkoutName').focus();
+}
+function removeCustomPlan(id){
+ const p=customPlans.find(x=>x.id===id);if(!p||!confirm('Delete this preview custom workout?'))return;
+ const previous=[...customPlans];customPlans=customPlans.filter(x=>x.id!==id);
+ try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(customPlans));renderCustomPlans();renderWorkouts();notice('Custom workout deleted from preview only.')}catch{customPlans=previous;notice('Could not delete custom workout.')}
+}
+function saveMeasurements(e){
+ e.preventDefault();const data=new FormData(e.currentTarget),day=String(data.get('day')||'');
+ const keys=['waist','chest','hips','arm','thigh'],values={};for(const key of keys){const raw=String(data.get(key)||'').trim();if(raw){const n=Number(raw);if(!Number.isFinite(n)||n<=0||n>100){notice('Check measurement values.');return}values[key]=n}}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Object.keys(values).length){notice('Enter a date and at least one measurement.');return}
+ const previous=[...measurements];measurements.unshift({id:'measure-'+Date.now(),day,values});measurements=measurements.slice(0,200);
+ try{localStorage.setItem(MEASUREMENT_KEY,JSON.stringify(measurements));renderMeasurements();e.currentTarget.reset();$('measurementDate').value=localDayString();notice('Measurements saved locally.')}catch{measurements=previous;notice('Could not save measurements.')}
+}
+function renderMeasurements(){
+ $('measurementHistory').innerHTML=measurements.length?measurements.slice(0,50).map(m=>'<div class="history-entry mlc-list-row"><div><strong>'+escapeHTML(m.day)+'</strong><small>'+Object.entries(m.values||{}).map(([k,v])=>escapeHTML(k)+': '+escapeHTML(String(v))+' in').join(' · ')+'</small></div><button type="button" data-measure-delete="'+escapeHTML(m.id)+'">Remove</button></div>').join(''):'<p class="empty-note">No body measurements saved yet.</p>';
+}
+function saveMeal(e){
+ e.preventDefault();const data=new FormData(e.currentTarget),name=String(data.get('name')||'').trim(),day=String(data.get('day')||''),values={};
+ for(const key of ['calories','protein','carbs','fat']){values[key]=Number(data.get(key));if(!Number.isFinite(values[key])||values[key]<0||values[key]>10000){notice('Enter valid meal numbers.');return}}
+ if(!name||name.length>80||!/^\d{4}-\d{2}-\d{2}$/.test(day)){notice('Enter a meal name and date.');return}
+ const old=[...meals];meals.unshift({id:'meal-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),day,name,...values});meals=meals.slice(0,500);
+ try{localStorage.setItem(NUTRITION_KEY,JSON.stringify(meals));renderNutrition();e.currentTarget.reset();$('mealDate').value=localDayString();notice('Meal saved in preview.')}catch{meals=old;notice('Could not save meal.')}
+}
+function renderNutrition(){
+ const form=$('nutritionGoalForm');form.elements.calories.value=nutritionGoals.calories||2000;form.elements.protein.value=nutritionGoals.protein||140;
+ const today=localDayString(),todayMeals=meals.filter(x=>x.day===today),sum=k=>todayMeals.reduce((n,m)=>n+Number(m[k]||0),0);
+ $('nutritionSummary').textContent='Today: '+Math.round(sum('calories'))+' / '+nutritionGoals.calories+' kcal · '+Math.round(sum('protein'))+' / '+nutritionGoals.protein+' g protein · '+Math.round(sum('carbs'))+' g carbs · '+Math.round(sum('fat'))+' g fat';
+ $('nutritionHistory').innerHTML=meals.length?meals.slice(0,80).map(x=>'<div class="history-entry mlc-list-row"><div><strong>'+escapeHTML(x.name)+'</strong><small>'+escapeHTML(x.day)+' · '+Math.round(x.calories)+' kcal · P '+x.protein+'g · C '+x.carbs+'g · F '+x.fat+'g</small></div><button type="button" data-meal-delete="'+escapeHTML(x.id)+'">Remove</button></div>').join(''):'<p class="empty-note">No meals logged yet.</p>';
+}
+function saveGoals(e){
+ e.preventDefault();const d=new FormData(e.currentTarget),calories=Number(d.get('calories')),protein=Number(d.get('protein'));
+ if(!Number.isFinite(calories)||calories<500||calories>8000||!Number.isFinite(protein)||protein<0||protein>600){notice('Check your daily goals.');return}
+ const old=nutritionGoals;nutritionGoals={calories,protein};
+ try{localStorage.setItem(GOALS_KEY,JSON.stringify(nutritionGoals));renderNutrition();notice('Nutrition goals saved in this browser.')}catch{nutritionGoals=old;notice('Could not save goals.')}
+}
+
 function renderWorkouts(){
- $('workoutGrid').innerHTML=plans.map((p,i)=>'<button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>').join('');
+ $('workoutGrid').innerHTML=allPlans().map((p,i)=>'<button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>').join('');
 }
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
@@ -210,7 +275,7 @@ function renderSettings(){
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
 function openWorkout(id){
- const plan=plans.find(x=>x.id===id);if(!plan)return;activePlan=plan;
+ const plan=allPlans().find(x=>x.id===id);if(!plan)return;activePlan=plan;
  session={sets:[]};
  openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p><div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
  renderWorkoutLog();
@@ -381,6 +446,14 @@ function bind(){
  $('calendarNext').addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderCalendar()});
  $('calendarGrid').addEventListener('click',event=>{const day=event.target.closest('[data-calendar-day]');if(day){selectedCalendarDay=day.dataset.calendarDay;renderCalendar()}});
  $('calendarLoadOriginal').addEventListener('click',viewOriginal);
+ $('customWorkoutForm').addEventListener('submit',saveCustomWorkout);
+ $('cancelCustomEdit').addEventListener('click',clearCustomEditor);
+ $('customWorkoutList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.customRun)openWorkout(b.dataset.customRun);else if(b.dataset.customEdit)editCustomPlan(b.dataset.customEdit);else if(b.dataset.customDelete)removeCustomPlan(b.dataset.customDelete)});
+ $('measurementsForm').addEventListener('submit',saveMeasurements);
+ $('measurementHistory').addEventListener('click',e=>{const b=e.target.closest('[data-measure-delete]');if(!b||!confirm('Remove this preview measurement?'))return;const old=[...measurements];measurements=measurements.filter(x=>x.id!==b.dataset.measureDelete);try{localStorage.setItem(MEASUREMENT_KEY,JSON.stringify(measurements));renderMeasurements()}catch{measurements=old;notice('Could not remove entry.')}});
+ $('mealForm').addEventListener('submit',saveMeal);
+ $('nutritionGoalForm').addEventListener('submit',saveGoals);
+ $('nutritionHistory').addEventListener('click',e=>{const b=e.target.closest('[data-meal-delete]');if(!b||!confirm('Remove this preview meal?'))return;const old=[...meals];meals=meals.filter(x=>x.id!==b.dataset.mealDelete);try{localStorage.setItem(NUTRITION_KEY,JSON.stringify(meals));renderNutrition()}catch{meals=old;notice('Could not remove meal.')}});
  $('homeAccountBtn').addEventListener('click',()=>setPage('settings'));
 
  $('heroStart').addEventListener('click',()=>openWorkout(nextPlan().id));
@@ -410,6 +483,6 @@ function bind(){
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
-$('waterDay').value=localDayString();$('weightDay').value=localDayString();
+$('waterDay').value=localDayString();$('weightDay').value=localDayString();$('measurementDate').value=localDayString();$('mealDate').value=localDayString();
 document.body.classList.add('home-active');bind();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
 })();
