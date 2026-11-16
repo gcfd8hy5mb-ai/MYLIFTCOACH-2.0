@@ -122,6 +122,10 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
  $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
+ // A sidebar navigation click must move keyboard focus to the destination before
+ // the mobile drawer becomes inert, rather than leaving focus in a hidden menu.
+ const fromSidebar=$('sidebar').contains(document.activeElement);
+ if(fromSidebar){const target=$(next);target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}
  $('sidebar').classList.remove('open');$('sidebarScrim').classList.remove('open');document.body.classList.remove('sidebar-is-open');['menuBtn','homeMenuBtn','moreMenuBtn'].forEach(id=>$(id).setAttribute('aria-expanded','false'));$('sidebar').inert=window.matchMedia('(max-width:760px)').matches;document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
  if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
@@ -315,7 +319,11 @@ function bind(){
  }
  function closeSidebar(){
   if(!sidebar.classList.contains('open'))return;
-  if(sidebar.contains(document.activeElement)) (sidebarFocusReturn||$('homeMenuBtn')).focus();
+  if(sidebar.contains(document.activeElement)){
+   const fallback=document.body.classList.contains('home-active')?$('homeMenuBtn'):$('menuBtn');
+   const returnTarget=sidebarFocusReturn?.isConnected&&!sidebarFocusReturn.hidden?sidebarFocusReturn:fallback;
+   returnTarget.focus();
+  }
   sidebar.classList.remove('open');syncSidebar();
  }
  function openSidebar(){
