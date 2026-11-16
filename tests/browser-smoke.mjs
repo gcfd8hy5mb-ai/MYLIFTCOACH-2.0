@@ -319,7 +319,7 @@ try {
  assert.equal(cloudSaved.size,3);
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-sync-journal-v1:user-a')).items.length),0);
 
- await page.locator('#homeMenuBtn').click();
+ await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
 
 
