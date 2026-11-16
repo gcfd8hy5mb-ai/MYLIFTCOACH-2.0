@@ -20,7 +20,15 @@ function build(){
  const entries=[],seen=new Set(),counts=[];
  for(const file of files){
   const raw=fs.readFileSync(path.join(__dirname,'source',file+'.txt'),'utf8');
-  const x=(id,name,muscle,equipment,how)=>({id,name,muscle,equipment,how,tip:'Use controlled reps and a comfortable range of motion.',mistake:'Avoid rushing the movement or sacrificing form.'});
+  const x=(id,name,muscle,equipment,how)=>{
+   // The original v5 'pendulum-squat-wide' call omitted its equipment
+   // argument. Correct this one documented source typo without changing ID,
+   // exercise name or original movement instructions.
+   if(id==='pendulum-squat-wide'&&how===undefined&&typeof equipment==='string'){
+    how=equipment;equipment='Machine';
+   }
+   return {id,name,muscle,equipment,how,tip:'Use controlled reps and a comfortable range of motion.',mistake:'Avoid rushing the movement or sacrificing form.'};
+  };
   const rows=vm.runInNewContext('('+arrayLiteral(raw)+')',{x},{timeout:1500,contextCodeGeneration:{strings:false,wasm:false}});
   if(!Array.isArray(rows)||rows.length<10||rows.length>150)throw Error('Unexpected row count '+file);
   let added=0;
