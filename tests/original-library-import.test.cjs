@@ -49,3 +49,34 @@ test('2.0 starts catalog before app without loading legacy source and preserves 
   assert.equal(app.includes("localStorage.setItem('"+old+"'"),false);
  }
 });
+
+test('original four-day preset program matches original source exactly and all IDs exist',()=>{
+ const vm=require('node:vm');
+ const catalogSource=fs.readFileSync(path.join(__dirname,'../imports/original-exercises.generated.js'),'utf8');
+ const programSource=fs.readFileSync(path.join(__dirname,'../imports/original-programs.js'),'utf8');
+ const ctx=vm.createContext({});
+ vm.runInContext(catalogSource,ctx,{timeout:2500});
+ vm.runInContext(programSource,ctx,{timeout:1500});
+ const ids=new Set(ctx.MLC2ExerciseCatalog.items.map(x=>x.id));
+ const plans=JSON.parse(JSON.stringify(ctx.MLC2OriginalPrograms.plans));
+ assert.deepEqual(plans.map(x=>x.id),['original-day1','original-day2','original-day3','original-day4']);
+ assert.deepEqual(plans.map(x=>x.title),[
+  'Day 1 — Chest & Triceps','Day 2 — Back & Biceps','Day 3 — Legs','Day 4 — Shoulders & Arms'
+ ]);
+ assert.deepEqual(plans.map(x=>x.ids),[
+  ['machine-chest-press','pec-deck','triceps-pushdown'],
+  ['lat-pulldown','seated-row','preacher-curl'],
+  ['leg-press','leg-extension','seated-leg-curl','calf-raise'],
+  ['shoulder-press','lateral-raise','biceps-curl','triceps-extension']
+ ]);
+ assert.ok(plans.every(x=>x.ids.every(id=>ids.has(id))));
+ assert.doesNotMatch(programSource,/localStorage\.|document\.|fetch\(/);
+});
+test('original program catalog loads before rebuilt app and without old storage code',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+ const app=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8');
+ assert.ok(html.indexOf('src="./imports/original-programs.js')>=0);
+ assert.ok(html.indexOf('src="./imports/original-programs.js')<html.indexOf('src="./app.js'));
+ assert.ok(app.includes('const allPlans=()=>[...plans,...originalPrograms,...customPlans]'));
+ assert.ok(app.includes('Original 4-day split'));
+});
