@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="./extras-restoration.css?v=1">
 <link rel="stylesheet" href="./button-finish.css?v=1">
 <link rel="stylesheet" href="./wallpaper-all-pages.css?v=1">
-<link rel="stylesheet" href="./feature-restoration.css?v=16">
+<link rel="stylesheet" href="./feature-restoration.css?v=18">
 <style id="preview-live-visual-fix">
 /* Preview visual correction in document, last in cascade: not dependent on a cached stylesheet. */
 #home .home-below-fold .metric,
@@ -107,7 +107,7 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
 </style>
 </head>
 <body>
-<div id="previewRevision">PREVIEW FIX 17</div>
+<div id="previewRevision">PREVIEW FIX 18</div>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
  <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 6.5v11M4 9v6M2 10v4m20-4v4m-2-5v6m-2.5-8.5v11M6.5 12h11" /></symbol>
  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7c-2-2-5-2.5-9-2v14c4-.5 7 0 9 2 2-2 5-2.5 9-2V5c-4-.5-7 0-9 2Zm0 0v14" /></symbol>
@@ -217,12 +217,12 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
   <input type="hidden" name="editId" id="customEditId">
   <label for="customWorkoutName">Workout name</label><input id="customWorkoutName" name="title" maxlength="65" placeholder="My strength session" required>
   <label for="customWorkoutDesc">Description (optional)</label><input id="customWorkoutDesc" name="description" maxlength="160" placeholder="Focus for this session">
-  <fieldset class="mlc-exercise-picker"><legend>Choose exercises (1–12)</legend><div id="customExerciseOptions" class="mlc-picker-grid"></div></fieldset>
+  <fieldset class="mlc-exercise-picker"><legend>Choose exercises (1–12)</legend><label for="customExerciseSearch">Find an exercise</label><input type="search" id="customExerciseSearch" placeholder="Search all imported movements" autocomplete="off"><p id="customExerciseCount" class="tracking-footnote" role="status"></p><div id="customExerciseOptions" class="mlc-picker-grid"></div></fieldset>
   <button type="submit" class="button-primary">Save custom workout</button><button type="button" id="cancelCustomEdit" class="button-outline">Clear editor</button>
  </form></article>
  <p class="tracking-footnote">Saved in the MYLIFTCOACH 2.0 browser preview only. Original workout plans are never overwritten.</p>
 </section>
-<section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>A focused starter collection of machine-friendly movements.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button></div><div class="library-grid" id="libraryGrid"></div></section>
+<section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>The original MYLIFTCOACH exercise library, with instructions, techniques, equipment, and muscle groups.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements, equipment or techniques"></label><label class="catalog-equipment-filter" for="libraryEquipment">Equipment <select id="libraryEquipment"><option value="">All equipment</option></select></label><p id="libraryResultsCount" class="catalog-result-count" role="status"></p><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button></div><div class="library-grid" id="libraryGrid"></div></section>
  <section id="progress" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div></section>
  <section id="history" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">TRAINING ARCHIVE</div><h1>Workout history</h1><p>Review completed sessions and exercise records. Original-app records are shown read-only; 2.0 practice sessions remain separate.</p></div>
@@ -320,9 +320,10 @@ body:not(.home-active) .app-shell{position:relative;z-index:1}
  <p class="rest-demo">Practice timer · no workout data is changed</p>
 </div>
 <div id="toast" role="status" class="toast" hidden></div>
-<script defer src="./sync/sync-journal.js?v=16"></script>
-<script defer src="./sync/supabase-transport.js?v=16"></script>
-<script defer src="./sync/aux-data.js?v=16"></script>
-<script defer src="./app.js?v=17"></script>
+<script defer src="./sync/sync-journal.js?v=1"></script>
+<script defer src="./sync/supabase-transport.js?v=2"></script>
+<script defer src="./sync/aux-data.js?v=1"></script>
+<script defer src="./imports/original-exercises.generated.js?v=18"></script>
+<script defer src="./app.js?v=18"></script>
 </body>
 </html>
