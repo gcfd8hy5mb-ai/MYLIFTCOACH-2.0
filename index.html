@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="./refinement-v2.css?v=11">
 <link rel="stylesheet" href="./home-rebuild.css?v=19">
 <link rel="stylesheet" href="./sidebar-only.css?v=1">
+<link rel="stylesheet" href="./extras-restoration.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -36,12 +37,12 @@
       <button type="button" data-page="workouts" class="nav-item"><span aria-hidden="true">▤</span> Workouts &amp; plans</button>
       <button type="button" data-page="library" class="nav-item"><span aria-hidden="true">▦</span> Exercise library</button>
       <span class="nav-item nav-pending"><span aria-hidden="true">＋</span> Manage/custom workouts <small>Restoration pending</small></span>
-      <span class="nav-item nav-pending"><span aria-hidden="true">◷</span> Standalone timer <small>Restoration pending</small></span>
+      <button type="button" id="sidebarTimer" class="nav-item"><span aria-hidden="true">◷</span> Timer · 90 seconds</button>
     </div></details>
     <details class="nav-group" open><summary>PROGRESS <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
       <button type="button" data-page="progress" class="nav-item"><span aria-hidden="true">▥</span> Progress</button>
       <button type="button" data-page="history" class="nav-item"><span aria-hidden="true">◷</span> Workout history</button>
-      <span class="nav-item nav-pending"><span aria-hidden="true">▦</span> Calendar &amp; records <small>Restoration pending</small></span>
+      <button type="button" data-page="calendar" class="nav-item"><span aria-hidden="true">▦</span> Calendar &amp; records</button>
       <span class="nav-item nav-pending"><span aria-hidden="true">▤</span> Measurements &amp; photos <small>Restoration pending</small></span>
     </div></details>
     <details class="nav-group"><summary>DAILY TRACKING <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
@@ -127,6 +128,15 @@
   <div id="originalHistorySummary" class="legacy-summary"></div><div id="originalHistoryList" class="legacy-list"></div>
  </article>
  <article class="panel"><div class="panel-heading"><h3>MYLIFTCOACH 2.0 sessions</h3><span class="micro-tag">SEPARATE LOCAL RECORDS</span></div><div id="detailedDemoHistory" class="legacy-list"></div></article>
+</section>
+<section id="calendar" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">TRAINING ARCHIVE</div><h1>Calendar &amp; records</h1><p>Review dates and personal bests from MYLIFTCOACH 2.0 practice sessions. You can also load original device history read-only.</p></div>
+ <article class="panel"><div class="panel-heading"><h3>Workout calendar</h3><span class="micro-tag">DEVICE PREVIEW</span></div>
+  <div class="calendar-toolbar"><button id="calendarPrevious" class="button-outline" type="button" aria-label="Previous month">‹</button><strong id="calendarMonthLabel"></strong><button id="calendarNext" class="button-outline" type="button" aria-label="Next month">›</button></div>
+  <div id="calendarGrid" class="calendar-grid" aria-label="Workout sessions by date"></div><div id="calendarDayDetails" class="legacy-list" role="status"></div>
+ </article>
+ <article class="panel"><div class="panel-heading"><h3>Personal records</h3><span class="micro-tag">CALCULATED FROM SAVED SETS</span></div><div id="calendarRecords" class="legacy-list"></div></article>
+ <article class="panel"><div class="panel-heading"><h3>Original device records</h3><span class="micro-tag">READ-ONLY</span></div><p>Original workout data is never changed or imported into 2.0.</p><button id="calendarLoadOriginal" type="button" class="button-outline">Load original device history</button><p id="calendarOriginalStatus" role="status" class="legacy-status"></p></article>
 </section>
 <section id="tracking" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">YOUR DAILY LOG</div><h1>Daily tracking</h1><p>Track hydration and body weight while retaining the original app's records safely.</p></div>
