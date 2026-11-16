@@ -63,3 +63,21 @@ test('read denies mismatched auth or foreign server responses',async()=>{
  const bad=create({...cfg,enabled:true,getVerifiedAuth:async()=>({userId:'b',accessToken:'token'}),fetcher:async()=>{throw Error('Must not send')}});
  await assert.rejects(bad.read('session','s1',op.owner),/Owner authentication unavailable/);
 });
+
+test('listSessions accepts only owner-scoped bounded pages',async()=>{
+ const requests=[];
+ const t=create({...cfg,enabled:true,fetcher:async(url,options)=>{
+  requests.push({url,options});
+  return {ok:true,json:async()=>[{owner:op.owner,type:'session',id:'demo-draft-abc',revision:1,deleted:false,payload:{id:'demo-draft-abc',sets:[{reps:8,weight:35}]}}]};
+ }});
+ const rows=await t.listSessions(op.owner,{afterId:'',limit:50});
+ assert.equal(rows.length,1);
+ assert.match(requests[0].url,/\/rpc\/mlc2_v1_list_sessions$/);
+ assert.deepEqual(JSON.parse(requests[0].options.body),{p_after_id:'',p_limit:50});
+ assert.equal(requests[0].options.headers.Authorization,'Bearer fake-token');
+ await assert.rejects(t.listSessions(op.owner,{afterId:'',limit:101}),/Invalid session page/);
+});
+test('listSessions rejects foreign-owner records before displaying them',async()=>{
+ const t=create({...cfg,enabled:true,fetcher:async()=>({ok:true,json:async()=>[{owner:'other-user',type:'session',id:'s',revision:1,deleted:false}]})});
+ await assert.rejects(t.listSessions(op.owner),/Unverified cloud session/);
+});
