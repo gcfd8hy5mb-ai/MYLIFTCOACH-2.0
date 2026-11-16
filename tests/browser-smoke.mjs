@@ -268,6 +268,32 @@ try {
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
  assert.equal(commits,1,'Recovery must not create new cloud writes');
 
+ // An offline workout is saved to the device and queued without cloud calls.
+ await mobile.setOffline(true);
+ await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="home"]').click();
+ await page.locator('#heroStart').click();
+ await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('80');
+ await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('8');
+ await page.locator('[data-addset="chest-press"]').click();
+ await page.locator('#finishWorkout').click();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),2);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-sync-journal-v1:user-a')||'{}').items.filter(x=>x.status==='queued').length),1);
+ assert.equal(commits,1,'Offline completion must not attempt cloud writes');
+ await mobile.setOffline(false);
+ await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+ await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('Up to date'));
+ assert.equal(commits,2,'A queued offline workout should upload exactly once');
+ assert.equal(cloudSaved.size,2);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-sync-journal-v1:user-a')||'{}').items.length),0);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('Up to date'));
+ assert.equal(commits,2,'Reload must not duplicate cloud workouts');
+ await page.locator('#homeMenuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+
+
  await page.locator('#backupPreview').click();
  // Export is read-only and never includes credentials.
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
