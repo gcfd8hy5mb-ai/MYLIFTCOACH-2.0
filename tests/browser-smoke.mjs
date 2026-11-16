@@ -112,6 +112,70 @@ try {
  await page.locator('#sidebar [data-page="nutrition"]').click();
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
  await page.screenshot({path:'test-artifacts/mobile-nutrition.png',fullPage:true});
+ // Account separation and offline recovery are tested with mocked Auth, not production data.
+ let fakeOwner='user-a';
+ await page.route('**/auth/v1/**',async route=>{
+  const url=new URL(route.request().url());
+  if(url.pathname.endsWith('/token')){
+   const body=route.request().postDataJSON();
+   fakeOwner=String(body?.email||'').startsWith('b@')?'user-b':'user-a';
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+    access_token:'test-token-'+fakeOwner,refresh_token:'test-refresh-'+fakeOwner,
+    token_type:'bearer',expires_in:3600,user:{id:fakeOwner,email:fakeOwner==='user-a'?'a@example.test':'b@example.test'}
+   })});return;
+  }
+  if(url.pathname.endsWith('/user')){
+   const token=route.request().headers()['authorization']||'';
+   const who=token.includes('user-b')?'user-b':'user-a';
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:who,email:who==='user-a'?'a@example.test':'b@example.test'})});return;
+  }
+  await route.fulfill({status:401,contentType:'application/json',body:'{}'});
+ });
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+ assert.match(await page.locator('#cloudSyncStatus').innerText(),/not enabled/i);
+ await page.locator('#authAction').click();
+ await page.locator('#loginForm input[name="email"]').fill('a@example.test');
+ await page.locator('#loginForm input[name="password"]').fill('test-password');
+ await page.locator('#loginSubmit').click();
+ await page.locator('#home').waitFor({state:'visible'});
+ await page.locator('#heroStart').click();
+ await page.locator('[data-addset="chest-press"]').click();
+ await page.locator('#finishWorkout').click();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+ await page.locator('#authAction').click(); // sign out: A stays on disk, guest remains isolated.
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1')||'[]').length),1);
+ assert.equal(await page.locator('#accountIdentity').innerText().then(t=>t.includes('a@example.test')),false);
+ await page.locator('#authAction').click();
+ await page.locator('#loginForm input[name="email"]').fill('b@example.test');
+ await page.locator('#loginForm input[name="password"]').fill('test-password');
+ await page.locator('#loginSubmit').click();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-b')),null);
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+ await page.locator('#authAction').click();
+ await page.locator('#authAction').click();
+ await page.locator('#loginForm input[name="email"]').fill('a@example.test');
+ await page.locator('#loginForm input[name="password"]').fill('test-password');
+ await page.locator('#loginSubmit').click();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
+ await mobile.setOffline(true);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#home').waitFor({state:'visible'});
+ await page.locator('#homeMenuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+ assert.match(await page.locator('#connectivityStatus').innerText(),/Offline/);
+ assert.match(await page.locator('#cloudSyncStatus').innerText(),/not enabled|unavailable|checking/i);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
+ await mobile.setOffline(false);
+ await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+ await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('a@example.test'));
+ assert.match(await page.locator('#cloudSyncStatus').innerText(),/not yet enabled/i);
+ await page.locator('#backupPreview').click();
+ // Export is read-only and never includes credentials.
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
  const desktop=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1});
  const desk=await desktop.newPage();
  desk.on('pageerror',e=>errors.push(e.message));
