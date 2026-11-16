@@ -10,6 +10,9 @@ test('original exercise library extensions safely extract as pure validated meta
  assert.ok(entries.some(x=>x.id==='incline-machine-chest-press'));
  assert.ok(entries.some(x=>x.id==='barbell-bench-press'));
  assert.ok(entries.some(x=>x.id==='plate-loaded-incline-press'));
+ const pendulum=entries.find(x=>x.id==='pendulum-squat-wide');
+ assert.equal(pendulum.equipment,'Machine');
+ assert.match(pendulum.how,/wider stance/);
  assert.ok(entries.every(x=>x.id&&x.name&&x.muscle&&x.how));
 });
 test('legacy DOM installers and styles are not loaded into 2.0 approved design',()=>{
