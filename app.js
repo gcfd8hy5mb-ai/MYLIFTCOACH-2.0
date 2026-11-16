@@ -580,7 +580,10 @@ function openSignIn(){
   try{
    const response=await authRequest('token?grant_type=password',{email:String(form.get('email')).trim(),password:String(form.get('password'))});
    if(!response?.access_token||!response?.user?.id)throw Error('No verified account was returned.');
-   saveAuth(response);closeModal();notice('Account verified. This workspace remains demo-only.');setPage('home');
+   const user=await authRequest('user',null,response.access_token,'GET');
+   if(!user?.id||user.id!==response.user.id)throw Error('Sign-in identity verification failed.');
+   saveAuth({...response,user});
+   closeModal();notice('Account verified. Workout records remain device-only until cloud sync is enabled.');setPage('home');
   }catch(err){$('loginMessage').className='auth-error';$('loginMessage').textContent=err.name==='AbortError'?'The account service timed out.':/invalid/i.test(err.message)?'Email or password was not accepted.':'Could not sign in: '+String(err.message).slice(0,120)}
   finally{submit.disabled=false;submit.textContent='Sign in securely'}
  });
