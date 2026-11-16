@@ -1,4 +1,4 @@
--- PROPOSAL ONLY. NOT APPLIED TO PRISM OR ANY LIVE PROJECT.
+-- REVIEWED ISOLATED SYNC MIGRATION. Apply only to the designated PRISM project.
 -- New isolated sync namespace; review, test with two disposable auth accounts,
 -- and obtain explicit deployment approval before applying.
 -- Dependencies: Supabase Auth, PostgREST RPC; mlc2_private is NOT exposed in Data API.
@@ -64,10 +64,11 @@ declare
  v_hash text;
 begin
  if v_owner is null then raise exception 'verified user required' using errcode='42501'; end if;
- if p_type not in ('session','custom-plan','tracking','measurement','meal','goal')
-    or length(p_record_id) not between 1 and 160 or p_op_id is null
+ if p_type is null or p_type not in ('session','custom-plan','tracking','measurement','meal','goal')
+    or p_record_id is null or length(p_record_id) not between 1 and 160 or p_op_id is null
     or p_base_revision is null or p_base_revision < 0
     or p_deleted is null or (not p_deleted and (p_payload is null or jsonb_typeof(p_payload) <> 'object'))
+    or (p_payload is not null and length(p_payload::text)>100000)
  then raise exception 'invalid operation' using errcode='22023'; end if;
 
  v_hash := md5(p_type||':'||p_record_id||':'||p_base_revision::text||':'||p_deleted::text||':'||coalesce(p_payload::text,'null'));
@@ -100,13 +101,13 @@ end;$$;
 -- Explicit owner-scoped read-only RPC for controlled recovery previews.
 create or replace function public.mlc2_v1_read(p_type text,p_record_id text)
 returns jsonb language plpgsql stable security invoker set search_path=''
-as $
+as $$
 declare
  v_owner uuid := (select auth.uid());
  v_record mlc2_private.records%rowtype;
 begin
  if v_owner is null then raise exception 'verified user required' using errcode='42501'; end if;
- if p_type not in ('session','custom-plan','tracking','measurement','meal','goal')
+ if p_type is null or p_type not in ('session','custom-plan','tracking','measurement','meal','goal')
  or p_record_id is null or length(p_record_id) not between 1 and 160
  then raise exception 'invalid record' using errcode='22023'; end if;
  select * into v_record from mlc2_private.records
@@ -115,7 +116,7 @@ begin
  return jsonb_build_object('owner',v_owner,'type',v_record.record_type,
   'id',v_record.record_id,'revision',v_record.revision,
   'deleted',v_record.deleted_at is not null,'payload',v_record.payload);
-end;$;
+end;$$;
 revoke all on function public.mlc2_v1_read(text,text) from public, anon;
 grant execute on function public.mlc2_v1_read(text,text) to authenticated;
 
