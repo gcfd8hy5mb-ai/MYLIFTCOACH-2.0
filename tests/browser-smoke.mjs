@@ -336,6 +336,44 @@ try {
  await desk.locator('#sidebar [data-page="workouts"]').click();
  await desk.locator('#workouts').waitFor({state:'visible'});
  await desk.screenshot({path:'test-artifacts/desktop-workouts.png',fullPage:true});
+ // This desktop context has independent browser storage and no workout data.
+ // Same account credentials must show remote history as recoverable, then
+ // restore only after confirmation, without removing anything from iPhone.
+ await desk.route('**/auth/v1/**',async route=>{
+  const path=new URL(route.request().url()).pathname;
+  if(path.endsWith('/token')){
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+    access_token:'desktop-test-a',refresh_token:'desktop-refresh-a',expires_in:3600,
+    user:{id:'user-a',email:'a@example.test'}
+   })});return;
+  }
+  if(path.endsWith('/user')){
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:'user-a',email:'a@example.test'})});return;
+  }
+  await route.fulfill({status:401,body:'{}'});
+ });
+ await desk.route('**/rest/v1/rpc/mlc2_v1_*',async route=>{
+  const path=new URL(route.request().url()).pathname,body=route.request().postDataJSON();
+  if(path.endsWith('mlc2_v1_list_sessions')){
+   const rows=[...cloudSaved.values()].filter(x=>x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});return;
+  }
+  throw Error('Second-device recovery attempted an unexpected cloud write');
+ });
+ desk.on('dialog',dialog=>dialog.accept());
+ await desk.locator('#sidebar [data-page="settings"]').click();
+ await desk.locator('#authAction').click();
+ await desk.locator('#loginForm input[name="email"]').fill('a@example.test');
+ await desk.locator('#loginForm input[name="password"]').fill('test-password');
+ await desk.locator('#loginSubmit').click();
+ await desk.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('cloud workouts available'));
+ assert.equal(await desk.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')),null,'Second device must not auto-import remote history');
+ await desk.locator('#sidebar [data-page="settings"]').click();
+ await desk.locator('#cloudRestoreSessions').click();
+ await desk.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('Restored 3'));
+ assert.equal(await desk.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),3);
+ assert.equal(commits,4,'Restoring on second browser must not upload extra records');
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),3,'Original device must retain its data');
  assert.deepEqual(errors,[], 'JavaScript page errors detected');
  console.log('PASS: mobile Home/sidebar/calendar/timer/custom-plans/measurements/nutrition and desktop Home/Workouts');
  await desktop.close();await mobile.close();
