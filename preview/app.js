@@ -950,7 +950,7 @@ async function checkPreviewUpdate(){
 }
 function openCheckedPreviewUpdate(){
  if(availablePreviewVersion){
-  if(session){notice('Finish or close your current workout before updating.');return}
+  if(session||readDraft()){notice('Finish or discard your saved unfinished workout before updating. Your logged sets remain saved.');return}
   window.location.replace(previewUpdateUrl(availablePreviewVersion));
   return;
  }
