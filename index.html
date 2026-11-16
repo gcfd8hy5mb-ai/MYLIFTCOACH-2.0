@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="./premium-reference.css?v=19">
 <link rel="stylesheet" href="./refinement-v2.css?v=11">
 <link rel="stylesheet" href="./home-rebuild.css?v=19">
+<link rel="stylesheet" href="./sidebar-only.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -25,23 +26,43 @@
  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m10 2-.5 2.5-2 1-2.5-1-2 3.5 2 1.5v4L3 15l2 3.5 2.5-1 2 1L10 21h4l.5-2.5 2-1 2.5 1 2-3.5-2-1.5v-4L21 8l-2-3.5-2.5 1-2-1L14 2Z"/></symbol>
 </svg>
 <div class="app-shell">
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar" aria-label="MYLIFTCOACH full navigation">
   <div class="wordmark"><img class="sidebar-logo" src="./assets/myliftcoach-mark.svg?v=6" alt=""><div><strong>MYLIFTCOACH</strong><small>THE TRAINING CLUB</small></div><button type="button" id="sidebarClose" class="sidebar-close" aria-label="Close navigation menu" title="Close menu"><span aria-hidden="true">✕</span></button></div>
-  <div class="side-label">YOUR TRAINING</div>
+  
   <nav class="side-nav" aria-label="Main navigation">
-    <button type="button" data-page="home" class="nav-item selected"><span>◫</span> Overview</button>
-    <button type="button" data-page="workouts" class="nav-item"><span>▤</span> Workouts</button>
-    <button type="button" data-page="library" class="nav-item"><span>▦</span> Exercise library</button>
-    <button type="button" data-page="progress" class="nav-item"><span>▥</span> Progress</button>
-    <button type="button" data-page="settings" class="nav-item"><span>⚙</span> Settings</button>
+    <div class="side-label">HOME</div>
+    <button type="button" data-page="home" class="nav-item selected"><span aria-hidden="true">⌂</span> Overview</button>
+    <details class="nav-group" open><summary>TRAINING <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="workouts" class="nav-item"><span aria-hidden="true">▤</span> Workouts &amp; plans</button>
+      <button type="button" data-page="library" class="nav-item"><span aria-hidden="true">▦</span> Exercise library</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">＋</span> Manage/custom workouts <small>Restoration pending</small></span>
+      <span class="nav-item nav-pending"><span aria-hidden="true">◷</span> Standalone timer <small>Restoration pending</small></span>
+    </div></details>
+    <details class="nav-group" open><summary>PROGRESS <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="progress" class="nav-item"><span aria-hidden="true">▥</span> Progress</button>
+      <button type="button" data-page="history" class="nav-item"><span aria-hidden="true">◷</span> Workout history</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">▦</span> Calendar &amp; records <small>Restoration pending</small></span>
+      <span class="nav-item nav-pending"><span aria-hidden="true">▤</span> Measurements &amp; photos <small>Restoration pending</small></span>
+    </div></details>
+    <details class="nav-group"><summary>DAILY TRACKING <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="tracking" class="nav-item"><span aria-hidden="true">◈</span> Daily tracking</button>
+      <button type="button" data-page="nutrition" class="nav-item"><span aria-hidden="true">◉</span> Nutrition</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">◎</span> Complete original logs <small>Restoration pending</small></span>
+    </div></details>
+    <details class="nav-group" open><summary>ACCOUNT &amp; EXTRAS <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="coaching" class="nav-item"><span aria-hidden="true">✧</span> Coaching</button>
+      <button type="button" data-page="settings" class="nav-item"><span aria-hidden="true">⚙</span> Account &amp; settings</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">⇪</span> Data &amp; backup <small>Restoration pending</small></span>
+      <span class="nav-item nav-pending"><span aria-hidden="true">?</span> Help &amp; support <small>Restoration pending</small></span>
+    </div></details>
   </nav>
   <div class="side-spacer"></div>
-  <div class="side-support"><span class="pill-dot"></span><div><strong>Built for consistency</strong><small>Train · Track · Progress</small></div></div>
-  <div class="sidebar-foot">MYLIFTCOACH <span>2.0 · FOUNDATION</span></div>
+  <div class="sidebar-foot">MYLIFTCOACH <span>2.0</span></div>
 </aside>
+<div id="sidebarScrim" class="sidebar-scrim" aria-hidden="true"></div>
 <div class="main-wrap">
 <header class="topbar">
- <button id="menuBtn" type="button" class="mobile-menu" aria-label="Toggle navigation">☰</button>
+ <button id="menuBtn" type="button" class="mobile-menu" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button>
  <div class="top-location"><span>MYLIFTCOACH 2.0</span><strong id="pageTitle">Overview</strong></div>
  <div class="top-actions"><span class="stage-pill" id="cloudPill">DEMO WORKSPACE</span><button type="button" class="avatar" id="avatarBtn" aria-label="Open settings">MC</button></div>
 </header>
@@ -66,7 +87,7 @@
  </section>
  <section id="home" class="page home-rebuilt">
   <div class="reference-home-header">
-    <button type="button" id="homeMenuBtn" class="home-menu-button" aria-label="Open navigation"><svg class="app-icon"><use href="#i-more"></use></svg></button>
+    <button type="button" id="homeMenuBtn" class="home-menu-button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><svg class="app-icon"><use href="#i-more"></use></svg></button>
     <div class="reference-home-brand"><img src="./assets/myliftcoach-mark.svg?v=6" alt=""><span>MYLIFTCOACH <small>2.0</small></span></div>
     <button type="button" id="homeAccountBtn" class="home-account-button" aria-label="Open account"><svg class="app-icon"><use href="#i-coach"></use></svg></button>
   </div>
@@ -86,7 +107,7 @@
     <button type="button" data-shortcut="progress"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-chart"></use></svg></span><strong>Progress</strong></button>
     <button type="button" data-shortcut="coaching"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-coach"></use></svg></span><strong>Coaching</strong></button>
     <button type="button" data-shortcut="nutrition"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-nutrition"></use></svg></span><strong>Nutrition</strong></button>
-    <button type="button" data-shortcut="settings"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-more"></use></svg></span><strong>More</strong></button>
+    <button type="button" data-sidebar-open="true"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-more"></use></svg></span><strong>More</strong></button>
   </div>
   <div class="home-below-fold">
     <div class="section-top"><div><div class="eyebrow">YOUR TRAINING</div><h2>Training overview</h2></div></div>
@@ -138,7 +159,7 @@
 </main>
 <footer class="site-footer"><span>MYLIFTCOACH 2.0</span><span>STRONGER BY DESIGN · PREVIEW</span></footer>
 </div></div>
-<nav class="bottom-tabs" aria-label="Mobile navigation"><button data-page="home" class="active"><svg class="app-icon"><use href="#i-home"></use></svg><small>Home</small></button><button data-page="workouts"><svg class="app-icon"><use href="#i-dumbbell"></use></svg><small>Workouts</small></button><button data-page="progress"><svg class="app-icon"><use href="#i-chart"></use></svg><small>Progress</small></button><button data-page="nutrition"><svg class="app-icon"><use href="#i-nutrition"></use></svg><small>Nutrition</small></button><button data-page="settings"><svg class="app-icon"><use href="#i-more"></use></svg><small>More</small></button></nav>
+<nav class="bottom-tabs" aria-label="Mobile navigation"><button data-page="home" class="active"><svg class="app-icon"><use href="#i-home"></use></svg><small>Home</small></button><button data-page="workouts"><svg class="app-icon"><use href="#i-dumbbell"></use></svg><small>Workouts</small></button><button data-page="progress"><svg class="app-icon"><use href="#i-chart"></use></svg><small>Progress</small></button><button data-page="nutrition"><svg class="app-icon"><use href="#i-nutrition"></use></svg><small>Nutrition</small></button><button type="button" id="moreMenuBtn" aria-label="Open extras navigation" aria-controls="sidebar" aria-expanded="false"><svg class="app-icon"><use href="#i-more"></use></svg><small>More</small></button></nav>
 <div id="modal" class="modal" hidden><div class="modal-panel"><button id="closeModal" class="modal-close" type="button" aria-label="Close dialog">×</button><div id="modalContent"></div></div></div>
 <div id="restScreen" class="rest-screen" hidden role="dialog" aria-modal="true" aria-label="Rest timer">
  <div class="rest-top"><button id="restClose" type="button" aria-label="Close rest timer">‹</button><strong>Resting</strong><span></span></div>
