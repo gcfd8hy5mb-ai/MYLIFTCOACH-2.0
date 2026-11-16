@@ -43,7 +43,31 @@ try {
  assert.match(await page.locator('#customWorkoutList').innerText(),/My test routine/);
  await page.locator('#customWorkoutList [data-custom-run]').click();
  assert.equal(await page.locator('#modal').isVisible(),true);
+ await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('65');
+ await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('9');
+ await page.locator('[data-addset="chest-press"]').click();
+ assert.match(await page.locator('#draftSaveStatus').innerText(),/1 sets/);
+ const savedDraft=await page.evaluate(()=>localStorage.getItem('mlc2-active-session-v1:guest'));
+ assert.match(savedDraft,/chest-press/);
  await page.locator('#closeModal').click();
+ assert.equal(await page.locator('#activeDraftWorkouts [data-draft-action="resume"]').isVisible(),false);
+ // The custom-plan modal was launched from Manage; the Home/Workouts banners offer recovery.
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#activeDraftNotice [data-draft-action="resume"]').click();
+ assert.match(await page.locator('[data-count="chest-press"]').innerText(),/1 logged/);
+ // Confirm saved weight and reps survive refresh and undo updates storage before displaying success.
+ await page.locator('[data-undo="chest-press"]').click();
+ assert.match(await page.locator('#draftSaveStatus').innerText(),/0 sets/);
+ await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('70');
+ await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('10');
+ await page.locator('[data-addset="chest-press"]').click();
+ await page.locator('#finishWorkout').click();
+ await page.locator('#progress').waitFor({state:'visible'});
+ assert.match(await page.locator('#sessionHistory').innerText(),/My test routine/);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-active-session-v1:guest')),null);
+ await page.reload({waitUntil:'domcontentloaded'});
+ assert.equal(await page.locator('#activeDraftNotice').isVisible(),false);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1')||'[]').length),1);
  await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="measurements"]').click();
  await page.locator('#measurementsForm input[name="waist"]').fill('32.5');
