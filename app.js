@@ -104,7 +104,43 @@ function renderTracking(){
  const combined=[...originalSnapshot.water.map(x=>({...x,type:'water'})),...originalSnapshot.weight.map(x=>({...x,type:'weight'}))].sort((a,b)=>b.day.localeCompare(a.day)).slice(0,60);
  $('originalTrackingList').innerHTML=combined.length?combined.map(x=>'<div class="history-entry tracking-row"><div><strong>'+escapeHTML(x.type==='water'?'Water':'Body weight')+'</strong><small>'+escapeHTML(x.day)+' · '+escapeHTML(String(x.type==='water'?Math.round(x.amount):x.value))+(x.type==='water'?' mL':' lb')+'</small></div><span class="micro-tag">ORIGINAL</span></div>').join(''):'<p class="empty-note">No original daily tracking records found on this browser. Cloud data was not queried or altered.</p>';
 }
-function viewOriginal(){originalSnapshot=getOriginalSnapshot();renderHistory();renderTracking();renderOriginalPlans();notice('Original records checked locally. No original records were changed.')}
+/* Read-only history-derived calendar. This does not write to original storage or Supabase. */
+let calendarCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+let selectedCalendarDay='';
+function dateKey(value){
+ const d=new Date(value);
+ if(!Number.isFinite(d.getTime()))return '';
+ return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+}
+function calendarSources(){
+ return [...demoSessions.map(s=>({date:dateKey(s.created),title:s.title,kind:'2.0 practice',sets:s.sets.map(x=>({name:exercises.find(e=>e.id===x.exerciseId)?.name||x.exerciseId,weight:Number(x.weight),reps:Number(x.reps)}))})),...(originalSnapshot?.sessions||[]).map(s=>({date:dateKey(s.date),title:s.title,kind:'Original · read-only',sets:s.exercises.flatMap(e=>e.sets.map(x=>({name:e.name,weight:Number(x.weight),reps:Number(x.reps)})))}))].filter(s=>s.date);
+}
+function renderCalendar(){
+ const year=calendarCursor.getFullYear(),month=calendarCursor.getMonth();
+ $('calendarMonthLabel').textContent=calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+ const first=new Date(year,month,1).getDay(),days=new Date(year,month+1,0).getDate();
+ const entries=calendarSources(),counts=new Map();
+ entries.forEach(s=>counts.set(s.date,(counts.get(s.date)||0)+1));
+ let cells='<div class="calendar-weekday">Sun</div><div class="calendar-weekday">Mon</div><div class="calendar-weekday">Tue</div><div class="calendar-weekday">Wed</div><div class="calendar-weekday">Thu</div><div class="calendar-weekday">Fri</div><div class="calendar-weekday">Sat</div>';
+ for(let i=0;i<first;i++)cells+='<span class="calendar-empty" aria-hidden="true"></span>';
+ for(let i=1;i<=days;i++){
+  const key=[year,String(month+1).padStart(2,'0'),String(i).padStart(2,'0')].join('-'),count=counts.get(key)||0;
+  cells+='<button type="button" class="calendar-day'+(count?' has-session':'')+(selectedCalendarDay===key?' selected':'')+'" data-calendar-day="'+key+'" aria-label="'+key+', '+count+' workouts" aria-pressed="'+(selectedCalendarDay===key)+'">'+i+(count?'<small>'+count+'</small>':'')+'</button>';
+ }
+ $('calendarGrid').innerHTML=cells;
+ const dayItems=entries.filter(s=>s.date===selectedCalendarDay);
+ $('calendarDayDetails').innerHTML=selectedCalendarDay?(dayItems.length?dayItems.map(s=>'<div class="history-entry"><strong>'+escapeHTML(s.title)+'</strong><small>'+escapeHTML(s.kind)+' · '+s.sets.length+' sets</small></div>').join(''):'<p class="empty-note">No recorded sessions for '+escapeHTML(selectedCalendarDay)+'.</p>'):'<p class="empty-note">Select a date to review recorded sessions.</p>';
+ const best=new Map();
+ for(const session of entries)for(const set of session.sets){
+  if(!Number.isFinite(set.weight)||!Number.isFinite(set.reps)||set.weight<0||set.reps<=0)continue;
+  const key=String(set.name||'Exercise');
+  const current=best.get(key);if(!current||set.weight>current.weight||(set.weight===current.weight&&set.reps>current.reps))best.set(key,{weight:set.weight,reps:set.reps,kind:session.kind});
+ }
+ $('calendarRecords').innerHTML=best.size?[...best].sort((a,b)=>a[0].localeCompare(b[0])).map(([name,x])=>'<div class="history-entry"><strong>'+escapeHTML(name)+'</strong><small>Heaviest set: '+x.weight+' lb × '+x.reps+' reps · '+escapeHTML(x.kind)+'</small></div>').join(''):'<p class="empty-note">No saved sets to calculate records yet.</p>';
+ $('calendarOriginalStatus').textContent=originalSnapshot?'Loaded '+originalSnapshot.sessions.length+' original sessions read-only from this browser.':'Original records not loaded. Preview data is separate.';
+}
+
+function viewOriginal(){originalSnapshot=getOriginalSnapshot();renderHistory();renderTracking();renderOriginalPlans();renderCalendar();notice('Original records checked locally. No original records were changed.')}
 function logDaily(event,type){
  event.preventDefault();
  const form=new FormData(event.currentTarget);
@@ -118,17 +154,17 @@ function logDaily(event,type){
 
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notice(message){const t=$('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
-function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking'].includes(next))return;page=next;
+function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking','calendar'].includes(next))return;page=next;
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
- $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
+ $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking',calendar:'Calendar & records'})[next];
  // A sidebar navigation click must move keyboard focus to the destination before
  // the mobile drawer becomes inert, rather than leaving focus in a hidden menu.
  const fromSidebar=$('sidebar').contains(document.activeElement);
  if(fromSidebar){const target=$(next);target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}
  $('sidebar').classList.remove('open');$('sidebarScrim').classList.remove('open');document.body.classList.remove('sidebar-is-open');['menuBtn','homeMenuBtn','moreMenuBtn'].forEach(id=>$(id).setAttribute('aria-expanded','false'));$('sidebar').inert=window.matchMedia('(max-width:760px)').matches;document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
- if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
+ if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();if(next==='calendar')renderCalendar();
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
 function nextPlan(){return plans[demoSessions.length%plans.length]}
@@ -340,6 +376,11 @@ function bind(){
  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeSidebar()});
  sidebarMobile.addEventListener('change',()=>{sidebar.classList.remove('open');syncSidebar()});
  syncSidebar();
+ $('sidebarTimer').addEventListener('click',()=>{closeSidebar();openRest()});
+ $('calendarPrevious').addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);renderCalendar()});
+ $('calendarNext').addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderCalendar()});
+ $('calendarGrid').addEventListener('click',event=>{const day=event.target.closest('[data-calendar-day]');if(day){selectedCalendarDay=day.dataset.calendarDay;renderCalendar()}});
+ $('calendarLoadOriginal').addEventListener('click',viewOriginal);
  $('homeAccountBtn').addEventListener('click',()=>setPage('settings'));
 
  $('heroStart').addEventListener('click',()=>openWorkout(nextPlan().id));
