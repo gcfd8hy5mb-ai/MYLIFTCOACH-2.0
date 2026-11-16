@@ -113,11 +113,27 @@ try {
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
  await page.screenshot({path:'test-artifacts/mobile-nutrition.png',fullPage:true});
  // Account separation and offline recovery are tested with mocked Auth, not production data.
- let fakeOwner='user-a',failAuth=false;
+ let fakeOwner='user-a',failAuth=false,refreshCalls=0,recoveryCalls=0,logoutCalls=0;
  await page.route('**/auth/v1/**',async route=>{
   const url=new URL(route.request().url());
+  if(url.pathname.endsWith('/recover')){
+   recoveryCalls++;
+   await route.fulfill({status:200,contentType:'application/json',body:'{}'});return;
+  }
+  if(url.pathname.endsWith('/logout')){
+   logoutCalls++;
+   await route.fulfill({status:204,body:''});return;
+  }
   if(url.pathname.endsWith('/token')){
    const body=route.request().postDataJSON();
+   if(url.searchParams.get('grant_type')==='refresh_token'){
+    refreshCalls++;
+    const who=String(body?.refresh_token||'').includes('user-b')?'user-b':'user-a';
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     access_token:'test-token-'+who+'-refreshed',refresh_token:'test-refresh-'+who,
+     expires_in:3600,token_type:'bearer',user:{id:who,email:who==='user-a'?'a@example.test':'b@example.test'}
+    })});return;
+   }
    fakeOwner=String(body?.email||'').startsWith('b@')?'user-b':'user-a';
    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
     access_token:'test-token-'+fakeOwner,refresh_token:'test-refresh-'+fakeOwner,
@@ -136,6 +152,13 @@ try {
  await page.locator('#sidebar [data-page="settings"]').click();
  assert.match(await page.locator('#cloudSyncStatus').innerText(),/not enabled/i);
  await page.locator('#authAction').click();
+ // Original-app style forgot-password flow uses same verified PRISM Auth endpoint.
+ await page.locator('#forgotPassword').click();
+ await page.locator('#resetPasswordForm input[name="email"]').fill('a@example.test');
+ await page.locator('#resetPasswordSubmit').click();
+ await page.waitForFunction(()=>document.getElementById('resetPasswordStatus')?.textContent.includes('recovery link'));
+ assert.equal(recoveryCalls,1);
+ await page.locator('#resetBackToLogin').click();
  await page.locator('#loginForm input[name="email"]').fill('a@example.test');
  await page.locator('#loginForm input[name="password"]').fill('test-password');
  await page.locator('#loginSubmit').click();
@@ -146,7 +169,10 @@ try {
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
  await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
- await page.locator('#authAction').click(); // sign out: A stays on disk, guest remains isolated.
+ await page.locator('#authAction').click(); // server logout + local isolation
+ await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('Not signed in'));
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-auth-session-v1')),null);
+ assert.equal(logoutCalls,1);
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1')||'[]').length),1);
  assert.equal(await page.locator('#accountIdentity').innerText().then(t=>t.includes('a@example.test')),false);
  await page.locator('#authAction').click();
@@ -157,13 +183,23 @@ try {
  await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
  await page.locator('#authAction').click();
+ await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('Not signed in'));
  await page.locator('#authAction').click();
  await page.locator('#loginForm input[name="email"]').fill('a@example.test');
  await page.locator('#loginForm input[name="password"]').fill('test-password');
  await page.locator('#loginSubmit').click();
  await page.locator('#home').waitFor({state:'visible'});
- await page.waitForFunction(()=>{try{return JSON.parse(sessionStorage.getItem('mlc2-auth-session-v1')).user.id==='user-a'}catch{return false}});
+ await page.waitForFunction(()=>{try{return JSON.parse(localStorage.getItem('mlc2-auth-session-v1')).user.id==='user-a'}catch{return false}});
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
+ // After a cold reload the original-style persistent session should be verified.
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('a@example.test'));
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-auth-session-v1')!==null),true);
+ // Force expiry to test refresh-token rotation without re-entering password.
+ await page.evaluate(()=>{const k='mlc2-auth-session-v1',a=JSON.parse(localStorage.getItem(k));a.expires_at=1;localStorage.setItem(k,JSON.stringify(a))});
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('a@example.test'));
+ assert.equal(refreshCalls,1);
  failAuth=true; // Reopen while authentication endpoint is temporarily unavailable.
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#home').waitFor({state:'visible'});
@@ -173,14 +209,14 @@ try {
  const authDiagnostic=await page.evaluate(()=>({
   status:document.getElementById('cloudSyncStatus').textContent,
   identity:document.getElementById('accountIdentity').textContent,
-  stored:!!sessionStorage.getItem('mlc2-auth-session-v1'),
+  stored:!!localStorage.getItem('mlc2-auth-session-v1'),
   pill:document.getElementById('backendStatus').textContent
  }));
  console.log('Offline auth diagnostic:',JSON.stringify(authDiagnostic));
  assert.equal(authDiagnostic.stored,true,'Transient auth failure should not delete tokens');
  assert.doesNotMatch(authDiagnostic.identity,/a@example.test/,'Unverified account must not expose scoped data');
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
- assert.equal(await page.evaluate(()=>sessionStorage.getItem('mlc2-auth-session-v1')!==null),true);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-auth-session-v1')!==null),true);
  await mobile.setOffline(true);await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
  assert.match(await page.locator('#connectivityStatus').innerText(),/Offline/);
  failAuth=false;
