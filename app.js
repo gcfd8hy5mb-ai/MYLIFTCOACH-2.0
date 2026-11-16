@@ -516,7 +516,8 @@ async function flushAutoSync(){
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (original training data not loaded)':authChecking?'Verifying your saved sign-in…':authUnavailable?'Account verification unavailable · preview records remain on this device':'Not signed in. You can still explore the demo.';
  $('backendStatus').textContent=account?'VERIFIED':authChecking?'CHECKING':authUnavailable?'OFFLINE':'NOT CONNECTED';
- $('cloudPill').textContent=account?'SIGNED IN · DEVICE ONLY':'DEVICE-ONLY PREVIEW';
+ $('cloudPill').textContent=account?'SIGNED IN · AUTO SYNC':'DEVICE-ONLY PREVIEW';
+ if($('cloudModeChip'))$('cloudModeChip').textContent=account?(navigator.onLine?'AUTO ON':'OFFLINE'):'DEVICE ONLY';
  $('authAction').textContent=account?'Sign out':authChecking?'Checking sign-in…':'Sign in with existing account';
  $('authAction').disabled=authChecking;
  $('cloudUploadSessions').disabled=authChecking||!account||cloudOperationBusy;
