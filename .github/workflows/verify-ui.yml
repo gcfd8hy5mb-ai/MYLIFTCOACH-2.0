@@ -1,0 +1,22 @@
+name: Verify MYLIFTCOACH UI
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "app.js"
+      - "*.css"
+      - "tests/**"
+      - ".github/workflows/verify-ui.yml"
+  workflow_dispatch:
+jobs:
+  sidebar-and-buttons:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check sidebar, button palette and preview isolation
+        run: node --test tests/sidebar-design.test.cjs
