@@ -1,3 +1,5 @@
+> **Phase 4 update (2026-11-15):** The isolated schema was installed using Supabase migration `create_mlc2_isolated_sync_v1` (version `20261116024621`). This document records the earlier pre-deployment state. For current live DB verification and remaining gates, see [Phase 4](RELIABILITY-PHASE-4-SUPABASE.md). The app cloud sync remains OFF.
+
 # MYLIFTCOACH 2.0 — Cloud Synchronization Foundation (Phase 3)
 
 **Status:** code and test-only development; backend NOT deployed; browser preview does NOT enable cloud writes. The original PRISM workout records, security policies and authentication records are unchanged.
