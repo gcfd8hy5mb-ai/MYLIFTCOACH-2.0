@@ -50,6 +50,7 @@ try {
  await page.locator('#measurementsForm button[type="submit"]').click();
  assert.match(await page.locator('#measurementHistory').innerText(),/32.5/);
  await page.locator('#menuBtn').click();
+ await page.locator('#sidebar .nav-group summary').filter({hasText:'DAILY TRACKING'}).click();
  await page.locator('#sidebar [data-page="nutrition"]').click();
  await page.locator('#mealForm input[name="name"]').fill('Test lunch');
  for(const [key,value] of [['calories','450'],['protein','38'],['carbs','42'],['fat','12']]){
@@ -59,6 +60,7 @@ try {
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#menuBtn').click();
+ await page.locator('#sidebar .nav-group summary').filter({hasText:'DAILY TRACKING'}).click();
  await page.locator('#sidebar [data-page="nutrition"]').click();
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
  await page.screenshot({path:'test-artifacts/mobile-nutrition.png',fullPage:true});
