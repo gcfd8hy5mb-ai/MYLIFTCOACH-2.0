@@ -126,3 +126,33 @@
  background:linear-gradient(150deg,#16262b,#09161b)!important;
  border-color:#cda669!important;
 }
+
+/* Workout logging + rest preview: match large panels to approved charcoal buttons. */
+.modal-panel .log-card,
+.modal-panel .workout-log .log-card,
+.rest-screen .rest-next{
+ background-color:#09171c!important;
+ background-image:linear-gradient(155deg,#17272d 0%,#0e1d22 48%,#081216 100%)!important;
+ background-position:center!important;
+ background-size:auto!important;
+ border:1.5px solid #d8af70!important;
+ color:#fff1d6!important;
+ box-shadow:inset 0 1px 0 rgba(255,236,189,.18),0 5px 13px rgba(0,0,0,.42)!important;
+}
+.modal-panel .log-card h4,
+.modal-panel .log-card .log-title,
+.rest-screen .rest-next strong{color:#fff0d5!important}
+.modal-panel .log-card input{
+ background:#0b1a20!important;
+ border-color:#d5ab6b!important;
+ color:#f9efdc!important;
+}
+.modal-panel .logged-count{
+ background:linear-gradient(150deg,#16262b,#09161b)!important;
+ border:1px solid #d9b16e!important;
+ color:#f4d5a0!important;
+}
+.rest-screen .rest-face{
+ background:radial-gradient(ellipse at 45% 35%,#1b3035,#09171d 75%)!important;
+ border:2px solid rgba(248,224,169,.7)!important;
+}
