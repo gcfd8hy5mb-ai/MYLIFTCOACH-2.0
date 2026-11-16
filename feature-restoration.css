@@ -50,3 +50,23 @@
  font-weight:750;
 }
 #draftSaveStatus{color:#f9d79f!important;margin:12px 0!important}
+
+/* Original exercise catalog — follows the approved emerald/charcoal/gold palette. */
+#libraryChips{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:7px;-webkit-overflow-scrolling:touch}
+#libraryChips button{flex:0 0 auto;white-space:nowrap}
+.catalog-equipment-filter{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;color:#f7deac;font-weight:650;font-size:13px}
+.catalog-equipment-filter select{flex:1;max-width:230px;min-height:42px;padding:8px 12px;color:#f8e7c4;background:#102125;border:1px solid #d1a66c;border-radius:10px}
+.catalog-result-count{margin:12px 0;color:#f3dfbf;font-size:12px}
+.catalog-icon{display:flex!important;align-items:center;justify-content:center;color:#eac182;background:linear-gradient(135deg,#17363a,#071920)!important;border:1px solid #bd945b;border-radius:12px;min-width:58px;min-height:58px}
+.catalog-icon .app-icon{width:34px;height:34px;stroke:currentColor;fill:none;stroke-width:1.6}
+#libraryGrid .library-card{align-items:flex-start}
+#libraryGrid .library-info{min-width:0}
+#libraryGrid .library-info details{margin-top:9px}
+#libraryGrid .library-info details p,#libraryGrid .library-info details li{line-height:1.55;color:#f4e7d1}
+#libraryGrid .library-info details ul{padding-left:18px;margin:7px 0 13px}
+#libraryGrid .library-info details strong{display:block;margin-top:11px;color:#f3cd8b}
+#customExerciseSearch{box-sizing:border-box;width:100%;min-height:43px;padding:10px 12px;margin:7px 0;border:1px solid #c5a171;border-radius:10px;color:#f7e7cf;background:#10252a}
+#customExerciseCount{margin:5px 0 11px;color:#e8c797;font-size:12px}
+#customExerciseOptions{max-height:360px;overflow:auto;overscroll-behavior:contain;padding:5px;border:1px solid #93744b;border-radius:12px;scrollbar-width:thin}
+#customExerciseOptions .mlc-option{padding:9px 6px}
+@media(max-width:760px){.catalog-icon{min-width:48px;min-height:48px}.catalog-icon .app-icon{width:27px;height:27px}}
