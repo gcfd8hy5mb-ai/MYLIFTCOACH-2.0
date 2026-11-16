@@ -41,7 +41,11 @@ function storeDemo(){localStorage.setItem(DEMO_KEY,JSON.stringify(demoSessions))
 // or removeItem with workoutHistoryV52, customWorkoutsV5 or dailyTrackingV1.
 function safeOriginal(key,kind){
  try{
-  const raw=localStorage.getItem(key);
+  // The original app stores signed-in data under a user-scoped key.
+  // Never browse another user's scoped records or fall back to guest data
+  // while an account is authenticated in 2.0.
+  const keyForOwner=account?.id?'prismAccountLocalV1:'+account.id+':'+key:key;
+  const raw=localStorage.getItem(keyForOwner);
   if(!raw||raw.length>5_000_000)return kind==='array'?[]:{};
   const value=JSON.parse(raw);
   return kind==='array'?(Array.isArray(value)?value.slice(0,1000):[]):(value&&typeof value==='object'&&!Array.isArray(value)?value:{});
@@ -76,7 +80,7 @@ function formatDate(value){const d=new Date(value);return Number.isFinite(d.getT
 function renderHistory(){
  const original=originalSnapshot?.sessions||[];
  const demo=demoSessions||[];
- $('legacyHistoryStatus').textContent=originalSnapshot?original.length+' original sessions available on this browser (read-only).':'Not loaded. Tap View original records to check this browser.';
+ $('legacyHistoryStatus').textContent=originalSnapshot?original.length+' original sessions available on this browser (read-only).':'Not loaded. Tap View original records to check this browser. For signed-in original records, sign in to the same account first.';
  const setCount=original.reduce((n,x)=>n+x.exercises.reduce((m,e)=>m+e.sets.length,0),0);
  $('originalHistorySummary').textContent=originalSnapshot?original.length+' workouts · '+setCount+' sets':'';
  $('originalHistoryList').innerHTML=originalSnapshot?(original.length?original.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.date))+' · '+x.exercises.length+' movements</small></summary>'+x.exercises.map(y=>'<div class="history-exercise"><b>'+escapeHTML(y.name)+'</b><small>'+y.sets.map(t=>escapeHTML(String(t.weight))+' lb × '+escapeHTML(String(t.reps))).join(' · ')+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No original session records found in this browser. Your original app or Supabase may store them elsewhere; no data was changed.</p>'):'';
@@ -259,11 +263,11 @@ async function authRequest(path,body,token,method='POST'){
   return data;
  }finally{clearTimeout(timer)}
 }
-function saveAuth(data){
+function saveAuth(data){originalSnapshot=null;
  const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
  sessionStorage.setItem(AUTH_KEY,JSON.stringify(session));auth=session;account=data.user;renderSettings();
 }
-function clearAuth(){sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;renderSettings()}
+function clearAuth(){sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;renderSettings();renderHistory();renderTracking();renderOriginalPlans()}
 async function validateStoredAuth(){
  try{
   const saved=JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null');
