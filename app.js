@@ -213,7 +213,7 @@ function removeCustomPlan(id){
 function saveMeasurements(e){
  e.preventDefault();const data=new FormData(e.currentTarget),day=String(data.get('day')||'');
  const keys=['waist','chest','hips','arm','thigh'],values={};for(const key of keys){const raw=String(data.get(key)||'').trim();if(raw){const n=Number(raw);if(!Number.isFinite(n)||n<=0||n>100){notice('Check measurement values.');return}values[key]=n}}
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(day)||!Object.keys(values).length){notice('Enter a date and at least one measurement.');return}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Object.keys(values).length){notice('Enter a date and at least one measurement.');return}
  const previous=[...measurements];measurements.unshift({id:'measure-'+Date.now(),day,values});measurements=measurements.slice(0,200);
  try{localStorage.setItem(MEASUREMENT_KEY,JSON.stringify(measurements));renderMeasurements();e.currentTarget.reset();$('measurementDate').value=localDayString();notice('Measurements saved locally.')}catch{measurements=previous;notice('Could not save measurements.')}
 }
@@ -223,7 +223,7 @@ function renderMeasurements(){
 function saveMeal(e){
  e.preventDefault();const data=new FormData(e.currentTarget),name=String(data.get('name')||'').trim(),day=String(data.get('day')||''),values={};
  for(const key of ['calories','protein','carbs','fat']){values[key]=Number(data.get(key));if(!Number.isFinite(values[key])||values[key]<0||values[key]>10000){notice('Enter valid meal numbers.');return}}
- if(!name||name.length>80||!/^\\d{4}-\\d{2}-\\d{2}$/.test(day)){notice('Enter a meal name and date.');return}
+ if(!name||name.length>80||!/^\d{4}-\d{2}-\d{2}$/.test(day)){notice('Enter a meal name and date.');return}
  const old=[...meals];meals.unshift({id:'meal-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),day,name,...values});meals=meals.slice(0,500);
  try{localStorage.setItem(NUTRITION_KEY,JSON.stringify(meals));renderNutrition();e.currentTarget.reset();$('mealDate').value=localDayString();notice('Meal saved in preview.')}catch{meals=old;notice('Could not save meal.')}
 }
