@@ -167,7 +167,7 @@ try {
  await page.locator('#home').waitFor({state:'visible'});
  await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
- await page.waitForFunction(()=>document.getElementById('cloudSyncStatus').textContent.includes('unavailable'));
+ await page.waitForFunction(()=>document.getElementById('cloudSyncStatus').textContent.toLowerCase().includes('unavailable'));
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('mlc2-auth-session-v1')!==null),true);
  await mobile.setOffline(true);await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
