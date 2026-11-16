@@ -195,12 +195,9 @@ try {
  await page.waitForFunction(()=>document.getElementById('autoSyncStatus').textContent.includes('Up to date'));
  assert.equal(commits,1,'Completed signed-in session uploads automatically');
  assert.equal(cloudSaved.size,1);
- await page.locator('#homeMenuBtn').click();
+ await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
  assert.match(await page.locator('#syncHealth').innerText(),/0 pending uploads · Last verified:/);
- await page.locator('#menuBtn').click();
- await page.locator('#sidebar [data-page="home"]').click();
- await page.locator('#sidebar [data-page="settings"]').click();
  await page.locator('#authAction').click(); // server logout + local isolation
  await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('Not signed in'));
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-auth-session-v1')),null);
