@@ -307,12 +307,127 @@ function downloadPreviewBackup(){
  }catch{notice('Could not export the preview backup. Your saved data was not changed.')}
 }
 
+
+/* Explicit opt-in 2.0-only cloud transfer. No upload on sign-in, app startup,
+   session completion, refresh or reconnect. Never writes original PRISM tables. */
+let cloudOperationBusy=false;
+const cloudActionMessage=message=>{const el=$('cloudActionStatus');if(el)el.textContent=message};
+function validCloudSession(value){
+ return value&&typeof value==='object'&&typeof value.id==='string'&&/^demo-draft-[a-z0-9-]+$/.test(value.id)&&
+  value.id.length<=160&&typeof value.title==='string'&&value.title.length<=110&&
+  typeof value.created==='string'&&Number.isFinite(Date.parse(value.created))&&
+  Array.isArray(value.sets)&&value.sets.length>=1&&value.sets.length<=300&&
+  value.sets.every(set=>set&&typeof set.exerciseId==='string'&&set.exerciseId.length<=100&&
+   Number.isFinite(set.weight)&&set.weight>=0&&set.weight<=1500&&
+   Number.isInteger(set.reps)&&set.reps>=1&&set.reps<=100);
+}
+async function verifiedCloudAccess(){
+ if(!account?.id||!navigator.onLine)throw Error('Sign in and connect to the internet first.');
+ if(!window.MLC2Sync||!window.MLC2SupabaseTransport)throw Error('Cloud sync modules are unavailable.');
+ let creds=readStoredAuth();
+ if(!creds||creds.user?.id!==account.id)throw Error('Your account must be verified again.');
+ if(creds.expires_at<Date.now()/1000+60){
+  await validateStoredAuth();creds=readStoredAuth();
+  if(!account?.id||!creds?.access_token||creds.user?.id!==account.id)throw Error('Account verification failed.');
+ }
+ const who=await authRequest('user',null,creds.access_token,'GET');
+ if(!who?.id||who.id!==account.id)throw Error('Account identity mismatch.');
+ return {
+  owner:who.id,
+  transport:window.MLC2SupabaseTransport.create({
+   baseUrl:BACKEND,publishableKey:PUBLIC_KEY,fetcher:window.fetch.bind(window),
+   enabled:true,
+   getVerifiedAuth:async()=>{
+    const c=readStoredAuth();
+    if(!c||c.user?.id!==who.id||c.expires_at<Date.now()/1000+30)throw Error('Sign-in needs renewal.');
+    return {userId:who.id,accessToken:c.access_token};
+   }
+  })
+ };
+}
+async function listCloudSessions(transport,owner){
+ let rows=[],afterId='';
+ for(let page=0;page<20;page++){
+  const next=await transport.listSessions(owner,{afterId,limit:50});
+  if(!next.length)return rows;
+  if(next.some(x=>x.id<=afterId))throw Error('Cloud pagination is not ordered.');
+  rows.push(...next);
+  if(next.length<50)return rows;
+  afterId=next[next.length-1].id;
+ }
+ throw Error('Cloud session list exceeds recovery limit. No changes made.');
+}
+function canonicalCloudValue(value){
+ if(Array.isArray(value))return value.map(canonicalCloudValue);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonicalCloudValue(value[k])]));
+ return value;
+}
+async function manuallyUploadWorkouts(){
+ if(cloudOperationBusy)return;
+ if(!account?.id){cloudActionMessage('Sign in to your existing MYLIFTCOACH account first.');return}
+ const local=demoSessions.filter(validCloudSession);
+ if(!local.length){cloudActionMessage('No completed 2.0 workouts are ready to sync.');return}
+ if(!confirm('Upload '+local.length+' completed MYLIFTCOACH 2.0 workouts to your private cloud space? Original workouts will not be changed.'))return;
+ cloudOperationBusy=true;cloudActionMessage('Verifying your account and checking cloud history…');
+ const selectedOwner=account.id;
+ try{
+  const {owner,transport}=await verifiedCloudAccess();
+  if(owner!==selectedOwner)throw Error('Account changed.');
+  const cloud=await listCloudSessions(transport,owner);
+  const remote=new Map(cloud.map(x=>[x.id,x]));
+  const engine=window.MLC2Sync.create({owner,storage:localStorage,transport,enabled:true});
+  const queued=new Set(engine.list().items.map(x=>x.id));
+  let added=0,conflicts=0,existing=0;
+  for(const row of local){
+   const previous=remote.get(row.id);
+   if(previous){
+    if(previous.deleted||JSON.stringify(canonicalCloudValue(previous.payload))!==JSON.stringify(canonicalCloudValue(row)))conflicts++;
+    else existing++;
+    continue;
+   }
+   if(queued.has(row.id))continue;
+   engine.enqueue('session',row.id,row,0);added++;
+  }
+  const result=await engine.drain({verifiedOwner:owner,online:navigator.onLine});
+  if(account?.id!==owner)throw Error('Account changed during sync. Review before retrying.');
+  cloudActionMessage('Cloud upload: '+(result.sent||0)+' confirmed, '+existing+' already saved, '+conflicts+' different versions, '+result.pending+' pending. Status: '+result.status+'.');
+ }catch(err){cloudActionMessage('Cloud upload paused: '+String(err.message||err).slice(0,130)+'. Local workouts preserved.')}
+ finally{cloudOperationBusy=false}
+}
+async function manuallyRestoreWorkouts(){
+ if(cloudOperationBusy)return;
+ cloudOperationBusy=true;cloudActionMessage('Checking your cloud workout history…');
+ const selectedOwner=account?.id;
+ try{
+  const {owner,transport}=await verifiedCloudAccess();
+  if(owner!==selectedOwner)throw Error('Account changed.');
+  const cloud=await listCloudSessions(transport,owner);
+  const existing=new Set(demoSessions.map(x=>x.id));
+  const missing=cloud.filter(row=>!row.deleted&&!existing.has(row.id)&&validCloudSession(row.payload)&&row.payload.id===row.id);
+  const invalid=cloud.filter(row=>!row.deleted&&!validCloudSession(row.payload)).length;
+  if(!missing.length){cloudActionMessage('No missing cloud workouts found. '+cloud.length+' cloud records checked'+(invalid?' · '+invalid+' invalid records skipped':'')+'.');return}
+  if(!confirm('Restore '+missing.length+' missing MYLIFTCOACH 2.0 workouts to this device? Existing workouts will remain unchanged.')){cloudActionMessage('Recovery canceled. No workouts were changed.');return}
+  if(account?.id!==owner)throw Error('Account changed.');
+  const current=loadDemo(),ids=new Set(current.map(x=>x.id));
+  const safe=missing.map(x=>x.payload).filter(x=>!ids.has(x.id));
+  if(current.length+safe.length>100)throw Error('Local history limit reached. Export a device backup before restoring.');
+  const previous=demoSessions;
+  demoSessions=[...current,...safe].sort((a,b)=>String(b.created).localeCompare(String(a.created)));
+  try{storeDemo()}catch(err){demoSessions=previous;throw Error('Local storage failed; nothing imported.')}
+  renderHome();renderProgress();renderHistory();
+  cloudActionMessage('Restored '+safe.length+' missing 2.0 workouts. Existing workouts preserved.');
+ }catch(err){cloudActionMessage('Cloud recovery paused: '+String(err.message||err).slice(0,130)+'. Local workouts preserved.')}
+ finally{cloudOperationBusy=false}
+}
+
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (original training data not loaded)':authChecking?'Verifying your saved sign-in…':authUnavailable?'Account verification unavailable · preview records remain on this device':'Not signed in. You can still explore the demo.';
  $('backendStatus').textContent=account?'VERIFIED':authChecking?'CHECKING':authUnavailable?'OFFLINE':'NOT CONNECTED';
  $('cloudPill').textContent=account?'SIGNED IN · DEVICE ONLY':'DEVICE-ONLY PREVIEW';
  $('authAction').textContent=account?'Sign out':authChecking?'Checking sign-in…':'Sign in with existing account';
  $('authAction').disabled=authChecking;
+ $('cloudUploadSessions').disabled=authChecking||!account||cloudOperationBusy;
+ $('cloudRestoreSessions').disabled=authChecking||!account||cloudOperationBusy;
  if($('connectivityStatus'))$('connectivityStatus').textContent=navigator.onLine?'Online · local device saving':'Offline · local device saving';
  if($('cloudSyncStatus'))$('cloudSyncStatus').textContent=authChecking?'Checking account…':authUnavailable?'Verification unavailable · local records safe':account?'Signed in · cloud sync not yet enabled':'Cloud sync not enabled';
 }
@@ -672,6 +787,8 @@ function bind(){
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(previewKey(DEMO_KEY));renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
  $('authAction').addEventListener('click',()=>{if(authChecking)return;if(!account){openSignIn();return}void signOutAccount()});
  $('backupPreview').addEventListener('click',downloadPreviewBackup);
+ $('cloudUploadSessions').addEventListener('click',()=>void manuallyUploadWorkouts());
+ $('cloudRestoreSessions').addEventListener('click',()=>void manuallyRestoreWorkouts());
  window.addEventListener('online',()=>{updateConnectivity();if(!account&&readStoredAuth())validateStoredAuth()});
  window.addEventListener('offline',updateConnectivity);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&readStoredAuth()&&navigator.onLine)validateStoredAuth()}});
