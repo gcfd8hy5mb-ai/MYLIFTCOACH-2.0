@@ -34,13 +34,31 @@ try {
  assert.equal(await page.locator('#restScreen').isVisible(),true);
  await page.locator('#restClose').click();
  assert.equal(await page.locator('#restScreen').isVisible(),false);
+ // Check the complete original library is present and searchable on mobile.
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="library"]').click();
+ await page.locator('#library').waitFor({state:'visible'});
+ assert.ok(await page.locator('#libraryResultsCount').innerText().then(x=>Number(x.split(' ')[0])>=341));
+ await page.locator('#exerciseSearch').fill('Wide-Stance Pendulum Squat');
+ assert.match(await page.locator('#libraryGrid').innerText(),/Wide-Stance Pendulum Squat/);
+ assert.match(await page.locator('#libraryGrid').innerText(),/wider stance/);
+ await page.locator('#exerciseSearch').fill('');
+ await page.locator('#libraryEquipment').selectOption('Cable');
+ assert.match(await page.locator('#libraryGrid').innerText(),/Cable/);
+ await page.locator('#libraryEquipment').selectOption('');
  // Exercise new device-only features and their persisted records.
  await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="manage"]').click();
  await page.locator('#customWorkoutName').fill('My test routine');
+ await page.locator('#customExerciseSearch').fill('Plate-Loaded Incline Chest Press');
+ await page.locator('#customExerciseOptions input[value="plate-loaded-incline-press"]').check();
+ await page.locator('#customExerciseSearch').fill('Machine Chest Press');
  await page.locator('#customExerciseOptions input[value="chest-press"]').check();
+ assert.match(await page.locator('#customExerciseCount').innerText(),/2 selected/);
  await page.locator('#customWorkoutForm button[type="submit"]').click();
  assert.match(await page.locator('#customWorkoutList').innerText(),/My test routine/);
+ assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-custom-plans-v1'))[0].ids.includes('plate-loaded-incline-press')),'Imported ID must persist in a custom plan');
+
  await page.locator('#customWorkoutList [data-custom-run]').click();
  assert.equal(await page.locator('#modal').isVisible(),true);
  await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('65');
