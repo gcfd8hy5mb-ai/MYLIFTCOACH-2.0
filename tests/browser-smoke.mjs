@@ -68,7 +68,7 @@ try {
  await page.reload({waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('#activeDraftNotice').isVisible(),false);
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1')||'[]').length),1);
- await page.locator('#menuBtn').click();
+ await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar [data-page="measurements"]').click();
  await page.locator('#measurementsForm input[name="waist"]').fill('32.5');
  await page.locator('#measurementsForm button[type="submit"]').click();
