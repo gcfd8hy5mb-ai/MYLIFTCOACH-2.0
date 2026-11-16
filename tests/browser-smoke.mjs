@@ -226,10 +226,12 @@ try {
  assert.match(await page.locator('#cloudSyncStatus').innerText(),/not yet enabled/i);
 
  // Manual cloud transfer uses only the new 2.0 RPCs; never original PRISM tables.
+ // Real people must confirm before upload or restore; the test explicitly accepts.
+ page.on('dialog',dialog=>dialog.accept());
  const cloudSaved=new Map();let commits=0;
  await page.route('**/rest/v1/rpc/mlc2_v1_*',async route=>{
   const url=new URL(route.request().url()),body=route.request().postDataJSON();
-  const owner=JSON.parse(await page.evaluate(()=>localStorage.getItem('mlc2-auth-session-v1'))).user.id;
+  const owner='user-a';
   if(url.pathname.endsWith('mlc2_v1_list_sessions')){
    const rows=[...cloudSaved.values()].filter(x=>x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});return;
