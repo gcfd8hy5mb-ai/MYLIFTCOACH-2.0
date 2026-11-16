@@ -159,3 +159,23 @@ test('read-only recovery verifies remote account, revision and record identity',
  },makeId:id});
  await assert.rejects(e.inspectRemote('session','s6',{verifiedOwner:'a'}),/Unverified remote record/);
 });
+
+test('two devices can inspect the same saved cloud record without silently replacing local history',async()=>{
+ const server=fakeServer(),firstStorage=localStore(),secondStorage=localStore();
+ const transport={commit:(op,owner)=>server.commit(op,owner),read:async(type,id,owner)=>{
+  const data=server.rows.get(owner+'/'+type+'/'+id);
+  return data?{owner,type,id,revision:data.revision,payload:data.payload,deleted:data.deleted}:null;
+ }};
+ const deviceA=create({owner:'athlete-a',storage:firstStorage,transport,enabled:true,makeId:id});
+ deviceA.enqueue('session','week-1',{sets:[{weight:75,reps:10}]});
+ assert.equal((await deviceA.drain({verifiedOwner:'athlete-a'})).status,'idle');
+ const deviceB=create({owner:'athlete-a',storage:secondStorage,transport,enabled:true,makeId:id});
+ const remote=await deviceB.inspectRemote('session','week-1',{verifiedOwner:'athlete-a'});
+ assert.equal(remote.status,'read-only');
+ assert.equal(remote.record.revision,1);
+ assert.equal(remote.record.payload.sets[0].weight,75);
+ assert.equal(secondStorage.getItem(PREFIX+'athlete-a'),null,'Reading cloud history cannot overwrite device data');
+ deviceB.enqueue('session','week-1',{sets:[{weight:85,reps:12}]},0);
+ assert.equal((await deviceB.drain({verifiedOwner:'athlete-a'})).status,'conflict');
+ assert.equal(server.rows.get('athlete-a/session/week-1').payload.sets[0].weight,75);
+});
