@@ -349,6 +349,20 @@ try {
  await page.locator('#backupOtherData').click();
  await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('5 unchanged/empty'));
  assert.equal(cloudSaved.size,8,'Repeat other-data backup must never duplicate a record');
+ // Saved-app update checker detects newer HTML without forcing a reload.
+ await page.evaluate(()=>{
+  const marker=document.createElement('div');
+  marker.id='previewRevision';marker.textContent='PREVIEW FIX 15';
+  document.body.appendChild(marker);
+ });
+ await page.route('**/index.html?update-check=*',async route=>{
+  await route.fulfill({status:200,contentType:'text/html',body:'<html><body>PREVIEW FIX 16</body></html>'});
+ });
+ const priorUrl=page.url();
+ await page.locator('#checkPreviewUpdate').click();
+ await page.waitForFunction(()=>document.getElementById('previewUpdateStatus').textContent.includes('Fix 16 is available'));
+ assert.equal(page.url(),priorUrl,'Preview update check must not interrupt the current screen');
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-food-goals-v1:user:user-a')).protein),140);
  const desktop=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1});
  const desk=await desktop.newPage();
  desk.on('pageerror',e=>errors.push(e.message));
