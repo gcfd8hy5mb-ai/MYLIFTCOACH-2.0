@@ -502,3 +502,26 @@ body{
  .sidebar .wordmark small{font-size:8px!important;letter-spacing:.10em!important;white-space:nowrap}
  .sidebar .sidebar-logo{width:33px!important;height:33px!important;flex:0 0 33px!important}
 }
+
+/* Mobile navigation simplification: one primary navigation instead of duplicated sidebar. */
+@media(max-width:760px){
+ #sidebar{display:none!important}
+ #menuBtn,#homeMenuBtn{display:none!important}
+ .home-rebuilt .reference-home-header{justify-content:center;position:relative}
+ .home-rebuilt #homeAccountBtn{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+ .bottom-tabs{z-index:40}
+}
+/* Secondary cards: same emerald-gold material, without repeating the identical gym photo everywhere.
+   Home's six approved shortcut tiles and Today's Workout photo remain unchanged. */
+#workouts .workout-card,#library .library-card,
+#progress .metric,#progress .panel,#coaching .coach-card,
+#nutrition .panel,#settings .settings-panel,#settings .account-menu button,
+#coaching .coach-links button,#home .home-below-fold .metric,
+#home .home-below-fold .panel,.modal-panel .log-card,
+.rest-next,#library .filter-chips button:not(.selected),
+#settings .button-outline,#settings .welcome-preview-link{
+ background-color:#052e36!important;
+ background-image:linear-gradient(145deg,#0a4249 0%,#052b33 100%)!important;
+ background-position:center!important;
+ background-size:auto!important;
+}
