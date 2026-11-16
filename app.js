@@ -903,6 +903,60 @@ function openSignIn(){
   finally{submit.disabled=false;submit.textContent='Sign in securely'}
  });
 }
+
+/* Preview update check: always fetch the HTML from network, never rely on
+   an old service-worker or cached script. Updates are user-confirmed; never
+   interrupt an active workout or alter stored training data. */
+let availablePreviewVersion=null,updateCheckActive=false;
+function currentPreviewVersion(){
+ const el=$('previewRevision');
+ const n=Number((el?.textContent||'').match(/PREVIEW FIX\s+(\d+)/i)?.[1]||0);
+ return Number.isSafeInteger(n)?n:0;
+}
+function previewUpdateUrl(revision){
+ const url=new URL('./',window.location.href);
+ url.searchParams.set('revision',String(revision));
+ url.searchParams.set('refresh',String(Date.now()));
+ return url.href;
+}
+async function checkPreviewUpdate(){
+ const node=$('previewUpdateStatus'),btn=$('checkPreviewUpdate');
+ if(!node||!btn||updateCheckActive)return;
+ const current=currentPreviewVersion();
+ if(!current){node.textContent='Update check is available on the preview website.';return}
+ if(!navigator.onLine){node.textContent='Offline · keep using saved workouts. Check when connected.';return}
+ updateCheckActive=true;btn.disabled=true;
+ try{
+  const url=new URL('./index.html',window.location.href);
+  url.searchParams.set('update-check',String(Date.now()));
+  const response=await fetch(url.href,{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
+  if(!response.ok)throw Error('Unable to check for updates');
+  const html=await response.text();
+  const match=html.match(/PREVIEW FIX\s+(\d+)/i);
+  const found=Number(match?.[1]||0);
+  if(!Number.isSafeInteger(found)||found<1||found>99999)throw Error('Invalid preview version');
+  if(found>current){
+   availablePreviewVersion=found;
+   node.textContent='Preview Fix '+found+' is available. Your saved workouts will remain intact.';
+   btn.textContent='Open latest version';
+  }else{
+   availablePreviewVersion=null;
+   node.textContent='Preview Fix '+current+' is current. No reinstall needed.';
+   btn.textContent='Check for updates';
+  }
+ }catch{
+  node.textContent='Could not check for updates. Your local workouts are unchanged.';
+ }finally{updateCheckActive=false;btn.disabled=false}
+}
+function openCheckedPreviewUpdate(){
+ if(availablePreviewVersion){
+  if(session){notice('Finish or close your current workout before updating.');return}
+  window.location.replace(previewUpdateUrl(availablePreviewVersion));
+  return;
+ }
+ void checkPreviewUpdate();
+}
+
 function bind(){
  document.addEventListener('click',e=>{const action=e.target.closest('[data-draft-action]');if(!action)return;if(action.dataset.draftAction==='resume')resumeDraft();else if(action.dataset.draftAction==='discard')discardDraft()});
  document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.page)));
@@ -987,13 +1041,14 @@ function bind(){
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(previewKey(DEMO_KEY));renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
  $('authAction').addEventListener('click',()=>{if(authChecking)return;if(!account){openSignIn();return}void signOutAccount()});
  $('backupPreview').addEventListener('click',downloadPreviewBackup);
+ $('checkPreviewUpdate').addEventListener('click',openCheckedPreviewUpdate);
  $('cloudUploadSessions').addEventListener('click',()=>void manuallyUploadWorkouts());
  $('cloudRestoreSessions').addEventListener('click',()=>void manuallyRestoreWorkouts());
  $('backupOtherData').addEventListener('click',()=>void backupOtherFitnessData());
  $('recoverOtherData').addEventListener('click',()=>void recoverOtherFitnessData());
  window.addEventListener('online',()=>{updateConnectivity();if(!account&&readStoredAuth())void validateStoredAuth();else scheduleAutoSync(400)});
  window.addEventListener('offline',()=>{updateConnectivity();if(autoSyncTimer!==null){clearTimeout(autoSyncTimer);autoSyncTimer=null}setAutoSyncState('Offline · workouts safe on device')});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&readStoredAuth()&&navigator.onLine)void validateStoredAuth();else scheduleAutoSync(500)}});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();void checkPreviewUpdate();if(!account&&readStoredAuth()&&navigator.onLine)void validateStoredAuth();else scheduleAutoSync(500)}});
  window.addEventListener('storage',event=>{if(event.key&&event.key===previewKey(DEMO_KEY)){demoSessions=loadDemo();renderHome();renderProgress();scheduleAutoSync(1000)}});
  // Browser timers may pause in the background. Rechecking here is a best-effort
  // foreground retry, NOT a claim of persistent background execution.
