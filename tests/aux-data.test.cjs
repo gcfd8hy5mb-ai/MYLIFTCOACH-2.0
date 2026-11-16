@@ -67,3 +67,43 @@ test('local storage denial rolls back earlier restorations',()=>{
 test('compare JSONB records without key ordering false conflicts',()=>{
  assert.equal(equal({id:'p',title:'Workout',ids:['a']},{ids:['a'],title:'Workout',id:'p'}),true);
 });
+
+test('recovering another account never reads guest or unrelated owner data',()=>{
+ const s=store();
+ s.setItem('mlc2-custom-plans-v1:user:user-a',JSON.stringify([{id:'a',title:'A'}]));
+ s.setItem('mlc2-custom-plans-v1:user:user-b',JSON.stringify([{id:'b',title:'B'}]));
+ s.setItem('mlc2-custom-plans-v1',JSON.stringify([{id:'guest',title:'Guest'}]));
+ restoreMissing(s,'user-b',[record('custom-plan',[{id:'cloud'}])]);
+ assert.equal(JSON.parse(s.getItem('mlc2-custom-plans-v1:user:user-a'))[0].id,'a');
+ assert.equal(JSON.parse(s.getItem('mlc2-custom-plans-v1:user:user-b'))[0].id,'b');
+ assert.equal(JSON.parse(s.getItem('mlc2-custom-plans-v1'))[0].id,'guest');
+});
+test('pre-existing populated categories stay byte-for-byte unchanged after recovery',()=>{
+ const s=store();
+ const categories=[
+ ['mlc2-custom-plans-v1', [{id:'plan-local',title:'My plan'}]],
+ ['mlc2-measurements-v1',[{id:'measure-local',day:'2026-11-15'}]],
+ ['mlc2-local-daily-v1',[{id:'tracking-local',type:'water'}]],
+ ['mlc2-food-log-v1',[{id:'meal-local',calories:50}]],
+ ['mlc2-food-goals-v1',{calories:2400,protein:180}]
+ ];
+ for(const [key,value] of categories)s.setItem(key+':user:user-a',JSON.stringify(value));
+ const before=[...s.data.entries()];
+ const remote=[
+  record('custom-plan',[{id:'new-plan'}]),
+  record('measurement',[{id:'new-measure'}]),
+  record('tracking',[{id:'new-tracking'}]),
+  record('meal',[{id:'new-meal'}]),
+  record('goal',{calories:2500,protein:160})
+ ];
+ assert.deepEqual(restoreMissing(s,'user-a',remote),[]);
+ assert.deepEqual([...s.data.entries()],before);
+});
+test('invalid remote category fails closed without overwriting earlier local records',()=>{
+ const s=store();
+ const bad=record('goal',{calories:'not-a-number',protein:160});
+ assert.throws(()=>restoreMissing(s,'user-a',[
+  record('custom-plan',[{id:'new-plan'}]),bad
+ ]),/remote backup is invalid/);
+ assert.equal(s.getItem('mlc2-custom-plans-v1:user:user-a'),null);
+});
