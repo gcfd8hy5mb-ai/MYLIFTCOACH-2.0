@@ -61,6 +61,30 @@ try {
  await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('70');
  await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('10');
  await page.locator('[data-addset="chest-press"]').click();
+ // Simulate storage quota/denial: the UI must not claim a second set saved.
+ await page.evaluate(()=>{
+  window.__testOriginalSetItem=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(key,value){
+   if(String(key).startsWith('mlc2-active-session-v1:'))throw new DOMException('Storage unavailable','QuotaExceededError');
+   return window.__testOriginalSetItem.call(this,key,value);
+  };
+ });
+ await page.locator('[data-addset="chest-press"]').click();
+ assert.match(await page.locator('[data-count="chest-press"]').innerText(),/^1 logged$/);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-active-session-v1:guest')).sets.length),1);
+ await page.evaluate(()=>{Storage.prototype.setItem=window.__testOriginalSetItem});
+ // Simulate failed history write: do not discard the unfinished workout.
+ await page.evaluate(()=>{
+  window.__testOriginalSetItem=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(key,value){
+   if(key==='mlc2-demo-workouts-v1')throw new DOMException('Storage unavailable','QuotaExceededError');
+   return window.__testOriginalSetItem.call(this,key,value);
+  };
+ });
+ await page.locator('#finishWorkout').click();
+ assert.equal(await page.locator('#modal').isVisible(),true);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-active-session-v1:guest')).sets.length),1);
+ await page.evaluate(()=>{Storage.prototype.setItem=window.__testOriginalSetItem});
  await page.locator('#finishWorkout').click();
  await page.locator('#progress').waitFor({state:'visible'});
  assert.match(await page.locator('#sessionHistory').innerText(),/My test routine/);
