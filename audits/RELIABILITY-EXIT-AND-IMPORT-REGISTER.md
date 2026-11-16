@@ -1,3 +1,5 @@
+> **Exit update — 2026-11-15:** Release gate [GitHub Actions run 43806364938](https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/actions/runs/43806364938) **passed** both the sync/library unit tests and browser UI regressions. The test found an unfinished-draft update-navigation bug; it was fixed before success and published as **Preview Fix 17**. Five original exercise-expansion source snapshots (81,260 source characters) and a side-effect-free validation extractor are staged under `imports/` on the draft branch. **They are not yet loaded by the preview UI.** Physical Home Screen icon and real second-device recovery acceptance remain outstanding, but catalog import work can proceed independently without touching production or current workouts.
+
 # MYLIFTCOACH 2.0 — Reliability exit and original-feature import register
 
 ## Evidence already demonstrated on the actual iPhone
