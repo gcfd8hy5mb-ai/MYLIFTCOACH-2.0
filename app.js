@@ -357,6 +357,11 @@ async function listCloudSessions(transport,owner){
  }
  throw Error('Cloud session list exceeds recovery limit. No changes made.');
 }
+function canonicalCloudValue(value){
+ if(Array.isArray(value))return value.map(canonicalCloudValue);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonicalCloudValue(value[k])]));
+ return value;
+}
 async function manuallyUploadWorkouts(){
  if(cloudOperationBusy)return;
  if(!account?.id){cloudActionMessage('Sign in to your existing MYLIFTCOACH account first.');return}
@@ -376,7 +381,7 @@ async function manuallyUploadWorkouts(){
   for(const row of local){
    const previous=remote.get(row.id);
    if(previous){
-    if(previous.deleted||JSON.stringify(previous.payload)!==JSON.stringify(row))conflicts++;
+    if(previous.deleted||JSON.stringify(canonicalCloudValue(previous.payload))!==JSON.stringify(canonicalCloudValue(row)))conflicts++;
     else existing++;
     continue;
    }
