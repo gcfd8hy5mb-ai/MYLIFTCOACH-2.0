@@ -43,3 +43,23 @@ test('refuses forged acknowledgement, wrong endpoint and invalid operation id',a
  await assert.rejects(t.commit({...op,opId:'not-a-uuid'},op.owner),/UUID operation ID/);
  assert.throws(()=>create({...cfg,baseUrl:'http://example.supabase.co',fetcher:async()=>{}}),/Approved HTTPS/);
 });
+
+test('remote read uses owner-verified RPC and never writes to the database',async()=>{
+ const requests=[],tr=create({...cfg,enabled:true,fetcher:async(url,options)=>{
+  requests.push({url,options});
+  return {ok:true,json:async()=>({owner:op.owner,type:'session',id:'s1',revision:3,deleted:false,payload:{sets:[{weight:85,reps:10}]}})};
+ }});
+ const result=await tr.read('session','s1',op.owner);
+ assert.equal(result.revision,3);
+ assert.equal(result.payload.sets[0].weight,85);
+ assert.equal(requests.length,1);
+ assert.match(requests[0].url,/\/rpc\/mlc2_v1_read$/);
+ assert.equal(JSON.parse(requests[0].options.body).p_record_id,'s1');
+ assert.equal(requests[0].options.method,'POST'); // RPC is read-only regardless of HTTP method.
+});
+test('read denies mismatched auth or foreign server responses',async()=>{
+ const t=create({...cfg,enabled:true,fetcher:async()=>({ok:true,json:async()=>({owner:'b',type:'session',id:'s1',revision:1,payload:{}})})});
+ await assert.rejects(t.read('session','s1',op.owner),/Unverified remote record/);
+ const bad=create({...cfg,enabled:true,getVerifiedAuth:async()=>({userId:'b',accessToken:'token'}),fetcher:async()=>{throw Error('Must not send')}});
+ await assert.rejects(bad.read('session','s1',op.owner),/Owner authentication unavailable/);
+});
