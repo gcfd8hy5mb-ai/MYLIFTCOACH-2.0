@@ -1,0 +1,12 @@
+/* Extras-only styling; no home, hero, or approved visual rules changed. */
+#calendar .calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}
+#calendar .calendar-toolbar strong{color:#f2d49c;font-size:17px}
+#calendar .calendar-toolbar button{min-height:42px;min-width:44px}
+#calendar .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:13px 0 20px}
+#calendar .calendar-weekday{text-align:center;color:#e6c48c;font-size:11px;font-weight:700}
+#calendar .calendar-empty{min-height:45px}
+#calendar .calendar-day{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;min-height:45px;min-width:0;border:1px solid rgba(219,182,117,.35);background:rgba(6,37,41,.62);color:#f9ead1;border-radius:9px;font-size:14px}
+#calendar .calendar-day small{font-size:10px;color:#e9ca8f}
+#calendar .calendar-day.has-session{border-color:#efca83;background:rgba(130,100,50,.3)}
+#calendar .calendar-day.selected{outline:2px solid #f6d597;outline-offset:1px}
+#calendar .calendar-day:focus-visible{outline:2px solid #fff0b1}

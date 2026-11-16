@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06454c">
+<meta name="description" content="MYLIFTCOACH 2.0 — premium training and progress">
+<title>MYLIFTCOACH 2.0</title>
+<link rel="stylesheet" href="../styles.css?v=1">
+<link rel="stylesheet" href="../theme-option-one.css?v=1">
+<link rel="stylesheet" href="../reference-mobile.css?v=1">
+<link rel="stylesheet" href="../premium-reference.css?v=19">
+<link rel="stylesheet" href="../refinement-v2.css?v=11">
+<link rel="stylesheet" href="../home-rebuild.css?v=19">
+<link rel="stylesheet" href="./sidebar-only.css?v=1">
+<link rel="stylesheet" href="./extras-restoration.css?v=1">
+<link rel="stylesheet" href="./button-finish.css?v=1">
+</head>
+<body>
+<svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+ <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6.5 6.5v11M4 9v6M2 10v4m20-4v4m-2-5v6m-2.5-8.5v11M6.5 12h11" /></symbol>
+ <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7c-2-2-5-2.5-9-2v14c4-.5 7 0 9 2 2-2 5-2.5 9-2V5c-4-.5-7 0-9 2Zm0 0v14" /></symbol>
+ <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V13h4v7M10 20V9h4v11m2 0V4h4v16M2 20h20" /></symbol>
+ <symbol id="i-coach" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0M19 3l1-2m-17 6L1 6" /></symbol>
+ <symbol id="i-nutrition" viewBox="0 0 24 24"><path d="M12 8C8 4 3 7 3 13c0 5 4 9 8 8l1-1 1 1c4 1 8-3 8-8 0-6-5-9-9-5m0 0c0-4 2-6 5-6M12 8c-1-3-3-5-6-5" /></symbol>
+ <symbol id="i-more" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></symbol>
+ <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11h-7v-7h-4v7H3Z"/></symbol>
+ <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m10 2-.5 2.5-2 1-2.5-1-2 3.5 2 1.5v4L3 15l2 3.5 2.5-1 2 1L10 21h4l.5-2.5 2-1 2.5 1 2-3.5-2-1.5v-4L21 8l-2-3.5-2.5 1-2-1L14 2Z"/></symbol>
+</svg>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar" aria-label="MYLIFTCOACH full navigation">
+  <div class="wordmark"><img class="sidebar-logo" src="../assets/myliftcoach-mark.svg?v=6" alt=""><div><strong>MYLIFTCOACH</strong><small>THE TRAINING CLUB</small></div><button type="button" id="sidebarClose" class="sidebar-close" aria-label="Close navigation menu" title="Close menu"><span aria-hidden="true">✕</span></button></div>
+  
+  <nav class="side-nav" aria-label="Main navigation">
+    <div class="side-label">HOME</div>
+    <button type="button" data-page="home" class="nav-item selected"><span aria-hidden="true">⌂</span> Overview</button>
+    <details class="nav-group" open><summary>TRAINING <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="workouts" class="nav-item"><span aria-hidden="true">▤</span> Workouts &amp; plans</button>
+      <button type="button" data-page="library" class="nav-item"><span aria-hidden="true">▦</span> Exercise library</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">＋</span> Manage/custom workouts <small>Restoration pending</small></span>
+      <button type="button" id="sidebarTimer" class="nav-item"><span aria-hidden="true">◷</span> Timer · 90 seconds</button>
+    </div></details>
+    <details class="nav-group" open><summary>PROGRESS <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="progress" class="nav-item"><span aria-hidden="true">▥</span> Progress</button>
+      <button type="button" data-page="history" class="nav-item"><span aria-hidden="true">◷</span> Workout history</button>
+      <button type="button" data-page="calendar" class="nav-item"><span aria-hidden="true">▦</span> Calendar &amp; records</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">▤</span> Measurements &amp; photos <small>Restoration pending</small></span>
+    </div></details>
+    <details class="nav-group"><summary>DAILY TRACKING <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="tracking" class="nav-item"><span aria-hidden="true">◈</span> Daily tracking</button>
+      <button type="button" data-page="nutrition" class="nav-item"><span aria-hidden="true">◉</span> Nutrition</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">◎</span> Complete original logs <small>Restoration pending</small></span>
+    </div></details>
+    <details class="nav-group" open><summary>ACCOUNT &amp; EXTRAS <span aria-hidden="true">⌄</span></summary><div class="nav-group-items">
+      <button type="button" data-page="coaching" class="nav-item"><span aria-hidden="true">✧</span> Coaching</button>
+      <button type="button" data-page="settings" class="nav-item"><span aria-hidden="true">⚙</span> Account &amp; settings</button>
+      <span class="nav-item nav-pending"><span aria-hidden="true">⇪</span> Data &amp; backup <small>Restoration pending</small></span>
+      <span class="nav-item nav-pending"><span aria-hidden="true">?</span> Help &amp; support <small>Restoration pending</small></span>
+    </div></details>
+  </nav>
+  <div class="side-spacer"></div>
+  <div class="sidebar-foot">MYLIFTCOACH <span>2.0</span></div>
+</aside>
+<div id="sidebarScrim" class="sidebar-scrim" aria-hidden="true"></div>
+<div class="main-wrap">
+<header class="topbar">
+ <button id="menuBtn" type="button" class="mobile-menu" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button>
+ <div class="top-location"><span>MYLIFTCOACH 2.0</span><strong id="pageTitle">Overview</strong></div>
+ <div class="top-actions"><span class="stage-pill" id="cloudPill">DEMO WORKSPACE</span><button type="button" class="avatar" id="avatarBtn" aria-label="Open settings">MC</button></div>
+</header>
+<main id="main" class="content">
+ <section id="welcome" class="page" hidden>
+  <div class="welcome-panel">
+    <img src="../assets/myliftcoach-mark.svg?v=6" alt="MYLIFTCOACH mark">
+    <h1>MYLIFTCOACH <span>2.0</span></h1>
+    <p class="welcome-tagline">SMART STRENGTH TRAINING</p>
+    <div class="welcome-features">
+     <p>◈ &nbsp; Personalized Workouts</p>
+     <p>▥ &nbsp; Track Your Progress</p>
+     <p>◎ &nbsp; Expert Coaching</p>
+     <p>◉ &nbsp; Nutrition &amp; Recovery</p>
+    </div>
+    <div class="welcome-actions">
+     <button type="button" class="button-primary" id="welcomeSignIn">Sign In</button>
+     <button type="button" class="button-outline" id="welcomeExplore">Explore Demo</button>
+    </div>
+    <small>Existing MYLIFTCOACH accounts use the same Supabase backend.<br>Preview workout records remain separate.</small>
+  </div>
+ </section>
+ <section id="home" class="page home-rebuilt">
+  <div class="reference-home-header">
+    <button type="button" id="homeMenuBtn" class="home-menu-button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><svg class="app-icon"><use href="#i-more"></use></svg></button>
+    <div class="reference-home-brand"><img src="../assets/myliftcoach-mark.svg?v=6" alt=""><span>MYLIFTCOACH <small>2.0</small></span></div>
+    <button type="button" id="homeAccountBtn" class="home-account-button" aria-label="Open account"><svg class="app-icon"><use href="#i-coach"></use></svg></button>
+  </div>
+  <div class="home-welcome"><span>Good Morning</span><h1>Let's Train <span class="muscle-symbol" aria-hidden="true">💪</span></h1></div>
+  <div class="reference-todays-workout hero">
+    <div class="workout-photo" aria-hidden="true"></div>
+    <div class="hero-copy">
+      <div class="hero-kicker">Today's Workout</div>
+      <h1 id="todayTitle">Upper Body A</h1>
+      <p class="hero-meta" id="todayDescription">4 exercises · 12 sets · ~45 min</p>
+      <div class="hero-actions"><button class="button-primary" id="heroStart">Start Workout <span aria-hidden="true">▶</span></button><button hidden class="button-ghost" id="heroViewPlan">Training plan</button></div>
+    </div>
+  </div>
+  <div class="quick-grid" aria-label="Training shortcuts">
+    <button type="button" data-shortcut="workouts"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-dumbbell"></use></svg></span><strong>Workouts</strong></button>
+    <button type="button" data-shortcut="library"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-book"></use></svg></span><strong>Exercise Library</strong></button>
+    <button type="button" data-shortcut="progress"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-chart"></use></svg></span><strong>Progress</strong></button>
+    <button type="button" data-shortcut="coaching"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-coach"></use></svg></span><strong>Coaching</strong></button>
+    <button type="button" data-shortcut="nutrition"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-nutrition"></use></svg></span><strong>Nutrition</strong></button>
+    <button type="button" data-sidebar-open="true"><span class="shortcut-symbol"><svg class="app-icon"><use href="#i-more"></use></svg></span><strong>More</strong></button>
+  </div>
+  <div class="home-below-fold">
+    <div class="section-top"><div><div class="eyebrow">YOUR TRAINING</div><h2>Training overview</h2></div></div>
+    <div class="metrics"><article class="metric"><span>WORKOUTS LOGGED</span><strong id="metricWorkouts">0</strong><small>Demo sessions</small></article><article class="metric"><span>SETS COMPLETED</span><strong id="metricSets">0</strong><small>All sessions</small></article><article class="metric"><span>YOUR TRAINING PLAN</span><strong>4-day</strong><small>Strength split</small></article></div>
+    <div class="home-grid"><article class="panel next-panel"><div class="panel-heading"><div><div class="eyebrow">YOUR NEXT SESSION</div><h3>Session outline</h3></div><span class="micro-tag">NEXT SESSION</span></div><div id="todayExercises" class="exercise-preview"></div><button id="todayStart" class="text-action" type="button">Begin this session <span>↗</span></button></article><article class="panel activity-panel"><div class="eyebrow">YOUR MOMENTUM</div><h3>Recently completed</h3><div id="recentActivity" class="recent-list"></div></article></div>
+    <p class="safety-note"><strong>Development preview.</strong> Demo workout entries stay in this browser. Original workout history remains unchanged.</p>
+  </div>
+ </section>
+ <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Training plan</h1><p>Four purposeful sessions. Select one to open its exercise list and record a practice workout.</p></div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
+ <section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>A focused starter collection of machine-friendly movements.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button></div><div class="library-grid" id="libraryGrid"></div></section>
+ <section id="progress" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div></section>
+ <section id="history" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">TRAINING ARCHIVE</div><h1>Workout history</h1><p>Review completed sessions and exercise records. Original-app records are shown read-only; 2.0 practice sessions remain separate.</p></div>
+ <article class="panel"><div class="panel-heading"><div><div class="eyebrow">ON THIS DEVICE</div><h3>Original MYLIFTCOACH records</h3></div></div>
+  <p>Load saved records from the original app on this browser. Nothing is imported into, changed in, or deleted from your original app.</p>
+  <button id="loadOriginalHistory" class="button-outline" type="button">View original records (read-only)</button><p class="legacy-status" id="legacyHistoryStatus" role="status">Not loaded</p>
+  <div id="originalHistorySummary" class="legacy-summary"></div><div id="originalHistoryList" class="legacy-list"></div>
+ </article>
+ <article class="panel"><div class="panel-heading"><h3>MYLIFTCOACH 2.0 sessions</h3><span class="micro-tag">SEPARATE LOCAL RECORDS</span></div><div id="detailedDemoHistory" class="legacy-list"></div></article>
+</section>
+<section id="calendar" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">TRAINING ARCHIVE</div><h1>Calendar &amp; records</h1><p>Review dates and personal bests from MYLIFTCOACH 2.0 practice sessions. You can also load original device history read-only.</p></div>
+ <article class="panel"><div class="panel-heading"><h3>Workout calendar</h3><span class="micro-tag">DEVICE PREVIEW</span></div>
+  <div class="calendar-toolbar"><button id="calendarPrevious" class="button-outline" type="button" aria-label="Previous month">‹</button><strong id="calendarMonthLabel"></strong><button id="calendarNext" class="button-outline" type="button" aria-label="Next month">›</button></div>
+  <div id="calendarGrid" class="calendar-grid" aria-label="Workout sessions by date"></div><div id="calendarDayDetails" class="legacy-list" role="status"></div>
+ </article>
+ <article class="panel"><div class="panel-heading"><h3>Personal records</h3><span class="micro-tag">CALCULATED FROM SAVED SETS</span></div><div id="calendarRecords" class="legacy-list"></div></article>
+ <article class="panel"><div class="panel-heading"><h3>Original device records</h3><span class="micro-tag">READ-ONLY</span></div><p>Original workout data is never changed or imported into 2.0.</p><button id="calendarLoadOriginal" type="button" class="button-outline">Load original device history</button><p id="calendarOriginalStatus" role="status" class="legacy-status"></p></article>
+</section>
+<section id="tracking" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">YOUR DAILY LOG</div><h1>Daily tracking</h1><p>Track hydration and body weight while retaining the original app's records safely.</p></div>
+ <article class="panel"><div class="panel-heading"><h3>Water &amp; body weight</h3><span class="micro-tag">2.0 DEVICE LOG</span></div>
+  <div class="tracking-entry-grid">
+   <form id="waterForm" class="tracking-form"><label for="waterDay">Date</label><input id="waterDay" name="day" type="date" required><label for="waterAmount">Water (mL)</label><input id="waterAmount" name="amount" type="number" min="1" max="5000" step="1" inputmode="numeric" placeholder="250" required><button class="button-primary" type="submit">Log water</button></form>
+   <form id="weightForm" class="tracking-form"><label for="weightDay">Date</label><input id="weightDay" name="day" type="date" required><label for="weightAmount">Body weight (lb)</label><input id="weightAmount" name="value" type="number" min="1" max="1500" step=".1" inputmode="decimal" placeholder="180.0" required><button class="button-primary" type="submit">Log weight</button></form>
+  </div>
+  <div id="localTrackingSummary" class="legacy-summary"></div><div id="localTrackingList" class="legacy-list"></div>
+  <p class="tracking-footnote">These entries are saved only in this browser under MYLIFTCOACH 2.0. They are not uploaded to your original Supabase account.</p>
+ </article>
+ <article class="panel"><div class="panel-heading"><h3>Original daily tracking</h3><span class="micro-tag">READ-ONLY</span></div>
+  <button id="loadOriginalTracking" class="button-outline" type="button">View original water &amp; weight history</button><p id="legacyTrackingStatus" class="legacy-status" role="status">Not loaded</p>
+  <div id="originalTrackingSummary" class="legacy-summary"></div><div id="originalTrackingList" class="legacy-list"></div>
+ </article>
+</section>
+<section id="coaching" class="page" hidden>
+  <div class="page-heading"><div class="eyebrow">TRAIN SMARTER</div><h1>Coaching</h1><p>Your personalized training insights will be carried over from the original workout app. This development preview does not generate fabricated advice.</p></div>
+  <div class="coach-emblem">✦</div>
+  <article class="panel coach-card"><div class="eyebrow">YOUR COACH</div><h3>Progress at your own pace.</h3><p>Training guidance, recommendations, form tips, and recovery insights will appear here after we validate the original coaching rules and safely connect training history.</p></article>
+  <div class="coach-links">
+    <button type="button" data-coach-link="workouts">◈ &nbsp; Next Workout Recommendation <span>›</span></button>
+    <button type="button" data-coach-link="progress">▥ &nbsp; Progress Insights <span>›</span></button>
+    <button type="button" data-coach-link="library">♧ &nbsp; Form &amp; Technique Tips <span>›</span></button>
+    <button type="button" data-coach-link="settings">♡ &nbsp; Recovery &amp; Readiness <span>›</span></button>
+  </div>
+ </section>
+ <section id="nutrition" class="page" hidden><div class="page-heading"><div class="eyebrow">FUEL & RECOVER</div><h1>Nutrition &amp; Hydration</h1><p>The full nutrition, water, weight, and macro-tracking features from your original app will return here after data compatibility testing.</p></div><article class="panel"><h3>Coming from your original app</h3><p>Daily water, food logs, calorie goals, saved meals, and weight history. No entries are being written to your production data.</p></article></section>
+ <section id="settings" class="page" hidden><div class="account-brand"><img src="../assets/myliftcoach-mark.svg?v=6" alt=""><h2>My Account</h2><p>Manage your profile, training and settings</p></div><div class="account-menu" aria-label="Additional training tools"><button type="button" data-account-page="library"><span>▣</span> Exercise Library <b>›</b></button><button type="button" data-account-page="history"><span>▤</span> Workout History <b>›</b></button><button type="button" data-account-page="tracking"><span>◉</span> Daily Tracking <b>›</b></button><button type="button" data-account-page="coaching"><span>✦</span> Coaching &amp; Guidance <b>›</b></button></div><div class="page-heading"><div class="eyebrow">YOUR ACCOUNT</div><h1>Settings</h1><p>Sign in with your existing MYLIFTCOACH account. Training data import remains off until validated.</p></div><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen design ↗</button><article class="panel settings-panel"><div class="setting-line"><div><strong>Supabase account</strong><p id="accountIdentity">Not signed in</p></div><span class="micro-tag" id="backendStatus">NOT CONNECTED</span></div><div class="setting-line"><div><strong>Data protection</strong><p>Existing workout records are read-only and are not yet imported into 2.0.</p></div><span class="micro-tag">ISOLATED</span></div><div class="setting-line"><div><strong>Demo session history</strong><p>Saved to this browser only, separate from your original workout app.</p></div><button id="clearDemo" type="button" class="button-outline">Clear demo</button></div><button id="authAction" type="button" class="button-primary">Sign in</button></article></section>
+</main>
+<footer class="site-footer"><span>MYLIFTCOACH 2.0</span><span>STRONGER BY DESIGN · PREVIEW</span></footer>
+</div></div>
+<nav class="bottom-tabs" aria-label="Mobile navigation"><button data-page="home" class="active"><svg class="app-icon"><use href="#i-home"></use></svg><small>Home</small></button><button data-page="workouts"><svg class="app-icon"><use href="#i-dumbbell"></use></svg><small>Workouts</small></button><button data-page="progress"><svg class="app-icon"><use href="#i-chart"></use></svg><small>Progress</small></button><button data-page="nutrition"><svg class="app-icon"><use href="#i-nutrition"></use></svg><small>Nutrition</small></button><button type="button" id="moreMenuBtn" aria-label="Open extras navigation" aria-controls="sidebar" aria-expanded="false"><svg class="app-icon"><use href="#i-more"></use></svg><small>More</small></button></nav>
+<div id="modal" class="modal" hidden><div class="modal-panel"><button id="closeModal" class="modal-close" type="button" aria-label="Close dialog">×</button><div id="modalContent"></div></div></div>
+<div id="restScreen" class="rest-screen" hidden role="dialog" aria-modal="true" aria-label="Rest timer">
+ <div class="rest-top"><button id="restClose" type="button" aria-label="Close rest timer">‹</button><strong>Resting</strong><span></span></div>
+ <div class="rest-dial" id="restDial"><div class="rest-face"><span id="restTime">1:30</span><small>REST TIME</small></div></div>
+ <div class="rest-controls"><button type="button" id="restPause" aria-label="Pause rest timer">Ⅱ</button><button type="button" id="restSkip" aria-label="Skip rest timer">▶▏</button></div>
+ <div class="rest-next"><div class="eyebrow">UP NEXT</div><strong id="restNextName">Next exercise</strong><small id="restNextReps">3 sets · 8–12 reps</small></div>
+ <p class="rest-demo">Practice timer · no workout data is changed</p>
+</div>
+<div id="toast" role="status" class="toast" hidden></div>
+<script defer src="./app.js?v=3"></script>
+</body>
+</html>
