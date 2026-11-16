@@ -12,13 +12,33 @@
   if(typeof publishableKey!=='string'||!publishableKey.startsWith('sb_publishable_'))throw Error('Publishable key required');
   if(typeof getVerifiedAuth!=='function')throw Error('Authenticated identity provider required');
   if(typeof fetcher!=='function')throw Error('fetch required');
+  async function authFor(owner){
+   const verified=await getVerifiedAuth();
+   if(!verified||verified.userId!==owner||!verified.accessToken)throw Error('Owner authentication unavailable');
+   return verified;
+  }
   return Object.freeze({
+   async read(type,id,owner){
+    if(!enabled)throw Error('Cloud sync deliberately disabled');
+    if(!/^[a-z0-9_-]{1,128}$/i.test(owner||'')||!['session','custom-plan','tracking','measurement','meal','goal'].includes(type)||
+      !/^[a-z0-9_:.\\-]{1,160}$/i.test(id||''))throw Error('Invalid owner or record');
+    const verified=await authFor(owner);
+    const response=await fetcher(baseUrl.replace(/\\/$/,'')+'/rest/v1/rpc/mlc2_v1_read',{
+      method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/json','apikey':publishableKey,'Authorization':'Bearer '+verified.accessToken},
+      body:JSON.stringify({p_type:type,p_record_id:id})
+    });
+    const payload=await response.json().catch(()=>null);
+    if(!response.ok){const error=Error('Remote read failed');error.status=response.status;throw error}
+    if(payload===null)return null;
+    if(String(payload.owner)!==owner||String(payload.type)!==type||String(payload.id)!==id||!Number.isSafeInteger(Number(payload.revision)))throw Error('Unverified remote record');
+    return {owner,type,id,revision:Number(payload.revision),payload:payload.payload,deleted:payload.deleted===true};
+   },
    async commit(op,owner){
     if(!enabled)throw Error('Cloud sync deliberately disabled');
     if(!op||op.owner!==owner||typeof owner!=='string')throw Error('Account mismatch');
     if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(op.opId))throw Error('UUID operation ID required');
-    const verified=await getVerifiedAuth();
-    if(!verified||verified.userId!==owner||!verified.accessToken)throw Error('Owner authentication unavailable');
+    const verified=await authFor(owner);
     const response=await fetcher(baseUrl.replace(/\/$/,'')+'/rest/v1/rpc/mlc2_v1_commit',{
      method:'POST',cache:'no-store',headers:{
       'Content-Type':'application/json','apikey':publishableKey,'Authorization':'Bearer '+verified.accessToken
