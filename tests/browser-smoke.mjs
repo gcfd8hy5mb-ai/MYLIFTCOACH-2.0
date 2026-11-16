@@ -41,6 +41,7 @@ try {
  assert.ok(await page.locator('#libraryResultsCount').innerText().then(x=>Number(x.split(' ')[0])>=341));
  await page.locator('#exerciseSearch').fill('Wide-Stance Pendulum Squat');
  assert.match(await page.locator('#libraryGrid').innerText(),/Wide-Stance Pendulum Squat/);
+ await page.locator('#libraryGrid details summary').first().click();
  assert.match(await page.locator('#libraryGrid').innerText(),/wider stance/);
  await page.locator('#exerciseSearch').fill('');
  await page.locator('#libraryEquipment').selectOption('Cable');
