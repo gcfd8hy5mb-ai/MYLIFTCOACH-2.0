@@ -272,8 +272,10 @@ try {
  await mobile.setOffline(true);
  await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
  await page.locator('#menuBtn').click();
- await page.locator('#sidebar [data-page="home"]').click();
- await page.locator('#heroStart').click();
+ await page.locator('#sidebar [data-page="workouts"]').click();
+ // Select Upper Body A explicitly; the dynamic Today card may rotate to legs
+ // after the previous completed workout, so chest-press may not be present there.
+ await page.locator('#workoutGrid [data-workout="upper-a"]').click();
  await page.locator('[data-exercise-card="chest-press"] [data-weight]').fill('80');
  await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('8');
  await page.locator('[data-addset="chest-press"]').click();
