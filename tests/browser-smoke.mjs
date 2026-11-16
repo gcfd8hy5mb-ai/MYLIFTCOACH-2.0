@@ -178,7 +178,7 @@ try {
  }));
  console.log('Offline auth diagnostic:',JSON.stringify(authDiagnostic));
  assert.equal(authDiagnostic.stored,true,'Transient auth failure should not delete tokens');
- assert.notMatch(authDiagnostic.identity,/a@example.test/,'Unverified account must not expose scoped data');
+ assert.doesNotMatch(authDiagnostic.identity,/a@example.test/,'Unverified account must not expose scoped data');
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('mlc2-auth-session-v1')!==null),true);
  await mobile.setOffline(true);await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
