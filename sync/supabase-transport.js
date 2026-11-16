@@ -21,9 +21,9 @@
    async read(type,id,owner){
     if(!enabled)throw Error('Cloud sync deliberately disabled');
     if(!/^[a-z0-9_-]{1,128}$/i.test(owner||'')||!['session','custom-plan','tracking','measurement','meal','goal'].includes(type)||
-      !/^[a-z0-9_:.\\-]{1,160}$/i.test(id||''))throw Error('Invalid owner or record');
+      !/^[a-z0-9_:.\-]{1,160}$/i.test(id||''))throw Error('Invalid owner or record');
     const verified=await authFor(owner);
-    const response=await fetcher(baseUrl.replace(/\\/$/,'')+'/rest/v1/rpc/mlc2_v1_read',{
+    const response=await fetcher(baseUrl.replace(/\/$/,'')+'/rest/v1/rpc/mlc2_v1_read',{
       method:'POST',cache:'no-store',
       headers:{'Content-Type':'application/json','apikey':publishableKey,'Authorization':'Bearer '+verified.accessToken},
       body:JSON.stringify({p_type:type,p_record_id:id})
