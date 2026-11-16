@@ -59,7 +59,7 @@ try {
  await page.locator('#mealForm button[type="submit"]').click();
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
  await page.reload({waitUntil:'domcontentloaded'});
- await page.locator('#menuBtn').click();
+ await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar .nav-group summary').filter({hasText:'DAILY TRACKING'}).click();
  await page.locator('#sidebar [data-page="nutrition"]').click();
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
