@@ -4,7 +4,7 @@
 const BACKEND='https://kirlpjflaoriiusfamsk.supabase.co';
 const PUBLIC_KEY='sb_publishable_yYMnCM3k14zaEtpHo4-xkQ_Cd1Aty90';
 const DEMO_KEY='mlc2-demo-workouts-v1'; // independent namespace, never original workout keys
-const AUTH_KEY='mlc2-auth-session-v1'; // separate from original production auth storage
+const AUTH_KEY='mlc2-auth-session-v1'; // persistent login as original PRISM app; independent preview namespace
 const exercises=[
  {id:'chest-press',name:'Machine Chest Press',group:'Chest',sets:3,reps:'8–12',cue:'Set the handles near mid-chest. Press smoothly and control the return.'},
  {id:'pec-deck',name:'Pec Deck',group:'Chest',sets:3,reps:'10–15',cue:'Keep the chest tall and bring the arms together without swinging.'},
@@ -29,7 +29,7 @@ const $=(id)=>document.getElementById(id);
 let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
 /* Guest data retain existing preview keys; signed-in data use distinct owner keys. */
 const previewKey=key=>account?.id?key+':user:'+account.id:key;
-let authChecking=Boolean(sessionStorage.getItem(AUTH_KEY)),authUnavailable=false;
+let authChecking=Boolean(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)),authUnavailable=false;
 let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
@@ -489,26 +489,73 @@ async function authRequest(path,body,token,method='POST'){
   return data;
  }finally{clearTimeout(timer)}
 }
+
+/* Original PRISM login lifecycle adapted to a separate 2.0 key:
+   localStorage persistence, 60s refresh buffer, authenticated /user check,
+   and server-side signout. Never read/write prismSupabaseSessionV1. */
+function readStoredAuth(){
+ try {
+  const raw=localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY);
+  if(!raw||raw.length>30000)return null;
+  const found=JSON.parse(raw);
+  return found?.access_token&&found?.user?.id?found:null;
+ }catch{return null}
+}
+function persistAuth(credentials){
+ // Write before switching any in-memory identity. On quota failure,
+ // refuse to claim login persisted; never write production auth keys.
+ localStorage.setItem(AUTH_KEY,JSON.stringify(credentials));
+ sessionStorage.removeItem(AUTH_KEY);
+}
+async function signOutAccount(){
+ if(authChecking)return;
+ const token=auth?.access_token||readStoredAuth()?.access_token;
+ try {
+  if(token)await authRequest('logout',null,token,'POST');
+ }catch(e){
+  // Local sign-out still hides this account's data even if offline;
+  // server session naturally expires. Do not touch the original app's session.
+ }
+ clearAuth();
+ notice('Signed out of MYLIFTCOACH 2.0. Original app login unchanged.');
+}
+function openPasswordRecovery(){
+ openModal('<div class="modal-eyebrow">EXISTING PRISM ACCOUNT</div><h2>Reset password</h2><p>Enter the email for your existing MYLIFTCOACH account. We will email a recovery link using your original Supabase backend.</p><form id="resetPasswordForm" class="login-form"><label>Email<input type="email" name="email" autocomplete="email" autocapitalize="none" required></label><button type="submit" class="button-primary" id="resetPasswordSubmit">Email recovery link</button></form><p id="resetPasswordStatus" role="status"></p><button type="button" class="button-outline" id="resetBackToLogin">Back to sign in</button>');
+ $('resetBackToLogin').addEventListener('click',openSignIn);
+ $('resetPasswordForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const btn=$('resetPasswordSubmit');btn.disabled=true;
+  try{
+   const email=String(new FormData(e.currentTarget).get('email')||'').trim();
+   // Keep reset callback on the same 2.0 origin; do not modify production account routes.
+   const redirect=new URL('.',window.location.href).href;
+   await authRequest('recover?redirect_to='+encodeURIComponent(redirect),{email});
+   $('resetPasswordStatus').textContent='If this email belongs to an account, a recovery link will be sent.';
+  }catch(err){$('resetPasswordStatus').textContent='Could not send the recovery link. Check your connection and try again.'}
+  finally{btn.disabled=false}
+ });
+}
+
 function saveAuth(data){
  if(!data?.access_token||!data?.user?.id)throw Error('Verified credentials required.');
  const previous=account?.id||null;
  const credentials={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Number.isFinite(Number(data.expires_at))&&Number(data.expires_at)>0?Number(data.expires_at):Math.floor(Date.now()/1000)+(Number(data.expires_in)||3600)};
- sessionStorage.setItem(AUTH_KEY,JSON.stringify(credentials));
+ persistAuth(credentials);
  auth=credentials;account=data.user;authChecking=false;authUnavailable=false;
  if(previous!==account.id)refreshPreviewOwner();
  renderSettings();
 }
 function clearAuth(){
- sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;authChecking=false;authUnavailable=false;
+ localStorage.removeItem(AUTH_KEY);sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;authChecking=false;authUnavailable=false;
  refreshPreviewOwner();renderSettings();
 }
 async function validateStoredAuth(){
- const saved=(()=>{try{return JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null')}catch{return null}})();
+ const saved=readStoredAuth();
  if(!saved?.access_token||!saved?.user?.id){authChecking=false;renderSettings();return}
  authChecking=true;renderSettings();
  try{
   let credentials=saved;
-  if(saved.expires_at<Date.now()/1000+45&&saved.refresh_token){
+  if(saved.expires_at<Date.now()/1000+60&&saved.refresh_token){
     const refreshed=await authRequest('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
     credentials={...saved,...refreshed,user:refreshed.user||saved.user};
     credentials.expires_at=Math.floor(Date.now()/1000)+(refreshed.expires_in||3600);
@@ -525,7 +572,8 @@ async function validateStoredAuth(){
  }finally{authChecking=false;renderSettings()}
 }
 function openSignIn(){
- openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">The training area stays in demo mode until the legacy data mapping is verified.</p>');
+ openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><button class="button-outline" id="forgotPassword" type="button">Forgot password?</button><p id="loginMessage" role="status"></p><p class="small">The training area stays in demo mode until the legacy data mapping is verified.</p>');
+ $('forgotPassword').addEventListener('click',openPasswordRecovery);
  $('loginForm').addEventListener('submit',async event=>{
   event.preventDefault();const submit=$('loginSubmit');submit.disabled=true;submit.textContent='Connecting…';$('loginMessage').textContent='';
   const form=new FormData(event.currentTarget);
@@ -619,11 +667,11 @@ function bind(){
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(previewKey(DEMO_KEY));renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
- $('authAction').addEventListener('click',()=>{if(authChecking)return;if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Your other account data is unchanged.')});
+ $('authAction').addEventListener('click',()=>{if(authChecking)return;if(!account){openSignIn();return}void signOutAccount()});
  $('backupPreview').addEventListener('click',downloadPreviewBackup);
- window.addEventListener('online',()=>{updateConnectivity();if(!account&&sessionStorage.getItem(AUTH_KEY))validateStoredAuth()});
+ window.addEventListener('online',()=>{updateConnectivity();if(!account&&readStoredAuth())validateStoredAuth()});
  window.addEventListener('offline',updateConnectivity);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&sessionStorage.getItem(AUTH_KEY)&&navigator.onLine)validateStoredAuth()}});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&readStoredAuth()&&navigator.onLine)validateStoredAuth()}});
  window.addEventListener('storage',event=>{if(event.key&&event.key===previewKey(DEMO_KEY)){demoSessions=loadDemo();renderHome();renderProgress()}});
 
 }
