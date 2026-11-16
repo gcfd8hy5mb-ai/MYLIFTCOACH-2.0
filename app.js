@@ -27,12 +27,15 @@ const plans=[
 ];
 const $=(id)=>document.getElementById(id);
 let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
+/* Guest data retain existing preview keys; signed-in data use distinct owner keys. */
+const previewKey=key=>account?.id?key+':user:'+account.id:key;
+let authChecking=Boolean(sessionStorage.getItem(AUTH_KEY)),authUnavailable=false;
 let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
 const CUSTOM_KEY='mlc2-custom-plans-v1',MEASUREMENT_KEY='mlc2-measurements-v1',NUTRITION_KEY='mlc2-food-log-v1',GOALS_KEY='mlc2-food-goals-v1';
-const readPreview=(key,fallback)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback}catch{return fallback}};
+const readPreview=(key,fallback)=>{try{const value=JSON.parse(localStorage.getItem(previewKey(key))||'null');return value??fallback}catch{return fallback}};
 let customPlans=readPreview(CUSTOM_KEY,[]);if(!Array.isArray(customPlans))customPlans=[];
 let measurements=readPreview(MEASUREMENT_KEY,[]);if(!Array.isArray(measurements))measurements=[];
 let meals=readPreview(NUTRITION_KEY,[]);if(!Array.isArray(meals))meals=[];
@@ -42,8 +45,8 @@ const allPlans=()=>[...plans,...customPlans];
 let toastTimer;
 let muscleFilter='';
 let restSeconds=90,restPaused=true,restClock=null;
-function loadDemo(){try{const a=JSON.parse(localStorage.getItem(DEMO_KEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&Array.isArray(x.sets)).slice(0,100):[]}catch{return []}}
-function storeDemo(){localStorage.setItem(DEMO_KEY,JSON.stringify(demoSessions))}
+function loadDemo(){try{const a=JSON.parse(localStorage.getItem(previewKey(DEMO_KEY))||'[]');return Array.isArray(a)?a.filter(x=>x&&Array.isArray(x.sets)).slice(0,100):[]}catch{return []}}
+function storeDemo(){localStorage.setItem(previewKey(DEMO_KEY),JSON.stringify(demoSessions))}
 // All original-app reads are opt-in and strictly read-only. Never call setItem
 // or removeItem with workoutHistoryV52, customWorkoutsV5 or dailyTrackingV1.
 function safeOriginal(key,kind){
@@ -80,9 +83,9 @@ function getOriginalSnapshot(){
 }
 function localDayString(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function loadLocalTracking(){
- try{const data=JSON.parse(localStorage.getItem(TRACK_KEY)||'[]');return Array.isArray(data)?data.filter(x=>x&&['water','weight'].includes(x.type)&&Number.isFinite(Number(x.value))&&Number(x.value)>0&&/^\d{4}-\d\d-\d\d$/.test(x.day)).slice(0,400):[]}catch{return []}
+ try{const data=JSON.parse(localStorage.getItem(previewKey(TRACK_KEY))||'[]');return Array.isArray(data)?data.filter(x=>x&&['water','weight'].includes(x.type)&&Number.isFinite(Number(x.value))&&Number(x.value)>0&&/^\d{4}-\d\d-\d\d$/.test(x.day)).slice(0,400):[]}catch{return []}
 }
-function persistLocalTracking(){localStorage.setItem(TRACK_KEY,JSON.stringify(trackingEntries))}
+function persistLocalTracking(){localStorage.setItem(previewKey(TRACK_KEY),JSON.stringify(trackingEntries))}
 function formatDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString():String(value||'Unknown date')}
 function renderHistory(){
  const original=originalSnapshot?.sessions||[];
@@ -198,7 +201,7 @@ function saveCustomWorkout(e){
  const editId=String(values.get('editId')||''),existing=customPlans.find(x=>x.id===editId),id=existing?.id||'custom-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
  const item={id,title,kind:'Custom',description:String(values.get('description')||'').trim().slice(0,160)||'My custom training session.',ids};
  const previous=[...customPlans];customPlans=existing?customPlans.map(x=>x.id===id?item:x):[...customPlans,item];
- try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(customPlans));clearCustomEditor();renderCustomPlans();renderWorkouts();notice('Custom workout saved in this preview.')}catch{customPlans=previous;notice('Could not save the custom workout.')}
+ try{localStorage.setItem(previewKey(CUSTOM_KEY),JSON.stringify(customPlans));clearCustomEditor();renderCustomPlans();renderWorkouts();notice('Custom workout saved in this preview.')}catch{customPlans=previous;notice('Could not save the custom workout.')}
 }
 function editCustomPlan(id){
  const p=customPlans.find(x=>x.id===id);if(!p)return;
@@ -209,14 +212,14 @@ function editCustomPlan(id){
 function removeCustomPlan(id){
  const p=customPlans.find(x=>x.id===id);if(!p||!confirm('Delete this preview custom workout?'))return;
  const previous=[...customPlans];customPlans=customPlans.filter(x=>x.id!==id);
- try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(customPlans));renderCustomPlans();renderWorkouts();notice('Custom workout deleted from preview only.')}catch{customPlans=previous;notice('Could not delete custom workout.')}
+ try{localStorage.setItem(previewKey(CUSTOM_KEY),JSON.stringify(customPlans));renderCustomPlans();renderWorkouts();notice('Custom workout deleted from preview only.')}catch{customPlans=previous;notice('Could not delete custom workout.')}
 }
 function saveMeasurements(e){
  e.preventDefault();const data=new FormData(e.currentTarget),day=String(data.get('day')||'');
  const keys=['waist','chest','hips','arm','thigh'],values={};for(const key of keys){const raw=String(data.get(key)||'').trim();if(raw){const n=Number(raw);if(!Number.isFinite(n)||n<=0||n>100){notice('Check measurement values.');return}values[key]=n}}
  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Object.keys(values).length){notice('Enter a date and at least one measurement.');return}
  const previous=[...measurements];measurements.unshift({id:'measure-'+Date.now(),day,values});measurements=measurements.slice(0,200);
- try{localStorage.setItem(MEASUREMENT_KEY,JSON.stringify(measurements));renderMeasurements();e.currentTarget.reset();$('measurementDate').value=localDayString();notice('Measurements saved locally.')}catch{measurements=previous;notice('Could not save measurements.')}
+ try{localStorage.setItem(previewKey(MEASUREMENT_KEY),JSON.stringify(measurements));renderMeasurements();e.currentTarget.reset();$('measurementDate').value=localDayString();notice('Measurements saved locally.')}catch{measurements=previous;notice('Could not save measurements.')}
 }
 function renderMeasurements(){
  $('measurementHistory').innerHTML=measurements.length?measurements.slice(0,50).map(m=>'<div class="history-entry mlc-list-row"><div><strong>'+escapeHTML(m.day)+'</strong><small>'+Object.entries(m.values||{}).map(([k,v])=>escapeHTML(k)+': '+escapeHTML(String(v))+' in').join(' · ')+'</small></div><button type="button" data-measure-delete="'+escapeHTML(m.id)+'">Remove</button></div>').join(''):'<p class="empty-note">No body measurements saved yet.</p>';
@@ -226,7 +229,7 @@ function saveMeal(e){
  for(const key of ['calories','protein','carbs','fat']){values[key]=Number(data.get(key));if(!Number.isFinite(values[key])||values[key]<0||values[key]>10000){notice('Enter valid meal numbers.');return}}
  if(!name||name.length>80||!/^\d{4}-\d{2}-\d{2}$/.test(day)){notice('Enter a meal name and date.');return}
  const old=[...meals];meals.unshift({id:'meal-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),day,name,...values});meals=meals.slice(0,500);
- try{localStorage.setItem(NUTRITION_KEY,JSON.stringify(meals));renderNutrition();e.currentTarget.reset();$('mealDate').value=localDayString();notice('Meal saved in preview.')}catch{meals=old;notice('Could not save meal.')}
+ try{localStorage.setItem(previewKey(NUTRITION_KEY),JSON.stringify(meals));renderNutrition();e.currentTarget.reset();$('mealDate').value=localDayString();notice('Meal saved in preview.')}catch{meals=old;notice('Could not save meal.')}
 }
 function renderNutrition(){
  const form=$('nutritionGoalForm');form.elements.calories.value=nutritionGoals.calories||2000;form.elements.protein.value=nutritionGoals.protein||140;
@@ -238,7 +241,7 @@ function saveGoals(e){
  e.preventDefault();const d=new FormData(e.currentTarget),calories=Number(d.get('calories')),protein=Number(d.get('protein'));
  if(!Number.isFinite(calories)||calories<500||calories>8000||!Number.isFinite(protein)||protein<0||protein>600){notice('Check your daily goals.');return}
  const old=nutritionGoals;nutritionGoals={calories,protein};
- try{localStorage.setItem(GOALS_KEY,JSON.stringify(nutritionGoals));renderNutrition();notice('Nutrition goals saved in this browser.')}catch{nutritionGoals=old;notice('Could not save goals.')}
+ try{localStorage.setItem(previewKey(GOALS_KEY),JSON.stringify(nutritionGoals));renderNutrition();notice('Nutrition goals saved in this browser.')}catch{nutritionGoals=old;notice('Could not save goals.')}
 }
 
 function renderWorkouts(){
@@ -268,11 +271,50 @@ function renderProgressChart(){
  const fill='22,184 '+points+' '+xy[xy.length-1].x.toFixed(1)+',184';
  root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' locally saved practice sessions"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb-reps last session</p>';
 }
+function refreshPreviewOwner(){
+ demoSessions=loadDemo();
+ trackingEntries=loadLocalTracking();
+ customPlans=readPreview(CUSTOM_KEY,[]);if(!Array.isArray(customPlans))customPlans=[];
+ measurements=readPreview(MEASUREMENT_KEY,[]);if(!Array.isArray(measurements))measurements=[];
+ meals=readPreview(NUTRITION_KEY,[]);if(!Array.isArray(meals))meals=[];
+ nutritionGoals=readPreview(GOALS_KEY,{calories:2000,protein:140});
+ originalSnapshot=null;
+ if(!document.getElementById('home'))return;
+ if(session){closeModal()}
+ draftBanner();renderHome();renderWorkouts();renderProgress();renderTracking();
+ renderMeasurements();renderNutrition();renderCustomPlans();renderHistory();renderOriginalPlans();
+}
+function updateConnectivity(){
+ const online=navigator.onLine;
+ const status=$('connectivityStatus');
+ if(status)status.textContent=online?'Online · records saved on this device only':'Offline · records saved on this device only';
+ const cloud=$('cloudSyncStatus');
+ if(cloud)cloud.textContent=authChecking?'Checking account…':authUnavailable?'Account service unavailable · no cloud sync':account?'Account verified · cloud sync not enabled':'Cloud sync not enabled · preview only';
+ renderSettings();
+}
+function downloadPreviewBackup(){
+ const keys=[DEMO_KEY,TRACK_KEY,CUSTOM_KEY,MEASUREMENT_KEY,NUTRITION_KEY,GOALS_KEY],snapshot={};
+ try{
+  for(const key of keys){const raw=localStorage.getItem(previewKey(key));if(raw!==null){const value=JSON.parse(raw);snapshot[key]=value;}}
+  const active=readDraft();
+  if(active)snapshot.activeWorkout=active;
+  const payload={format:'MYLIFTCOACH-2.0-local-export-v1',createdAt:new Date().toISOString(),owner:account?.id||'guest',data:snapshot};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='myliftcoach-preview-backup-'+localDayString()+'.json';document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+  notice('Device backup export created. Keep this file private; it contains workout records.');
+ }catch{notice('Could not export the preview backup. Your saved data was not changed.')}
+}
+
 function renderSettings(){
- $('accountIdentity').textContent=account?.email?account.email+' · authenticated (production workout data is not loaded)':'Not signed in. You can still explore the demo.';
- $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
- $('cloudPill').textContent=account?'ACCOUNT CONNECTED · DEMO':'DEMO WORKSPACE';
- $('authAction').textContent=account?'Sign out':'Sign in with existing account';
+ $('accountIdentity').textContent=account?.email?account.email+' · authenticated (original training data not loaded)':authChecking?'Verifying your saved sign-in…':authUnavailable?'Account verification unavailable · preview records remain on this device':'Not signed in. You can still explore the demo.';
+ $('backendStatus').textContent=account?'VERIFIED':authChecking?'CHECKING':authUnavailable?'OFFLINE':'NOT CONNECTED';
+ $('cloudPill').textContent=account?'SIGNED IN · DEVICE ONLY':'DEVICE-ONLY PREVIEW';
+ $('authAction').textContent=account?'Sign out':authChecking?'Checking sign-in…':'Sign in with existing account';
+ $('authAction').disabled=authChecking;
+ if($('connectivityStatus'))$('connectivityStatus').textContent=navigator.onLine?'Online · local device saving':'Offline · local device saving';
+ if($('cloudSyncStatus'))$('cloudSyncStatus').textContent=authChecking?'Checking account…':authUnavailable?'Verification unavailable · local records safe':account?'Signed in · cloud sync not yet enabled':'Cloud sync not enabled';
 }
 
 /* Recovery foundation: a separate preview-only, account-scoped active-session journal.
@@ -447,24 +489,40 @@ async function authRequest(path,body,token,method='POST'){
   return data;
  }finally{clearTimeout(timer)}
 }
-function saveAuth(data){originalSnapshot=null;
- const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
- sessionStorage.setItem(AUTH_KEY,JSON.stringify(session));auth=session;account=data.user;renderSettings();
+function saveAuth(data){
+ if(!data?.access_token||!data?.user?.id)throw Error('Verified credentials required.');
+ const previous=account?.id||null;
+ const credentials={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
+ sessionStorage.setItem(AUTH_KEY,JSON.stringify(credentials));
+ auth=credentials;account=data.user;authChecking=false;authUnavailable=false;
+ if(previous!==account.id)refreshPreviewOwner();
+ renderSettings();
 }
-function clearAuth(){sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;renderSettings();renderHistory();renderTracking();renderOriginalPlans()}
+function clearAuth(){
+ sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;authChecking=false;authUnavailable=false;
+ refreshPreviewOwner();renderSettings();
+}
 async function validateStoredAuth(){
+ const saved=(()=>{try{return JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null')}catch{return null}})();
+ if(!saved?.access_token||!saved?.user?.id){authChecking=false;renderSettings();return}
+ authChecking=true;renderSettings();
  try{
-  const saved=JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null');
-  if(!saved?.access_token||!saved?.user?.id)return;
-  let token=saved.access_token;
+  let credentials=saved;
   if(saved.expires_at<Date.now()/1000+45&&saved.refresh_token){
     const refreshed=await authRequest('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
-    saveAuth(refreshed);token=refreshed.access_token;
-  }else{auth=saved;account=saved.user}
-  const user=await authRequest('user',null,token,'GET');
-  if(!user?.id||user.id!==account.id)clearAuth();
- }catch{clearAuth()}
- renderSettings();
+    credentials={...saved,...refreshed,user:refreshed.user||saved.user};
+    credentials.expires_at=Math.floor(Date.now()/1000)+(refreshed.expires_in||3600);
+  }
+  const user=await authRequest('user',null,credentials.access_token,'GET');
+  if(!user?.id||user.id!==saved.user.id){clearAuth();return}
+  saveAuth({...credentials,user});
+ }catch(e){
+  // Connection drops are not sign-outs. Retain the token but do not expose
+  // owner-scoped local data until Auth confirms the user.
+  if(e?.status===400||e?.status===401||e?.status===403){clearAuth();return}
+  authChecking=false;authUnavailable=true;auth=null;account=null;
+  refreshPreviewOwner();renderSettings();
+ }finally{authChecking=false;renderSettings()}
 }
 function openSignIn(){
  openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">The training area stays in demo mode until the legacy data mapping is verified.</p>');
@@ -530,10 +588,10 @@ function bind(){
  $('cancelCustomEdit').addEventListener('click',clearCustomEditor);
  $('customWorkoutList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.customRun)openWorkout(b.dataset.customRun);else if(b.dataset.customEdit)editCustomPlan(b.dataset.customEdit);else if(b.dataset.customDelete)removeCustomPlan(b.dataset.customDelete)});
  $('measurementsForm').addEventListener('submit',saveMeasurements);
- $('measurementHistory').addEventListener('click',e=>{const b=e.target.closest('[data-measure-delete]');if(!b||!confirm('Remove this preview measurement?'))return;const old=[...measurements];measurements=measurements.filter(x=>x.id!==b.dataset.measureDelete);try{localStorage.setItem(MEASUREMENT_KEY,JSON.stringify(measurements));renderMeasurements()}catch{measurements=old;notice('Could not remove entry.')}});
+ $('measurementHistory').addEventListener('click',e=>{const b=e.target.closest('[data-measure-delete]');if(!b||!confirm('Remove this preview measurement?'))return;const old=[...measurements];measurements=measurements.filter(x=>x.id!==b.dataset.measureDelete);try{localStorage.setItem(previewKey(MEASUREMENT_KEY),JSON.stringify(measurements));renderMeasurements()}catch{measurements=old;notice('Could not remove entry.')}});
  $('mealForm').addEventListener('submit',saveMeal);
  $('nutritionGoalForm').addEventListener('submit',saveGoals);
- $('nutritionHistory').addEventListener('click',e=>{const b=e.target.closest('[data-meal-delete]');if(!b||!confirm('Remove this preview meal?'))return;const old=[...meals];meals=meals.filter(x=>x.id!==b.dataset.mealDelete);try{localStorage.setItem(NUTRITION_KEY,JSON.stringify(meals));renderNutrition()}catch{meals=old;notice('Could not remove meal.')}});
+ $('nutritionHistory').addEventListener('click',e=>{const b=e.target.closest('[data-meal-delete]');if(!b||!confirm('Remove this preview meal?'))return;const old=[...meals];meals=meals.filter(x=>x.id!==b.dataset.mealDelete);try{localStorage.setItem(previewKey(NUTRITION_KEY),JSON.stringify(meals));renderNutrition()}catch{meals=old;notice('Could not remove meal.')}});
  $('homeAccountBtn').addEventListener('click',()=>setPage('settings'));
 
  $('heroStart').addEventListener('click',()=>openWorkout(nextPlan().id));
@@ -560,8 +618,14 @@ function bind(){
  $('restPause').addEventListener('click',()=>{restPaused=!restPaused;updateRestClock()});
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
- $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
- $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
+ $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(previewKey(DEMO_KEY));renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ $('authAction').addEventListener('click',()=>{if(authChecking)return;if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Your other account data is unchanged.')});
+ $('backupPreview').addEventListener('click',downloadPreviewBackup);
+ window.addEventListener('online',()=>{updateConnectivity();if(!account&&sessionStorage.getItem(AUTH_KEY))validateStoredAuth()});
+ window.addEventListener('offline',updateConnectivity);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateConnectivity();if(!account&&sessionStorage.getItem(AUTH_KEY)&&navigator.onLine)validateStoredAuth()}});
+ window.addEventListener('storage',event=>{if(event.key&&event.key===previewKey(DEMO_KEY)){demoSessions=loadDemo();renderHome();renderProgress()}});
+
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();$('measurementDate').value=localDayString();$('mealDate').value=localDayString();
 document.body.classList.add('home-active');bind();draftBanner();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
