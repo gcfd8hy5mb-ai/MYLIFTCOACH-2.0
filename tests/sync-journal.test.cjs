@@ -135,3 +135,27 @@ test('invalid operations are rejected',()=>{
  assert.throws(()=>e.enqueue('session','s',{a:1},-1),/base revision/);
  assert.throws(()=>create({owner:'../../other',storage:localStore()}),/owner ID/);
 });
+
+test('remote inspection does not overwrite pending local changes',async()=>{
+ const store=localStore(),cloud=fakeServer();
+ const engine=create({owner:'a',storage:store,enabled:true,transport:{
+  ...cloud,
+  read:async(type,id,owner)=>{
+   const row=cloud.rows.get(owner+'/'+type+'/'+id);
+   return row?{owner,type,id,revision:row.revision,payload:row.payload,deleted:row.deleted}:null;
+  }
+ },makeId:id});
+ engine.enqueue('session','s5',{sets:[{weight:80,reps:10}]});
+ const copy=await engine.inspectRemote('session','s5',{verifiedOwner:'a'});
+ assert.equal(copy.status,'not-found');
+ assert.equal(engine.list().items.length,1);
+ assert.equal((await engine.inspectRemote('session','s5',{verifiedOwner:'b'})).status,'owner-unverified');
+ const saved=engine.list();
+ assert.deepEqual(engine.list(),saved,'Inspecting remote rows must not touch the local journal');
+});
+test('read-only recovery verifies remote account, revision and record identity',async()=>{
+ const e=create({owner:'a',storage:localStore(),enabled:true,transport:{
+  read:async()=>({owner:'b',type:'session',id:'s6',revision:1,payload:{sets:[]},deleted:false})
+ },makeId:id});
+ await assert.rejects(e.inspectRemote('session','s6',{verifiedOwner:'a'}),/Unverified remote record/);
+});
