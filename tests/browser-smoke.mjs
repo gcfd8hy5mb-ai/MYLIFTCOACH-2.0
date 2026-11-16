@@ -244,7 +244,10 @@ try {
   await route.fulfill({status:404,body:'{}'});
  });
  await page.locator('#cloudUploadSessions').click();
- await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('Cloud upload:'));
+ await page.waitForTimeout(1700);
+ const cloudDiagnostic=await page.locator('#cloudActionStatus').innerText();
+ console.log('Manual cloud upload diagnostic:',cloudDiagnostic,'RPC commits:',commits);
+ assert.match(cloudDiagnostic,/Cloud upload:/);
  assert.equal(commits,1);
  assert.equal(cloudSaved.size,1);
  await page.locator('#cloudUploadSessions').click();
