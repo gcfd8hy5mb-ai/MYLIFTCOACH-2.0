@@ -92,6 +92,19 @@
     return {status:state.items.length?'pending':'idle',sent,pending:state.items.length};
    }finally{busy=false}
   }
+  async function inspectRemote(type,id,{verifiedOwner}={}){
+   validate(type,id);
+   if(!enabled)return {status:'disabled'};
+   if(verifiedOwner!==owner)return {status:'owner-unverified'};
+   if(!transport||typeof transport.read!=='function')throw Error('Verified read transport missing');
+   const row=await transport.read(type,id,owner);
+   if(row===null)return {status:'not-found'};
+   if(row.owner!==owner||row.type!==type||row.id!==id||
+     !Number.isSafeInteger(row.revision)||row.revision<1)throw Error('Unverified remote record');
+   // Never auto-merge cloud records with unsent local changes.
+   return {status:'read-only',record:clone(row),
+    localPending:state.items.some(x=>x.type===type&&x.id===id)};
+  }
   function resolveConflict(opId,{strategy,revision}={}){
    const item=state.items.find(x=>x.opId===opId&&x.status==='conflict');
    if(!item)throw Error('No matching conflict');
@@ -107,7 +120,7 @@
    }
    throw Error('Conflict must be resolved explicitly against server revision');
   }
-  return Object.freeze({enqueue,enqueueDelete,list,drain,resolveConflict});
+  return Object.freeze({enqueue,enqueueDelete,list,drain,resolveConflict,inspectRemote});
  }
  return Object.freeze({create,load,VERSION,PREFIX});
 });
