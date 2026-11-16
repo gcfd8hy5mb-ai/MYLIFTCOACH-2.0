@@ -5,7 +5,7 @@ const BACKEND='https://kirlpjflaoriiusfamsk.supabase.co';
 const PUBLIC_KEY='sb_publishable_yYMnCM3k14zaEtpHo4-xkQ_Cd1Aty90';
 const DEMO_KEY='mlc2-demo-workouts-v1'; // independent namespace, never original workout keys
 const AUTH_KEY='mlc2-auth-session-v1'; // persistent login as original PRISM app; independent preview namespace
-const exercises=[
+const starterExercises=[
  {id:'chest-press',name:'Machine Chest Press',group:'Chest',sets:3,reps:'8–12',cue:'Set the handles near mid-chest. Press smoothly and control the return.'},
  {id:'pec-deck',name:'Pec Deck',group:'Chest',sets:3,reps:'10–15',cue:'Keep the chest tall and bring the arms together without swinging.'},
  {id:'shoulder-press',name:'Machine Shoulder Press',group:'Shoulders',sets:3,reps:'8–12',cue:'Keep elbows under the handles and avoid arching your back.'},
@@ -19,6 +19,20 @@ const exercises=[
  {id:'calf-raise',name:'Calf Raise Machine',group:'Legs',sets:3,reps:'12–15',cue:'Reach a comfortable stretch, rise steadily, and pause.'},
  {id:'cable-crunch',name:'Cable Crunch',group:'Core',sets:3,reps:'10–15',cue:'Move the rib cage toward the pelvis without pulling with the arms.'}
 ];
+// The original exercise library is imported as static data only. Keep the
+// established 2.0 identifiers (including previously saved session sets)
+// unchanged, and append validated legacy IDs without executing legacy scripts.
+const exercises=[...starterExercises];
+const exerciseIds=new Set(exercises.map(item=>item.id));
+for(const item of (window.MLC2ExerciseCatalog?.items||[])){
+ if(!item||typeof item.id!=='string'||!/^[-a-z0-9]{2,100}$/.test(item.id)||
+    typeof item.name!=='string'||typeof item.cue!=='string'||typeof item.group!=='string'||
+    exerciseIds.has(item.id))continue;
+ exerciseIds.add(item.id);
+ exercises.push({...item,sets:3,reps:'8–12'});
+}
+const muscleGroups=[...new Set(exercises.map(item=>item.group))].sort((a,b)=>a.localeCompare(b));
+const equipmentGroups=[...new Set(exercises.map(item=>item.equipment||'Machine'))].sort((a,b)=>a.localeCompare(b));
 const plans=[
  {id:'upper-a',title:'Upper Body A',kind:'Upper Strength',description:'A push-and-pull session for the upper body.',ids:['chest-press','lat-pulldown','shoulder-press','triceps-push']},
  {id:'lower-a',title:'Lower Body A',kind:'Lower Strength',description:'Controlled lower-body movements and core training.',ids:['leg-press','leg-curl','calf-raise','cable-crunch']},
@@ -43,7 +57,8 @@ let nutritionGoals=readPreview(GOALS_KEY,{calories:2000,protein:140});
 const allPlans=()=>[...plans,...customPlans];
 
 let toastTimer;
-let muscleFilter='';
+let muscleFilter='',equipmentFilter='';
+let customExerciseSelected=new Set();
 let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{const a=JSON.parse(localStorage.getItem(previewKey(DEMO_KEY))||'[]');return Array.isArray(a)?a.filter(x=>x&&Array.isArray(x.sets)).slice(0,100):[]}catch{return []}}
 function storeDemo(){localStorage.setItem(previewKey(DEMO_KEY),JSON.stringify(demoSessions))}
@@ -187,16 +202,26 @@ function renderHome(){
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
 /* Device-only functionality. These namespaces are separate from the original app. */
+function renderCustomExerciseOptions(){
+ const query=($('customExerciseSearch')?.value||'').trim().toLowerCase();
+ const matches=exercises.filter(e=>(e.name+' '+e.group+' '+(e.equipment||'')).toLowerCase().includes(query));
+ const chosen=exercises.filter(e=>customExerciseSelected.has(e.id));
+ const shown=matches.slice(0,90);
+ const visible=[...chosen.filter(e=>!shown.some(x=>x.id===e.id)),...shown];
+ $('customExerciseOptions').innerHTML=visible.map(e=>'<label class="mlc-option"><input type="checkbox" name="exercise" value="'+escapeHTML(e.id)+'" '+(customExerciseSelected.has(e.id)?'checked':'')+'><span>'+escapeHTML(e.name)+'</span></label>').join('');
+ $('customExerciseCount').textContent=customExerciseSelected.size+' selected · '+matches.length+' matching'+(matches.length>90?' (showing first 90; search to narrow)':'');
+}
 function renderCustomPlans(){
  const list=$('customWorkoutList');
  list.innerHTML=customPlans.length?customPlans.map(p=>'<div class="history-entry mlc-list-row"><div><strong>'+escapeHTML(p.title)+'</strong><small>'+p.ids.length+' exercises</small></div><div class="mlc-mini-actions"><button type="button" data-custom-run="'+escapeHTML(p.id)+'">Start</button><button type="button" data-custom-edit="'+escapeHTML(p.id)+'">Edit</button><button type="button" data-custom-delete="'+escapeHTML(p.id)+'">Delete</button></div></div>').join(''):'<p class="empty-note">No custom workouts yet. Build one below.</p>';
- $('customExerciseOptions').innerHTML=exercises.map(e=>'<label class="mlc-option"><input type="checkbox" name="exercise" value="'+escapeHTML(e.id)+'"><span>'+escapeHTML(e.name)+'</span></label>').join('');
+ renderCustomExerciseOptions();
 }
 function clearCustomEditor(){
  $('customWorkoutForm').reset();$('customEditId').value='';$('customEditorTitle').textContent='Create a workout';
+ customExerciseSelected=new Set();$('customExerciseSearch').value='';renderCustomExerciseOptions();
 }
 function saveCustomWorkout(e){
- e.preventDefault();const form=e.currentTarget,values=new FormData(form),title=String(values.get('title')||'').trim(),ids=values.getAll('exercise').filter(id=>exercises.some(x=>x.id===id));
+ e.preventDefault();const form=e.currentTarget,values=new FormData(form),title=String(values.get('title')||'').trim(),ids=[...customExerciseSelected].filter(id=>exerciseIds.has(id));
  if(!title||title.length>65||ids.length<1||ids.length>12){notice('Give the workout a name and choose 1–12 exercises.');return}
  const editId=String(values.get('editId')||''),existing=customPlans.find(x=>x.id===editId),id=existing?.id||'custom-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
  const item={id,title,kind:'Custom',description:String(values.get('description')||'').trim().slice(0,160)||'My custom training session.',ids};
@@ -206,7 +231,8 @@ function saveCustomWorkout(e){
 function editCustomPlan(id){
  const p=customPlans.find(x=>x.id===id);if(!p)return;
  renderCustomPlans();$('customEditId').value=p.id;$('customWorkoutName').value=p.title;$('customWorkoutDesc').value=p.description;
- document.querySelectorAll('#customExerciseOptions input').forEach(x=>x.checked=p.ids.includes(x.value));
+ customExerciseSelected=new Set(p.ids.filter(id=>exerciseIds.has(id)));
+ $('customExerciseSearch').value='';renderCustomExerciseOptions();
  $('customEditorTitle').textContent='Edit custom workout';$('customWorkoutName').focus();
 }
 function removeCustomPlan(id){
@@ -250,9 +276,14 @@ function renderWorkouts(){
 }
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
- const matches=exercises.filter(e=>(!muscleFilter||e.group===muscleFilter)&&(e.name+' '+e.group).toLowerCase().includes(query));
- document.querySelectorAll('[data-muscle]').forEach(b=>b.classList.toggle('selected',b.dataset.muscle===muscleFilter));
- $('libraryGrid').innerHTML=matches.map(e=>'<article class="library-card reference-exercise"><img class="library-thumb" src="./assets/chest-press.svg" alt="" loading="lazy"><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+e.sets+' sets · '+escapeHTML(e.reps)+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue)+'</p></details></div><span class="library-chevron">›</span></article>').join('')||'<p class="empty-note">No exercises match that search.</p>';
+ const selectedEquipment=$('libraryEquipment').value;
+ const matches=exercises.filter(e=>(!muscleFilter||e.group===muscleFilter)&&
+  (!selectedEquipment||(e.equipment||'Machine')===selectedEquipment)&&
+  (e.name+' '+e.group+' '+(e.equipment||'')+' '+(e.how||e.cue||'')).toLowerCase().includes(query));
+ const shown=matches.slice(0,60);
+ $('libraryChips').innerHTML=['',...muscleGroups].map(group=>'<button type="button" data-muscle="'+escapeHTML(group)+'"'+(group===muscleFilter?' class="selected"':'')+'>'+escapeHTML(group||'All')+'</button>').join('');
+ $('libraryResultsCount').textContent=matches.length+' matching exercises out of '+exercises.length+(matches.length>shown.length?' · Showing first '+shown.length+'. Search or filter to narrow.':'');
+ $('libraryGrid').innerHTML=shown.map(e=>'<article class="library-card reference-exercise"><div class="library-thumb catalog-icon" aria-hidden="true"><svg class="app-icon"><use href="#i-dumbbell"></use></svg></div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(e.equipment||'Machine')+'</p><details><summary>Instructions and technique</summary><p>'+escapeHTML(e.how||e.cue)+'</p>'+(e.tips?.length?'<strong>Technique tips</strong><ul>'+e.tips.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+(e.mistakes?.length?'<strong>Common mistakes</strong><ul>'+e.mistakes.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+'</details></div></article>').join('')||'<p class="empty-note">No exercises match those filters.</p>';
 }
 function renderProgress(){
  const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
@@ -1028,6 +1059,10 @@ function bind(){
  });
 
  $('exerciseSearch').addEventListener('input',renderLibrary);
+ $('libraryEquipment').innerHTML='<option value="">All equipment</option>'+equipmentGroups.map(v=>'<option value="'+escapeHTML(v)+'">'+escapeHTML(v)+'</option>').join('');
+ $('libraryEquipment').addEventListener('change',()=>{equipmentFilter=$('libraryEquipment').value;renderLibrary()});
+ $('customExerciseSearch').addEventListener('input',renderCustomExerciseOptions);
+ $('customExerciseOptions').addEventListener('change',e=>{const field=e.target.closest('input[name="exercise"]');if(!field)return;if(field.checked)customExerciseSelected.add(field.value);else customExerciseSelected.delete(field.value);renderCustomExerciseOptions()});
  $('libraryChips').addEventListener('click',event=>{const el=event.target.closest('[data-muscle]');if(!el)return;muscleFilter=el.dataset.muscle;renderLibrary()});
  document.querySelectorAll('[data-account-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.accountPage)));
 
