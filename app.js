@@ -492,7 +492,7 @@ async function authRequest(path,body,token,method='POST'){
 function saveAuth(data){
  if(!data?.access_token||!data?.user?.id)throw Error('Verified credentials required.');
  const previous=account?.id||null;
- const credentials={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
+ const credentials={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Number.isFinite(Number(data.expires_at))&&Number(data.expires_at)>0?Number(data.expires_at):Math.floor(Date.now()/1000)+(Number(data.expires_in)||3600)};
  sessionStorage.setItem(AUTH_KEY,JSON.stringify(credentials));
  auth=credentials;account=data.user;authChecking=false;authUnavailable=false;
  if(previous!==account.id)refreshPreviewOwner();
