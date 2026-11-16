@@ -224,6 +224,43 @@ try {
  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
  await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('a@example.test'));
  assert.match(await page.locator('#cloudSyncStatus').innerText(),/not yet enabled/i);
+
+ // Manual cloud transfer uses only the new 2.0 RPCs; never original PRISM tables.
+ const cloudSaved=new Map();let commits=0;
+ await page.route('**/rest/v1/rpc/mlc2_v1_*',async route=>{
+  const url=new URL(route.request().url()),body=route.request().postDataJSON();
+  const owner=JSON.parse(await page.evaluate(()=>localStorage.getItem('mlc2-auth-session-v1'))).user.id;
+  if(url.pathname.endsWith('mlc2_v1_list_sessions')){
+   const rows=[...cloudSaved.values()].filter(x=>x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});return;
+  }
+  if(url.pathname.endsWith('mlc2_v1_commit')){
+   commits++;
+   const id=body.p_record_id;
+   if(cloudSaved.has(id)){await route.fulfill({status:409,contentType:'application/json',body:'{"code":"PT409","message":"MLC2_REVISION_CONFLICT"}'});return}
+   cloudSaved.set(id,{owner,type:body.p_type,id,revision:1,deleted:false,payload:body.p_payload});
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({owner,opId:body.p_op_id,revision:1})});return;
+  }
+  await route.fulfill({status:404,body:'{}'});
+ });
+ await page.locator('#cloudUploadSessions').click();
+ await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('Cloud upload:'));
+ assert.equal(commits,1);
+ assert.equal(cloudSaved.size,1);
+ await page.locator('#cloudUploadSessions').click();
+ await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('1 already saved'));
+ assert.equal(commits,1,'Already uploaded workout must not be uploaded twice');
+ // Simulate a fresh device that has no local workout history (test account only).
+ await page.evaluate(()=>localStorage.removeItem('mlc2-demo-workouts-v1:user:user-a'));
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('a@example.test'));
+ await page.locator('#homeMenuBtn').click();
+ await page.locator('#sidebar [data-page="settings"]').click();
+ await page.locator('#cloudRestoreSessions').click();
+ await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('Restored 1'));
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
+ assert.equal(commits,1,'Recovery must not create new cloud writes');
+
  await page.locator('#backupPreview').click();
  // Export is read-only and never includes credentials.
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
