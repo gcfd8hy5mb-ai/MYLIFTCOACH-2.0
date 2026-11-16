@@ -121,8 +121,12 @@ try {
   const url=new URL(route.request().url()),body=route.request().postDataJSON();
   const owner='user-a';
   if(url.pathname.endsWith('mlc2_v1_list_sessions')){
-   const rows=[...cloudSaved.values()].filter(x=>x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
+   const rows=[...cloudSaved.values()].filter(x=>x.type==='session'&&x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});return;
+  }
+  if(url.pathname.endsWith('mlc2_v1_read')){
+   const row=cloudSaved.get(body.p_type+':'+body.p_record_id)||null;
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(row)});return;
   }
   if(url.pathname.endsWith('mlc2_v1_commit')){
    commits++;
@@ -131,9 +135,9 @@ try {
     failNextCommit=false;
     await route.fulfill({status:503,contentType:'application/json',body:'{"message":"Temporary service outage"}'});return;
    }
-   const id=body.p_record_id;
-   if(cloudSaved.has(id)){await route.fulfill({status:409,contentType:'application/json',body:'{"code":"PT409","message":"MLC2_REVISION_CONFLICT"}'});return}
-   cloudSaved.set(id,{owner,type:body.p_type,id,revision:1,deleted:false,payload:body.p_payload});
+   const id=body.p_record_id,key=body.p_type+':'+id;
+   if(cloudSaved.has(key)){await route.fulfill({status:409,contentType:'application/json',body:'{"code":"PT409","message":"MLC2_REVISION_CONFLICT"}'});return}
+   cloudSaved.set(key,{owner,type:body.p_type,id,revision:1,deleted:false,payload:body.p_payload});
    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({owner,opId:body.p_op_id,revision:1})});return;
   }
   await route.fulfill({status:404,body:'{}'});
@@ -326,6 +330,25 @@ try {
  await page.locator('#backupPreview').click();
  // Export is read-only and never includes credentials.
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
+ // Explicit backup of five non-session categories: original PRISM records untouched.
+ await page.evaluate(()=>{
+  const owner=':user:user-a';
+  const records={
+   'mlc2-custom-plans-v1':[{id:'custom-alpha',title:'Strength Day',ids:['chest-press'],kind:'Custom',description:'Safe test'}],
+   'mlc2-measurements-v1':[{id:'m-alpha',day:'2026-11-15',values:{waist:34}}],
+   'mlc2-local-daily-v1':[{id:'t-alpha',day:'2026-11-15',type:'water',value:300}],
+   'mlc2-food-log-v1':[{id:'food-alpha',name:'Breakfast',day:'2026-11-15',calories:300,protein:20,carbs:35,fat:8}],
+   'mlc2-food-goals-v1':{calories:2300,protein:140}
+  };
+  for(const [key,value] of Object.entries(records))localStorage.setItem(key+owner,JSON.stringify(value));
+ });
+ await page.locator('#backupOtherData').click();
+ await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('Other data backup:'));
+ assert.equal(cloudSaved.size,8,'Five auxiliary categories should back up separately from three workouts');
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-custom-plans-v1:user:user-a'))[0].id),'custom-alpha');
+ await page.locator('#backupOtherData').click();
+ await page.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('5 unchanged/empty'));
+ assert.equal(cloudSaved.size,8,'Repeat other-data backup must never duplicate a record');
  const desktop=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1});
  const desk=await desktop.newPage();
  desk.on('pageerror',e=>errors.push(e.message));
@@ -355,8 +378,12 @@ try {
  await desk.route('**/rest/v1/rpc/mlc2_v1_*',async route=>{
   const path=new URL(route.request().url()).pathname,body=route.request().postDataJSON();
   if(path.endsWith('mlc2_v1_list_sessions')){
-   const rows=[...cloudSaved.values()].filter(x=>x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
+   const rows=[...cloudSaved.values()].filter(x=>x.type==='session'&&x.id>body.p_after_id).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,body.p_limit);
    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});return;
+  }
+  if(path.endsWith('mlc2_v1_read')){
+   const row=cloudSaved.get(body.p_type+':'+body.p_record_id)||null;
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(row)});return;
   }
   throw Error('Second-device recovery attempted an unexpected cloud write');
  });
@@ -372,7 +399,13 @@ try {
  await desk.locator('#cloudRestoreSessions').click();
  await desk.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('Restored 3'));
  assert.equal(await desk.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),3);
- assert.equal(commits,4,'Restoring on second browser must not upload extra records');
+ assert.equal(commits,9,'Five additional categories should upload once and recovery should upload nothing');
+ await desk.locator('#recoverOtherData').click();
+ await desk.waitForFunction(()=>document.getElementById('cloudActionStatus').textContent.includes('Recovered Custom workouts'));
+ assert.equal(await desk.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-measurements-v1:user:user-a'))[0].id),'m-alpha');
+ assert.equal(await desk.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-food-goals-v1:user:user-a')).calories),2300);
+ assert.equal(await desk.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-local-daily-v1:user:user-a'))[0].value),300);
+ assert.equal(commits,9,'Auxiliary recovery should be read-only');
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),3,'Original device must retain its data');
  assert.deepEqual(errors,[], 'JavaScript page errors detected');
  console.log('PASS: mobile Home/sidebar/calendar/timer/custom-plans/measurements/nutrition and desktop Home/Workouts');
