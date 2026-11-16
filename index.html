@@ -120,7 +120,7 @@
     <p class="safety-note"><strong>Development preview.</strong> Demo workout entries stay in this browser. Original workout history remains unchanged.</p>
   </div>
  </section>
- <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Training plan</h1><p>Four purposeful sessions. Select one to open its exercise list and record a practice workout.</p></div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
+ <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Training plans</h1><p>Your existing 2.0 routines, original four-day split, and saved custom workouts—all in one place.</p></div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
  <section id="manage" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">YOUR ROUTINES</div><h1>Manage workouts</h1><p>Create, edit, and practice custom training plans. Preview plans remain separate from original workout data.</p></div>
  <article class="panel"><h3>My custom workouts</h3><div id="customWorkoutList" class="legacy-list"></div></article>
@@ -235,6 +235,7 @@
 <script defer src="./sync/supabase-transport.js?v=2"></script>
 <script defer src="./sync/aux-data.js?v=1"></script>
 <script defer src="./imports/original-exercises.generated.js?v=1"></script>
+<script defer src="./imports/original-programs.js?v=1"></script>
 <script defer src="./app.js?v=10"></script>
 </body>
 </html>
