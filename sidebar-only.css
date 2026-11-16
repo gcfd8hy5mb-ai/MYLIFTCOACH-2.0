@@ -29,3 +29,12 @@ body.sidebar-is-open{overflow:hidden}
 }
 .sidebar .nav-item:focus-visible,.sidebar .nav-group summary:focus-visible,.sidebar .sidebar-close:focus-visible{outline:2px solid #f1ce8e;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.sidebar,.sidebar-scrim,.sidebar .nav-group summary span{transition:none!important}}
+
+/* The earlier premium skin intentionally hid the unfinished mobile sidebar.
+ * The drawer is functional now, so restore it only on mobile. */
+@media(max-width:760px){
+ #sidebar{display:flex!important;flex-direction:column!important}
+ #menuBtn{display:block!important}
+ #homeMenuBtn{display:grid!important}
+ body.home-active .topbar{display:none!important}
+}
