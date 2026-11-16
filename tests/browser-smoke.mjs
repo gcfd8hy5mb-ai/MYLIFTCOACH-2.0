@@ -34,6 +34,34 @@ try {
  assert.equal(await page.locator('#restScreen').isVisible(),true);
  await page.locator('#restClose').click();
  assert.equal(await page.locator('#restScreen').isVisible(),false);
+ // Exercise new device-only features and their persisted records.
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="manage"]').click();
+ await page.locator('#customWorkoutName').fill('My test routine');
+ await page.locator('#customExerciseOptions input[value="chest-press"]').check();
+ await page.locator('#customWorkoutForm button[type="submit"]').click();
+ assert.match(await page.locator('#customWorkoutList').innerText(),/My test routine/);
+ await page.locator('#customWorkoutList [data-custom-run]').click();
+ assert.equal(await page.locator('#modal').isVisible(),true);
+ await page.locator('#closeModal').click();
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="measurements"]').click();
+ await page.locator('#measurementsForm input[name="waist"]').fill('32.5');
+ await page.locator('#measurementsForm button[type="submit"]').click();
+ assert.match(await page.locator('#measurementHistory').innerText(),/32.5/);
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="nutrition"]').click();
+ await page.locator('#mealForm input[name="name"]').fill('Test lunch');
+ for(const [key,value] of [['calories','450'],['protein','38'],['carbs','42'],['fat','12']]){
+  await page.locator('#mealForm input[name="'+key+'"]').fill(value);
+ }
+ await page.locator('#mealForm button[type="submit"]').click();
+ assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="nutrition"]').click();
+ assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
+ await page.screenshot({path:'test-artifacts/mobile-nutrition.png',fullPage:true});
  const desktop=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1});
  const desk=await desktop.newPage();
  desk.on('pageerror',e=>errors.push(e.message));
@@ -45,6 +73,6 @@ try {
  await desk.locator('#workouts').waitFor({state:'visible'});
  await desk.screenshot({path:'test-artifacts/desktop-workouts.png',fullPage:true});
  assert.deepEqual(errors,[], 'JavaScript page errors detected');
- console.log('PASS: mobile Home/buttons/sidebar/calendar/timer and desktop Home/Workouts');
+ console.log('PASS: mobile Home/sidebar/calendar/timer/custom-plans/measurements/nutrition and desktop Home/Workouts');
  await desktop.close();await mobile.close();
 }finally{await browser.close()}
