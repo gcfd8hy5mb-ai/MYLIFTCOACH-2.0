@@ -190,3 +190,18 @@ body.home-active .topbar{display:none!important}
  .home-rebuilt .quick-grid button{height:61px;min-height:61px!important}
 }
 @media(prefers-reduced-motion:reduce){.home-rebuilt .button-primary{transition:none}}
+
+/* Home secondary information uses the same gold-framed dark surface without
+   repeating the gym hero image throughout the page. The six shortcuts are unchanged. */
+#home .home-below-fold .metric,
+#home .home-below-fold .next-panel,
+#home .home-below-fold .activity-panel,
+#home .home-below-fold .preview-exercise,
+#home .home-below-fold .recent-item,
+#home .home-below-fold .micro-tag,
+#home .home-below-fold .text-action{
+ background-color:#052e36!important;
+ background-image:linear-gradient(145deg,#0a4249 0%,#052b33 100%)!important;
+ background-position:center!important;
+ background-size:auto!important;
+}
