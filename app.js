@@ -171,11 +171,12 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
  if(fromSidebar){const target=$(next);target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}
  $('sidebar').classList.remove('open');$('sidebarScrim').classList.remove('open');document.body.classList.remove('sidebar-is-open');['menuBtn','homeMenuBtn','moreMenuBtn'].forEach(id=>$(id).setAttribute('aria-expanded','false'));$('sidebar').inert=window.matchMedia('(max-width:760px)').matches;document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
- if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();if(next==='calendar')renderCalendar();if(next==='manage')renderCustomPlans();if(next==='measurements')renderMeasurements();if(next==='nutrition')renderNutrition();
+ if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();if(next==='calendar')renderCalendar();if(next==='manage')renderCustomPlans();if(next==='measurements')renderMeasurements();if(next==='nutrition')renderNutrition();draftBanner();
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
 function nextPlan(){return plans[demoSessions.length%plans.length]}
 function renderHome(){
+ draftBanner();
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
  const plan=nextPlan();$('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
@@ -241,6 +242,7 @@ function saveGoals(e){
 }
 
 function renderWorkouts(){
+ draftBanner();
  $('workoutGrid').innerHTML=allPlans().map((p,i)=>'<button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>').join('');
 }
 function renderLibrary(){
@@ -272,20 +274,91 @@ function renderSettings(){
  $('cloudPill').textContent=account?'ACCOUNT CONNECTED · DEMO':'DEMO WORKSPACE';
  $('authAction').textContent=account?'Sign out':'Sign in with existing account';
 }
+
+/* Recovery foundation: a separate preview-only, account-scoped active-session journal.
+   Commit each set to storage *before* displaying success. No production key or cloud write. */
+const DRAFT_PREFIX='mlc2-active-session-v1:';
+const draftKey=()=>DRAFT_PREFIX+(account?.id||'guest');
+function readDraft(){
+ try{
+  const raw=localStorage.getItem(draftKey());
+  if(!raw||raw.length>125000)return null;
+  const d=JSON.parse(raw);
+  if(!d||d.version!==1||typeof d.id!=='string'||!/^draft-[a-z0-9-]+$/.test(d.id)||
+    typeof d.planId!=='string'||!Array.isArray(d.ids)||!Array.isArray(d.sets)||
+    d.ids.length<1||d.ids.length>24||d.sets.length>300||
+    !d.ids.every(id=>exercises.some(e=>e.id===id))||
+    !d.sets.every(x=>d.ids.includes(x.exerciseId)&&Number.isFinite(x.weight)&&x.weight>=0&&x.weight<=1500&&Number.isInteger(x.reps)&&x.reps>=1&&x.reps<=100))return null;
+  if(demoSessions.some(x=>x.id==='demo-'+d.id))return null;
+  return d;
+ }catch{return null}
+}
+function writeDraft(d){
+ try{localStorage.setItem(draftKey(),JSON.stringify(d));return true}
+ catch{notice('Save failed. Storage may be full or blocked. Your previous saved sets remain intact.');return false}
+}
+function draftBanner(){
+ let holder=$('activeDraftNotice');
+ if(!holder){
+  holder=document.createElement('div');holder.id='activeDraftNotice';
+  holder.className='active-draft-notice';holder.setAttribute('role','status');
+  const home=$('home'),workouts=$('workouts');
+  home.prepend(holder);
+  const other=holder.cloneNode(false);other.id='activeDraftWorkouts';workouts.prepend(other);
+ }
+ for(const id of ['activeDraftNotice','activeDraftWorkouts']){
+  const el=$(id),d=readDraft();
+  if(!el)continue;
+  el.hidden=!d;
+  if(d)el.innerHTML='<div><strong>Unfinished workout saved</strong><small>'+escapeHTML(d.title)+' · '+d.sets.length+' logged sets · stored on this device</small></div><div class="active-draft-actions"><button type="button" data-draft-action="resume">Resume workout</button><button type="button" data-draft-action="discard">Discard</button></div>';
+ }
+}
+function discardDraft(){
+ const d=readDraft();if(!d)return;
+ if(!confirm('Discard the unfinished preview workout and its '+d.sets.length+' sets? Completed history is not affected.'))return;
+ try{localStorage.removeItem(draftKey());draftBanner();notice('Unfinished preview workout discarded.')}
+ catch{notice('Unable to discard this workout. Try again.')}
+}
+function resumeDraft(){
+ const d=readDraft();if(!d){draftBanner();notice('No unfinished workout was found.');return}
+ const plan=allPlans().find(x=>x.id===d.planId);
+ const snapshot=plan&&d.ids.every(id=>plan.ids.includes(id))?plan:{id:d.planId,title:d.title,description:'Recovered workout',ids:d.ids,kind:'Recovered'};
+ openWorkout(d.planId,snapshot);
+}
+
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
-function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
-function openWorkout(id){
- const plan=allPlans().find(x=>x.id===id);if(!plan)return;activePlan=plan;
- session={sets:[]};
- openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p><div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
+function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null;draftBanner()}
+function openWorkout(id,recoveredPlan=null){
+ const pending=readDraft();
+ if(pending&&pending.planId!==id&&!recoveredPlan){
+  notice('You have an unfinished workout. Resume it or discard it first to protect saved sets.');
+  draftBanner();setPage('workouts');return;
+ }
+ const plan=recoveredPlan||allPlans().find(x=>x.id===id);
+ if(!plan)return;
+ const saved=pending?.planId===id?pending:null;
+ const next=saved||{
+  version:1,id:'draft-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),
+  planId:plan.id,title:plan.title,ids:[...plan.ids],startedAt:new Date().toISOString(),sets:[]
+ };
+ if(!saved&&!writeDraft(next))return;
+ activePlan=plan;session=next;
+ openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' Sets are saved to this device as you log them. Closing the dialog keeps the unfinished workout so you can resume after refresh.</p><div id="workoutLog" class="workout-log"></div><p id="draftSaveStatus" role="status" class="tracking-footnote">Saved on this device · '+session.sets.length+' sets</p><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Close · keep saved</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
  renderWorkoutLog();
+ for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
+ draftBanner();
  $('cancelWorkout').addEventListener('click',closeModal);
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',()=>{
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
-  const entry={id:'demo-'+Date.now(),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets};
-  demoSessions.unshift(entry);demoSessions=demoSessions.slice(0,100);
-  try{storeDemo();closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.')}catch{notice('Could not save demo session; check browser storage.')}
+  const entry={id:'demo-'+session.id,created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(x=>({...x}))};
+  const previous=demoSessions;
+  demoSessions=[entry,...demoSessions.filter(x=>x.id!==entry.id)].slice(0,100);
+  try{storeDemo();}
+  catch{demoSessions=previous;notice('Workout not finished: history could not be saved. Your draft remains available.');return;}
+  try{localStorage.removeItem(draftKey());}catch{ /* completed ID prevents duplicate restoration */ }
+  closeModal();renderHome();setPage('progress');
+  notice('Workout saved in this browser. Refresh to verify it remains in history.');
  });
 }
 function renderWorkoutLog(){
@@ -314,16 +387,22 @@ function addSet(id){
  if(weightField.value.trim()===''||repsField.value.trim()===''||!Number.isFinite(weight)||weight<0||weight>1500||!Number.isInteger(reps)||reps<1||reps>100){
   notice('Enter a valid weight and rep count.');return;
  }
- session.sets.push({exerciseId:id,weight,reps});
+ const next={...session,sets:[...session.sets,{exerciseId:id,weight,reps}],updatedAt:new Date().toISOString()};
+ if(!writeDraft(next))return;
+ session=next;
  // Update only this exercise: never erase inputs, keyboard focus, or scroll position.
  updateExerciseFeedback(id);
+ $('draftSaveStatus').textContent='Saved on this device · '+session.sets.length+' sets';
 }
 function undoSet(id){
  if(!session||!activePlan?.ids.includes(id))return;
  const index=session.sets.findLastIndex(x=>x.exerciseId===id);
  if(index<0)return;
- session.sets.splice(index,1);
+ const next={...session,sets:session.sets.filter((_,i)=>i!==index),updatedAt:new Date().toISOString()};
+ if(!writeDraft(next))return;
+ session=next;
  updateExerciseFeedback(id);
+ $('draftSaveStatus').textContent='Saved on this device · '+session.sets.length+' sets';
 }
 function stopRestClock(){
  if(restClock!==null){clearInterval(restClock);restClock=null;}
@@ -401,6 +480,7 @@ function openSignIn(){
  });
 }
 function bind(){
+ document.addEventListener('click',e=>{const action=e.target.closest('[data-draft-action]');if(!action)return;if(action.dataset.draftAction==='resume')resumeDraft();else if(action.dataset.draftAction==='discard')discardDraft()});
  document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.page)));
  $('avatarBtn').addEventListener('click',()=>setPage('settings'));
  $('previewWelcome').addEventListener('click',()=>setPage('welcome'));
@@ -484,5 +564,5 @@ function bind(){
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();$('measurementDate').value=localDayString();$('mealDate').value=localDayString();
-document.body.classList.add('home-active');bind();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
+document.body.classList.add('home-active');bind();draftBanner();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
 })();
