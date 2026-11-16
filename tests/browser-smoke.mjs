@@ -113,7 +113,7 @@ try {
  assert.match(await page.locator('#nutritionHistory').innerText(),/Test lunch/);
  await page.screenshot({path:'test-artifacts/mobile-nutrition.png',fullPage:true});
  // Account separation and offline recovery are tested with mocked Auth, not production data.
- let fakeOwner='user-a';
+ let fakeOwner='user-a',failAuth=false;
  await page.route('**/auth/v1/**',async route=>{
   const url=new URL(route.request().url());
   if(url.pathname.endsWith('/token')){
@@ -125,6 +125,7 @@ try {
    })});return;
   }
   if(url.pathname.endsWith('/user')){
+   if(failAuth){await route.abort('failed');return}
    const token=route.request().headers()['authorization']||'';
    const who=token.includes('user-b')?'user-b':'user-a';
    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:who,email:who==='user-a'?'a@example.test':'b@example.test'})});return;
@@ -153,7 +154,7 @@ try {
  await page.locator('#loginForm input[name="password"]').fill('test-password');
  await page.locator('#loginSubmit').click();
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-b')),null);
- await page.locator('#menuBtn').click();
+ await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
  await page.locator('#authAction').click();
  await page.locator('#authAction').click();
@@ -161,14 +162,17 @@ try {
  await page.locator('#loginForm input[name="password"]').fill('test-password');
  await page.locator('#loginSubmit').click();
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')||'[]').length),1);
- await mobile.setOffline(true);
+ failAuth=true; // Reopen while authentication endpoint is temporarily unavailable.
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#home').waitFor({state:'visible'});
  await page.locator('#homeMenuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
- assert.match(await page.locator('#connectivityStatus').innerText(),/Offline/);
- assert.match(await page.locator('#cloudSyncStatus').innerText(),/not enabled|unavailable|checking/i);
+ await page.waitForFunction(()=>document.getElementById('cloudSyncStatus').textContent.includes('unavailable'));
  assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1:user:user-a')!==null),true);
+ assert.equal(await page.evaluate(()=>sessionStorage.getItem('mlc2-auth-session-v1')!==null),true);
+ await mobile.setOffline(true);await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
+ assert.match(await page.locator('#connectivityStatus').innerText(),/Offline/);
+ failAuth=false;
  await mobile.setOffline(false);
  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
  await page.waitForFunction(()=>document.getElementById('accountIdentity').textContent.includes('a@example.test'));
