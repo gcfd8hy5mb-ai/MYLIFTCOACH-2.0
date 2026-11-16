@@ -372,6 +372,7 @@ try {
  await page.locator('[data-exercise-card="chest-press"] [data-reps]').fill('9');
  await page.locator('[data-addset="chest-press"]').click();
  const draftBeforeUpdate=await page.evaluate(()=>localStorage.getItem('mlc2-active-session-v1:user-a'));
+ await page.locator('#closeModal').click();
  await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="settings"]').click();
  await page.locator('#checkPreviewUpdate').click();
