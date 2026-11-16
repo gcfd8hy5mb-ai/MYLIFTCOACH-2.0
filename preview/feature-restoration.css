@@ -70,3 +70,9 @@
 #customExerciseOptions{max-height:360px;overflow:auto;overscroll-behavior:contain;padding:5px;border:1px solid #93744b;border-radius:12px;scrollbar-width:thin}
 #customExerciseOptions .mlc-option{padding:9px 6px}
 @media(max-width:760px){.catalog-icon{min-width:48px;min-height:48px}.catalog-icon .app-icon{width:27px;height:27px}}
+
+/* Restored original training split: retain approved dark cards / gold borders. */
+#workoutGrid .program-section-title{grid-column:1/-1;margin-top:18px;padding:12px 0 4px;border-bottom:1px solid #b99b68}
+#workoutGrid .program-section-title h2{margin:0;color:#f7d99c;font-size:18px;letter-spacing:.01em}
+#workoutGrid .program-section-title p{margin:5px 0 3px;color:#f2e6ce;font-size:12px;line-height:1.5}
+#workoutGrid .program-section-title:first-child{margin-top:0}

@@ -54,7 +54,10 @@ let customPlans=readPreview(CUSTOM_KEY,[]);if(!Array.isArray(customPlans))custom
 let measurements=readPreview(MEASUREMENT_KEY,[]);if(!Array.isArray(measurements))measurements=[];
 let meals=readPreview(NUTRITION_KEY,[]);if(!Array.isArray(meals))meals=[];
 let nutritionGoals=readPreview(GOALS_KEY,{calories:2000,protein:140});
-const allPlans=()=>[...plans,...customPlans];
+const originalPrograms=(window.MLC2OriginalPrograms?.plans||[]).filter(p=>
+ Array.isArray(p.ids)&&p.ids.length>0&&p.ids.every(id=>exerciseIds.has(id))&&
+ typeof p.id==='string'&&typeof p.title==='string');
+const allPlans=()=>[...plans,...originalPrograms,...customPlans];
 
 let toastTimer;
 let muscleFilter='',equipmentFilter='';
@@ -272,7 +275,12 @@ function saveGoals(e){
 
 function renderWorkouts(){
  draftBanner();
- $('workoutGrid').innerHTML=allPlans().map((p,i)=>'<button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>').join('');
+ const renderCard=(p,i)=>'<button type="button" class="workout-card" data-workout="'+escapeHTML(p.id)+'"><span class="number">'+escapeHTML(p.kind.toUpperCase())+' · '+(i+1)+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>';
+ $('workoutGrid').innerHTML='<div class="program-section-title"><h2>MYLIFTCOACH 2.0 plans</h2><p>Existing routines — your saved history and workouts remain unchanged.</p></div>'+
+ plans.map(renderCard).join('')+
+ '<div class="program-section-title"><h2>Original 4-day split</h2><p>Restored exactly from the original training program with matching exercise IDs.</p></div>'+
+ originalPrograms.map(renderCard).join('')+
+ (customPlans.length?'<div class="program-section-title"><h2>My custom workouts</h2></div>'+customPlans.map(renderCard).join(''):'');
 }
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
