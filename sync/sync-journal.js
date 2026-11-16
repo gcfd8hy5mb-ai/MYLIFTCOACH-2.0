@@ -69,7 +69,7 @@
    try{
     let sent=0;
     for(const item of [...state.items].slice(0,Math.min(50,maxOperations))){
-     if(item.status==='conflict')break;
+     if(item.status==='conflict')return {status:'conflict',pending:state.items.length};
      if(verifiedOwner!==owner)break;
      const next={...item,attempts:item.attempts+1};
      persist({...state,items:state.items.map(x=>x.opId===item.opId?next:x)});
