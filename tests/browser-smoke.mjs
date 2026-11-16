@@ -47,6 +47,24 @@ try {
  await page.locator('#libraryEquipment').selectOption('Cable');
  assert.match(await page.locator('#libraryGrid').innerText(),/Cable/);
  await page.locator('#libraryEquipment').selectOption('');
+ // Original four-day program must open, log an ID preserved from the
+ // original app, and discard only its own temporary draft.
+ await page.locator('#menuBtn').click();
+ await page.locator('#sidebar [data-page="workouts"]').click();
+ assert.equal(await page.locator('#workoutGrid [data-workout^="original-day"]').count(),4);
+ assert.match(await page.locator('#workoutGrid').innerText(),/Day 1 — Chest & Triceps/);
+ await page.locator('#workoutGrid [data-workout="original-day1"]').click();
+ assert.equal(await page.locator('[data-exercise-card="machine-chest-press"]').count(),1);
+ await page.locator('[data-exercise-card="machine-chest-press"] [data-weight]').fill('55');
+ await page.locator('[data-exercise-card="machine-chest-press"] [data-reps]').fill('8');
+ await page.locator('[data-addset="machine-chest-press"]').click();
+ assert.match(await page.locator('#draftSaveStatus').innerText(),/1 sets/);
+ assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('mlc2-active-session-v1:guest')).sets[0].exerciseId==='machine-chest-press'));
+ await page.locator('#closeModal').click();
+ page.once('dialog',dialog=>dialog.accept());
+ await page.locator('#activeDraftWorkouts [data-draft-action="discard"]').click();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-active-session-v1:guest')),null,'Discard should clear only temporary legacy workout draft');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('mlc2-demo-workouts-v1')),null,'Discard should not invent completed workouts');
  // Exercise new device-only features and their persisted records.
  await page.locator('#menuBtn').click();
  await page.locator('#sidebar [data-page="manage"]').click();
