@@ -472,32 +472,33 @@ body{
  #library .filter-chips button{padding:7px 12px}
 }
 
-/* Sidebar close control occupies its own visible row, avoiding overlay clipping. */
+/* Sidebar X is physically inside the same visible header row as the logo.
+   Do not place a dismiss button above the logo: Safari may hide it under browser chrome. */
+.sidebar .wordmark{position:relative;min-height:48px}
+.sidebar .wordmark > div{min-width:0}
 .sidebar .sidebar-close{
- position:static!important;
- display:flex!important;
- align-items:center;
- justify-content:center;
- align-self:flex-end;
- flex:0 0 44px;
- width:108px;min-height:44px;
- margin:0 0 15px;padding:7px 11px;
- gap:9px;
+ position:absolute!important;
+ top:0!important;right:0!important;left:auto!important;
+ display:grid!important;place-items:center!important;
+ width:42px!important;height:42px!important;min-height:42px!important;
+ padding:0!important;margin:0!important;
  background-color:#06333a!important;
  background-image:linear-gradient(110deg,rgba(3,37,43,.93),rgba(3,45,51,.84)),url("./assets/hero-dumbbells-photo.jpg?v=7")!important;
- background-position:center;background-size:cover;
+ background-position:center!important;background-size:cover!important;
  border:1.5px solid #f1d394!important;border-radius:11px!important;
  box-shadow:inset 0 1.5px 0 rgba(255,247,209,.35),0 4px 10px rgba(0,15,22,.37)!important;
- color:#ffe6ac!important;font:700 13px/1 'DM Sans',Arial,sans-serif;
- opacity:1!important;visibility:visible!important;
- z-index:3;
+ color:#ffe6ac!important;
+ font:500 29px/1 Arial,sans-serif!important;
+ opacity:1!important;visibility:visible!important;z-index:5!important;
 }
-.sidebar .sidebar-close span{font-size:24px;line-height:1;font-weight:500}
-.sidebar .sidebar-close:hover,.sidebar .sidebar-close:active{filter:brightness(1.15)}
+.sidebar .sidebar-close span{line-height:1;display:block}
+.sidebar .sidebar-close:active{filter:brightness(1.15)}
 .sidebar .sidebar-close:focus-visible{outline:2px solid #fff0bc;outline-offset:2px}
 @media(min-width:761px){.sidebar .sidebar-close{display:none!important}}
 @media(max-width:760px){
  .sidebar{position:fixed}
- .sidebar .sidebar-close{margin:0 0 15px}
- .sidebar .wordmark{padding-right:0;margin-bottom:32px}
+ .sidebar .wordmark{padding-right:48px!important;gap:7px!important;margin-bottom:37px!important}
+ .sidebar .wordmark strong{font-size:12px!important;letter-spacing:.055em!important;white-space:nowrap}
+ .sidebar .wordmark small{font-size:8px!important;letter-spacing:.10em!important;white-space:nowrap}
+ .sidebar .sidebar-logo{width:33px!important;height:33px!important;flex:0 0 33px!important}
 }
