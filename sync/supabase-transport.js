@@ -18,6 +18,28 @@
    return verified;
   }
   return Object.freeze({
+   async listSessions(owner,{afterId='',limit=50}={}){
+    if(!enabled)throw Error('Cloud sync deliberately disabled');
+    if(typeof owner!=='string'||!owner||typeof afterId!=='string'||afterId.length>160||
+       !Number.isInteger(limit)||limit<1||limit>100)throw Error('Invalid session page request');
+    const verified=await authFor(owner);
+    const response=await fetcher(baseUrl.replace(/\/$/,'')+'/rest/v1/rpc/mlc2_v1_list_sessions',{
+      method:'POST',cache:'no-store',headers:{
+       'Content-Type':'application/json','apikey':publishableKey,'Authorization':'Bearer '+verified.accessToken
+      },
+      body:JSON.stringify({p_after_id:afterId,p_limit:limit})
+    });
+    let rows;
+    try{rows=await response.json()}catch{rows=null}
+    if(!response.ok){const err=Error('Cloud session list request failed');err.status=response.status;throw err}
+    if(!Array.isArray(rows)||rows.length>limit)throw Error('Invalid cloud session page');
+    for(const row of rows){
+     if(row.owner!==owner||row.type!=='session'||typeof row.id!=='string'||row.id.length>160||
+        !Number.isSafeInteger(Number(row.revision))||Number(row.revision)<1||
+        typeof row.deleted!=='boolean')throw Error('Unverified cloud session');
+    }
+    return rows.map(row=>({...row,revision:Number(row.revision)}));
+   },
    async read(type,id,owner){
     if(!enabled)throw Error('Cloud sync deliberately disabled');
     if(!/^[a-z0-9_-]{1,128}$/i.test(owner||'')||!['session','custom-plan','tracking','measurement','meal','goal'].includes(type)||
