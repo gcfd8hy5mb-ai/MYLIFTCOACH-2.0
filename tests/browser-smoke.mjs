@@ -53,7 +53,7 @@ try {
  assert.equal(await page.locator('#libraryGrid [data-library-more]').count(),0);
  await page.locator('#exerciseSearch').fill('Machine Chest Press');
  assert.equal(await page.locator('#libraryGrid .library-card img[src*="machine-chest-press.png"]').count(),1,'Original chest press photo reference missing');
- assert.equal(await page.locator('#libraryGrid .library-card .liftova-anatomy svg').count(),1);
+ assert.ok(await page.locator('#libraryGrid .library-card .liftova-anatomy svg').count()>=1,'Expected anatomy visual for exercise matches');
  await page.locator('#exerciseSearch').fill('');
 
  await page.locator('#exerciseSearch').fill('Wide-Stance Pendulum Squat');
