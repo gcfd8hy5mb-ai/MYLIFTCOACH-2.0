@@ -27,7 +27,7 @@ const exerciseIds=new Set(exercises.map(item=>item.id));
 for(const item of (window.MLC2ExerciseCatalog?.items||[])){
  if(!item||typeof item.id!=='string'||!/^[-a-z0-9]{2,100}$/.test(item.id)||
     typeof item.name!=='string'||typeof item.cue!=='string'||typeof item.group!=='string'||
-    false)continue;
+    typeof item.name!=='string'||typeof item.cue!=='string'||typeof item.group!=='string')continue;
  if(exerciseIds.has(item.id)){
    const original=exercises.find(ex=>ex.id===item.id);
    if(original){if(item.image&&!original.image)original.image=item.image;if(item.muscle&&!original.muscle)original.muscle=item.muscle;}
