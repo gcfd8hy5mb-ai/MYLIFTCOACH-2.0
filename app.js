@@ -188,7 +188,7 @@ function logDaily(event,type){
 
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notice(message){const t=$('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
-function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking','calendar','manage','measurements'].includes(next))return;page=next;
+function setPage(next){closeExerciseDetail();if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking','calendar','manage','measurements'].includes(next))return;page=next;
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
  $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking',calendar:'Calendar & records',manage:'Manage workouts',measurements:'Measurements'})[next];
@@ -304,6 +304,27 @@ function libraryHowTo(ex){
  const instructions=steps.length>1?'<ol class="mlc-how-steps">'+steps.map(x=>'<li>'+escapeHTML(x)+'</li>').join('')+'</ol>':'<p>'+escapeHTML(source||'Technique instructions are not yet available for this exercise.')+'</p>';
  return '<details class="mlc-exercise-how"><summary>How to perform this exercise</summary>'+instructions+(ex.tips?.length?'<strong>Technique tips</strong><ul>'+ex.tips.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+(ex.mistakes?.length?'<strong>Common mistakes</strong><ul>'+ex.mistakes.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+'</details>';
 }
+// Premium exercise detail: original demonstration where available, original anatomy otherwise.
+function openExerciseDetail(id){
+ const ex=exercises.find(x=>x.id===id);if(!ex)return;
+ const root=$('exerciseDetail');if(!root)return;
+ const anatomy=window.LiftovaAnatomy?.render(ex,{size:'detail'})||'<p>Muscle illustration unavailable.</p>';
+ const hasPhoto=Boolean(ex.image&&/^images\/[a-z0-9-]+\.(png|webp|jpg)$/i.test(ex.image));
+ const image=hasPhoto?'https://raw.githubusercontent.com/gcfd8hy5mb-ai/workout-tracker/main/'+ex.image:null;
+ const steps=String(ex.how||ex.cue||'').match(/[^.!?]+[.!?]?/g)?.map(x=>x.trim()).filter(Boolean)||[];
+ const how=steps.length?'<ol>'+steps.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ol>':'<p>Detailed movement instructions have not yet been verified.</p>';
+ root.innerHTML='<header class="mlc-detail-top"><button type="button" data-exercise-back aria-label="Back to exercise library">‹</button><strong>MYLIFTCOACH <em>2.0</em></strong><span>EXERCISE GUIDE</span></header>'+
+ '<div class="mlc-detail-scroll"><div class="mlc-detail-hero">'+(image?'<img src="'+image+'" alt="Original '+escapeHTML(ex.name)+' exercise demonstration" loading="eager" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><div class="mlc-detail-fallback" hidden>'+anatomy+'</div>':'<div class="mlc-detail-fallback">'+anatomy+'</div>')+'</div>'+
+ '<h1>'+escapeHTML(ex.name)+'</h1><p class="mlc-detail-sub">'+escapeHTML(ex.group)+' · '+escapeHTML(ex.equipment||'Equipment not specified')+'</p>'+
+ '<div class="mlc-detail-tabs"><button type="button" data-detail-tab="how" class="active">How to Perform</button><button type="button" data-detail-tab="muscles">Muscles</button><button type="button" data-detail-tab="tips">Tips</button></div>'+
+ '<section data-detail-panel="how"><h2>How to Perform</h2>'+(hasPhoto?'<p class="mlc-detail-note">Original start / finish demonstration</p>':'<p class="mlc-detail-note">The image identifies target muscles; it does not demonstrate the movement.</p>')+how+'</section>'+
+ '<section data-detail-panel="muscles" hidden><h2>Muscles Used</h2>'+anatomy+'<p>'+escapeHTML(window.LiftovaAnatomy?.profile(ex)?.primaryLabels?.join(', ')||ex.muscle||ex.group)+'</p></section>'+
+ '<section data-detail-panel="tips" hidden><h2>Technique Tips</h2><ul>'+(ex.tips||[]).map(x=>'<li>'+escapeHTML(x)+'</li>').join('')+'</ul><h2>Common Mistakes</h2><ul>'+(ex.mistakes||[]).map(x=>'<li>'+escapeHTML(x)+'</li>').join('')+'</ul></section>'+
+ '<div class="mlc-detail-prescription">'+escapeHTML(String(ex.sets||3))+' sets · '+escapeHTML(String(ex.reps||'8–12'))+' reps</div>'+
+ '<button type="button" class="mlc-detail-add" data-detail-add="'+escapeHTML(ex.id)+'">+ Add to Workout</button></div>';
+ root.hidden=false;document.body.classList.add('exercise-detail-open');root.querySelector('[data-exercise-back]').focus();
+}
+function closeExerciseDetail(){const root=$('exerciseDetail');if(root)root.hidden=true;document.body.classList.remove('exercise-detail-open')}
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
  const selectedEquipment=$('libraryEquipment').value;
@@ -313,7 +334,7 @@ function renderLibrary(){
  const shown=matches.slice(0,libraryVisibleCount);
  $('libraryChips').innerHTML=['',...muscleGroups].map(group=>'<button type="button" data-muscle="'+escapeHTML(group)+'"'+(group===muscleFilter?' class="selected"':'')+'>'+escapeHTML(group||'All')+'</button>').join('');
  $('libraryResultsCount').textContent=matches.length+' matching exercises out of '+exercises.length+(matches.length>shown.length?' · Showing '+shown.length+'; load more below.':'');
- $('libraryGrid').innerHTML=shown.map(e=>'<article class="library-card reference-exercise">'+libraryVisual(e)+'<div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(e.equipment||'Machine')+'</p>'+libraryHowTo(e)+'</div></article>').join('')||'<p class="empty-note">No exercises match those filters.</p>';
+ $('libraryGrid').innerHTML=shown.map(e=>'<article class="library-card reference-exercise"><button type="button" class="mlc-exercise-open" data-library-open="'+escapeHTML(e.id)+'">'+libraryVisual(e)+'<div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(e.equipment||'Machine')+'</p><span class="mlc-card-view">View exercise ›</span></div></button></article>').join('')||'<p class="empty-note">No exercises match those filters.</p>';
  if(matches.length>shown.length)$('libraryGrid').insertAdjacentHTML('beforeend','<button type="button" class="button-outline" data-library-more style="display:block;margin:20px auto;padding:12px 25px">Load more exercises ('+(matches.length-shown.length)+' remaining)</button>');
 }
 function renderProgress(){
@@ -1093,6 +1114,15 @@ function bind(){
 
  $('exerciseSearch').addEventListener('input',()=>{libraryVisibleCount=60;renderLibrary()});
  $('libraryGrid').addEventListener('click',event=>{if(!event.target.closest('[data-library-more]'))return;libraryVisibleCount+=60;renderLibrary()});
+ $('libraryGrid').addEventListener('click',event=>{const b=event.target.closest('[data-library-open]');if(b)openExerciseDetail(b.dataset.libraryOpen)});
+ $('exerciseDetail').addEventListener('click',event=>{
+  if(event.target.closest('[data-exercise-back]')){closeExerciseDetail();return}
+  const tab=event.target.closest('[data-detail-tab]');
+  if(tab){const selected=tab.dataset.detailTab;document.querySelectorAll('#exerciseDetail [data-detail-tab]').forEach(x=>x.classList.toggle('active',x===tab));document.querySelectorAll('#exerciseDetail [data-detail-panel]').forEach(x=>x.hidden=x.dataset.detailPanel!==selected);return}
+  const add=event.target.closest('[data-detail-add]');if(!add)return;
+  closeExerciseDetail();setPage('manage');customExerciseSelected.add(add.dataset.detailAdd);renderCustomExerciseOptions();$('customWorkoutName').focus();notice('Exercise selected. Name and save a custom workout to keep it.');
+ });
+
  $('libraryEquipment').innerHTML='<option value="">All equipment</option>'+equipmentGroups.map(v=>'<option value="'+escapeHTML(v)+'">'+escapeHTML(v)+'</option>').join('');
  $('libraryEquipment').addEventListener('change',()=>{equipmentFilter=$('libraryEquipment').value;libraryVisibleCount=60;renderLibrary()});
  $('customExerciseSearch').addEventListener('input',renderCustomExerciseOptions);
