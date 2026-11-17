@@ -1,0 +1,38 @@
+/* Approved premium MYLIFTCOACH exercise-library/detail prototype, mobile first. */
+#libraryGrid .reference-exercise{padding:0;overflow:hidden;border:1px solid #b98e48;border-radius:18px;background:linear-gradient(155deg,#17242a,#081216)}
+#libraryGrid .mlc-exercise-open{appearance:none;border:0;background:none;color:inherit;width:100%;display:flex;align-items:center;gap:15px;text-align:left;padding:10px;cursor:pointer}
+#libraryGrid .mlc-exercise-open .mlc-anatomy-thumb{width:120px;min-width:120px;max-width:120px;min-height:100px;max-height:120px;overflow:hidden;margin:0}
+#libraryGrid .mlc-exercise-open .mlc-demo-thumb>img{max-height:108px;width:100%;object-fit:contain}
+#libraryGrid .mlc-exercise-open .library-info{flex:1;min-width:0}
+#libraryGrid .mlc-exercise-open h3{margin:0 0 5px;font-size:1.12rem;color:#fff5df}
+#libraryGrid .mlc-exercise-open p{margin:0;color:#cdd7d2}
+#libraryGrid .mlc-card-view{display:inline-block;margin-top:10px;color:#e9bb72;font-size:.82rem;font-weight:650}
+#libraryGrid .mlc-exercise-open:focus-visible{outline:3px solid #f2c772;outline-offset:-4px}
+.mlc-exercise-detail[hidden]{display:none!important}
+.mlc-exercise-detail{position:fixed;z-index:400;inset:0;background:#071116;color:#f8f0df;display:flex;flex-direction:column;max-width:800px;margin:auto;box-shadow:0 0 0 100vmax rgba(0,0,0,.82)}
+body.exercise-detail-open{overflow:hidden!important}
+.mlc-detail-top{height:68px;min-height:68px;display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #a17b42;background:#0b171c}
+.mlc-detail-top button{background:transparent;border:1px solid #a78956;border-radius:12px;color:#e3b369;font-size:30px;line-height:1;padding:3px 13px;cursor:pointer}
+.mlc-detail-top strong{font-size:1.06rem;letter-spacing:.03em;color:#f1d49f}.mlc-detail-top em{font-style:normal;color:#d9a84f}
+.mlc-detail-top span{font-size:10px;letter-spacing:.08em;color:#adbdba}
+.mlc-detail-scroll{overflow:auto;padding:16px 17px 50px}
+.mlc-detail-hero{background:linear-gradient(140deg,#17282f,#060e12);border:1px solid #97733d;border-radius:18px;overflow:hidden;display:flex;justify-content:center;align-items:center;min-height:205px;max-height:310px}
+.mlc-detail-hero>img{width:100%;max-height:305px;object-fit:contain}
+.mlc-detail-fallback{width:100%;max-width:315px;margin:auto}
+.mlc-detail-fallback[hidden]{display:none}
+.mlc-detail-fallback .liftova-anatomy{background:transparent;border:0;box-shadow:none}
+.mlc-detail-scroll h1{text-align:center;font-size:1.65rem;margin:20px 0 4px;line-height:1.16;color:#fff}
+.mlc-detail-sub{text-align:center;color:#c2cdc9;margin:0 0 17px}
+.mlc-detail-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:15px 0}
+.mlc-detail-tabs button{background:#17232a;color:#f3e5cd;border:1px solid #65706c;border-radius:10px;padding:11px 5px;font-size:.83rem;cursor:pointer}
+.mlc-detail-tabs button.active{border-color:#efb963;background:linear-gradient(135deg,#806028,#292011);color:#fff1ca}
+.mlc-detail-scroll section[data-detail-panel]{border:1px solid #94723d;border-radius:16px;padding:15px;background:#0d1a21}
+.mlc-detail-scroll section[data-detail-panel][hidden]{display:none}
+.mlc-detail-scroll section h2{margin:0 0 12px;color:#e9ba72;font-size:1.08rem}
+.mlc-detail-scroll ol,.mlc-detail-scroll ul{margin:0 0 10px;padding-left:23px;line-height:1.6}
+.mlc-detail-scroll li{margin:0 0 9px}
+.mlc-detail-scroll .mlc-detail-note{font-size:.8rem;color:#bac9c8}
+.mlc-detail-scroll section .liftova-anatomy{background:transparent;box-shadow:none;border:0;max-width:340px}
+.mlc-detail-prescription{color:#e9cc91;text-align:center;margin:16px 0}
+.mlc-detail-add{display:block;width:100%;padding:15px;border-radius:15px;border:1px solid #ffe2a1;background:linear-gradient(145deg,#e7b76b,#826027);color:#18150e;font-weight:800;font-size:1rem;cursor:pointer}
+@media(max-width:430px){.mlc-detail-top span{display:none}#libraryGrid .mlc-exercise-open .mlc-anatomy-thumb{min-width:105px;width:105px;max-width:105px}.mlc-detail-scroll{padding:12px 13px 40px}}

@@ -1,0 +1,42 @@
+name: Verify MYLIFTCOACH UI
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "app.js"
+      - "*.css"
+      - "tests/**"
+      - "sync/**"
+      - "imports/**"
+      - ".github/workflows/verify-ui.yml"
+  workflow_dispatch:
+jobs:
+  sidebar-and-buttons:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check sidebar, button palette and preview isolation
+        run: node --test tests/sidebar-design.test.cjs
+      - name: Verify isolated sync safety, idempotency and transport
+        run: node --test tests/sync-journal.test.cjs tests/supabase-transport.test.cjs tests/aux-data.test.cjs tests/original-library-import.test.cjs
+      - name: Install browser smoke-test dependencies
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Test mobile and desktop in browser
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/myliftcoach-http.log 2>&1 &
+          sleep 2
+          node tests/browser-smoke.mjs
+      - name: Upload visual screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: myliftcoach-ui-screenshots
+          path: test-artifacts/*.png
+          if-no-files-found: ignore

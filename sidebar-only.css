@@ -1,0 +1,40 @@
+/* Original-style extras drawer for approved MYLIFTCOACH 2.0 GitHub design.
+   Scoped to sidebar only; deliberately no Home/cards/hero/main-page overrides. */
+.sidebar{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#d6ab68 transparent;padding-top:calc(23px + env(safe-area-inset-top));background:#10191e!important;border-right:1px solid rgba(224,179,105,.38)!important}
+.sidebar .wordmark{margin:0 0 18px 2px!important;display:flex;align-items:center}
+.sidebar .sidebar-close{margin-left:auto;flex:0 0 38px}
+.sidebar .side-nav{display:block!important}
+.sidebar .side-label{margin:8px 10px 6px;color:#e6bf7d!important;letter-spacing:.14em;font-size:10px}
+.sidebar .nav-group{margin-top:11px;border-top:1px solid rgba(224,179,105,.2);padding-top:5px}
+.sidebar .nav-group summary{display:flex;justify-content:space-between;align-items:center;list-style:none;cursor:pointer;padding:12px 10px;min-height:44px;color:#e9c17f;font-size:10px;font-weight:800;letter-spacing:.12em}
+.sidebar .nav-group summary::-webkit-details-marker{display:none}
+.sidebar .nav-group summary span{font-size:18px;transition:transform .18s}
+.sidebar .nav-group[open] summary span{transform:rotate(180deg)}
+.sidebar .nav-group-items{display:grid;gap:3px}
+.sidebar .nav-item{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;margin:2px 0;padding:10px 11px!important;border:1px solid rgba(225,177,104,.26)!important;border-radius:11px!important;background:linear-gradient(145deg,#222e31,#121d22)!important;color:#f6ead7!important;text-align:left;font-size:12px;line-height:1.25;font-weight:600}
+.sidebar .nav-item>span:first-child{flex:none;width:23px;text-align:center;color:#e7bd77;font-size:18px}
+.sidebar .nav-item.selected,.sidebar .nav-item:hover:not(.nav-pending){border-color:#edc47f!important;background:linear-gradient(145deg,#373427,#19282b)!important;color:#fff5dd!important}
+.sidebar .nav-pending{cursor:default;opacity:.56;flex-wrap:wrap}
+.sidebar .nav-pending small{width:100%;padding-left:33px;margin-top:-6px;color:#e5cda7;font-size:9px;font-weight:400}
+.sidebar .side-spacer{min-height:12px}
+.sidebar .sidebar-foot{margin:12px 0;color:#ddbe8a}
+.sidebar-scrim{display:none}
+body.sidebar-is-open{overflow:hidden}
+@media(max-width:760px){
+ .sidebar{z-index:105!important;width:min(86vw,340px)!important;max-width:340px;height:100dvh!important;min-height:100dvh!important;visibility:hidden;transition:transform .22s ease,visibility .22s ease}
+ .sidebar.open{visibility:visible;transform:translateX(0)}
+ .sidebar .sidebar-close{display:grid!important;place-items:center;width:38px;height:38px;border:1px solid #cc9e5b;border-radius:10px;background:#243039;color:#f8d594;cursor:pointer}
+ .sidebar-scrim{position:fixed;inset:0;z-index:104;background:rgba(0,0,0,.72);display:block;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s,visibility .22s}
+ .sidebar-scrim.open{opacity:1;visibility:visible;pointer-events:auto}
+}
+.sidebar .nav-item:focus-visible,.sidebar .nav-group summary:focus-visible,.sidebar .sidebar-close:focus-visible{outline:2px solid #f1ce8e;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.sidebar,.sidebar-scrim,.sidebar .nav-group summary span{transition:none!important}}
+
+/* The earlier premium skin intentionally hid the unfinished mobile sidebar.
+ * The drawer is functional now, so restore it only on mobile. */
+@media(max-width:760px){
+ #sidebar{display:flex!important;flex-direction:column!important}
+ #menuBtn{display:block!important}
+ #homeMenuBtn{display:grid!important}
+ body.home-active .topbar{display:none!important}
+}

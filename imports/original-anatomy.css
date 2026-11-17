@@ -1,0 +1,17 @@
+/* Restored original atlas preview thumbnails. Retain charcoal/gold UI. */
+#libraryGrid .mlc-anatomy-thumb{width:145px;min-width:110px;max-width:100%;padding:6px;overflow:hidden;gap:5px;background:rgba(4,11,14,.78);border:1px solid rgba(216,180,105,.22);border-radius:12px}
+#libraryGrid .mlc-anatomy-thumb .liftova-anatomy{display:block;width:100%;max-width:150px;overflow:hidden;background:transparent;border:0;box-shadow:none}
+#libraryGrid .mlc-anatomy-thumb .liftova-anatomy svg{display:block;width:100%;height:auto;aspect-ratio:1190/1024}
+#libraryGrid .mlc-anatomy-thumb img{max-width:100%;object-fit:contain}
+@media(max-width:430px){#libraryGrid .mlc-anatomy-thumb{width:116px;min-width:100px}}
+
+/* One clear visual per exercise: demonstration photograph OR original highlighted anatomy. */
+#libraryGrid .mlc-demo-thumb,#libraryGrid .mlc-muscle-thumb{min-height:110px;height:auto;gap:6px}
+#libraryGrid .mlc-demo-thumb>img{width:100%;max-width:165px;max-height:180px;object-fit:contain;display:block}
+#libraryGrid .mlc-demo-thumb>img[hidden],#libraryGrid .mlc-photo-fallback[hidden]{display:none!important}
+#libraryGrid .mlc-photo-fallback{width:100%;max-width:145px}
+#libraryGrid .mlc-visual-label{display:block;font-size:10px;letter-spacing:.04em;color:#d9b978;text-align:center}
+#libraryGrid .mlc-how-steps{margin:10px 0 14px;padding-left:22px;line-height:1.55}
+#libraryGrid .mlc-how-steps li{padding:0 0 6px 3px}
+#libraryGrid .mlc-exercise-how summary{cursor:pointer;font-weight:600}
+#libraryGrid .mlc-exercise-how strong{display:block;margin-top:12px}

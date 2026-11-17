@@ -1,0 +1,158 @@
+/* MYLIFTCOACH 2.0 | approved dark action-button finish
+ * This file is intentionally button-only: preserve the approved marble, layout,
+ * Today’s Workout hero and gold Start Workout button.
+ */
+:root{--mlc-action-top:#142328;--mlc-action-mid:#0a191f;--mlc-action-bottom:#071116;--mlc-action-edge:#d5ab6b;--mlc-action-text:#fff1d6;--mlc-action-gold:#eec780}
+#home button:not(#heroStart):not(.home-menu-button):not(.avatar),
+#workouts button:not(#heroStart),
+#library button:not(#heroStart),
+#progress button:not(#heroStart),
+#history button:not(#heroStart),
+#calendar button:not(#heroStart),
+#tracking button:not(#heroStart),
+#coaching button:not(#heroStart),
+#nutrition button:not(#heroStart),
+#settings button:not(#heroStart),
+.modal-panel button:not(.modal-close),
+.rest-screen button:not(#restClose),
+#home .quick-grid button,
+#workouts .workout-card,
+#settings .account-menu button,
+#coaching .coach-links button,
+#library .filter-chips button:not(.selected),
+#calendar .calendar-day{
+  background-color:var(--mlc-action-bottom)!important;
+  background-image:linear-gradient(162deg,var(--mlc-action-top) 0%,var(--mlc-action-mid) 58%,var(--mlc-action-bottom) 100%)!important;
+  background-size:auto!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  border:1.5px solid var(--mlc-action-edge)!important;
+  border-radius:11px!important;
+  color:var(--mlc-action-text)!important;
+  box-shadow:inset 0 1px 0 rgba(255,231,177,.19),inset 0 -1px 0 rgba(0,0,0,.68),0 4px 11px rgba(0,0,0,.43)!important;
+  text-shadow:none;
+  transition:background-color .16s,box-shadow .16s,filter .16s,transform .16s;
+}
+#home .quick-grid button{background-image:linear-gradient(162deg,#142328 0%,#0a191f 58%,#071116 100%)!important}
+#home .quick-grid button .shortcut-symbol,
+#home .quick-grid button .app-icon,
+#settings .account-menu button span,
+#coaching .coach-links button span{color:var(--mlc-action-gold)!important}
+#home .quick-grid button strong,
+#settings .account-menu button,
+#coaching .coach-links button,
+#workouts .workout-card h3{color:var(--mlc-action-text)!important}
+#workouts .workout-card{cursor:pointer}
+#home button:not(#heroStart):hover,#workouts button:hover,#library button:hover,#progress button:hover,#history button:hover,#calendar button:hover,#tracking button:hover,#coaching button:hover,#nutrition button:hover,#settings button:hover,
+:where(.modal-panel) button:not(.modal-close):hover,
+#workouts .workout-card:hover{
+ border-color:#f3d492!important;
+ box-shadow:inset 0 1px 0 rgba(255,231,177,.26),0 5px 15px rgba(0,0,0,.5)!important;
+ filter:brightness(1.12);
+}
+#home button:not(#heroStart):active,#workouts button:active,#library button:active,#progress button:active,#history button:active,#calendar button:active,#tracking button:active,#coaching button:active,#nutrition button:active,#settings button:active,
+#workouts .workout-card:active{transform:translateY(1px);filter:brightness(1.05)}
+#home button:focus-visible,#workouts button:focus-visible,#library button:focus-visible,#progress button:focus-visible,#history button:focus-visible,#calendar button:focus-visible,#tracking button:focus-visible,#coaching button:focus-visible,#nutrition button:focus-visible,#settings button:focus-visible{outline:2px solid #ffe2a3!important;outline-offset:3px}
+/* Selected chips and calendar dates still have an unmistakable state. */
+#library .filter-chips button.selected,
+#calendar .calendar-day.selected{background:linear-gradient(165deg,#4b3a25,#211e19)!important;border-color:#ffdb99!important;color:#fff4db!important}
+#calendar .calendar-day.has-session{border-color:#e9bf78!important}
+#calendar .calendar-day.selected{box-shadow:inset 0 0 0 1px #f0d096,0 0 0 2px rgba(245,204,129,.27)!important}
+/* Menu and bottom navigation remain distinct navigation surfaces. */
+.sidebar .nav-item{background:linear-gradient(145deg,#222e31,#121d22)!important}
+.sidebar .nav-item.selected{background:linear-gradient(145deg,#373427,#19282b)!important}
+/* Explicitly retain the approved champagne-gold primary session control. */
+#home #heroStart,
+.home-rebuilt .reference-todays-workout .button-primary{
+ background:linear-gradient(180deg,#fff9df 0%,#ffefb8 17%,#f2d28d 47%,#daa85e 84%,#ba8240 100%)!important;
+ border:1px solid #ffefbf!important;
+ color:#15353a!important;
+ box-shadow:inset 0 2px 2px rgba(255,255,255,.9),inset 0 -2px 2px rgba(90,54,12,.31),0 5px 11px rgba(0,16,23,.52)!important;
+}
+@media(prefers-reduced-motion:reduce){:where(#home,#workouts,#library,#progress,#history,#calendar,#tracking,#coaching,#nutrition,#settings) button{transition:none!important}}
+
+/* Secondary surfaces: user-reviewed iPhone screenshot revealed teal summary cards.
+   Preserve the emerald-gold marble page background and hero artwork, but make
+   inset tiles and lower-page cards as dark as the approved shortcut controls. */
+#home .home-below-fold .metric,
+#home .home-below-fold .panel,
+#home .home-below-fold .preview-exercise,
+#home .home-below-fold .recent-item,
+#workouts .workout-card,
+#workouts .original-plan-panel,
+#progress .metric,
+#progress .panel,
+#library .library-card,
+#history .panel,
+#calendar .panel,
+#tracking .panel,
+#coaching .panel,
+#nutrition .panel,
+#settings .settings-panel,
+#settings .account-menu button{
+ background-color:#09171c!important;
+ background-image:linear-gradient(155deg,#17272d 0%,#0e1d22 48%,#081216 100%)!important;
+ border-color:#d8af70!important;
+ color:#fff1d6!important;
+ box-shadow:inset 0 1px 0 rgba(255,236,189,.18),0 5px 13px rgba(0,0,0,.42)!important;
+}
+#home .home-below-fold .preview-exercise,
+#home .home-below-fold .recent-item{
+ border:1px solid #cda669!important;
+ border-radius:10px!important;
+ padding:10px 12px;
+}
+#home .home-below-fold .micro-tag,
+#workouts .micro-tag,
+#progress .micro-tag,
+#history .micro-tag,
+#calendar .micro-tag,
+#tracking .micro-tag,
+#nutrition .micro-tag,
+#settings .micro-tag{
+ background:linear-gradient(150deg,#16262b,#09161b)!important;
+ border:1px solid #d9b16e!important;
+ color:#f4d5a0!important;
+}
+/* Match the Next Session action to the same charcoal/gold raised buttons. */
+#home #todayStart{
+ background:linear-gradient(162deg,#142328 0%,#0a191f 58%,#071116 100%)!important;
+ border:1.5px solid #d5ab6b!important;
+ color:#fff1d6!important;
+ box-shadow:inset 0 1px 0 rgba(255,231,177,.19),0 4px 11px rgba(0,0,0,.43)!important;
+}
+/* Darken the calendar and set rows, never the primary golden Start Workout. */
+#calendar .history-entry,#tracking .history-entry,#history .history-entry{
+ background:linear-gradient(150deg,#16262b,#09161b)!important;
+ border-color:#cda669!important;
+}
+
+/* Workout logging + rest preview: match large panels to approved charcoal buttons. */
+.modal-panel .log-card,
+.modal-panel .workout-log .log-card,
+.rest-screen .rest-next{
+ background-color:#09171c!important;
+ background-image:linear-gradient(155deg,#17272d 0%,#0e1d22 48%,#081216 100%)!important;
+ background-position:center!important;
+ background-size:auto!important;
+ border:1.5px solid #d8af70!important;
+ color:#fff1d6!important;
+ box-shadow:inset 0 1px 0 rgba(255,236,189,.18),0 5px 13px rgba(0,0,0,.42)!important;
+}
+.modal-panel .log-card h4,
+.modal-panel .log-card .log-title,
+.rest-screen .rest-next strong{color:#fff0d5!important}
+.modal-panel .log-card input{
+ background:#0b1a20!important;
+ border-color:#d5ab6b!important;
+ color:#f9efdc!important;
+}
+.modal-panel .logged-count{
+ background:linear-gradient(150deg,#16262b,#09161b)!important;
+ border:1px solid #d9b16e!important;
+ color:#f4d5a0!important;
+}
+.rest-screen .rest-face{
+ background:radial-gradient(ellipse at 45% 35%,#1b3035,#09171d 75%)!important;
+ border:2px solid rgba(248,224,169,.7)!important;
+}

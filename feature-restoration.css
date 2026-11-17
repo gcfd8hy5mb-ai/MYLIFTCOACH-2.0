@@ -1,0 +1,78 @@
+/* Scoped new functional pages; visual system follows the approved dark/gold cards. */
+#manage .mlc-form,#measurements .mlc-form,#nutrition .mlc-form{display:grid;gap:12px}
+#manage .mlc-form label,#measurements .mlc-form label,#nutrition .mlc-form label{display:grid;gap:5px;color:#ffe5ae;font-size:12px}
+#manage .mlc-form input,#measurements .mlc-form input,#nutrition .mlc-form input{
+ width:100%;min-width:0;min-height:44px;padding:10px 12px;border-radius:11px;
+ border:1px solid #d6ab70;background:#0a171d;color:#fff6e8;font-size:14px;color-scheme:dark;
+}
+#manage .mlc-exercise-picker{border:1px solid #b88f58;border-radius:11px;padding:12px}
+#manage .mlc-exercise-picker legend{font-size:12px;color:#f9d99b}
+#manage .mlc-picker-grid{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+#manage .mlc-option{display:flex!important;flex-direction:row!important;align-items:center;gap:9px!important;border:1px solid #6a5b49;border-radius:10px;padding:9px;background:#0e2025;color:#fff0d9}
+#manage .mlc-option input{width:17px;height:17px;min-height:17px;accent-color:#dcb273}
+#manage .mlc-list-row,#measurements .mlc-list-row,#nutrition .mlc-list-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;margin:8px 0;border:1px solid #cba46d;border-radius:11px;background:linear-gradient(150deg,#19282b,#0c171b)}
+#manage .mlc-list-row>div:first-child,#measurements .mlc-list-row>div:first-child,#nutrition .mlc-list-row>div:first-child{display:grid;gap:6px;min-width:0;overflow-wrap:anywhere}
+#manage .mlc-list-row small,#measurements .mlc-list-row small,#nutrition .mlc-list-row small{font-size:11px;color:#decbaa}
+.mlc-mini-actions{display:flex;gap:5px;flex-wrap:wrap}
+#manage .mlc-list-row button,#measurements .mlc-list-row button,#nutrition .mlc-list-row button{
+ min-height:36px;padding:8px 10px;background:linear-gradient(155deg,#17272d,#09161b);border:1px solid #d5ac70;border-radius:9px;color:#fff1d6;
+}
+#manage .panel,#measurements .panel,#nutrition .panel{
+ background:linear-gradient(150deg,#17272d,#08151b)!important;border:1.5px solid #d5ac70!important;color:#fff1d6!important;
+ box-shadow:inset 0 1px 0 #ffffff1a,0 5px 13px #0007!important;
+}
+#manage .mlc-form button,#measurements .mlc-form button,#nutrition .mlc-form button{
+ min-height:45px;border:1.5px solid #d5ac70;border-radius:11px;
+ background:linear-gradient(150deg,#17272d,#08151b);color:#fff1d6;
+}
+#manage .mlc-form button:focus-visible,#measurements .mlc-form button:focus-visible,#nutrition .mlc-form button:focus-visible{outline:2px solid #f8dfa8;outline-offset:3px}
+#manage .mlc-fields-two,#measurements .mlc-fields-two,#nutrition .mlc-fields-two{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:460px){#manage .mlc-picker-grid{grid-template-columns:1fr}.mlc-mini-actions{justify-content:flex-end}}
+
+/* Reliability milestone: recovered workouts remain visible without overlaying navigation. */
+.active-draft-notice{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+ gap:12px;margin:14px 0;padding:14px;border-radius:14px;
+ color:#f8e9cd;background:linear-gradient(150deg,#17272d,#09171d);
+ border:1.5px solid #d5ad70;box-shadow:0 5px 15px #0007;
+}
+.active-draft-notice[hidden]{display:none!important}
+.active-draft-notice>div:first-child{display:grid;gap:4px;flex:1 1 160px}
+.active-draft-notice strong{color:#f6d49b;font-size:14px}
+.active-draft-notice small{color:#eee0c9;font-size:12px}
+.active-draft-actions{display:flex;gap:8px;flex-wrap:wrap}
+.active-draft-actions button{
+ min-height:41px;padding:9px 13px;border:1px solid #dbaf70;border-radius:10px;
+ color:#fff1d7;background:#0a171d;box-shadow:inset 0 1px #ffffff25,0 3px 8px #0006;
+}
+.active-draft-actions button:first-child{
+ color:#17282c;background:linear-gradient(165deg,#ffe9b8,#d2a25d);
+ font-weight:750;
+}
+#draftSaveStatus{color:#f9d79f!important;margin:12px 0!important}
+
+/* Original exercise catalog — follows the approved emerald/charcoal/gold palette. */
+#libraryChips{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:7px;-webkit-overflow-scrolling:touch}
+#libraryChips button{flex:0 0 auto;white-space:nowrap}
+.catalog-equipment-filter{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;color:#f7deac;font-weight:650;font-size:13px}
+.catalog-equipment-filter select{flex:1;max-width:230px;min-height:42px;padding:8px 12px;color:#f8e7c4;background:#102125;border:1px solid #d1a66c;border-radius:10px}
+.catalog-result-count{margin:12px 0;color:#f3dfbf;font-size:12px}
+.catalog-icon{display:flex!important;align-items:center;justify-content:center;color:#eac182;background:linear-gradient(135deg,#17363a,#071920)!important;border:1px solid #bd945b;border-radius:12px;min-width:58px;min-height:58px}
+.catalog-icon .app-icon{width:34px;height:34px;stroke:currentColor;fill:none;stroke-width:1.6}
+#libraryGrid .library-card{align-items:flex-start}
+#libraryGrid .library-info{min-width:0}
+#libraryGrid .library-info details{margin-top:9px}
+#libraryGrid .library-info details p,#libraryGrid .library-info details li{line-height:1.55;color:#f4e7d1}
+#libraryGrid .library-info details ul{padding-left:18px;margin:7px 0 13px}
+#libraryGrid .library-info details strong{display:block;margin-top:11px;color:#f3cd8b}
+#customExerciseSearch{box-sizing:border-box;width:100%;min-height:43px;padding:10px 12px;margin:7px 0;border:1px solid #c5a171;border-radius:10px;color:#f7e7cf;background:#10252a}
+#customExerciseCount{margin:5px 0 11px;color:#e8c797;font-size:12px}
+#customExerciseOptions{max-height:360px;overflow:auto;overscroll-behavior:contain;padding:5px;border:1px solid #93744b;border-radius:12px;scrollbar-width:thin}
+#customExerciseOptions .mlc-option{padding:9px 6px}
+@media(max-width:760px){.catalog-icon{min-width:48px;min-height:48px}.catalog-icon .app-icon{width:27px;height:27px}}
+
+/* Restored original training split: retain approved dark cards / gold borders. */
+#workoutGrid .program-section-title{grid-column:1/-1;margin-top:18px;padding:12px 0 4px;border-bottom:1px solid #b99b68}
+#workoutGrid .program-section-title h2{margin:0;color:#f7d99c;font-size:18px;letter-spacing:.01em}
+#workoutGrid .program-section-title p{margin:5px 0 3px;color:#f2e6ce;font-size:12px;line-height:1.5}
+#workoutGrid .program-section-title:first-child{margin-top:0}
