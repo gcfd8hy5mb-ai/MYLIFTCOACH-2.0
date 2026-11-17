@@ -54,13 +54,20 @@ try {
  await page.locator('#exerciseSearch').fill('Machine Chest Press');
  assert.ok(await page.locator('#libraryGrid .library-card img[src*="machine-chest-press.png"]').count()>=1,'Original chest press photo reference missing');
  assert.ok(await page.locator('#libraryGrid .library-card .mlc-anatomy-thumb').count()>=1,'Every exercise has one visual');
- assert.ok(await page.locator('#libraryGrid .library-card .mlc-exercise-how').count()>=1,'How-to instructions missing');
+ await page.locator('#libraryGrid [data-library-open="machine-chest-press"]').click();
+ assert.equal(await page.locator('#exerciseDetail').isVisible(),true);
+ assert.match(await page.locator('#exerciseDetail [data-detail-panel="how"]').innerText(),/Press the handles/);
+ await page.locator('#exerciseDetail [data-detail-tab="muscles"]').click();
+ assert.equal(await page.locator('#exerciseDetail [data-detail-panel="muscles"] .liftova-anatomy').count(),1);
+ await page.locator('#exerciseDetail [data-exercise-back]').click();
+ assert.equal(await page.locator('#exerciseDetail').isVisible(),false);
  await page.locator('#exerciseSearch').fill('');
 
  await page.locator('#exerciseSearch').fill('Wide-Stance Pendulum Squat');
  assert.match(await page.locator('#libraryGrid').innerText(),/Wide-Stance Pendulum Squat/);
- await page.locator('#libraryGrid details summary').first().click();
- assert.match(await page.locator('#libraryGrid').innerText(),/wider stance/);
+ await page.locator('#libraryGrid [data-library-open="pendulum-squat-wide"]').click();
+ assert.match(await page.locator('#exerciseDetail [data-detail-panel="how"]').innerText(),/wider stance/i);
+ await page.locator('#exerciseDetail [data-exercise-back]').click();
  await page.locator('#exerciseSearch').fill('');
  await page.locator('#libraryEquipment').selectOption('Cable');
  assert.match(await page.locator('#libraryGrid').innerText(),/Cable/);
