@@ -41,6 +41,7 @@ const plans=[
 ];
 const $=(id)=>document.getElementById(id);
 let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
+let libraryVisibleCount=60;
 /* Guest data retain existing preview keys; signed-in data use distinct owner keys. */
 const previewKey=key=>account?.id?key+':user:'+account.id:key;
 let authChecking=Boolean(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)),authUnavailable=false;
@@ -288,10 +289,11 @@ function renderLibrary(){
  const matches=exercises.filter(e=>(!muscleFilter||e.group===muscleFilter)&&
   (!selectedEquipment||(e.equipment||'Machine')===selectedEquipment)&&
   (e.name+' '+e.group+' '+(e.equipment||'')+' '+(e.how||e.cue||'')).toLowerCase().includes(query));
- const shown=matches.slice(0,60);
+ const shown=matches.slice(0,libraryVisibleCount);
  $('libraryChips').innerHTML=['',...muscleGroups].map(group=>'<button type="button" data-muscle="'+escapeHTML(group)+'"'+(group===muscleFilter?' class="selected"':'')+'>'+escapeHTML(group||'All')+'</button>').join('');
- $('libraryResultsCount').textContent=matches.length+' matching exercises out of '+exercises.length+(matches.length>shown.length?' · Showing first '+shown.length+'. Search or filter to narrow.':'');
- $('libraryGrid').innerHTML=shown.map(e=>'<article class="library-card reference-exercise"><div class="library-thumb catalog-icon" aria-hidden="true"><svg class="app-icon"><use href="#i-dumbbell"></use></svg></div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(e.equipment||'Machine')+'</p><details><summary>Instructions and technique</summary><p>'+escapeHTML(e.how||e.cue)+'</p>'+(e.tips?.length?'<strong>Technique tips</strong><ul>'+e.tips.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+(e.mistakes?.length?'<strong>Common mistakes</strong><ul>'+e.mistakes.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+'</details></div></article>').join('')||'<p class="empty-note">No exercises match those filters.</p>';
+ $('libraryResultsCount').textContent=matches.length+' matching exercises out of '+exercises.length+(matches.length>shown.length?' · Showing '+shown.length+'; load more below.':'');
+ $('libraryGrid').innerHTML=shown.map(e=>'<article class="library-card reference-exercise"><div class="library-thumb catalog-icon" aria-hidden="true"><img loading="lazy" alt="" style="width:100%;height:100%;object-fit:contain" src="'+(e.image?'https://raw.githubusercontent.com/gcfd8hy5mb-ai/workout-tracker/main/'+e.image:'https://raw.githubusercontent.com/gcfd8hy5mb-ai/workout-tracker/main/images/myliftcoach-anatomy-realistic.webp')+'" onerror="this.onerror=null;this.src=\'https://raw.githubusercontent.com/gcfd8hy5mb-ai/workout-tracker/main/images/myliftcoach-anatomy-realistic.webp\'"></div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(e.equipment||'Machine')+'</p><details><summary>Instructions and technique</summary><p>'+escapeHTML(e.how||e.cue)+'</p>'+(e.tips?.length?'<strong>Technique tips</strong><ul>'+e.tips.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+(e.mistakes?.length?'<strong>Common mistakes</strong><ul>'+e.mistakes.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+'</details></div></article>').join('')||'<p class="empty-note">No exercises match those filters.</p>';
+ if(matches.length>shown.length)$('libraryGrid').insertAdjacentHTML('beforeend','<button type="button" class="button-outline" data-library-more style="display:block;margin:20px auto;padding:12px 25px">Load more exercises ('+(matches.length-shown.length)+' remaining)</button>');
 }
 function renderProgress(){
  const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
@@ -1068,12 +1070,13 @@ function bind(){
   try{persistLocalTracking();renderTracking();notice('2.0 entry removed. Original data unchanged.')}catch{trackingEntries=old;notice('Could not remove local entry.')}
  });
 
- $('exerciseSearch').addEventListener('input',renderLibrary);
+ $('exerciseSearch').addEventListener('input',()=>{libraryVisibleCount=60;renderLibrary()});
+ $('libraryGrid').addEventListener('click',event=>{if(!event.target.closest('[data-library-more]'))return;libraryVisibleCount+=60;renderLibrary()});
  $('libraryEquipment').innerHTML='<option value="">All equipment</option>'+equipmentGroups.map(v=>'<option value="'+escapeHTML(v)+'">'+escapeHTML(v)+'</option>').join('');
- $('libraryEquipment').addEventListener('change',()=>{equipmentFilter=$('libraryEquipment').value;renderLibrary()});
+ $('libraryEquipment').addEventListener('change',()=>{equipmentFilter=$('libraryEquipment').value;libraryVisibleCount=60;renderLibrary()});
  $('customExerciseSearch').addEventListener('input',renderCustomExerciseOptions);
  $('customExerciseOptions').addEventListener('change',e=>{const field=e.target.closest('input[name="exercise"]');if(!field)return;if(field.checked)customExerciseSelected.add(field.value);else customExerciseSelected.delete(field.value);renderCustomExerciseOptions()});
- $('libraryChips').addEventListener('click',event=>{const el=event.target.closest('[data-muscle]');if(!el)return;muscleFilter=el.dataset.muscle;renderLibrary()});
+ $('libraryChips').addEventListener('click',event=>{const el=event.target.closest('[data-muscle]');if(!el)return;muscleFilter=el.dataset.muscle;libraryVisibleCount=60;renderLibrary()});
  document.querySelectorAll('[data-account-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.accountPage)));
 
  $('modalContent').addEventListener('click',e=>{const add=e.target.closest('[data-addset]');if(add){addSet(add.dataset.addset);return}const undo=e.target.closest('[data-undo]');if(undo)undoSet(undo.dataset.undo)});
