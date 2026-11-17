@@ -43,8 +43,8 @@ try {
  assert.equal(await page.locator('#libraryGrid .library-card').count(),60);
  assert.equal(await page.locator('#libraryGrid [data-library-more]').count(),1);
  const initialArtwork=page.locator('#libraryGrid .library-card').first();
- assert.equal(await initialArtwork.locator('.liftova-anatomy svg').count(),1,'Expected original anatomy map, not the dumbbell placeholder');
- assert.ok(await initialArtwork.locator('.liftova-anatomy').getAttribute('data-primary')!==null);
+ assert.equal(await initialArtwork.locator('.mlc-anatomy-thumb').count(),1,'Expected one original exercise visual');
+ assert.equal(await initialArtwork.locator('.mlc-anatomy-thumb > img:not([hidden]), .mlc-anatomy-thumb > .liftova-anatomy').count(),1,'Only one visible main visual per exercise');
  for(let i=0;i<5;i++){
    const more=page.locator('#libraryGrid [data-library-more]');
    if(await more.count())await more.click();
@@ -53,7 +53,8 @@ try {
  assert.equal(await page.locator('#libraryGrid [data-library-more]').count(),0);
  await page.locator('#exerciseSearch').fill('Machine Chest Press');
  assert.ok(await page.locator('#libraryGrid .library-card img[src*="machine-chest-press.png"]').count()>=1,'Original chest press photo reference missing');
- assert.ok(await page.locator('#libraryGrid .library-card .liftova-anatomy svg').count()>=1,'Expected anatomy visual for exercise matches');
+ assert.ok(await page.locator('#libraryGrid .library-card .mlc-anatomy-thumb').count()>=1,'Every exercise has one visual');
+ assert.ok(await page.locator('#libraryGrid .library-card .mlc-exercise-how').count()>=1,'How-to instructions missing');
  await page.locator('#exerciseSearch').fill('');
 
  await page.locator('#exerciseSearch').fill('Wide-Stance Pendulum Squat');
