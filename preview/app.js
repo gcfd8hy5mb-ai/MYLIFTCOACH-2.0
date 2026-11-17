@@ -289,11 +289,20 @@ function renderWorkouts(){
  (customPlans.length?'<div class="program-section-title"><h2>My custom workouts</h2></div>'+customPlans.map(renderCard).join(''):'');
 }
 function libraryVisual(ex){
- const anatomy=window.LiftovaAnatomy?.render(ex,{size:'mini'});
  const atlas='https://raw.githubusercontent.com/gcfd8hy5mb-ai/workout-tracker/main/images/myliftcoach-anatomy-realistic.webp';
- const img=ex.image&&/^images\/[a-z0-9-]+\.(png|webp|jpg)$/i.test(ex.image)?'https://raw.githubusercontent.com/gcfd8hy5mb-ai/workout-tracker/main/'+ex.image:null;
- const photo=img?'<img loading="lazy" decoding="async" src="'+img+'" alt="" style="display:block;max-width:100%;max-height:80px;object-fit:contain" onerror="this.hidden=true">':'';
- return '<div class="library-thumb catalog-icon mlc-anatomy-thumb" style="height:auto;min-height:115px;display:flex;flex-direction:column;align-items:center" aria-label="Muscles trained by '+escapeHTML(ex.name)+'">'+(anatomy||'<img loading="lazy" alt="" src="'+atlas+'">')+photo+'</div>';
+ const anatomy=window.LiftovaAnatomy?.render(ex,{size:'mini'})||'<img loading="lazy" alt="Muscle anatomy illustration" src="'+atlas+'">';
+ const photoPath=ex.image&&/^images\/[a-z0-9-]+\.(png|webp|jpg)$/i.test(ex.image)?'https://raw.githubusercontent.com/gcfd8hy5mb-ai/workout-tracker/main/'+ex.image:null;
+ // Each card shows exactly one visual; the original photograph takes priority.
+ // When a photo fails, reveal the original anatomy map rather than an empty box.
+ if(photoPath)return '<div class="library-thumb catalog-icon mlc-anatomy-thumb mlc-demo-thumb"><img loading="lazy" decoding="async" alt="Exercise demonstration for '+escapeHTML(ex.name)+'" src="'+photoPath+'" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><div hidden class="mlc-photo-fallback">'+anatomy+'</div></div>';
+ return '<div class="library-thumb catalog-icon mlc-anatomy-thumb mlc-muscle-thumb" aria-label="Muscles trained by '+escapeHTML(ex.name)+'">'+anatomy+'<small class="mlc-visual-label">Target muscles</small></div>';
+}
+function libraryHowTo(ex){
+ const source=String(ex.how||ex.cue||'').trim();
+ // Use the original exercise's actual instructions, not generated movement guesses.
+ const steps=source.match(/[^.!?]+[.!?]?/g)?.map(x=>x.trim()).filter(Boolean)||[];
+ const instructions=steps.length>1?'<ol class="mlc-how-steps">'+steps.map(x=>'<li>'+escapeHTML(x)+'</li>').join('')+'</ol>':'<p>'+escapeHTML(source||'Technique instructions are not yet available for this exercise.')+'</p>';
+ return '<details class="mlc-exercise-how"><summary>How to perform this exercise</summary>'+instructions+(ex.tips?.length?'<strong>Technique tips</strong><ul>'+ex.tips.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+(ex.mistakes?.length?'<strong>Common mistakes</strong><ul>'+ex.mistakes.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+'</details>';
 }
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
@@ -304,7 +313,7 @@ function renderLibrary(){
  const shown=matches.slice(0,libraryVisibleCount);
  $('libraryChips').innerHTML=['',...muscleGroups].map(group=>'<button type="button" data-muscle="'+escapeHTML(group)+'"'+(group===muscleFilter?' class="selected"':'')+'>'+escapeHTML(group||'All')+'</button>').join('');
  $('libraryResultsCount').textContent=matches.length+' matching exercises out of '+exercises.length+(matches.length>shown.length?' · Showing '+shown.length+'; load more below.':'');
- $('libraryGrid').innerHTML=shown.map(e=>'<article class="library-card reference-exercise">'+libraryVisual(e)+'<div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(e.equipment||'Machine')+'</p><details><summary>Instructions and technique</summary><p>'+escapeHTML(e.how||e.cue)+'</p>'+(e.tips?.length?'<strong>Technique tips</strong><ul>'+e.tips.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+(e.mistakes?.length?'<strong>Common mistakes</strong><ul>'+e.mistakes.map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'')+'</details></div></article>').join('')||'<p class="empty-note">No exercises match those filters.</p>';
+ $('libraryGrid').innerHTML=shown.map(e=>'<article class="library-card reference-exercise">'+libraryVisual(e)+'<div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(e.equipment||'Machine')+'</p>'+libraryHowTo(e)+'</div></article>').join('')||'<p class="empty-note">No exercises match those filters.</p>';
  if(matches.length>shown.length)$('libraryGrid').insertAdjacentHTML('beforeend','<button type="button" class="button-outline" data-library-more style="display:block;margin:20px auto;padding:12px 25px">Load more exercises ('+(matches.length-shown.length)+' remaining)</button>');
 }
 function renderProgress(){
