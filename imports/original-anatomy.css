@@ -1,0 +1,6 @@
+/* Restored original atlas preview thumbnails. Retain charcoal/gold UI. */
+#libraryGrid .mlc-anatomy-thumb{width:145px;min-width:110px;max-width:100%;padding:6px;overflow:hidden;gap:5px;background:rgba(4,11,14,.78);border:1px solid rgba(216,180,105,.22);border-radius:12px}
+#libraryGrid .mlc-anatomy-thumb .liftova-anatomy{display:block;width:100%;max-width:150px;overflow:hidden;background:transparent;border:0;box-shadow:none}
+#libraryGrid .mlc-anatomy-thumb .liftova-anatomy svg{display:block;width:100%;height:auto;aspect-ratio:1190/1024}
+#libraryGrid .mlc-anatomy-thumb img{max-width:100%;object-fit:contain}
+@media(max-width:430px){#libraryGrid .mlc-anatomy-thumb{width:116px;min-width:100px}}
