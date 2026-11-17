@@ -39,6 +39,23 @@ try {
  await page.locator('#sidebar [data-page="library"]').click();
  await page.locator('#library').waitFor({state:'visible'});
  assert.ok(await page.locator('#libraryResultsCount').innerText().then(x=>Number(x.split(' ')[0])>=341));
+ // Regression: the complete library must be browsable and use the original imagery.
+ assert.equal(await page.locator('#libraryGrid .library-card').count(),60);
+ assert.equal(await page.locator('#libraryGrid [data-library-more]').count(),1);
+ const initialArtwork=page.locator('#libraryGrid .library-card').first();
+ assert.equal(await initialArtwork.locator('.liftova-anatomy svg').count(),1,'Expected original anatomy map, not the dumbbell placeholder');
+ assert.ok(await initialArtwork.locator('.liftova-anatomy').getAttribute('data-primary')!==null);
+ for(let i=0;i<5;i++){
+   const more=page.locator('#libraryGrid [data-library-more]');
+   if(await more.count())await more.click();
+ }
+ assert.equal(await page.locator('#libraryGrid .library-card').count(),344,'All 344 verified unique entries must be browseable');
+ assert.equal(await page.locator('#libraryGrid [data-library-more]').count(),0);
+ await page.locator('#exerciseSearch').fill('Machine Chest Press');
+ assert.equal(await page.locator('#libraryGrid .library-card img[src*="machine-chest-press.png"]').count(),1,'Original chest press photo reference missing');
+ assert.equal(await page.locator('#libraryGrid .library-card .liftova-anatomy svg').count(),1);
+ await page.locator('#exerciseSearch').fill('');
+
  await page.locator('#exerciseSearch').fill('Wide-Stance Pendulum Squat');
  assert.match(await page.locator('#libraryGrid').innerText(),/Wide-Stance Pendulum Squat/);
  await page.locator('#libraryGrid details summary').first().click();
