@@ -138,11 +138,30 @@ function renderHome(){
 function renderWorkouts(){
  $('workoutGrid').innerHTML=plans.map((p,i)=>'<button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>').join('');
 }
+// An external catalog is optional. Never treat a readable file as visually approved.
+// The 344-item private release manifest can populate window.MLC2_EXERCISE_CATALOG
+// before app.js is loaded; the original demo catalog remains a safe fallback.
+function libraryExercises(){
+ const imported=window.MLC2_EXERCISE_CATALOG;
+ return Array.isArray(imported)&&imported.length?imported.filter(e=>e&&typeof e.id==='string'&&typeof e.name==='string'&&typeof e.group==='string'):exercises;
+}
+function approvedThumbnail(e){
+ const d=e.demonstration;
+ if(!d||d.status!=='approved'||typeof d.thumbnail!=='string')return '';
+ // Only same-site media paths. An unapproved or missing thumbnail displays the placeholder.
+ return /^(?:\\.\\/)?(?:assets|media|images)\\/[A-Za-z0-9_./-]+\\.(?:webp|png|jpg|jpeg)$/i.test(d.thumbnail)?d.thumbnail:'';
+}
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
- const matches=exercises.filter(e=>(!muscleFilter||e.group===muscleFilter)&&(e.name+' '+e.group).toLowerCase().includes(query));
+ const matches=libraryExercises().filter(e=>(!muscleFilter||e.group===muscleFilter)&&(e.name+' '+e.group).toLowerCase().includes(query));
  document.querySelectorAll('[data-muscle]').forEach(b=>b.classList.toggle('selected',b.dataset.muscle===muscleFilter));
- $('libraryGrid').innerHTML=matches.map(e=>'<article class="library-card reference-exercise"><img class="library-thumb" src="./assets/chest-press.svg" alt="" loading="lazy"><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+e.sets+' sets · '+escapeHTML(e.reps)+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue)+'</p></details></div><span class="library-chevron">›</span></article>').join('')||'<p class="empty-note">No exercises match that search.</p>';
+ $('libraryGrid').innerHTML=matches.map(e=>{
+  const image=approvedThumbnail(e);
+  const thumbnail=image?'<img class="library-thumb approved-thumb" src="'+escapeHTML(image)+'" alt="Approved demonstration of '+escapeHTML(e.name)+'" loading="lazy" data-approved-thumb>':'';
+  const placeholder='<div class="library-placeholder" aria-label="Demonstration coming soon"><span class="library-placeholder-icon" aria-hidden="true">◇</span><span>DEMONSTRATION<br>COMING SOON</span></div>';
+  return '<article class="library-card reference-exercise"><div class="library-media">'+placeholder+thumbnail+'</div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(String(e.sets||3))+' sets · '+escapeHTML(String(e.reps||'8–12'))+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue||'Follow correct setup and controlled movement.')+'</p></details></div><span class="library-chevron">›</span></article>';
+ }).join('')||'<p class="empty-note">No exercises match that search.</p>';
+ $('libraryGrid').querySelectorAll('img[data-approved-thumb]').forEach(img=>img.addEventListener('error',()=>img.remove(),{once:true}));
 }
 function renderProgress(){
  const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
