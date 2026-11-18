@@ -362,6 +362,16 @@ function bind(){
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ $('cloudAuditAction').addEventListener('click',async()=>{
+  const output=$('cloudAuditResult'),button=$('cloudAuditAction');
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before checking cloud compatibility.';return}
+  button.disabled=true;output.textContent='Checking authenticated records read-only…';
+  try{
+   const report=await window.MLC2CloudAudit.check({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,token:auth.access_token,userId:account.id});
+   window.MLC2CloudAudit.render(output,report);
+  }catch(err){output.textContent='Compatibility check unavailable: '+String(err.message||err).slice(0,160)}
+  finally{button.disabled=false}
+ });
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();
