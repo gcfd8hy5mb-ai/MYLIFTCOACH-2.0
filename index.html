@@ -143,7 +143,7 @@
  </article>
  <article class="panel mlc-body-progress">
  <div class="panel-heading"><h3>Private progress photos</h3><span class="micro-tag">THIS DEVICE</span></div>
- <p>These preview photos stay in this browser's separate local photo storage. They are not synced or uploaded to your original MYLIFTCOACH account. Clearing website data can erase them.</p>
+ <p>These preview photos stay in this browser's separate local photo storage. They are not synced or uploaded to your original MYLIFTCOACH account. Use Save copy on each important photo before clearing website data, which can permanently erase them.</p>
  <label class="mlc-photo-picker">Add progress photo <input type="file" id="mlcPhotoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
  <p id="mlcPhotoStatus" role="status"></p><div id="mlcPhotoList" class="mlc-photo-list"></div>
  </article>
@@ -168,7 +168,7 @@
 <button type="button" id="cloudAuditAction" class="button-outline">Check cloud data (read-only)</button>
 <div id="cloudAuditResult" role="status" aria-live="polite"></div>
 <div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><div class="mlc-mapping-preview"><h4>2.0 workout format mapping</h4><p>Review which 2.0 practice workouts and sessions can be represented in the original app's format. This is a local-only dry run; no cloud connection or changes occur.</p><div class="mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
-<p>Download a private JSON backup of this browser's 2.0 workouts, practice sessions, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Keep the file somewhere private. This option does not restore or sync records.</p>
+<p>Download a private JSON backup of this browser's 2.0 workouts, practice sessions, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Save important progress photos individually using Save copy in Daily Tracking. Keep all exported files private. This option does not sync records.</p>
 <button id="recoveryExportAction" class="button-outline" type="button">Download recovery copy</button>
 <p id="recoveryExportResult" role="status" aria-live="polite"></p>
 <div class="mlc-data-health"><h4>Check local workout data</h4><p>Verify saved plans, session sets, exercise references and daily tracking without changing records or connecting to the cloud.</p><button id="dataHealthAction" class="button-outline" type="button">Check local data integrity</button><div id="dataHealthResult" role="status" aria-live="polite"></div></div>
