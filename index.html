@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="./refinement-v2.css?v=11">
 <link rel="stylesheet" href="./home-rebuild.css?v=19">
 <link rel="stylesheet" href="./exercise-placeholders.css?v=1">
+<link rel="stylesheet" href="./custom-workouts.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -96,7 +97,7 @@
     <p class="safety-note"><strong>Development preview.</strong> Demo workout entries stay in this browser. Original workout history remains unchanged.</p>
   </div>
  </section>
- <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Training plan</h1><p>Four purposeful sessions. Select one to open its exercise list and record a practice workout.</p></div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
+ <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Your workouts</h1><p>Create and edit custom workouts using the complete 344-exercise catalog. Select any workout to show on Home.</p></div><div class="custom-workout-toolbar"><button type="button" id="createWorkout" class="button-primary">+ Create custom workout</button><small>Development preview · local only · original records are unchanged</small></div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
  <section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>Explore all 344 movements, with technique notes and approved demonstrations as they become available.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button><button type="button" data-muscle="Cardio">Cardio</button></div><div class="library-grid" id="libraryGrid"></div></section>
  <section id="progress" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div></section>
  <section id="history" class="page" hidden>
@@ -150,6 +151,7 @@
 </div>
 <div id="toast" role="status" class="toast" hidden></div>
 <script defer src="./exercise-catalog-344.js?v=1"></script>
+<script defer src="./custom-workouts.js?v=1"></script>
 <script defer src="./app.js?v=3"></script>
 </body>
 </html>
