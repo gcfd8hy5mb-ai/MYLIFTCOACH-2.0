@@ -7,3 +7,11 @@
 **Not yet migrated:** The workout creator and current session logic still use the earlier 12-item starter data set and demo local history. The complete 344-item catalog is available in the Exercise Library view, but must also be wired into custom workout editing, the home screen's workout selection, and workout logging without changing production Supabase data.
 
 **Do not merge or deploy as finished:** Browser acceptance testing and the private media transfer remain outstanding; keep this pull request a draft. No production workout data is written.
+
+## Cloud migration staging (not activated)
+
+The public 2.0 development build now includes the **exact pure original storage model and three-way reconciliation planner**, plus a manually triggered **read-only cloud dry run** in Settings. The cloud check revalidates the signed-in user, fetches account-scoped rows without caching, and reports overlap and potential conflicts. It has **no write APIs or restore logic**.
+
+This dry run may see **zero original local keys**, because the original app uses account-scoped storage and the 2.0 app has separate `mlc2-*` storage. A zero count does not prove the original app or account has no data. Its findings are advisory, not permission to merge. Safe synchronization needs an explicit 2.0-to-original mapping, verified owner-scoped local reads, a shared checkpoint, recovery archive, conflict-resolution UI and physical device tests.
+
+No production schema changes, records, or images were modified.
