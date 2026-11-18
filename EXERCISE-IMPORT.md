@@ -21,3 +21,9 @@ No production schema changes, records, or images were modified.
 Settings now offers **Download recovery copy**. This downloads a versioned, allowlisted 2.0 JSON snapshot of local custom workouts, selected workout, practice session history, water/weight tracking, body measurements, and readiness check-ins. It expressly excludes original-app keys, Supabase tokens and photo binaries; the photo store remains separately in IndexedDB. No import/restore button exists yet, and exporting does not mean data is synced to the cloud. Keep this file securely and back up photos separately.
 
 The dry-run original-format converter remains intentionally non-writing. The original app's numeric custom-workout IDs, scoped storage, and revision checkpoint semantics must be reconciled before any upload. Do not use this recovery export as an input to the original app's cloud backup endpoint.
+
+## Guarded recovery import (new)
+
+Settings also supports selecting the exported **MYLIFTCOACH-2.0-recovery v1 JSON file** and previewing it. The importer validates supported categories, bounded item counts, dates, weighted sets, and IDs; rejects corrupted/unknown/unsafe content; and **does not restore over any non-identical existing 2.0 category**. All conflicts block the operation before any write. The restore button stays disabled until the preview passes and the user confirms, then restores **absent browser-storage keys only**; new-key writes are rolled back if a storage error occurs. No legacy keys, Supabase calls, account tokens, or private progress photos are imported.
+
+After a successful restore, the page must be reloaded to update in-memory application state. The UI currently describes this step; it does not force an automatic reload. A separate photo backup/restore and verified cloud migration are still outstanding. Tests here are code-level/mock storage only, not on-device Safari acceptance.
