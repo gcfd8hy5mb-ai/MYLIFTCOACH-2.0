@@ -396,6 +396,19 @@ function bind(){
    $('recoveryRestoreAction').disabled=true;pendingRecovery=null;
   }catch(err){$('recoveryImportResult').textContent='Restore blocked: '+String(err.message||err).slice(0,180)}
  });
+ $('dataHealthAction').addEventListener('click',()=>{
+  const output=$('dataHealthResult');
+  try{
+   const report=window.MLC2DataHealth.check(localStorage,libraryExercises(),plans);
+   output.replaceChildren();
+   const head=document.createElement('strong');head.textContent='Local data status: '+report.status.toUpperCase();output.append(head);
+   const summary=document.createElement('p');summary.textContent=Object.entries(report.counts).map(([key,value])=>key+': '+value).join(' · ');output.append(summary);
+   for(const line of [...report.errors,...report.warnings]){
+    const p=document.createElement('p');p.textContent=line;output.append(p);
+   }
+   if(report.status==='pass'){const note=document.createElement('p');note.textContent='No local data structure problems detected. This does not verify cloud sync or private photos.';output.append(note)}
+  }catch(err){output.textContent='Data check unavailable: '+String(err.message||err).slice(0,180)}
+ });
  $('recoveryExportAction').addEventListener('click',()=>{
   const output=$('recoveryExportResult');
   try{
