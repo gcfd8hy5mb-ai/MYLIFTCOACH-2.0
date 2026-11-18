@@ -362,5 +362,5 @@ function bind(){
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();
-document.body.classList.add('home-active');bind();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
+document.body.classList.add('home-active');bind();window.MLC2BodyProgress?.init();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
 })();
