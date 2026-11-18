@@ -50,20 +50,44 @@ async function run({url,publishableKey,token,userId,fetcher=fetch,storage=localS
  const localSources=new Set(Object.keys(raw));
  const cloudSources=new Set(remote.filter(r=>r.table==='sources').map(r=>r.source_key));
  const overlaps=[...localSources].filter(k=>cloudSources.has(k));
+ // Rehydrate only in memory to inspect original cloud data without ever writing
+ // legacy keys into the 2.0 app's browser storage. Malformed cloud shapes fail closed.
+ const restored=model.restoreSnapshot(remote);
+ const originalList=key=>{
+  if(typeof restored[key]!=='string')return [];
+  const value=JSON.parse(restored[key]);
+  if(!Array.isArray(value))throw Error('Unexpected '+key+' cloud record format. No data changed.');
+  return value;
+ };
+ const cloudPlans=originalList('customWorkoutsV5');
+ const cloudSessions=originalList('workoutHistoryV52');
+ const local2Plans=JSON.parse(storage.getItem('mlc2-custom-plans-v1')||'[]');
+ const local2Sessions=JSON.parse(storage.getItem('mlc2-demo-workouts-v1')||'[]');
+ if(!Array.isArray(local2Plans)||!Array.isArray(local2Sessions))throw Error('Invalid 2.0 local history shape. No data changed.');
+ const cloudPlanIds=new Set(cloudPlans.map(x=>String(x.id)));
+ const cloudSessionIds=new Set(cloudSessions.map(x=>String(x.id)));
+ const planIdCollisions=local2Plans.filter(x=>x&&cloudPlanIds.has(String(x.id))).length;
+ const sessionIdCollisions=local2Sessions.filter(x=>x&&cloudSessionIds.has(String(x.id))).length;
  return Object.freeze({
   localSources:localSources.size,localRows:local.length,cloudRows:remote.length,
+  cloudWorkouts:cloudPlans.length,cloudSessions:cloudSessions.length,
+  local2Workouts:local2Plans.length,local2Sessions:local2Sessions.length,
+  idCollisions:planIdCollisions+sessionIdCollisions,
   overlappingSources:overlaps.length,conflicts:planned.conflicts.length,
   prospectiveCreates:planned.writes.length,
   cloudOnly:remote.filter(r=>!local.some(v=>v.table===r.table&&v.id===r.id)).length,
-  cannotAutoMerge:overlaps.length>0||planned.conflicts.length>0,
-  advisory:'Preview only. Without the original account checkpoint and explicit 2.0-to-legacy mapping, a safe upload or restoration cannot be authorized.'
+  cannotAutoMerge:true,
+  advisory:'Read-only preview. Original records and 2.0 practice records are separate. No full three-way checkpoint or 2.0-to-original mapping has been authorized. This comparison cannot approve syncing, even if zero conflicts are shown.'
  });
 }
 function render(element,result){
  if(!element)return;
  const metrics=[
  ['Original keys visible locally',result.localSources],['Local legacy rows',result.localRows],
- ['Cloud rows',result.cloudRows],['Overlapping data sources',result.overlappingSources],
+ ['Cloud rows',result.cloudRows],['Original cloud workouts',result.cloudWorkouts],
+ ['Original cloud sessions',result.cloudSessions],['2.0 custom workouts',result.local2Workouts],
+ ['2.0 practice sessions',result.local2Sessions],['ID collisions across apps',result.idCollisions],
+ ['Overlapping data sources',result.overlappingSources],
  ['Potential conflicting records',result.conflicts],['Potential new legacy records',result.prospectiveCreates],
  ['Cloud-only records',result.cloudOnly]];
  element.replaceChildren();
