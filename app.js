@@ -362,6 +362,16 @@ function bind(){
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ $('cloudPreviewAction').addEventListener('click',async()=>{
+  const output=$('cloudPreviewResult'),button=$('cloudPreviewAction');
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account first.';return}
+  button.disabled=true;output.textContent='Inspecting original cloud records without changing them…';
+  try{
+   const result=await window.MLC2SyncPreview.run({url:BACKEND,publishableKey:PUBLIC_KEY,token:auth.access_token,userId:account.id});
+   window.MLC2SyncPreview.render(output,result);
+  }catch(e){output.textContent='Read-only preview unavailable: '+String(e.message||e).slice(0,200)}
+  finally{button.disabled=false}
+ });
  $('cloudAuditAction').addEventListener('click',async()=>{
   const output=$('cloudAuditResult'),button=$('cloudAuditAction');
   if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before checking cloud compatibility.';return}
