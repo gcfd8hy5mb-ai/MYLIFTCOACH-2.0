@@ -80,7 +80,8 @@ async function renderPhotos(){
    const url=URL.createObjectURL(p.data);photoUrls.push(url);img.src=url;
    const footer=document.createElement('div'),caption=document.createElement('span'),button=document.createElement('button');
    caption.textContent=p.day;button.type='button';button.textContent='Remove photo';button.dataset.photoDelete=p.id;
-   footer.append(caption,button);item.append(img,footer);list.append(item);
+   const saveButton=document.createElement('button');saveButton.type='button';saveButton.textContent='Save copy';saveButton.dataset.photoExport=p.id;
+   footer.append(caption,saveButton,button);item.append(img,footer);list.append(item);
   }
  }catch(e){setStatus('mlcPhotoStatus',e.message||'Photos unavailable on this device.')}
 }
@@ -131,6 +132,20 @@ function init(){
   finally{input.value=''}
  });
  document.getElementById('mlcPhotoList')?.addEventListener('click',async e=>{
+  const save=e.target.closest('[data-photo-export]');
+  if(save){
+   try{
+    const photo=(await listPhotos()).find(p=>p.id===save.dataset.photoExport);
+    if(!photo||!(photo.data instanceof Blob))throw Error('Photo was not found');
+    // Export one original locally held JPEG. No network transfer or remote processing.
+    const url=URL.createObjectURL(photo.data),link=document.createElement('a');
+    link.href=url;link.download='MYLIFTCOACH-2.0-progress-'+photo.day+'-'+String(photo.id).replace(/[^a-zA-Z0-9-]/g,'').slice(-15)+'.jpg';
+    document.body.appendChild(link);
+    try{link.click()}finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+    setStatus('mlcPhotoStatus','Photo copy prepared for download. Keep it private.');
+   }catch{setStatus('mlcPhotoStatus','Could not export the photo from this browser.')}
+   return;
+  }
   const b=e.target.closest('[data-photo-delete]');if(!b||!confirm('Permanently remove this 2.0 photo from this device?'))return;
   try{await deletePhoto(b.dataset.photoDelete);await renderPhotos();setStatus('mlcPhotoStatus','2.0 photo removed from this device.')}
   catch{setStatus('mlcPhotoStatus','Could not remove photo.')}
