@@ -27,3 +27,20 @@ The dry-run original-format converter remains intentionally non-writing. The ori
 Settings also supports selecting the exported **MYLIFTCOACH-2.0-recovery v1 JSON file** and previewing it. The importer validates supported categories, bounded item counts, dates, weighted sets, and IDs; rejects corrupted/unknown/unsafe content; and **does not restore over any non-identical existing 2.0 category**. All conflicts block the operation before any write. The restore button stays disabled until the preview passes and the user confirms, then restores **absent browser-storage keys only**; new-key writes are rolled back if a storage error occurs. No legacy keys, Supabase calls, account tokens, or private progress photos are imported.
 
 After a successful restore, the page must be reloaded to update in-memory application state. The UI currently describes this step; it does not force an automatic reload. A separate photo backup/restore and verified cloud migration are still outstanding. Tests here are code-level/mock storage only, not on-device Safari acceptance.
+
+## Large-batch migration integrity improvements
+
+- **Practice-session persistence:** A completed practice workout is now stored and read back successfully **before** replacing in-memory session history or closing the workout. A failed browser storage write keeps the workout open, so the student can retry instead of seeing a phantom completion.
+- **Private photo safety:** Device-only progress photo cards now provide an individual **Save copy** action. This is a separate JPEG download (no network). The JSON recovery export still excludes IndexedDB photo blobs; photos must be downloaded separately.
+- **Local data health:** A new read-only Settings action inspects 2.0 workout references, duplicate IDs, session sets, daily tracking, measurements, and selected workout integrity. It does not fix, delete, overwrite, or transmit records.
+- **Deeper cloud comparison:** The opt-in authenticated cloud dry run now rehydrates an **in-memory only** original-format snapshot from account-scoped GET results. It shows counts of original cloud workouts/sessions and local 2.0 workouts/sessions, plus potential ID collisions. The original account data is never written to 2.0 storage. Even if there are zero reported conflicts, `cannotAutoMerge` stays `true` because there is no shared revision baseline or approved final mapping.
+
+### Verification for this batch
+
+JavaScript syntax checks passed for modified modules; static HTML check found no duplicate IDs among the feature controls; mock cloud preview performed 40 requests, all **GET**, and did not authorize synchronization. A normal device-local fixture passed the integrity check; duplicate workout IDs, broken session JSON, orphan selected workout IDs, and unknown exercises were surfaced as failures or warnings. Browser and iPhone acceptance testing **has not happened**, and no production cloud data was changed.
+
+### Major outstanding gates
+
+1. Obtain the latest privately approved 268 demonstrations and their IDs, source rights, and checksums. Older preview media statuses are not approval.
+2. Complete owner-scoped checkpoint/revision reconciliation and a test account with conflict/recovery tests before cloud writes are ever enabled.
+3. Verify 2.0 features on real mobile and desktop devices. The current branch is not production-ready.
