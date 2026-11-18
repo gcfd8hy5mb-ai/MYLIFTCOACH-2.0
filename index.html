@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="./custom-workouts.css?v=1">
 <link rel="stylesheet" href="./progress-migration.css?v=1">
 <link rel="stylesheet" href="./coach-migration.css?v=1">
+<link rel="stylesheet" href="./body-progress.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -125,6 +126,25 @@
   <button id="loadOriginalTracking" class="button-outline" type="button">View original water &amp; weight history</button><p id="legacyTrackingStatus" class="legacy-status" role="status">Not loaded</p>
   <div id="originalTrackingSummary" class="legacy-summary"></div><div id="originalTrackingList" class="legacy-list"></div>
  </article>
+ <article class="panel mlc-body-progress">
+ <div class="panel-heading"><h3>Body measurements</h3><span class="micro-tag">2.0 DEVICE ONLY</span></div>
+ <p>Log measurements in inches. Original MYLIFTCOACH measurement records are preserved and are not imported into this preview.</p>
+ <form id="mlcMeasurementForm" class="mlc-measurement-form">
+ <label>Area<select name="area" required><option>Waist</option><option>Chest</option><option>Arm</option><option>Thigh</option><option>Hips</option></select></label>
+ <label>Date<input id="mlcMeasurementDay" name="day" type="date" required></label>
+ <label>Inches<input name="value" type="number" min="1" max="200" step="0.1" inputmode="decimal" required placeholder="32.5"></label>
+ <button class="button-primary" type="submit">Save measurement</button>
+ </form>
+ <p id="mlcMeasurementStatus" role="status"></p>
+ <label class="mlc-progress-chart-label">Trend for <select id="mlcMeasurementChartArea"><option>Waist</option><option>Chest</option><option>Arm</option><option>Thigh</option><option>Hips</option></select></label>
+ <div id="mlcMeasurementsChart" class="mlc-measurement-chart"></div><div id="mlcMeasurementsList"></div>
+ </article>
+ <article class="panel mlc-body-progress">
+ <div class="panel-heading"><h3>Private progress photos</h3><span class="micro-tag">THIS DEVICE</span></div>
+ <p>These preview photos stay in this browser's separate local photo storage. They are not synced or uploaded to your original MYLIFTCOACH account. Clearing website data can erase them.</p>
+ <label class="mlc-photo-picker">Add progress photo <input type="file" id="mlcPhotoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
+ <p id="mlcPhotoStatus" role="status"></p><div id="mlcPhotoList" class="mlc-photo-list"></div>
+ </article>
 </section>
 <section id="coaching" class="page" hidden>
   <div class="page-heading"><div class="eyebrow">TRAIN SMARTER</div><h1>Coaching</h1><p>Your personalized training insights will be carried over from the original workout app. This development preview does not generate fabricated advice.</p></div>
@@ -157,6 +177,7 @@
 <script defer src="./custom-workouts.js?v=1"></script>
 <script defer src="./progress-migration.js?v=1"></script>
 <script defer src="./coach-migration.js?v=1"></script>
+<script defer src="./body-progress.js?v=1"></script>
 <script defer src="./app.js?v=3"></script>
 </body>
 </html>
