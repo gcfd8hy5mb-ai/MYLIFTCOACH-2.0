@@ -56,6 +56,7 @@ function getOriginalSnapshot(){
  const rawPlans=safeOriginal('customWorkoutsV5','array');
  const rawTracking=safeOriginal('dailyTrackingV1','object');
  const sessions=rawSessions.filter(x=>x&&typeof x==='object'&&Array.isArray(x.exercises)).map(x=>({
+  id:String(x.id??'').slice(0,100),
   title:String(x.workoutTitle||x.title||'Workout').slice(0,110),
   date:String(x.date||x.created||'').slice(0,35),
   exercises:x.exercises.filter(y=>y&&Array.isArray(y.sets)).map(y=>({
@@ -65,6 +66,7 @@ function getOriginalSnapshot(){
   })).slice(0,55)
  }));
  const plans=rawPlans.filter(x=>x&&typeof x==='object'&&Array.isArray(x.exercises)).slice(0,100).map(x=>({
+  id:String(x.id??'').slice(0,100),
   title:String(x.name||x.title||'Custom workout').slice(0,110),
   exercises:x.exercises.slice(0,80).map(v=>String(v).slice(0,80))
  }));
