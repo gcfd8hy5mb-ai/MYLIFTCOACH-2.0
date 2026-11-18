@@ -170,7 +170,14 @@
 <div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><div class="mlc-mapping-preview"><h4>2.0 workout format mapping</h4><p>Review which 2.0 practice workouts and sessions can be represented in the original app's format. This is a local-only dry run; no cloud connection or changes occur.</p><div class="mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
 <p>Download a private JSON backup of this browser's 2.0 workouts, practice sessions, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Keep the file somewhere private. This option does not restore or sync records.</p>
 <button id="recoveryExportAction" class="button-outline" type="button">Download recovery copy</button>
-<p id="recoveryExportResult" role="status" aria-live="polite"></p></div><button type="button" id="mappingPreviewAction" class="button-outline">Check local workout conversion</button><div id="mappingPreviewResult" role="status" aria-live="polite"></div></div>
+<p id="recoveryExportResult" role="status" aria-live="polite"></p>
+<div class="mlc-recovery-import"><h4>Restore missing 2.0 data (this browser only)</h4>
+<p>Choose a previously downloaded MYLIFTCOACH 2.0 recovery file. Check the preview first. Any category with existing different data will block the entire restore. Existing data is never overwritten. Private photos and cloud records are not included.</p>
+<label for="recoveryImportFile">Choose recovery JSON</label>
+<input type="file" id="recoveryImportFile" accept=".json,application/json">
+<button type="button" id="recoveryRestoreAction" class="button-outline" disabled>Restore only missing data</button>
+<p id="recoveryImportResult" role="status" aria-live="polite"></p>
+</div></div><button type="button" id="mappingPreviewAction" class="button-outline">Check local workout conversion</button><div id="mappingPreviewResult" role="status" aria-live="polite"></div></div>
 <button type="button" id="cloudPreviewAction" class="button-outline">Preview possible conflicts (read-only)</button><div id="cloudPreviewResult" role="status" aria-live="polite"></div></div>
 </article></section>
 </main>
@@ -196,6 +203,7 @@
 <script defer src="./legacy-storage-model.js?v=1"></script>
 <script defer src="./legacy-reconcile.js?v=1"></script>
 <script defer src="./recovery-export.js?v=1"></script>
+<script defer src="./recovery-import.js?v=1"></script>
 <script defer src="./legacy-mapping-preview.js?v=1"></script>
 <script defer src="./cloud-sync-preview.js?v=1"></script>
 <script defer src="./cloud-compatibility.js?v=1"></script>
