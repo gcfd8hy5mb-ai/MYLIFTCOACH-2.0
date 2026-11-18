@@ -49,8 +49,7 @@ function summarize({customPlans=[],sessions=[],catalog=[],existingPlans=[],exist
  if(!Array.isArray(customPlans)||!Array.isArray(sessions)||!Array.isArray(catalog)||!Array.isArray(existingPlans)||!Array.isArray(existingSessions))throw Error('Expected arrays.');
  const warnings=[];
  const duplicatePlans=auditDuplicates(customPlans,'2.0 plans'),duplicateSessions=auditDuplicates(sessions,'2.0 sessions');
- if(duplicatePlans)warnings.push(duplicatePlans);
- if(duplicateSessions)warnings.push(duplicateSessions);
+ if(duplicatePlans||duplicateSessions)throw Error([duplicatePlans,duplicateSessions].filter(Boolean).join('; ')+' — resolve duplicate IDs before mapping.');
  const targetPlanIds=new Set(existingPlans.map(p=>String(p?.id)));
  const targetSessionIds=new Set(existingSessions.map(s=>String(s?.id)));
  const idCollisionPlan=[],idCollisionSession=[],rejected=[],plans=[],completed=[];
