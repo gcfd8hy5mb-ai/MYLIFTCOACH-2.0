@@ -364,6 +364,13 @@ function bind(){
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ $('recoveryExportAction').addEventListener('click',()=>{
+  const output=$('recoveryExportResult');
+  try{
+   const result=window.MLC2Recovery.download(localStorage);
+   output.textContent='Local recovery file prepared ('+result.keys+' stored data categories; '+result.bytes+' bytes). Photos and account credentials are excluded.';
+  }catch(err){output.textContent='Backup export failed: '+String(err.message||err).slice(0,180)}
+ });
  $('mappingPreviewAction').addEventListener('click',()=>{
   const area=$('mappingPreviewResult');
   try{
