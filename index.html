@@ -167,7 +167,8 @@
 <p>Check which original account record categories are accessible with your existing sign-in. This does not transfer, sync, edit, or delete any workout information. Run only when you want to verify compatibility.</p>
 <button type="button" id="cloudAuditAction" class="button-outline">Check cloud data (read-only)</button>
 <div id="cloudAuditResult" role="status" aria-live="polite"></div>
-<div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><button type="button" id="cloudPreviewAction" class="button-outline">Preview possible conflicts (read-only)</button><div id="cloudPreviewResult" role="status" aria-live="polite"></div></div>
+<div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><div class="mlc-mapping-preview"><h4>2.0 workout format mapping</h4><p>Review which 2.0 practice workouts and sessions can be represented in the original app's format. This is a local-only dry run; no cloud connection or changes occur.</p><button type="button" id="mappingPreviewAction" class="button-outline">Check local workout conversion</button><div id="mappingPreviewResult" role="status" aria-live="polite"></div></div>
+<button type="button" id="cloudPreviewAction" class="button-outline">Preview possible conflicts (read-only)</button><div id="cloudPreviewResult" role="status" aria-live="polite"></div></div>
 </article></section>
 </main>
 <footer class="site-footer"><span>MYLIFTCOACH 2.0</span><span>STRONGER BY DESIGN · PREVIEW</span></footer>
@@ -191,6 +192,7 @@
 <script defer src="./body-progress.js?v=1"></script>
 <script defer src="./legacy-storage-model.js?v=1"></script>
 <script defer src="./legacy-reconcile.js?v=1"></script>
+<script defer src="./legacy-mapping-preview.js?v=1"></script>
 <script defer src="./cloud-sync-preview.js?v=1"></script>
 <script defer src="./cloud-compatibility.js?v=1"></script>
 <script defer src="./app.js?v=3"></script>
