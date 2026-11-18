@@ -1,1 +1,6 @@
 .coach-suggestion{padding:12px 0;border-bottom:1px solid rgba(215,183,110,.19)}.coach-suggestion h4{margin:0 0 7px;color:#eee0c8}.coach-suggestion p{margin:0 0 5px;color:#e4bc72}.coach-suggestion small{color:#c3bdad;line-height:1.6}
+.coach-sub-label{display:block;font-size:.9rem;color:#e7d6ae;margin:12px 0}
+.coach-sub-label select{display:block;width:100%;max-width:440px;margin-top:8px;background:#132128;border:1px solid rgba(217,184,111,.5);border-radius:9px;padding:11px;color:#f3e5c4;font:inherit}
+.coach-sub-item{border-bottom:1px solid rgba(209,168,93,.19);padding:12px 0;display:flex;flex-direction:column;gap:5px}
+.coach-sub-item strong{color:#eed6a0}.coach-sub-item small,.coach-sub-note{color:#c6c1b3;line-height:1.6}
+.coach-sub-note{margin-top:14px;font-size:.84rem}
