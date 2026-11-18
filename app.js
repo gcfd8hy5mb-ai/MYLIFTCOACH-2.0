@@ -149,7 +149,7 @@ function approvedThumbnail(e){
  const d=e.demonstration;
  if(!d||d.status!=='approved'||typeof d.thumbnail!=='string')return '';
  // Only same-site media paths. An unapproved or missing thumbnail displays the placeholder.
- return /^(?:\\.\\/)?(?:assets|media|images)\\/[A-Za-z0-9_./-]+\\.(?:webp|png|jpg|jpeg)$/i.test(d.thumbnail)?d.thumbnail:'';
+ return /^(?:\.\/)?(?:assets|media|images)\/[A-Za-z0-9_./-]+\.(?:webp|png|jpg|jpeg)$/i.test(d.thumbnail)?d.thumbnail:'';
 }
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
