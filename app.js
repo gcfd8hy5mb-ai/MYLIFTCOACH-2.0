@@ -70,7 +70,8 @@ function getOriginalSnapshot(){
  }));
  const water=Array.isArray(rawTracking.water)?rawTracking.water.filter(x=>x&&typeof x==='object'&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0).slice(0,1000).map(x=>({day:String(x.day||'').slice(0,10),amount:Number(x.amount)})):[];
  const weight=Array.isArray(rawTracking.weight)?rawTracking.weight.filter(x=>x&&typeof x==='object'&&Number.isFinite(Number(x.value))&&Number(x.value)>0).slice(0,1000).map(x=>({day:String(x.day||'').slice(0,10),value:Number(x.value)})):[];
- return {sessions,plans,water,weight};
+ const measurements=Array.isArray(rawTracking.measurements)?rawTracking.measurements.filter(x=>x&&['Waist','Chest','Arm','Thigh','Hips'].includes(x.area)&&/^\d{4}-\d{2}-\d{2}$/.test(String(x.day||''))&&Number.isFinite(Number(x.value))&&Number(x.value)>0&&Number(x.value)<=200).slice(0,1000).map(x=>({area:String(x.area),day:String(x.day),value:Number(x.value)})):[];
+ return {sessions,plans,water,weight,measurements};
 }
 function localDayString(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function loadLocalTracking(){
@@ -100,9 +101,11 @@ function renderTracking(){
  $('localTrackingSummary').textContent='Today: '+Math.round(total)+' mL water · '+weight.length+' weight entries';
  $('localTrackingList').innerHTML=trackingEntries.length?trackingEntries.slice(0,40).map(x=>'<div class="history-entry tracking-row"><div><strong>'+escapeHTML(x.type==='water'?'Water':'Body weight')+'</strong><small>'+escapeHTML(x.day)+' · '+escapeHTML(String(x.value))+(x.type==='water'?' mL':' lb')+'</small></div><button type="button" class="tracking-delete" data-remove-track="'+escapeHTML(x.id)+'" aria-label="Remove this 2.0 entry">Remove</button></div>').join(''):'<p class="empty-note">No 2.0 daily entries yet.</p>';
  $('legacyTrackingStatus').textContent=originalSnapshot?'Original device data loaded read-only.':'Not loaded';
- if(!originalSnapshot){$('originalTrackingSummary').textContent='';$('originalTrackingList').innerHTML='';return}
- $('originalTrackingSummary').textContent=originalSnapshot.water.length+' water entries · '+originalSnapshot.weight.length+' weight entries';
+ if(!originalSnapshot){$('originalTrackingSummary').textContent='';$('originalTrackingList').innerHTML='';if($('mlcOriginalMeasurements'))$('mlcOriginalMeasurements').innerHTML='';return}
+ $('originalTrackingSummary').textContent=originalSnapshot.water.length+' water entries · '+originalSnapshot.weight.length+' weight entries · '+(originalSnapshot.measurements?.length||0)+' body measurements';
  const combined=[...originalSnapshot.water.map(x=>({...x,type:'water'})),...originalSnapshot.weight.map(x=>({...x,type:'weight'}))].sort((a,b)=>b.day.localeCompare(a.day)).slice(0,60);
+ const oldMeasurements=$('mlcOriginalMeasurements');
+ if(oldMeasurements)oldMeasurements.innerHTML=(originalSnapshot.measurements||[]).slice().sort((a,b)=>b.day.localeCompare(a.day)).map(x=>'<div class="mlc-measurement-row"><span>'+escapeHTML(x.day)+' · '+escapeHTML(x.area)+': '+escapeHTML(String(x.value))+' in</span><span class="micro-tag">ORIGINAL</span></div>').join('')||'<p class="empty-note">No original measurements found on this browser.</p>';
  $('originalTrackingList').innerHTML=combined.length?combined.map(x=>'<div class="history-entry tracking-row"><div><strong>'+escapeHTML(x.type==='water'?'Water':'Body weight')+'</strong><small>'+escapeHTML(x.day)+' · '+escapeHTML(String(x.type==='water'?Math.round(x.amount):x.value))+(x.type==='water'?' mL':' lb')+'</small></div><span class="micro-tag">ORIGINAL</span></div>').join(''):'<p class="empty-note">No original daily tracking records found on this browser. Cloud data was not queried or altered.</p>';
 }
 function viewOriginal(){originalSnapshot=getOriginalSnapshot();renderHistory();renderTracking();renderOriginalPlans();renderProgress();notice('Original records checked locally. No original records were changed.')}
