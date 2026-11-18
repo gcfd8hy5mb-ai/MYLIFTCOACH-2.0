@@ -362,6 +362,27 @@ function bind(){
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ $('mappingPreviewAction').addEventListener('click',()=>{
+  const area=$('mappingPreviewResult');
+  try{
+   const plans=JSON.parse(localStorage.getItem('mlc2-custom-plans-v1')||'[]');
+   const result=window.MLC2LegacyMapper.summarize({
+    customPlans:plans,sessions:demoSessions,catalog:libraryExercises(),
+    existingPlans:originalSnapshot?.plans||[],existingSessions:originalSnapshot?.sessions||[]
+   });
+   const messages=[
+    'Convertible custom workouts: '+result.customWorkouts,
+    'Convertible sessions: '+result.sessions,
+    'Weighted sets: '+result.plannedSets,
+    'Rejected records: '+result.rejected.length,
+    'Potential ID collisions: '+(result.workoutIdCollisions.length+result.sessionIdCollisions.length)
+   ];
+   area.replaceChildren();
+   const summary=document.createElement('p');summary.textContent=messages.join(' · ');area.append(summary);
+   for(const message of result.warnings){const p=document.createElement('p');p.textContent=message;area.append(p)}
+   const safety=document.createElement('strong');safety.textContent='DRY RUN ONLY — no upload or restore is enabled.';area.append(safety);
+  }catch(err){area.textContent='Cannot prepare safe mapping: '+String(err.message||err).slice(0,200)}
+ });
  $('cloudPreviewAction').addEventListener('click',async()=>{
   const output=$('cloudPreviewResult'),button=$('cloudPreviewAction');
   if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account first.';return}
