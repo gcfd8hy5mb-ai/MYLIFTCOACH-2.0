@@ -18,3 +18,6 @@
 #customOptions input {width:18px;height:18px;accent-color:#d7b46b}
 .custom-editor-footer {display:flex;justify-content:flex-end;gap:10px}
 .custom-editor-footer button[type=submit] {background:#b88f4e;color:#14181b;font-weight:700}
+
+.workout-item {min-width:0;display:flex;flex-direction:column}
+.workout-item .workout-card {width:100%;flex:1}
