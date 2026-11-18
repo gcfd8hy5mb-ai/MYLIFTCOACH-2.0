@@ -1,9 +1,9 @@
-# Exercise catalog integration contract
+# Exercise library import status
 
-This branch only prepares the public demo UI. It **does not** import the private approved images or claim the public app has 344 exercises yet.
+**Completed on this development branch:** `exercise-catalog-344.js` has been committed and loaded before `app.js`. It includes 344 unique exercise IDs, names, categories, equipment, cues and supporting instruction fields. Search and filters now cover Chest, Arms, Back, Legs, Shoulders, Core and Cardio. A charcoal-and-gold generic illustration appears for any withheld or unavailable demonstration.
 
-Load a separate same-origin catalog script before `app.js` that assigns `window.MLC2_EXERCISE_CATALOG` as an array. Each exercise must have `id`, `name`, `group`, optional `sets`, `reps`, `cue`, and an optional `demonstration` object.
+**Important release safeguard:** The recovered archive predates the latest Work-approved image manifest. Consequently **all 344 demonstration statuses are withheld in this branch**, including the 268 whose actual images were reportedly approved and integrated in the separate private Work workspace. This is a safe placeholder state, not a revocation of those private approvals. Import only the latest checksum-verified approved image files and matching manifest before showing thumbnails in the development app.
 
-The demonstration object can be `{status:'approved',thumbnail:'assets/exercises/<id>.webp'}` **only after** matching an approved original/delivered checksum in the private manifest. For the 76 withheld exercises use `{status:'withheld'}`, or omit it, to display the generic charcoal-and-gold placeholder. Missing approved files also fall back to the placeholder. Do not embed private archive files into this public branch.
+**Not yet migrated:** The workout creator and current session logic still use the earlier 12-item starter data set and demo local history. The complete 344-item catalog is available in the Exercise Library view, but must also be wired into custom workout editing, the home screen's workout selection, and workout logging without changing production Supabase data.
 
-The public demo currently contains 12 starter exercises and read-only legacy records. The full private 344-ID catalog, 268 verified media files, and the original app migration still require an explicit, permitted import. Protect existing Supabase data; do not modify production records during import preparation.
+**Do not merge or deploy as finished:** Browser acceptance testing and the private media transfer remain outstanding; keep this pull request a draft. No production workout data is written.
