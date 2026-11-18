@@ -208,8 +208,15 @@ function openWorkout(id){
  $('finishWorkout').addEventListener('click',()=>{
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
   const entry={id:'demo-'+Date.now(),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets};
-  demoSessions.unshift(entry);demoSessions=demoSessions.slice(0,100);
-  try{storeDemo();closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.')}catch{notice('Could not save demo session; check browser storage.')}
+  // Persist first. A failed local write must not create a phantom completed workout.
+  const proposed=[entry,...demoSessions].slice(0,100);
+  try{
+   const payload=JSON.stringify(proposed);
+   localStorage.setItem(DEMO_KEY,payload);
+   if(localStorage.getItem(DEMO_KEY)!==payload)throw Error('Workout was not retained in browser storage.');
+   demoSessions=proposed;
+   closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
+  }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
 }
 function renderWorkoutLog(){
