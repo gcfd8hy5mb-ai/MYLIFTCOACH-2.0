@@ -364,6 +364,31 @@ function bind(){
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ let pendingRecovery=null;
+ $('recoveryImportFile').addEventListener('change',async e=>{
+  pendingRecovery=null;
+  $('recoveryRestoreAction').disabled=true;
+  const status=$('recoveryImportResult'),file=e.target.files?.[0];
+  if(!file){status.textContent='No recovery file selected.';return}
+  if(file.size>4*1024*1024){status.textContent='Recovery file exceeds 4 MB.';return}
+  try{
+   const parsed=window.MLC2RecoveryImport.parse(await file.text());
+   const preview=window.MLC2RecoveryImport.planRestore(parsed,localStorage);
+   status.textContent='Backup '+parsed.created.slice(0,10)+': '+preview.writes.length+' categories absent, '+preview.identical.length+' already identical, '+preview.conflicts.length+' conflicting. '+(preview.canRestore?'Only absent categories can be restored.':'Conflicts detected: existing data will not be overwritten.')+' No photos or cloud records are included.';
+   if(preview.canRestore&&preview.writes.length){pendingRecovery=parsed;$('recoveryRestoreAction').disabled=false}
+  }catch(err){status.textContent='Rejected backup: '+String(err.message||err).slice(0,180)}
+ });
+ $('recoveryRestoreAction').addEventListener('click',()=>{
+  if(!pendingRecovery)return;
+  const preview=window.MLC2RecoveryImport.planRestore(pendingRecovery,localStorage);
+  if(!preview.canRestore){$('recoveryImportResult').textContent='Existing data changed or conflicts. Restore blocked.';$('recoveryRestoreAction').disabled=true;pendingRecovery=null;return}
+  if(!confirm('Restore '+preview.writes.length+' missing 2.0 storage categories in this browser? Existing records will NOT be replaced. Photos and cloud are unchanged.'))return;
+  try{
+   const result=window.MLC2RecoveryImport.restore(pendingRecovery,localStorage);
+   $('recoveryImportResult').textContent='Recovered '+result.restored+' missing storage categories. Reload this page to display recovered workout data.';
+   $('recoveryRestoreAction').disabled=true;pendingRecovery=null;
+  }catch(err){$('recoveryImportResult').textContent='Restore blocked: '+String(err.message||err).slice(0,180)}
+ });
  $('recoveryExportAction').addEventListener('click',()=>{
   const output=$('recoveryExportResult');
   try{
