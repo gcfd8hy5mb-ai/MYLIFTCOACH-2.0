@@ -50,6 +50,25 @@ function check(storage,catalog=[],presets=[]){
    if(!ids.has(set.exerciseId))warnings.push('Unknown exercise in session '+s.id+': '+set.exerciseId);
   }
  }
+ const draftRaw=storage.getItem('mlc2-active-session-v1');
+ if(draftRaw!==null){
+  let draft;
+  try{draft=JSON.parse(draftRaw)}catch{errors.push('Invalid unfinished workout draft JSON')}
+  if(draft){
+   if(draft.version!==1||typeof draft.planId!=='string'||!Array.isArray(draft.ids)||!Array.isArray(draft.sets)){
+    errors.push('Malformed unfinished workout draft');
+   }else{
+    counts['Unfinished workout sets']=draft.sets.length;
+    const availablePlans=[...(Array.isArray(custom)?custom:[]),...(Array.isArray(presets)?presets:[])];
+    const match=availablePlans.find(p=>p?.id===draft.planId);
+    if(!match)warnings.push('Unfinished workout references an unavailable plan');
+    else if(JSON.stringify(match.ids)!==JSON.stringify(draft.ids))warnings.push('Unfinished workout exercise list differs from current plan');
+    if(draft.sets.some(set=>!obj(set)||!draft.ids.includes(set.exerciseId)||
+     !Number.isFinite(set.weight)||set.weight<0||set.weight>1500||
+     !Number.isInteger(set.reps)||set.reps<1||set.reps>100))errors.push('Unfinished workout contains invalid set data');
+   }
+  }
+ }
  const selected=storage.getItem(SELECTED);
  const available=new Set([...seenPlans,...(Array.isArray(presets)?presets.map(p=>p.id):[])]);
  if(selected&&!available.has(selected))warnings.push('Selected workout ID cannot be found: '+selected);
