@@ -13,7 +13,8 @@ const tests=[
  'cloud-checkpoint-review.test.js',
  'cloud-original-history.test.js',
  'cloud-live-history.test.js',
- 'post-workout-media.test.js'
+ 'post-workout-media.test.js',
+ 'legacy-media-review.test.js'
 ];
 for(const test of tests){
  console.log('Running '+test);
