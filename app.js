@@ -32,6 +32,7 @@ const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
 let cloudHistorySnapshot=null; // in-memory, account-bound, original archive only
+let cloudHistoryRequestId=0; // invalidates any pending read when account or view changes
 
 let toastTimer;
 let muscleFilter='';
@@ -318,7 +319,7 @@ function saveAuth(data){originalSnapshot=null;
  const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
  sessionStorage.setItem(AUTH_KEY,JSON.stringify(session));auth=session;account=data.user;renderSettings();
 }
-function clearAuth(){sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
+function clearAuth(){cloudHistoryRequestId++;sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
 async function validateStoredAuth(){
  try{
   const saved=JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null');
@@ -478,7 +479,32 @@ function bind(){
    for(const reason of result.blockers){const p=document.createElement('p');p.textContent='Required: '+reason;output.append(p)}
   }catch(error){output.textContent='Checkpoint comparison blocked: '+String(error.message||error).slice(0,190)}
  });
+ $('loadCloudOriginalHistory').addEventListener('click',async()=>{
+  const button=$('loadCloudOriginalHistory'),output=$('cloudOriginalHistoryResults'),status=$('cloudOriginalHistoryStatus');
+  if(!account?.id||!auth?.access_token){status.textContent='Sign in to the original account to load cloud history.';return}
+  const owner=account.id,token=auth.access_token,requestId=++cloudHistoryRequestId;
+  button.disabled=true;cloudHistorySnapshot=null;output.replaceChildren();
+  status.textContent='Loading original cloud workout records (read-only). This may take several requests…';
+  try{
+   const view=await window.MLC2LiveOriginalHistory.load({
+    url:BACKEND,publishableKey:PUBLIC_KEY,token,userId:owner,
+    tables:window.PRISMStorageModel.TABLES,fetcher:fetch,makeUrl:address=>new URL(address),
+    archiveService:window.MLC2CloudArchive,historyViewer:window.MLC2CloudHistory,
+    inspector:window.MLC2MigrationReadiness.inspectArchive,storageModel:window.PRISMStorageModel,
+    stillAuthenticated:(userId,originalToken)=>requestId===cloudHistoryRequestId&&account?.id===userId&&auth?.access_token===originalToken
+   });
+   if(requestId!==cloudHistoryRequestId)return;
+   cloudHistorySnapshot=view;
+   window.MLC2CloudHistory.render(output,view,document);
+   status.textContent='Original cloud data loaded for this view only. '+view.sessionCount+' sessions · '+view.planCount+' custom workouts. Nothing was saved or synchronized.';
+  }catch(err){
+   if(requestId!==cloudHistoryRequestId)return;
+   cloudHistorySnapshot=null;output.replaceChildren();
+   status.textContent='Original cloud history unavailable: '+String(err.message||err).slice(0,200);
+  }finally{button.disabled=false}
+ });
  $('cloudOriginalHistoryFile').addEventListener('change',async event=>{
+  const requestId=++cloudHistoryRequestId;
   const output=$('cloudOriginalHistoryResults'),status=$('cloudOriginalHistoryStatus'),file=event.target.files?.[0];
   output.replaceChildren();cloudHistorySnapshot=null;
   status.textContent='No cloud archive loaded.';
@@ -488,7 +514,7 @@ function bind(){
   const owner=account.id,token=auth.access_token;
   try{
    const archiveText=await file.text();
-   if(account?.id!==owner||auth?.access_token!==token)throw Error('Signed-in account changed while reading archive');
+   if(requestId!==cloudHistoryRequestId||account?.id!==owner||auth?.access_token!==token)throw Error('Signed-in account or history view changed while reading archive');
    const view=window.MLC2CloudHistory.open({
     archiveText,ownerId:owner,tables:window.PRISMStorageModel.TABLES,
     inspector:window.MLC2MigrationReadiness.inspectArchive,storageModel:window.PRISMStorageModel
@@ -502,7 +528,7 @@ function bind(){
   }finally{event.target.value=''}
  });
  $('clearCloudOriginalHistory').addEventListener('click',()=>{
-  cloudHistorySnapshot=null;$('cloudOriginalHistoryResults').replaceChildren();
+  cloudHistoryRequestId++;cloudHistorySnapshot=null;$('cloudOriginalHistoryResults').replaceChildren();
   $('cloudOriginalHistoryStatus').textContent='Original cloud archive cleared from memory.';
  });
  $('migrationReadinessFile').addEventListener('change',async e=>{
