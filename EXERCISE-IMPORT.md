@@ -59,3 +59,11 @@ The versioned 2.0 JSON recovery export/import now includes this draft with valid
 - A reusable regression script `tests/migration-regression.test.js` covers unfinished workout resume and expiration, recovery export/import round-trip, conflict refusal, original-format conversion staying non-writing, and stale-plan warnings. It uses only Node built-in assertions. The script was exercised with a compatible injected test harness in this turn and passed; real browser and GitHub CI tests remain outstanding.
 
 No production account records, authentication tables, storage rules or deployments were changed.
+
+## Coach progression and integrated selected-workout review (Nov 18)
+
+- The original app's exercise-specific progression conditions are preserved: two qualifying sessions with at least two working sets at the top working load, 8–10 rep default, 2.5-lb changes for verified isolation or dumbbell exercises and 5-lb otherwise. The 2.0 implementation now **sorts by workout date**, so reverse-ordered imported session arrays cannot cause advice from an older workout.
+- Coach now includes a **Next selected workout** card that references the same `nextPlan()` as Home, with exercise-by-exercise suggestions only where history qualifies. No weights or workouts are automatically changed.
+- Coach also shows **selected-workout technique notes** (instructions, tips, mistakes) directly from the existing 344-entry exercise catalog. This is not new AI-generated guidance or proof of approved images.
+- Added `tests/coach-regression.test.js` as a reusable Node test file using built-in assertions and `vm`; it covers out-of-order history, insufficient sessions, top-working-set warmups, isolation increase/decrease, matched substitutions and selected plan identity. Equivalent functions were evaluated with sample sessions in this development turn; direct CI/Node execution and browser/iPhone acceptance are still pending.
+- Original account data and production deployments remain unchanged.
