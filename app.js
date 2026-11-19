@@ -451,6 +451,37 @@ function bind(){
    const safety=document.createElement('strong');safety.textContent='DRY RUN ONLY — no upload or restore is enabled.';area.append(safety);
   }catch(err){area.textContent='Cannot prepare safe mapping: '+String(err.message||err).slice(0,200)}
  });
+ $('migrationReadinessFile').addEventListener('change',async e=>{
+  const file=e.target.files?.[0],output=$('migrationReadinessResult');
+  output.replaceChildren();
+  if(!file){output.textContent='No cloud archive chosen.';return}
+  if(file.size>30*1024*1024){output.textContent='Archive exceeds the safe 30 MB preview limit.';return}
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to the same original account before inspecting its archive.';return}
+  const owner=account.id;
+  try{
+   const contents=await file.text();
+   if(!account||account.id!==owner)throw Error('Signed-in account changed during inspection');
+   const plans=JSON.parse(localStorage.getItem('mlc2-custom-plans-v1')||'[]');
+   const sessions=JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1')||'[]');
+   const result=window.MLC2MigrationReadiness.plan({
+    archiveText:contents,ownerId:owner,allowedTables:window.PRISMStorageModel.TABLES,
+    customPlans:plans,sessions,catalog:libraryExercises(),
+    mapper:window.MLC2LegacyMapper,storageModel:window.PRISMStorageModel
+   });
+   const metrics=[
+    ['Original cloud rows',result.cloudRows],['Original cloud workouts',result.originalWorkouts],
+    ['Original cloud sessions',result.originalSessions],['Local 2.0 custom workouts',result.localWorkouts],
+    ['Local 2.0 sessions',result.localSessions],['Convertible 2.0 workouts',result.convertibleWorkouts],
+    ['Convertible 2.0 sessions',result.convertibleSessions],['Convertible weighted sets',result.convertibleSets],
+    ['Rejected 2.0 records',result.rejected.length],['Original categories absent in archive',result.missingSourceCategories]
+   ];
+   const heading=document.createElement('strong');heading.textContent='Migration preview — READ ONLY; transfer blocked';output.append(heading);
+   for(const [label,value] of metrics){const row=document.createElement('p');row.textContent=label+': '+value;output.append(row)}
+   for(const message of result.blockers){const row=document.createElement('p');row.textContent='Blocked: '+message;output.append(row)}
+   for(const message of result.warnings.slice(0,6)){const row=document.createElement('p');row.textContent='Note: '+message;output.append(row)}
+  }catch(err){output.textContent='Cloud archive inspection blocked: '+String(err.message||err).slice(0,200)}
+  finally{e.target.value=''}
+ });
  $('cloudArchiveAction').addEventListener('click',async()=>{
   const output=$('cloudArchiveResult'),button=$('cloudArchiveAction');
   if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before exporting original records.';return}
