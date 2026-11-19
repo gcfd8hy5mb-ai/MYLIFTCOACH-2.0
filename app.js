@@ -519,12 +519,15 @@ function bind(){
     archiveText,ownerId:owner,tables:window.PRISMStorageModel.TABLES,
     inspector:window.MLC2MigrationReadiness.inspectArchive,storageModel:window.PRISMStorageModel
    });
+   if(requestId!==cloudHistoryRequestId)throw Error('Original archive view changed while loading');
    cloudHistorySnapshot=view;
    status.textContent='Original cloud archive opened for this session only. No cloud records or 2.0 history were changed.';
    window.MLC2CloudHistory.render(output,view,document);
   }catch(err){
-   cloudHistorySnapshot=null;
-   status.textContent='Could not open original cloud history: '+String(err.message||err).slice(0,200);
+   if(requestId===cloudHistoryRequestId){
+    cloudHistorySnapshot=null;
+    status.textContent='Could not open original cloud history: '+String(err.message||err).slice(0,200);
+   }
   }finally{event.target.value=''}
  });
  $('clearCloudOriginalHistory').addEventListener('click',()=>{
