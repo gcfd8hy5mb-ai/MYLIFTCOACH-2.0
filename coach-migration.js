@@ -6,26 +6,29 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function suggestion(id,sessions,catalog,range={min:8,max:10}){
  if(!Array.isArray(sessions)||!Array.isArray(catalog))return {status:'insufficient'};
  const exercise=catalog.find(x=>x.id===id);
- if(!exercise)return {status:'insufficient'};
+ if(!exercise||!Number.isFinite(range.min)||!Number.isFinite(range.max)||range.min<1||range.max<range.min)return {status:'insufficient'};
  const normalized=window.MLC2Progress?.normalizedSessions(sessions,'demo')||[];
- const recent=normalized.filter(session=>session.exercises.some(e=>e.id===id))
-  .slice(0,3).map(session=>{
-   const sets=session.exercises.find(e=>e.id===id)?.sets||[];
+ // Do not depend on imported array order: most recent valid workout must win.
+ const recent=normalized.slice().sort((a,b)=>Date.parse(b.date||'')-Date.parse(a.date||'')).map(session=>{
+   const entry=session.exercises.find(e=>e.id===id);
+   const sets=(entry?.sets||[]).filter(t=>Number.isFinite(t.weight)&&t.weight>0&&Number.isInteger(t.reps)&&t.reps>0);
    if(sets.length<2)return null;
-   const weight=Math.max(...sets.map(s=>s.weight));
-   const working=sets.filter(s=>s.weight===weight);
-   return working.length>=2?{weight,reps:working.map(s=>s.reps)}:null;
-  }).filter(Boolean);
- if(recent.length<2)return {status:'insufficient'};
- const last=recent[0],meta=String(exercise.equipment||'').toLowerCase();
- const details=window.MLC2_COACH_ATTRIBUTES?.[id];
- const increment=meta.includes('dumbbell')||details?.type==='Isolation'?2.5:5;
+   const weight=Math.max(...sets.map(t=>t.weight));
+   const working=sets.filter(t=>t.weight===weight);
+   return working.length>=2?{weight,reps:working.map(t=>t.reps),date:session.date}:null;
+ }).filter(Boolean).slice(0,3);
+ if(!recent.length)return {status:'insufficient',reason:'Log two working sets in at least two sessions.'};
+ const last=recent[0],base={lastWeight:last.weight,lastReps:last.reps,range,status:'insufficient',sessionsUsed:recent.length};
+ if(recent.length<2)return {...base,reason:'Another completed session is needed before recommending a change.'};
+ const metadata=window.MLC2_COACH_ATTRIBUTES?.[id]||{};
+ const dumbbell=metadata.equipment==='Dumbbell'||(!metadata.equipment&&String(exercise.equipment||'').toLowerCase().includes('dumbbell'));
+ const increment=dumbbell||metadata.type==='Isolation'?2.5:5;
  const top=last.reps.every(x=>x>=range.max);
  const low=recent.slice(0,2).every(s=>s.weight===last.weight&&s.reps.filter(x=>x<range.min).length>s.reps.length/2);
  const action=top?'increase':low?'reduce':'hold';
  const weight=top?last.weight+increment:low?Math.max(increment,last.weight-increment):last.weight;
- const reason=top?'All working sets reached the top of the target range.':low?'Most working sets fell below the target range in two sessions.':'Continue working toward the top of the target rep range.';
- return {status:'ready',weight,action,reason,lastWeight:last.weight,range};
+ const reason=top?'All working sets reached the top of the target range.':low?'Most working sets fell below the target range in two sessions at the same load.':'Continue toward the top of your target rep range.';
+ return {...base,status:'ready',weight:Number(weight.toFixed(2)),action,reason};
 }
 function render(root,sessions,catalog){
  if(!root)return;
@@ -34,6 +37,33 @@ function render(root,sessions,catalog){
  root.innerHTML=rows.length?rows.slice(0,12).map(r=>'<article class="coach-suggestion"><h4>'+esc(r.exercise?.name||r.id)+'</h4><p><strong>'+esc(r.result.action.toUpperCase())+' · '+r.result.weight+' lb suggested</strong></p><small>'+esc(r.result.reason)+' Based only on your locally logged sessions.</small></article>').join(''):'<p class="empty-note">For an evidence-based progression suggestion, log at least two working sets of an exercise in each of two sessions. No advice is generated from missing history.</p>';
 }
 
+function nextWorkoutSummary(plan,sessions,catalog){
+ if(!plan||!Array.isArray(plan.ids)||!Array.isArray(catalog))return null;
+ const workoutSessions=(Array.isArray(sessions)?sessions:[]).filter(s=>s?.planId===plan.id);
+ const valid=plan.ids.map(id=>{
+  const exercise=catalog.find(e=>e.id===id);
+  if(!exercise)return {id,status:'unknown'};
+  const advice=suggestion(id,sessions,catalog);
+  return {id,name:exercise.name,equipment:exercise.equipment||'',status:advice.status,
+    action:advice.action||null,weight:advice.weight??null,reason:advice.reason||null};
+ });
+ return {planId:plan.id,title:plan.title,completedForPlan:workoutSessions.length,
+   ready:valid.filter(e=>e.status==='ready').length,exercises:valid};
+}
+function renderNextWorkout(root,plan,sessions,catalog){
+ if(!root)return;
+ const review=nextWorkoutSummary(plan,sessions,catalog);
+ if(!review){root.textContent='Select a workout first.';return}
+ const counts=review.exercises.length;
+ root.innerHTML='<p><strong>'+esc(review.title)+'</strong> · '+counts+' exercises · '+review.completedForPlan+
+ ' locally completed sessions of this workout</p>'+
+ '<div class="coach-next-rows">'+review.exercises.map(e=>
+ '<div class="coach-next-row"><strong>'+esc(e.name||e.id)+'</strong><small>'+
+ (e.status==='ready'?esc(e.action.toUpperCase()+' · suggested '+e.weight+' lb; '+e.reason):
+ e.status==='unknown'?'Exercise catalog entry is missing.':'Not enough qualifying working sets yet.')+
+ '</small></div>').join('')+'</div>'+
+ '<p class="coach-sub-note">This follows the workout currently selected on Home. Weight suggestions are informational and never overwrite custom routines or logged sets.</p>';
+}
 function substitutions(id,catalog){
  const metadata=window.MLC2_COACH_ATTRIBUTES||{},current=catalog.find(e=>e.id===id),from=metadata[id];
  if(!current||!from?.pattern)return [];
@@ -67,5 +97,5 @@ function renderTools(root,catalog,plan){
  select.addEventListener('change',update);update();
 }
 
-window.MLC2Coach={suggestion,render,substitutions,renderTools};
+window.MLC2Coach={suggestion,render,substitutions,renderTools,nextWorkoutSummary,renderNextWorkout};
 })();
