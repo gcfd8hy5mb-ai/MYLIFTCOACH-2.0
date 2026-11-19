@@ -11,7 +11,7 @@ const html=file('index.html'),app=file('app.js');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'duplicate static HTML ids');
 for(const id of ['todayStart','todayTitle','workoutGrid','coachNextWorkout','coachTechnique',
-  'recoveryExportAction','recoveryRestoreAction','cloudPreviewAction','cloudArchiveAction','dataHealthAction']){
+  'recoveryExportAction','recoveryRestoreAction','cloudPreviewAction','cloudArchiveAction','migrationReadinessFile','dataHealthAction']){
  assert.ok(ids.includes(id),'missing interface control: '+id);
 }
 const scriptNames=[...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(m=>m[1].replace(/^\.\//,'').split('?')[0]);
@@ -29,6 +29,7 @@ assert.ok(ids.includes('coachTrends'),'missing Coach training consistency contro
 before('coach-attributes.js','coach-migration.js');
 before('legacy-storage-model.js','legacy-reconcile.js');
 before('cloud-account-archive.js','app.js');
+before('cloud-migration-readiness.js','app.js');
 before('legacy-reconcile.js','cloud-sync-preview.js');
 assert.match(app,/function nextPlan\(\)\{return window\.MLC2Custom\?\.currentPlan/);
 assert.match(app,/\$\('todayStart'\)\.addEventListener\('click',\(\)=>openWorkout\(nextPlan\(\)\.id\)\)/);
