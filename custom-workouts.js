@@ -5,6 +5,8 @@ const KEY='mlc2-custom-plans-v1', TODAY='mlc2-selected-workout-v1';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const catalog=()=>Array.isArray(window.MLC2_EXERCISE_CATALOG)?window.MLC2_EXERCISE_CATALOG:[];
 const byId=id=>catalog().find(e=>e.id===id);
+const newPlanId=()=> 'custom-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
+function persistPlans(next){const payload=JSON.stringify(next);localStorage.setItem(KEY,payload);if(localStorage.getItem(KEY)!==payload)throw Error('Workout changes were not retained.');}
 function read(){
  try{
  const a=JSON.parse(localStorage.getItem(KEY)||'[]');
@@ -56,20 +58,21 @@ function openEditor(id,unused,onChanged){
   const form=e.currentTarget,name=form.elements.title.value.trim(),description=form.elements.description.value.trim();
   if(!name||!selected.length){alert('Enter a workout name and select at least one exercise.');return}
   const plans=read();if(!existing&&plans.length>=60){alert('Maximum 60 custom workouts.');return}
-  const updated={id:existing?.id||'custom-'+Date.now(),title:name.slice(0,75),kind:'Custom',description:description.slice(0,160),ids:[...selected]};
+  const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',description:description.slice(0,160),ids:[...selected]};
   const next=existing?plans.map(p=>p.id===existing.id?updated:p):[updated,...plans];
-  try{localStorage.setItem(KEY,JSON.stringify(next));localStorage.setItem(TODAY,updated.id)}catch{alert('Browser storage is unavailable; workout was not saved.');return}
+  try{persistPlans(next)}catch{alert('Browser storage is unavailable; workout was not saved.');return}
+  try{localStorage.setItem(TODAY,updated.id)}catch{alert('Workout saved, but selecting it for today failed. You can select it from Workouts.')}
   close();onChanged?.();
  });
  selectedView();options();$('customName').focus();
 }
 function handleClick(e,onChanged){
- const selection=e.target.closest('[data-custom-select]');if(selection){try{localStorage.setItem(TODAY,selection.dataset.customSelect)}catch{alert('Could not save selection.');return true}onChanged?.();return true}
+ const selection=e.target.closest('[data-custom-select]');if(selection){try{localStorage.setItem(TODAY,selection.dataset.customSelect);if(localStorage.getItem(TODAY)!==selection.dataset.customSelect)throw Error('Selection not retained')}catch{alert('Could not save selection.');return true}onChanged?.();return true}
  const edit=e.target.closest('[data-custom-edit]');if(edit){openEditor(edit.dataset.customEdit,null,onChanged);return true}
  const del=e.target.closest('[data-custom-delete]');if(del){
   const id=del.dataset.customDelete,items=read(),item=items.find(x=>x.id===id);if(!item)return true;
   if(!confirm('Delete '+item.title+'? Workout history will remain.'))return true;
-  try{localStorage.setItem(KEY,JSON.stringify(items.filter(x=>x.id!==id)));if(localStorage.getItem(TODAY)===id)localStorage.removeItem(TODAY)}catch{alert('Could not delete workout.');return true}
+  try{persistPlans(items.filter(x=>x.id!==id));if(localStorage.getItem(TODAY)===id)localStorage.removeItem(TODAY)}catch{alert('Could not delete workout.');return true}
   onChanged?.();return true;
  }
  return false;
