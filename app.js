@@ -31,6 +31,7 @@ let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
+let cloudHistorySnapshot=null; // in-memory, account-bound, original archive only
 
 let toastTimer;
 let muscleFilter='';
@@ -317,7 +318,7 @@ function saveAuth(data){originalSnapshot=null;
  const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
  sessionStorage.setItem(AUTH_KEY,JSON.stringify(session));auth=session;account=data.user;renderSettings();
 }
-function clearAuth(){sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;renderSettings();renderHistory();renderTracking();renderOriginalPlans()}
+function clearAuth(){sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
 async function validateStoredAuth(){
  try{
   const saved=JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null');
@@ -476,6 +477,33 @@ function bind(){
     'Checkpoint anomalies or deletions detected. Sync remains blocked.';output.append(notice);
    for(const reason of result.blockers){const p=document.createElement('p');p.textContent='Required: '+reason;output.append(p)}
   }catch(error){output.textContent='Checkpoint comparison blocked: '+String(error.message||error).slice(0,190)}
+ });
+ $('cloudOriginalHistoryFile').addEventListener('change',async event=>{
+  const output=$('cloudOriginalHistoryResults'),status=$('cloudOriginalHistoryStatus'),file=event.target.files?.[0];
+  output.replaceChildren();cloudHistorySnapshot=null;
+  status.textContent='No cloud archive loaded.';
+  if(!file)return;
+  if(file.size>30*1024*1024){status.textContent='Cloud archive is larger than 30 MB.';event.target.value='';return}
+  if(!account?.id||!auth?.access_token){status.textContent='Sign in to the original account before opening its history.';event.target.value='';return}
+  const owner=account.id,token=auth.access_token;
+  try{
+   const archiveText=await file.text();
+   if(account?.id!==owner||auth?.access_token!==token)throw Error('Signed-in account changed while reading archive');
+   const view=window.MLC2CloudHistory.open({
+    archiveText,ownerId:owner,tables:window.PRISMStorageModel.TABLES,
+    inspector:window.MLC2MigrationReadiness.inspectArchive,storageModel:window.PRISMStorageModel
+   });
+   cloudHistorySnapshot=view;
+   status.textContent='Original cloud archive opened for this session only. No cloud records or 2.0 history were changed.';
+   window.MLC2CloudHistory.render(output,view,document);
+  }catch(err){
+   cloudHistorySnapshot=null;
+   status.textContent='Could not open original cloud history: '+String(err.message||err).slice(0,200);
+  }finally{event.target.value=''}
+ });
+ $('clearCloudOriginalHistory').addEventListener('click',()=>{
+  cloudHistorySnapshot=null;$('cloudOriginalHistoryResults').replaceChildren();
+  $('cloudOriginalHistoryStatus').textContent='Original cloud archive cleared from memory.';
  });
  $('migrationReadinessFile').addEventListener('change',async e=>{
   const file=e.target.files?.[0],output=$('migrationReadinessResult');
