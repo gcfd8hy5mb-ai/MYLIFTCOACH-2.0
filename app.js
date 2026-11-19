@@ -216,7 +216,7 @@ function openWorkout(id){
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',()=>{
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
-  const entry={id:'demo-'+Date.now(),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets};
+  const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set}))};
   // Persist first. A failed local write must not create a phantom completed workout.
   const proposed=[entry,...demoSessions].slice(0,100);
   try{
