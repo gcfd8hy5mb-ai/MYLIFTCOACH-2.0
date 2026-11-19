@@ -55,3 +55,9 @@ A draft-branch GitHub Actions workflow now runs `node tests/run-all.js` on chang
 3. Coach regression (progression, history ordering, selected workout).
 
 This clears the **offline automated test gate only**. Real iPhone/desktop acceptance, 268 approved image transfer, production account sync and full Coach parity remain blockers. The GitHub job emitted a Node runtime deprecation warning from its runner/actions; it did not affect test completion.
+
+## Coach weekly goal — verified development batch
+
+The Coach readiness panel now provides a persisted 1–7 workout weekly target, defaulting to four. Weekly progress uses the selected target instead of a permanent hard-coded four-workout goal. The target remains private to the 2.0 browser: `mlc2-weekly-goal-v1`. The existing versioned recovery JSON includes it and the restore validator rejects out-of-range values; local integrity inspection also checks the goal. The Coach description was updated to reflect current implementation.
+
+**GitHub Actions run #44437207479: SUCCESS.** Logs confirmed the updated Coach and migration regression tests passed, including weekly goal saving and restore-validation cases. This verifies offline Node behavior, not iPhone/Safari behavior or production account synchronization. No production rules, user accounts, or cloud records modified.
