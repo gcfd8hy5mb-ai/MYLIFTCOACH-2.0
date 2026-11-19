@@ -37,7 +37,7 @@ before('coach-post-workout.js','app.js');
 before('weekly-workout-schedule.js','app.js');
 before('legacy-media-review.js','app.js');
 before('legacy-reconcile.js','cloud-sync-preview.js');
-assert.match(app,/function nextPlan\(\)\{return window\.MLC2Custom\?\.currentPlan/);
+assert.match(app,/function nextPlan\(\)\{return window\.MLC2WeeklySchedule\?\.resolve/);
 assert.match(app,/\$\('todayStart'\)\.addEventListener\('click',\(\)=>openWorkout\(nextPlan\(\)\.id\)\)/);
 assert.match(app,/renderNextWorkout\(\$\('coachNextWorkout'\),selected,demoSessions,catalog\)/);
 assert.match(app,/renderTechnique\(\$\('coachTechnique'\),selected,catalog\)/);
