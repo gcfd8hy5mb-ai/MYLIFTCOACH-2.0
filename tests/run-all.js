@@ -14,7 +14,8 @@ const tests=[
  'cloud-original-history.test.js',
  'cloud-live-history.test.js',
  'post-workout-media.test.js',
- 'legacy-media-review.test.js'
+ 'legacy-media-review.test.js',
+ 'weekly-schedule.test.js'
 ];
 for(const test of tests){
  console.log('Running '+test);
