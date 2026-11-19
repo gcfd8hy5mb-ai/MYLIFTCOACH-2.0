@@ -11,7 +11,7 @@ const html=file('index.html'),app=file('app.js');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'duplicate static HTML ids');
 for(const id of ['todayStart','todayTitle','workoutGrid','coachNextWorkout','coachTechnique',
-  'recoveryExportAction','recoveryRestoreAction','cloudPreviewAction','dataHealthAction']){
+  'recoveryExportAction','recoveryRestoreAction','cloudPreviewAction','cloudArchiveAction','dataHealthAction']){
  assert.ok(ids.includes(id),'missing interface control: '+id);
 }
 const scriptNames=[...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(m=>m[1].replace(/^\.\//,'').split('?')[0]);
@@ -28,12 +28,15 @@ before('coach-trends.js','app.js');
 assert.ok(ids.includes('coachTrends'),'missing Coach training consistency control');
 before('coach-attributes.js','coach-migration.js');
 before('legacy-storage-model.js','legacy-reconcile.js');
+before('cloud-account-archive.js','app.js');
 before('legacy-reconcile.js','cloud-sync-preview.js');
 assert.match(app,/function nextPlan\(\)\{return window\.MLC2Custom\?\.currentPlan/);
 assert.match(app,/\$\('todayStart'\)\.addEventListener\('click',\(\)=>openWorkout\(nextPlan\(\)\.id\)\)/);
 assert.match(app,/renderNextWorkout\(\$\('coachNextWorkout'\),selected,demoSessions,catalog\)/);
 assert.match(app,/renderTechnique\(\$\('coachTechnique'\),selected,catalog\)/);
 const cloud=file('cloud-sync-preview.js');
+const archive=file('cloud-account-archive.js');
+assert.doesNotMatch(archive,/\bmethod\s*:\s*['\"](?:POST|PUT|PATCH|DELETE)['\"]/i,'cloud archive may not write');
 assert.doesNotMatch(cloud,/\bmethod\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/i,'cloud preview may not write');
 assert.doesNotMatch(cloud,/\b(?:localStorage|sessionStorage)\.setItem\b/,'cloud preview may not write browser data');
 const registry=JSON.parse(file('exercise-catalog-344.js').match(/window\.MLC2_EXERCISE_CATALOG=(\[[\s\S]*\]);\s*$/)[1]);
