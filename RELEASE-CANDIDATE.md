@@ -43,3 +43,15 @@ These checks do **not** prove that Safari, desktop browsers, Supabase auth, or p
 - Do not silently claim or overwrite original users' local data.
 - Never treat an empty client-side history as evidence of an empty original cloud account.
 - Keep the original production app available until an explicit cutover/rollback decision.
+
+## GitHub-hosted automated verification — November 18, 2026
+
+A draft-branch GitHub Actions workflow now runs `node tests/run-all.js` on changes to `feature/exercise-placeholder-migration-prep` and pull requests targeting `main`. It uses Node 22, standard GitHub-hosted compute, and no external API credentials or deployment tokens.
+
+**Verified completed run:** workflow run `44430476871`, job `135246265357`, conclusion `success`. Its logs confirmed PASS for:
+
+1. Static integration contracts (catalog, script order, UI controls, read-only cloud-preview safeguards).
+2. Recovery/migration regression (drafts, local export/import, conflict rejection, original mapping).
+3. Coach regression (progression, history ordering, selected workout).
+
+This clears the **offline automated test gate only**. Real iPhone/desktop acceptance, 268 approved image transfer, production account sync and full Coach parity remain blockers. The GitHub job emitted a Node runtime deprecation warning from its runner/actions; it did not affect test completion.
