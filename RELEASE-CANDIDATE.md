@@ -61,3 +61,9 @@ This clears the **offline automated test gate only**. Real iPhone/desktop accept
 The Coach readiness panel now provides a persisted 1–7 workout weekly target, defaulting to four. Weekly progress uses the selected target instead of a permanent hard-coded four-workout goal. The target remains private to the 2.0 browser: `mlc2-weekly-goal-v1`. The existing versioned recovery JSON includes it and the restore validator rejects out-of-range values; local integrity inspection also checks the goal. The Coach description was updated to reflect current implementation.
 
 **GitHub Actions run #44437207479: SUCCESS.** Logs confirmed the updated Coach and migration regression tests passed, including weekly goal saving and restore-validation cases. This verifies offline Node behavior, not iPhone/Safari behavior or production account synchronization. No production rules, user accounts, or cloud records modified.
+
+## Coach training consistency (November 18 development batch)
+
+Added `coach-trends.js`, a local read-only comparison of this week's and last week's **actually completed** 2.0 sessions: training days, session count, weighted sets and set volume. Coach reflects the user's selected 1–7 workout weekly goal, shows the remaining number of workouts to that target and does not invent missing progress. Comparisons are descriptive and cannot diagnose health or readiness. Updated static UI and script-order checks and Coach regression fixtures for Monday/Sunday week boundaries, empty history, training volume and goal completion. Readiness check-in saves now verify browser persistence.
+
+**Verified GitHub Actions run #44439274820: SUCCESS.** Job #135275774067 logs show PASS for static, migration/recovery, and Coach regression tests. This is offline Node testing only, not mobile/browser acceptance. No original records, production cloud tables, or deployments were modified.
