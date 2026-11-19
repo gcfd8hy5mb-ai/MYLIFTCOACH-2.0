@@ -111,6 +111,12 @@
   <button id="loadOriginalHistory" class="button-outline" type="button">View original records (read-only)</button><p class="legacy-status" id="legacyHistoryStatus" role="status">Not loaded</p>
   <div id="originalHistorySummary" class="legacy-summary"></div><div id="originalHistoryList" class="legacy-list"></div>
  </article>
+ <article class="panel"><div class="panel-heading"><h3>Original cloud account history</h3><span class="micro-tag">ARCHIVE ONLY · READ-ONLY</span></div><p>Open an original account archive downloaded from Settings while signed in to the same account. These sessions remain separate from your 2.0 workouts, are shown only in memory, and are never uploaded, restored, or used to edit your current plan.</p>
+<label for="cloudOriginalHistoryFile">Choose original account cloud archive</label><input type="file" id="cloudOriginalHistoryFile" accept=".json,application/json">
+<button type="button" id="clearCloudOriginalHistory" class="button-outline">Clear archive view</button>
+<p id="cloudOriginalHistoryStatus" role="status" aria-live="polite">No cloud archive loaded.</p>
+<div id="cloudOriginalHistoryResults" class="legacy-list"></div>
+</article>
  <article class="panel"><div class="panel-heading"><h3>MYLIFTCOACH 2.0 sessions</h3><span class="micro-tag">SEPARATE LOCAL RECORDS</span></div><div id="detailedDemoHistory" class="legacy-list"></div></article>
 </section>
 <section id="tracking" class="page" hidden>
@@ -224,6 +230,7 @@
 <script defer src="./legacy-mapping-preview.js?v=1"></script>
 <script defer src="./cloud-account-archive.js?v=1"></script>
 <script defer src="./cloud-migration-readiness.js?v=1"></script>
+<script defer src="./cloud-original-history.js?v=1"></script>
 <script defer src="./cloud-checkpoint-review.js?v=1"></script>
 <script defer src="./cloud-sync-preview.js?v=1"></script>
 <script defer src="./cloud-compatibility.js?v=1"></script>
