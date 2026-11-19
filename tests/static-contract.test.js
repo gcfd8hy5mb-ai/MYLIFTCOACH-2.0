@@ -10,7 +10,7 @@ const file=p=>fs.readFileSync(path.join(root,p),'utf8');
 const html=file('index.html'),app=file('app.js');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 assert.equal(new Set(ids).size,ids.length,'duplicate static HTML ids');
-for(const id of ['todayStart','todayTitle','workoutGrid','coachNextWorkout','coachTechnique',
+for(const id of ['todayStart','todayTitle','workoutGrid','weeklySchedule','coachNextWorkout','coachTechnique',
   'recoveryExportAction','recoveryRestoreAction','cloudPreviewAction','cloudArchiveAction','migrationReadinessFile','checkpointCompareAction','checkpointBaselineFile','checkpointCurrentFile','cloudOriginalHistoryFile','clearCloudOriginalHistory','loadCloudOriginalHistory','cloudOriginalHistoryResults','postWorkoutRecap','reviewLegacyMedia','legacyMediaReviewResults','dataHealthAction']){
  assert.ok(ids.includes(id),'missing interface control: '+id);
 }
@@ -34,6 +34,7 @@ before('cloud-checkpoint-review.js','app.js');
 before('cloud-original-history.js','app.js');
 before('cloud-live-original-history.js','app.js');
 before('coach-post-workout.js','app.js');
+before('weekly-workout-schedule.js','app.js');
 before('legacy-media-review.js','app.js');
 before('legacy-reconcile.js','cloud-sync-preview.js');
 assert.match(app,/function nextPlan\(\)\{return window\.MLC2Custom\?\.currentPlan/);
