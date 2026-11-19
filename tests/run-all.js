@@ -8,7 +8,8 @@ const tests=[
  'static-contract.test.js',
  'migration-regression.test.js',
  'coach-regression.test.js',
- 'cloud-archive.test.js'
+ 'cloud-archive.test.js',
+ 'cloud-migration-readiness.test.js'
 ];
 for(const test of tests){
  console.log('Running '+test);
