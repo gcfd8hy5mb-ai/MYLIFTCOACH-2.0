@@ -11,7 +11,8 @@ const tests=[
  'cloud-archive.test.js',
  'cloud-migration-readiness.test.js',
  'cloud-checkpoint-review.test.js',
- 'cloud-original-history.test.js'
+ 'cloud-original-history.test.js',
+ 'cloud-live-history.test.js'
 ];
 for(const test of tests){
  console.log('Running '+test);
