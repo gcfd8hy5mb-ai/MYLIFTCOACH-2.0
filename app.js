@@ -172,6 +172,7 @@ function renderLibrary(){
  $('libraryGrid').querySelectorAll('img[data-approved-thumb]').forEach(img=>img.addEventListener('error',()=>img.remove(),{once:true}));
 }
 function renderProgress(){
+ window.MLC2PostWorkout?.render($('postWorkoutRecap'),demoSessions);
  const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
  $('progressSessions').textContent=demoSessions.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
  renderProgressChart();
