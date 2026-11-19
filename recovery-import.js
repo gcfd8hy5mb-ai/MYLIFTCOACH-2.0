@@ -12,6 +12,7 @@ const KEY_TYPES=Object.freeze({
  'mlc2-custom-plans-v1':'plans',
  'mlc2-selected-workout-v1':'selection',
  'mlc2-demo-workouts-v1':'sessions',
+ 'mlc2-active-session-v1':'draft',
  'mlc2-coach-readiness-v1':'readiness',
  'mlc2-measurements-v1':'measurements',
  'mlc2-local-daily-v1':'daily'
@@ -47,6 +48,13 @@ function validateData(key,v){
   if(!Array.isArray(v)||v.length>100)throw Error('Invalid session history');
   const ids=new Set();
   for(const s of v){if(!safeObj(s)||typeof s.id!=='string'||!s.id.startsWith('demo-')||s.id.length>100||ids.has(s.id)||typeof s.title!=='string'||!Array.isArray(s.sets)||s.sets.length>1000||!s.sets.every(validSet)||!Number.isFinite(Date.parse(s.created)))throw Error('Invalid or duplicate session');ids.add(s.id)}
+  return;
+ }
+ if(kind==='draft'){
+  if(!safeObj(v)||v.version!==1||typeof v.planId!=='string'||!Array.isArray(v.ids)||!v.ids.length||v.ids.length>40||
+   new Set(v.ids).size!==v.ids.length||v.ids.some(id=>!validId(id))||
+   !Number.isFinite(v.savedAt)||!Array.isArray(v.sets)||v.sets.length>500||
+   v.sets.some(set=>!validSet(set)||!v.ids.includes(set.exerciseId)))throw Error('Invalid unfinished workout draft');
   return;
  }
  if(kind==='readiness'){
