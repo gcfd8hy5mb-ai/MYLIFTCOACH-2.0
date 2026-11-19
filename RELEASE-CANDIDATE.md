@@ -81,3 +81,9 @@ A new Settings control accepts an **original cloud archive JSON from the signed-
 **Fail-closed:** `canWrite:false`, `canMerge:false` and `requiresCheckpoint:true` are unconditional. The preview does not fetch, store, restore, merge, or write account records. The downloaded JSON may contain sensitive personal information; it is not uploaded. Neither account identity checks against a live backend nor real device archive selection have yet been verified.
 
 **GitHub Actions #44440511919: SUCCESS.** Five offline test groups passed, including new synthetic archive owner mismatch, duplicate ID, malformed manifest, record count, and rejected-conversion cases. Account-safe revision checkpoints, original-compatible numeric ID migration and cloud rollback remain outstanding.
+
+## Original-account revision checkpoint comparison (November 18)
+
+Added `cloud-checkpoint-review.js`, a **pure offline comparison** of two user-supplied original account archives. Settings now accepts an older baseline and newer snapshot for the **same signed-in account** and displays counts of unchanged, new, modified and deleted records, as well as suspicious revisions. Each archive must pass the original manifest, owner, count and duplicate-ID validations. Archive chronology must strictly increase. An unchanged revision with changed payload, a declining revision, missing revision, or deleted row is marked as a blocker. Contents of user records are never displayed in the comparison, and neither file is uploaded.
+
+**GitHub Actions #44443812172: SUCCESS** (job #135290919969): static UI contracts, local migration/recovery, Coach, original account archiving, migration readiness and new checkpoint drift tests all passed. The comparison is **not a live atomic checkpoint**; `canWrite:false` and `canMerge:false` remain unconditional. Actual revision-safe cloud writes, rollback verification, production account sync, and real-device testing are not completed.
