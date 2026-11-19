@@ -10,7 +10,8 @@ const tests=[
  'coach-regression.test.js',
  'cloud-archive.test.js',
  'cloud-migration-readiness.test.js',
- 'cloud-checkpoint-review.test.js'
+ 'cloud-checkpoint-review.test.js',
+ 'cloud-original-history.test.js'
 ];
 for(const test of tests){
  console.log('Running '+test);
