@@ -566,6 +566,16 @@ function bind(){
   }catch(err){output.textContent='Cloud archive inspection blocked: '+String(err.message||err).slice(0,200)}
   finally{e.target.value=''}
  });
+ $('reviewLegacyMedia').addEventListener('click',()=>{
+  const root=$('legacyMediaReviewResults'),button=$('reviewLegacyMedia');
+  if(!root)return;
+  if(root.childElementCount){root.replaceChildren();button.textContent='Review 14 original image candidates';return}
+  try{
+   const report=window.MLC2LegacyMediaReview.render(root,libraryExercises(),document);
+   button.textContent='Hide original image candidates';
+   if(report.unmatched)notice(report.unmatched+' candidate images do not match a catalog ID.');
+  }catch(err){root.textContent='Media review unavailable: '+String(err.message||err).slice(0,180)}
+ });
  $('cloudArchiveAction').addEventListener('click',async()=>{
   const output=$('cloudArchiveResult'),button=$('cloudArchiveAction');
   if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before exporting original records.';return}
