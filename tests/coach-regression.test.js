@@ -40,4 +40,14 @@ assert.equal(plan.completedForPlan,2);
 assert.equal(plan.exercises[0].status,'ready');
 assert.ok(api.substitutions('cable-fly',catalog).some(x=>x.id==='pec-deck'));
 assert.equal(api.substitutions('unrecognized-movement',catalog).length,0);
+vm.runInContext(fs.readFileSync(path.join(root,'coach-readiness.js'),'utf8'),browser,{filename:'coach-readiness.js'});
+const readiness=browser.window.MLC2CoachReadiness;
+const goalEntries=new Map();
+const goalStorage={getItem:key=>goalEntries.has(key)?goalEntries.get(key):null,
+ setItem:(key,value)=>goalEntries.set(key,value)};
+assert.equal(readiness.weeklyGoal(goalStorage),4,'default training target');
+assert.equal(readiness.saveWeeklyGoal(5,goalStorage),true);
+assert.equal(readiness.weeklyGoal(goalStorage),5);
+assert.equal(readiness.saveWeeklyGoal(9,goalStorage),false);
+assert.equal(readiness.weekSummary([newest],new Date('2026-11-18T12:00:00Z'),5).target,5);
 console.log('MYLIFTCOACH Coach regression: PASS');
