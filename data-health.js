@@ -7,7 +7,7 @@
 'use strict';
 const KEYS=[
  'mlc2-custom-plans-v1','mlc2-demo-workouts-v1','mlc2-local-daily-v1',
- 'mlc2-measurements-v1','mlc2-coach-readiness-v1'
+ 'mlc2-measurements-v1','mlc2-coach-readiness-v1','mlc2-weekly-schedule-v1'
 ];
 const SELECTED='mlc2-selected-workout-v1';
 const obj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
@@ -74,6 +74,13 @@ function check(storage,catalog=[],presets=[]){
   const goal=Number(goalRaw);
   if(!/^\d$/.test(goalRaw)||!Number.isInteger(goal)||goal<1||goal>7)errors.push('Invalid weekly workout goal');
   else counts['Weekly workout goal']=goal;
+ }
+ const weekly=values['mlc2-weekly-schedule-v1']??{};
+ if(!obj(weekly)||Object.keys(weekly).length>7||Object.entries(weekly).some(([day,id])=>!/^[0-6]$/.test(day)||typeof id!=='string'||!/^[a-z0-9][a-z0-9-]{0,99}$/.test(id)))errors.push('Weekly schedule has invalid day or workout IDs');
+ else{
+  counts['Scheduled weekdays']=Object.keys(weekly).length;
+  const availablePlans=new Set([...(Array.isArray(custom)?custom:[]).map(p=>p.id),...(Array.isArray(presets)?presets:[]).map(p=>p.id)]);
+  for(const id of Object.values(weekly))if(!availablePlans.has(id))warnings.push('Weekly schedule references a missing workout: '+id);
  }
  const selected=storage.getItem(SELECTED);
  const available=new Set([...seenPlans,...(Array.isArray(presets)?presets.map(p=>p.id):[])]);
