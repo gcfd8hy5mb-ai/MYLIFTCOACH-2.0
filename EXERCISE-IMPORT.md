@@ -50,3 +50,12 @@ JavaScript syntax checks passed for modified modules; static HTML check found no
 The development app now saves a validated `mlc2-active-session-v1` draft on every added or removed set. When the user opens the same plan after a refresh, logged sets can be restored locally. Drafts expire after seven days, and ID/exercise-list mismatches are rejected. Opening a different workout, or changing the exercise list of the original workout, prompts before replacing a saved draft with logged sets. Once a completed session has been persisted and verified, the matching draft is cleared; if session saving fails, the draft remains.
 
 The versioned 2.0 JSON recovery export/import now includes this draft with validation, and the local data-health checker reports missing or changed plan references. A rest timer now looks up exercises in the full imported catalog as well as the 12-item fallback. Syntax, draft persistence/resumption, recovery round-trip, and stale-plan checks passed on test fixtures. **These are not physical-device/browser acceptance tests**, and cloud synchronization remains disabled.
+
+## Integrated workout flow regression batch (Nov 18)
+
+- Rechecked the original user-reported **Today / custom-workout mismatch**: Home and the Workouts selected marker both resolve through `MLC2Custom.currentPlan`; opening Today passes the same plan ID as the workout grid. Preset exercises were cross-checked against the imported 344-entry catalog and all current preset IDs exist.
+- Custom plan creation now uses a time-plus-random suffix instead of only `Date.now()` to reduce rapid-creation ID collisions. Writes to custom plans and the Today selection verify browser persistence. Selection-save failure after creating/editing a plan is surfaced separately rather than wrongly reporting the workout itself was lost.
+- Practice-session IDs also include a random suffix, and completed-session sets are copied into saved history rather than retaining a mutable array reference.
+- A reusable regression script `tests/migration-regression.test.js` covers unfinished workout resume and expiration, recovery export/import round-trip, conflict refusal, original-format conversion staying non-writing, and stale-plan warnings. It uses only Node built-in assertions. The script was exercised with a compatible injected test harness in this turn and passed; real browser and GitHub CI tests remain outstanding.
+
+No production account records, authentication tables, storage rules or deployments were changed.
