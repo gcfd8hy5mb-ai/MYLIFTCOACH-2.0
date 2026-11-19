@@ -451,6 +451,24 @@ function bind(){
    const safety=document.createElement('strong');safety.textContent='DRY RUN ONLY — no upload or restore is enabled.';area.append(safety);
   }catch(err){area.textContent='Cannot prepare safe mapping: '+String(err.message||err).slice(0,200)}
  });
+ $('cloudArchiveAction').addEventListener('click',async()=>{
+  const output=$('cloudArchiveResult'),button=$('cloudArchiveAction');
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before exporting original records.';return}
+  if(!confirm('Download a PRIVATE copy of your original cloud account records? The archive may contain personal health and workout information. Keep it somewhere secure. This will not synchronize or change any cloud data.'))return;
+  button.disabled=true;output.textContent='Reading your original account records (GET only)…';
+  const originalId=account.id,originalToken=auth.access_token;
+  try{
+   const archive=await window.MLC2CloudArchive.collect({
+    url:BACKEND,publishableKey:PUBLIC_KEY,token:originalToken,userId:originalId,
+    tables:window.PRISMStorageModel.TABLES,fetcher:fetch,makeUrl:address=>new URL(address)
+   });
+   // Do not allow an archive to be delivered if sign-in identity changed during the request.
+   if(account?.id!==originalId||auth?.access_token!==originalToken)throw Error('Account changed while reading; export cancelled');
+   const result=window.MLC2CloudArchive.download(archive,document,URL,Blob,callback=>setTimeout(callback,60000));
+   output.textContent='Original account archive prepared for download: '+result.records+' rows across '+result.tables+' table categories. Store this file privately. No data was changed.';
+  }catch(e){output.textContent='Cloud archive unavailable: '+String(e.message||e).slice(0,210)}
+  finally{button.disabled=false}
+ });
  $('cloudPreviewAction').addEventListener('click',async()=>{
   const output=$('cloudPreviewResult'),button=$('cloudPreviewAction');
   if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account first.';return}
