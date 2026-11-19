@@ -9,7 +9,7 @@
 const KEYS=Object.freeze([
  'mlc2-custom-plans-v1','mlc2-selected-workout-v1','mlc2-demo-workouts-v1',
  'mlc2-active-session-v1',
- 'mlc2-coach-readiness-v1','mlc2-measurements-v1','mlc2-local-daily-v1'
+ 'mlc2-coach-readiness-v1','mlc2-weekly-goal-v1','mlc2-measurements-v1','mlc2-local-daily-v1'
 ]);
 const LIMIT=4*1024*1024;
 function snapshot(storage){
