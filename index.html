@@ -171,6 +171,11 @@
 <button type="button" id="cloudAuditAction" class="button-outline">Check cloud data (read-only)</button>
 <div id="cloudAuditResult" role="status" aria-live="polite"></div>
 <div class="mlc-cloud-archive"><h4>Original cloud recovery archive</h4><p>Optional: download a private, read-only snapshot of the original account’s accessible cloud records before a future migration. This may include sensitive workout and personal information. The file remains on your device; keep it secure. This is not a 2.0 restore or working cloud sync. If any table fails, no partial archive is offered.</p><button type="button" id="cloudArchiveAction" class="button-outline">Download original cloud archive (read-only)</button><p id="cloudArchiveResult" role="status" aria-live="polite"></p></div>
+<div class="mlc-cloud-checkpoints"><h4>Original account revision checkpoint comparison</h4><p>Choose two original account archives from different dates to inspect record additions, changes, deletions and revision anomalies. Both files stay in this browser. This cannot authorize cloud writes or prove a current server checkpoint.</p>
+<label for="checkpointBaselineFile">Older original cloud archive</label><input type="file" id="checkpointBaselineFile" accept=".json,application/json">
+<label for="checkpointCurrentFile">Newer original cloud archive</label><input type="file" id="checkpointCurrentFile" accept=".json,application/json">
+<button type="button" id="checkpointCompareAction" class="button-outline">Compare account checkpoints (read-only)</button>
+<div id="checkpointReviewResult" role="status" aria-live="polite"></div></div>
 <div class="mlc-migration-readiness"><h4>Compare saved original cloud archive with 2.0 workouts</h4><p>Choose your previously downloaded original cloud archive while signed in to the same account. The file is inspected only in this browser; it is not uploaded or saved. This preview identifies convertible items, absent categories, collisions and migration blockers. It never enables cloud writes.</p>
 <label for="migrationReadinessFile">Choose original cloud archive JSON</label>
 <input type="file" id="migrationReadinessFile" accept=".json,application/json">
