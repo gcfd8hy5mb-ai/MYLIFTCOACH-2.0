@@ -109,9 +109,7 @@ function render(root,catalog,doc=document){
   const availability=doc.createElement('p');availability.className='mlc-media-review-meta';availability.textContent='Original media · approval pending';
   img.addEventListener('error',()=>{img.remove();availability.textContent='Original-site image preview unavailable. Source blob is still catalogued.'},{once:true});
   card.append(img,availability);
-  const link=doc.createElement('a');link.href='https://github.com/gcfd8hy5mb-ai/workout-tracker/blob/'+item.blob+'/'+item.id+'.png';
-  // GitHub blob route is mapped from the exact verified path, not a media assertion.
-  link.href='https://github.com/gcfd8hy5mb-ai/workout-tracker/blob/main/images/'+item.id+'.png';
+  const link=doc.createElement('a');link.href='https://github.com/gcfd8hy5mb-ai/workout-tracker/blob/main/images/'+item.id+'.png';
   link.target='_blank';link.rel='noopener noreferrer';link.textContent='Inspect original source';card.append(link);
   list.append(card);
  }
