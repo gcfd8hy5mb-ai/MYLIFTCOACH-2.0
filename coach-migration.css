@@ -4,3 +4,12 @@
 .coach-sub-item{border-bottom:1px solid rgba(209,168,93,.19);padding:12px 0;display:flex;flex-direction:column;gap:5px}
 .coach-sub-item strong{color:#eed6a0}.coach-sub-item small,.coach-sub-note{color:#c6c1b3;line-height:1.6}
 .coach-sub-note{margin-top:14px;font-size:.84rem}
+
+.coach-next-rows{display:grid;gap:10px;margin:14px 0}
+.coach-next-row{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid rgba(211,177,103,.18)}
+.coach-next-row strong{color:#ead5a9}.coach-next-row small{color:#c6c2b8;line-height:1.5}
+.coach-technique-item{border-bottom:1px solid rgba(211,177,103,.22);padding:12px 0}
+.coach-technique-item summary{cursor:pointer;color:#ebd9b0;font-weight:650}
+.coach-technique-item p,.coach-technique-item li{color:#cfccc4;line-height:1.55}
+.coach-technique-item strong{color:#ead5a9;font-size:.9rem}
+.coach-technique-item ul{margin:6px 0 12px;padding-left:22px}
