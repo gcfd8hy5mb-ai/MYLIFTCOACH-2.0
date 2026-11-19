@@ -199,10 +199,19 @@ function renderSettings(){
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
 function openWorkout(id){
- const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;activePlan=plan;
- session={sets:[]};
+ const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;
+ const draftAPI=window.MLC2SessionDraft;
+ const other=draftAPI?.read(localStorage);
+ if(other?.sets.length&&other.planId!==id){
+  if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. Start a different workout and discard that draft?'))return;
+ }
+ activePlan=plan;
+ session={sets:draftAPI?.resume(localStorage,plan)||[]};
+ try{draftAPI?.save(localStorage,plan,session.sets)}
+ catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
  openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p><div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
  renderWorkoutLog();
+ for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',()=>{
@@ -215,6 +224,7 @@ function openWorkout(id){
    localStorage.setItem(DEMO_KEY,payload);
    if(localStorage.getItem(DEMO_KEY)!==payload)throw Error('Workout was not retained in browser storage.');
    demoSessions=proposed;
+   try{window.MLC2SessionDraft?.clear(localStorage,plan.id)}catch{}
    closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
   }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
@@ -246,6 +256,8 @@ function addSet(id){
   notice('Enter a valid weight and rep count.');return;
  }
  session.sets.push({exerciseId:id,weight,reps});
+ try{window.MLC2SessionDraft?.save(localStorage,activePlan,session.sets)}
+ catch{notice('Set logged in memory, but browser draft saving failed.')}
  // Update only this exercise: never erase inputs, keyboard focus, or scroll position.
  updateExerciseFeedback(id);
 }
@@ -254,6 +266,8 @@ function undoSet(id){
  const index=session.sets.findLastIndex(x=>x.exerciseId===id);
  if(index<0)return;
  session.sets.splice(index,1);
+ try{window.MLC2SessionDraft?.save(localStorage,activePlan,session.sets)}
+ catch{notice('Set removed in memory, but browser draft saving failed.')}
  updateExerciseFeedback(id);
 }
 function stopRestClock(){
@@ -273,7 +287,7 @@ function closeRest(){
 function openRest(){
  restSeconds=90;restPaused=false;
  let next=activePlan?.ids.find(id=>!session?.sets.some(set=>set.exerciseId===id))||activePlan?.ids[0];
- const e=exercises.find(x=>x.id===next);
+ const e=libraryExercises().find(x=>x.id===next)||exercises.find(x=>x.id===next);
  $('restNextName').textContent=e?.name||'Continue workout';
  $('restNextReps').textContent=e?e.sets+' sets · '+e.reps+' reps':'';
  $('restScreen').hidden=false;
