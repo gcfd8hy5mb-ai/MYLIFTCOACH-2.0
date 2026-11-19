@@ -30,6 +30,7 @@ before('coach-attributes.js','coach-migration.js');
 before('legacy-storage-model.js','legacy-reconcile.js');
 before('cloud-account-archive.js','app.js');
 before('cloud-migration-readiness.js','app.js');
+before('cloud-checkpoint-review.js','app.js');
 before('legacy-reconcile.js','cloud-sync-preview.js');
 assert.match(app,/function nextPlan\(\)\{return window\.MLC2Custom\?\.currentPlan/);
 assert.match(app,/\$\('todayStart'\)\.addEventListener\('click',\(\)=>openWorkout\(nextPlan\(\)\.id\)\)/);
