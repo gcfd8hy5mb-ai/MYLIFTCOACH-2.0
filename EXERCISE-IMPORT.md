@@ -44,3 +44,9 @@ JavaScript syntax checks passed for modified modules; static HTML check found no
 1. Obtain the latest privately approved 268 demonstrations and their IDs, source rights, and checksums. Older preview media statuses are not approval.
 2. Complete owner-scoped checkpoint/revision reconciliation and a test account with conflict/recovery tests before cloud writes are ever enabled.
 3. Verify 2.0 features on real mobile and desktop devices. The current branch is not production-ready.
+
+## Unfinished workout recovery and consistency (Nov 18 batch)
+
+The development app now saves a validated `mlc2-active-session-v1` draft on every added or removed set. When the user opens the same plan after a refresh, logged sets can be restored locally. Drafts expire after seven days, and ID/exercise-list mismatches are rejected. Opening a different workout, or changing the exercise list of the original workout, prompts before replacing a saved draft with logged sets. Once a completed session has been persisted and verified, the matching draft is cleared; if session saving fails, the draft remains.
+
+The versioned 2.0 JSON recovery export/import now includes this draft with validation, and the local data-health checker reports missing or changed plan references. A rest timer now looks up exercises in the full imported catalog as well as the 12-item fallback. Syntax, draft persistence/resumption, recovery round-trip, and stale-plan checks passed on test fixtures. **These are not physical-device/browser acceptance tests**, and cloud synchronization remains disabled.
