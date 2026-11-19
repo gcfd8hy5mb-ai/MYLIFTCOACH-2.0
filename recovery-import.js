@@ -14,6 +14,7 @@ const KEY_TYPES=Object.freeze({
  'mlc2-demo-workouts-v1':'sessions',
  'mlc2-active-session-v1':'draft',
  'mlc2-coach-readiness-v1':'readiness',
+ 'mlc2-weekly-goal-v1':'weeklyGoal',
  'mlc2-measurements-v1':'measurements',
  'mlc2-local-daily-v1':'daily'
 });
@@ -37,6 +38,7 @@ function validSet(s){return safeObj(s)&&validId(s.exerciseId)&&isNum(s.weight)&&
 function validateData(key,v){
  const kind=KEY_TYPES[key];
  if(!kind)throw Error('Unrecognized backup category');
+ if(kind==='weeklyGoal'){if(!Number.isInteger(v)||v<1||v>7)throw Error('Invalid weekly workout goal');return}
  if(kind==='selection'){if(typeof v!=='string'||v.length>100)throw Error('Invalid selected workout');return}
  if(kind==='plans'){
   if(!Array.isArray(v)||v.length>60)throw Error('Invalid custom workouts');
