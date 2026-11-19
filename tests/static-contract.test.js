@@ -24,6 +24,8 @@ for(const script of ['custom-workouts.js','session-draft.js','exercise-catalog-3
   'progress-migration.js','coach-attributes.js','coach-migration.js',
   'recovery-import.js','cloud-sync-preview.js'])before(script,'app.js');
 before('progress-migration.js','coach-migration.js');
+before('coach-trends.js','app.js');
+assert.ok(ids.includes('coachTrends'),'missing Coach training consistency control');
 before('coach-attributes.js','coach-migration.js');
 before('legacy-storage-model.js','legacy-reconcile.js');
 before('legacy-reconcile.js','cloud-sync-preview.js');
