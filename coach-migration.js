@@ -64,6 +64,21 @@ function renderNextWorkout(root,plan,sessions,catalog){
  '</small></div>').join('')+'</div>'+
  '<p class="coach-sub-note">This follows the workout currently selected on Home. Weight suggestions are informational and never overwrite custom routines or logged sets.</p>';
 }
+function renderTechnique(root,plan,catalog){
+ if(!root)return;
+ if(!plan?.ids?.length){root.textContent='Select a workout to view technique notes.';return}
+ const rows=plan.ids.map(id=>catalog.find(e=>e.id===id)).filter(Boolean);
+ root.innerHTML=rows.length?rows.map(e=>{
+  const instructions=String(e.how||e.cue||'').trim();
+  const tips=(Array.isArray(e.tips)?e.tips:[]).filter(x=>typeof x==='string'&&x.trim()).slice(0,4);
+  const mistakes=(Array.isArray(e.mistakes)?e.mistakes:[]).filter(x=>typeof x==='string'&&x.trim()).slice(0,4);
+  return '<details class="coach-technique-item"><summary>'+esc(e.name)+'</summary>'+
+   (instructions?'<p>'+esc(instructions)+'</p>':'<p>No verified technique instructions available for this exercise.</p>')+
+   (tips.length?'<strong>Form cues</strong><ul>'+tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'')+
+   (mistakes.length?'<strong>Common mistakes</strong><ul>'+mistakes.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'')+
+   '</details>';
+ }).join(''):'<p class="empty-note">No matching exercise notes are currently available.</p>';
+}
 function substitutions(id,catalog){
  const metadata=window.MLC2_COACH_ATTRIBUTES||{},current=catalog.find(e=>e.id===id),from=metadata[id];
  if(!current||!from?.pattern)return [];
@@ -97,5 +112,5 @@ function renderTools(root,catalog,plan){
  select.addEventListener('change',update);update();
 }
 
-window.MLC2Coach={suggestion,render,substitutions,renderTools,nextWorkoutSummary,renderNextWorkout};
+window.MLC2Coach={suggestion,render,substitutions,renderTools,nextWorkoutSummary,renderNextWorkout,renderTechnique};
 })();
