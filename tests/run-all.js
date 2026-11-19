@@ -7,7 +7,8 @@ const path=require('node:path');
 const tests=[
  'static-contract.test.js',
  'migration-regression.test.js',
- 'coach-regression.test.js'
+ 'coach-regression.test.js',
+ 'cloud-archive.test.js'
 ];
 for(const test of tests){
  console.log('Running '+test);
