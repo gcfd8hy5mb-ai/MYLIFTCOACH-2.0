@@ -13,3 +13,7 @@
 .coach-technique-item p,.coach-technique-item li{color:#cfccc4;line-height:1.55}
 .coach-technique-item strong{color:#ead5a9;font-size:.9rem}
 .coach-technique-item ul{margin:6px 0 12px;padding-left:22px}
+
+.coach-goal-label{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;color:#e7d6ae;font-size:.9rem}
+.coach-goal-label select{background:#132128;color:#f3e5c4;border:1px solid rgba(217,184,111,.5);border-radius:9px;padding:9px 12px;font:inherit}
+#coachGoalNote{color:#d4bb8a;font-size:.85rem}
