@@ -69,6 +69,12 @@ function check(storage,catalog=[],presets=[]){
    }
   }
  }
+ const goalRaw=storage.getItem('mlc2-weekly-goal-v1');
+ if(goalRaw!==null){
+  const goal=Number(goalRaw);
+  if(!/^\d$/.test(goalRaw)||!Number.isInteger(goal)||goal<1||goal>7)errors.push('Invalid weekly workout goal');
+  else counts['Weekly workout goal']=goal;
+ }
  const selected=storage.getItem(SELECTED);
  const available=new Set([...seenPlans,...(Array.isArray(presets)?presets.map(p=>p.id):[])]);
  if(selected&&!available.has(selected))warnings.push('Selected workout ID cannot be found: '+selected);
