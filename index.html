@@ -171,6 +171,10 @@
 <button type="button" id="cloudAuditAction" class="button-outline">Check cloud data (read-only)</button>
 <div id="cloudAuditResult" role="status" aria-live="polite"></div>
 <div class="mlc-cloud-archive"><h4>Original cloud recovery archive</h4><p>Optional: download a private, read-only snapshot of the original account’s accessible cloud records before a future migration. This may include sensitive workout and personal information. The file remains on your device; keep it secure. This is not a 2.0 restore or working cloud sync. If any table fails, no partial archive is offered.</p><button type="button" id="cloudArchiveAction" class="button-outline">Download original cloud archive (read-only)</button><p id="cloudArchiveResult" role="status" aria-live="polite"></p></div>
+<div class="mlc-migration-readiness"><h4>Compare saved original cloud archive with 2.0 workouts</h4><p>Choose your previously downloaded original cloud archive while signed in to the same account. The file is inspected only in this browser; it is not uploaded or saved. This preview identifies convertible items, absent categories, collisions and migration blockers. It never enables cloud writes.</p>
+<label for="migrationReadinessFile">Choose original cloud archive JSON</label>
+<input type="file" id="migrationReadinessFile" accept=".json,application/json">
+<div id="migrationReadinessResult" role="status" aria-live="polite"></div></div>
 <div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><div class="mlc-mapping-preview"><h4>2.0 workout format mapping</h4><p>Review which 2.0 practice workouts and sessions can be represented in the original app's format. This is a local-only dry run; no cloud connection or changes occur.</p><div class="mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
 <p>Download a private JSON backup of this browser's 2.0 workouts, unfinished session sets, practice history, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Save important progress photos individually using Save copy in Daily Tracking. Keep all exported files private. This option does not sync records.</p>
 <button id="recoveryExportAction" class="button-outline" type="button">Download recovery copy</button>
@@ -214,6 +218,7 @@
 <script defer src="./data-health.js?v=1"></script>
 <script defer src="./legacy-mapping-preview.js?v=1"></script>
 <script defer src="./cloud-account-archive.js?v=1"></script>
+<script defer src="./cloud-migration-readiness.js?v=1"></script>
 <script defer src="./cloud-sync-preview.js?v=1"></script>
 <script defer src="./cloud-compatibility.js?v=1"></script>
 <script defer src="./app.js?v=3"></script>
