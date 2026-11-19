@@ -12,6 +12,14 @@
 <link rel="stylesheet" href="./premium-reference.css?v=19">
 <link rel="stylesheet" href="./refinement-v2.css?v=11">
 <link rel="stylesheet" href="./home-rebuild.css?v=19">
+<link rel="stylesheet" href="./exercise-placeholders.css?v=1">
+<link rel="stylesheet" href="./legacy-media-review.css?v=1">
+<link rel="stylesheet" href="./custom-workouts.css?v=1">
+<link rel="stylesheet" href="./weekly-workout-schedule.css?v=1">
+<link rel="stylesheet" href="./progress-migration.css?v=1">
+<link rel="stylesheet" href="./coach-migration.css?v=1">
+<link rel="stylesheet" href="./coach-readiness.css?v=1">
+<link rel="stylesheet" href="./body-progress.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -95,9 +103,9 @@
     <p class="safety-note"><strong>Development preview.</strong> Demo workout entries stay in this browser. Original workout history remains unchanged.</p>
   </div>
  </section>
- <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Training plan</h1><p>Four purposeful sessions. Select one to open its exercise list and record a practice workout.</p></div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
- <section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>A focused starter collection of machine-friendly movements.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button></div><div class="library-grid" id="libraryGrid"></div></section>
- <section id="progress" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div></section>
+ <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Your workouts</h1><p>Create and edit custom workouts using the complete 344-exercise catalog. Select any workout to show on Home.</p></div><div class="custom-workout-toolbar"><button type="button" id="createWorkout" class="button-primary">+ Create custom workout</button><small>Development preview · local only · original records are unchanged</small></div><article class="panel"><div class="panel-heading"><h3>Weekly workout schedule</h3><span class="micro-tag">CUSTOM PLANS FIRST</span></div><div id="weeklySchedule"></div></article><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
+ <section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>Explore all 344 movements, with technique notes and approved demonstrations as they become available.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button><button type="button" data-muscle="Cardio">Cardio</button></div><div class="library-grid" id="libraryGrid"></div></section>
+ <section id="progress" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><article class="panel"><div class="panel-heading"><h3>Latest saved workout recap</h3><span class="micro-tag">SAME-PLAN COMPARISON</span></div><div id="postWorkoutRecap"></div></article><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div><article class="panel"><div class="panel-heading"><h3>2.0 personal records and weekly training volume</h3><span class="micro-tag">LOCAL PRACTICE</span></div><div id="demoRecords"></div></article><article class="panel"><div class="panel-heading"><h3>Original app personal records</h3><span class="micro-tag">READ-ONLY</span></div><p id="legacyRecordsNote">Tap View original records in Workout History to load a local snapshot.</p><div id="legacyRecords"></div></article></section>
  <section id="history" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">TRAINING ARCHIVE</div><h1>Workout history</h1><p>Review completed sessions and exercise records. Original-app records are shown read-only; 2.0 practice sessions remain separate.</p></div>
  <article class="panel"><div class="panel-heading"><div><div class="eyebrow">ON THIS DEVICE</div><h3>Original MYLIFTCOACH records</h3></div></div>
@@ -105,6 +113,13 @@
   <button id="loadOriginalHistory" class="button-outline" type="button">View original records (read-only)</button><p class="legacy-status" id="legacyHistoryStatus" role="status">Not loaded</p>
   <div id="originalHistorySummary" class="legacy-summary"></div><div id="originalHistoryList" class="legacy-list"></div>
  </article>
+ <article class="panel"><div class="panel-heading"><h3>Original cloud account history</h3><span class="micro-tag">ACCOUNT OR ARCHIVE · READ-ONLY</span></div><p>Use your existing account sign-in to load original history directly, or open an original archive downloaded from Settings. These sessions remain separate from your 2.0 workouts, are shown only in memory, and are never uploaded, restored, or used to edit your current plan.</p>
+<label for="cloudOriginalHistoryFile">Choose original account cloud archive</label><input type="file" id="cloudOriginalHistoryFile" accept=".json,application/json">
+<button type="button" id="loadCloudOriginalHistory" class="button-outline">Load my original cloud history (read-only)</button>
+<button type="button" id="clearCloudOriginalHistory" class="button-outline">Clear original cloud view</button>
+<p id="cloudOriginalHistoryStatus" role="status" aria-live="polite">No cloud archive loaded.</p>
+<div id="cloudOriginalHistoryResults" class="legacy-list"></div>
+</article>
  <article class="panel"><div class="panel-heading"><h3>MYLIFTCOACH 2.0 sessions</h3><span class="micro-tag">SEPARATE LOCAL RECORDS</span></div><div id="detailedDemoHistory" class="legacy-list"></div></article>
 </section>
 <section id="tracking" class="page" hidden>
@@ -120,12 +135,38 @@
  <article class="panel"><div class="panel-heading"><h3>Original daily tracking</h3><span class="micro-tag">READ-ONLY</span></div>
   <button id="loadOriginalTracking" class="button-outline" type="button">View original water &amp; weight history</button><p id="legacyTrackingStatus" class="legacy-status" role="status">Not loaded</p>
   <div id="originalTrackingSummary" class="legacy-summary"></div><div id="originalTrackingList" class="legacy-list"></div>
+ <div class="mlc-original-measurements"><h4>Original body measurements (read-only)</h4><div id="mlcOriginalMeasurements"></div></div>
+ </article>
+ <article class="panel mlc-body-progress">
+ <div class="panel-heading"><h3>Body measurements</h3><span class="micro-tag">2.0 DEVICE ONLY</span></div>
+ <p>Log measurements in inches. Original MYLIFTCOACH measurement records are preserved and are not imported into this preview.</p>
+ <form id="mlcMeasurementForm" class="mlc-measurement-form">
+ <label>Area<select name="area" required><option>Waist</option><option>Chest</option><option>Arm</option><option>Thigh</option><option>Hips</option></select></label>
+ <label>Date<input id="mlcMeasurementDay" name="day" type="date" required></label>
+ <label>Inches<input name="value" type="number" min="1" max="200" step="0.1" inputmode="decimal" required placeholder="32.5"></label>
+ <button class="button-primary" type="submit">Save measurement</button>
+ </form>
+ <p id="mlcMeasurementStatus" role="status"></p>
+ <label class="mlc-progress-chart-label">Trend for <select id="mlcMeasurementChartArea"><option>Waist</option><option>Chest</option><option>Arm</option><option>Thigh</option><option>Hips</option></select></label>
+ <div id="mlcMeasurementsChart" class="mlc-measurement-chart"></div><div id="mlcMeasurementsList"></div>
+ </article>
+ <article class="panel mlc-body-progress">
+ <div class="panel-heading"><h3>Private progress photos</h3><span class="micro-tag">THIS DEVICE</span></div>
+ <p>These preview photos stay in this browser's separate local photo storage. They are not synced or uploaded to your original MYLIFTCOACH account. Use Save copy on each important photo before clearing website data, which can permanently erase them.</p>
+ <label class="mlc-photo-picker">Add progress photo <input type="file" id="mlcPhotoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
+ <p id="mlcPhotoStatus" role="status"></p><div id="mlcPhotoList" class="mlc-photo-list"></div>
  </article>
 </section>
 <section id="coaching" class="page" hidden>
   <div class="page-heading"><div class="eyebrow">TRAIN SMARTER</div><h1>Coaching</h1><p>Your personalized training insights will be carried over from the original workout app. This development preview does not generate fabricated advice.</p></div>
   <div class="coach-emblem">✦</div>
-  <article class="panel coach-card"><div class="eyebrow">YOUR COACH</div><h3>Progress at your own pace.</h3><p>Training guidance, recommendations, form tips, and recovery insights will appear here after we validate the original coaching rules and safely connect training history.</p></article>
+  <article class="panel coach-card"><div class="eyebrow">YOUR COACH</div><h3>Progress at your own pace.</h3><p>Your local Coach now reviews completed workouts, tracks readiness, and lets you set a weekly training goal. Original account synchronization remains separate and is not active.</p></article>
+  <article class="panel"><div class="panel-heading"><h3>Readiness and weekly progress</h3><span class="micro-tag">LOCAL CHECK-IN</span></div><div id="coachReadiness"></div></article>
+  <article class="panel"><div class="panel-heading"><h3>Training consistency</h3><span class="micro-tag">THIS WEEK / LAST WEEK</span></div><p>Based on your completed 2.0 sessions and your chosen weekly goal.</p><div id="coachTrends" aria-live="polite"></div></article>
+  <article class="panel"><div class="panel-heading"><h3>Next selected workout</h3><span class="micro-tag">HOME WORKOUT MATCH</span></div><div id="coachNextWorkout"></div></article>
+  <article class="panel"><div class="panel-heading"><h3>Evidence-based progression suggestions</h3><span class="micro-tag">2.0 LOCAL LOGS</span></div><p>Uses original-app working-set progression rules where sufficient training history exists. Does not change your weights or workouts automatically.</p><div id="coachSuggestions"></div></article>
+  <article class="panel"><div class="panel-heading"><h3>Exercise substitutions</h3><span class="micro-tag">ORIGINAL COACH RULES</span></div><p>Review alternatives matched by primary muscle and verified movement pattern. This never changes your saved workout.</p><div id="coachSubstitutions"></div></article>
+  <article class="panel"><div class="panel-heading"><h3>Selected workout technique</h3><span class="micro-tag">CATALOG NOTES</span></div><p>Setup, form cues, and common mistakes for the workout chosen on Home, where verified catalog notes are present.</p><div id="coachTechnique"></div></article>
   <div class="coach-links">
     <button type="button" data-coach-link="workouts">◈ &nbsp; Next Workout Recommendation <span>›</span></button>
     <button type="button" data-coach-link="progress">▥ &nbsp; Progress Insights <span>›</span></button>
@@ -134,7 +175,35 @@
   </div>
  </section>
  <section id="nutrition" class="page" hidden><div class="page-heading"><div class="eyebrow">FUEL & RECOVER</div><h1>Nutrition &amp; Hydration</h1><p>The full nutrition, water, weight, and macro-tracking features from your original app will return here after data compatibility testing.</p></div><article class="panel"><h3>Coming from your original app</h3><p>Daily water, food logs, calorie goals, saved meals, and weight history. No entries are being written to your production data.</p></article></section>
- <section id="settings" class="page" hidden><div class="account-brand"><img src="./assets/myliftcoach-mark.svg?v=6" alt=""><h2>My Account</h2><p>Manage your profile, training and settings</p></div><div class="account-menu" aria-label="Additional training tools"><button type="button" data-account-page="library"><span>▣</span> Exercise Library <b>›</b></button><button type="button" data-account-page="history"><span>▤</span> Workout History <b>›</b></button><button type="button" data-account-page="tracking"><span>◉</span> Daily Tracking <b>›</b></button><button type="button" data-account-page="coaching"><span>✦</span> Coaching &amp; Guidance <b>›</b></button></div><div class="page-heading"><div class="eyebrow">YOUR ACCOUNT</div><h1>Settings</h1><p>Sign in with your existing MYLIFTCOACH account. Training data import remains off until validated.</p></div><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen design ↗</button><article class="panel settings-panel"><div class="setting-line"><div><strong>Supabase account</strong><p id="accountIdentity">Not signed in</p></div><span class="micro-tag" id="backendStatus">NOT CONNECTED</span></div><div class="setting-line"><div><strong>Data protection</strong><p>Existing workout records are read-only and are not yet imported into 2.0.</p></div><span class="micro-tag">ISOLATED</span></div><div class="setting-line"><div><strong>Demo session history</strong><p>Saved to this browser only, separate from your original workout app.</p></div><button id="clearDemo" type="button" class="button-outline">Clear demo</button></div><button id="authAction" type="button" class="button-primary">Sign in</button></article></section>
+ <section id="settings" class="page" hidden><div class="account-brand"><img src="./assets/myliftcoach-mark.svg?v=6" alt=""><h2>My Account</h2><p>Manage your profile, training and settings</p></div><div class="account-menu" aria-label="Additional training tools"><button type="button" data-account-page="library"><span>▣</span> Exercise Library <b>›</b></button><button type="button" data-account-page="history"><span>▤</span> Workout History <b>›</b></button><button type="button" data-account-page="tracking"><span>◉</span> Daily Tracking <b>›</b></button><button type="button" data-account-page="coaching"><span>✦</span> Coaching &amp; Guidance <b>›</b></button></div><div class="page-heading"><div class="eyebrow">YOUR ACCOUNT</div><h1>Settings</h1><p>Sign in with your existing MYLIFTCOACH account. Training data import remains off until validated.</p></div><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen design ↗</button><article class="panel settings-panel"><div class="setting-line"><div><strong>Supabase account</strong><p id="accountIdentity">Not signed in</p></div><span class="micro-tag" id="backendStatus">NOT CONNECTED</span></div><div class="setting-line"><div><strong>Data protection</strong><p>Existing workout records are read-only and are not yet imported into 2.0.</p></div><span class="micro-tag">ISOLATED</span></div><div class="setting-line"><div><strong>Demo session history</strong><p>Saved to this browser only, separate from your original workout app.</p></div><button id="clearDemo" type="button" class="button-outline">Clear demo</button></div><button id="authAction" type="button" class="button-primary">Sign in</button></article><article class="panel mlc-legacy-media-panel"><div class="panel-heading"><h3>Original exercise images for review</h3><span class="micro-tag">14 SOURCE CANDIDATES · NOT APPROVED</span></div><p>Preview original-app exercise image candidates against their 2.0 exercise IDs. This does not import, approve, or replace exercise media. The independently approved 268 files still need their current manifest.</p><button id="reviewLegacyMedia" type="button" class="button-outline">Review 14 original image candidates</button><div id="legacyMediaReviewResults" aria-live="polite"></div></article>
+<article class="panel mlc-cloud-audit-panel"><div class="panel-heading"><h3>Cloud compatibility</h3><span class="micro-tag">READ-ONLY</span></div>
+<p>Check which original account record categories are accessible with your existing sign-in. This does not transfer, sync, edit, or delete any workout information. Run only when you want to verify compatibility.</p>
+<button type="button" id="cloudAuditAction" class="button-outline">Check cloud data (read-only)</button>
+<div id="cloudAuditResult" role="status" aria-live="polite"></div>
+<div class="mlc-cloud-archive"><h4>Original cloud recovery archive</h4><p>Optional: download a private, read-only snapshot of the original account’s accessible cloud records before a future migration. This may include sensitive workout and personal information. The file remains on your device; keep it secure. This is not a 2.0 restore or working cloud sync. If any table fails, no partial archive is offered.</p><button type="button" id="cloudArchiveAction" class="button-outline">Download original cloud archive (read-only)</button><p id="cloudArchiveResult" role="status" aria-live="polite"></p></div>
+<div class="mlc-cloud-checkpoints"><h4>Original account revision checkpoint comparison</h4><p>Choose two original account archives from different dates to inspect record additions, changes, deletions and revision anomalies. Both files stay in this browser. This cannot authorize cloud writes or prove a current server checkpoint.</p>
+<label for="checkpointBaselineFile">Older original cloud archive</label><input type="file" id="checkpointBaselineFile" accept=".json,application/json">
+<label for="checkpointCurrentFile">Newer original cloud archive</label><input type="file" id="checkpointCurrentFile" accept=".json,application/json">
+<button type="button" id="checkpointCompareAction" class="button-outline">Compare account checkpoints (read-only)</button>
+<div id="checkpointReviewResult" role="status" aria-live="polite"></div></div>
+<div class="mlc-migration-readiness"><h4>Compare saved original cloud archive with 2.0 workouts</h4><p>Choose your previously downloaded original cloud archive while signed in to the same account. The file is inspected only in this browser; it is not uploaded or saved. This preview identifies convertible items, absent categories, collisions and migration blockers. It never enables cloud writes.</p>
+<label for="migrationReadinessFile">Choose original cloud archive JSON</label>
+<input type="file" id="migrationReadinessFile" accept=".json,application/json">
+<div id="migrationReadinessResult" role="status" aria-live="polite"></div></div>
+<div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><div class="mlc-mapping-preview"><h4>2.0 workout format mapping</h4><p>Review which 2.0 practice workouts and sessions can be represented in the original app's format. This is a local-only dry run; no cloud connection or changes occur.</p><div class="mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
+<p>Download a private JSON backup of this browser's 2.0 workouts, unfinished session sets, practice history, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Save important progress photos individually using Save copy in Daily Tracking. Keep all exported files private. This option does not sync records.</p>
+<button id="recoveryExportAction" class="button-outline" type="button">Download recovery copy</button>
+<p id="recoveryExportResult" role="status" aria-live="polite"></p>
+<div class="mlc-data-health"><h4>Check local workout data</h4><p>Verify saved plans, session sets, exercise references and daily tracking without changing records or connecting to the cloud.</p><button id="dataHealthAction" class="button-outline" type="button">Check local data integrity</button><div id="dataHealthResult" role="status" aria-live="polite"></div></div>
+<div class="mlc-recovery-import"><h4>Restore missing 2.0 data (this browser only)</h4>
+<p>Choose a previously downloaded MYLIFTCOACH 2.0 recovery file, including any unfinished workout draft. Check the preview first. Any category with existing different data will block the entire restore. Existing data is never overwritten. Private photos and cloud records are not included.</p>
+<label for="recoveryImportFile">Choose recovery JSON</label>
+<input type="file" id="recoveryImportFile" accept=".json,application/json">
+<button type="button" id="recoveryRestoreAction" class="button-outline" disabled>Restore only missing data</button>
+<p id="recoveryImportResult" role="status" aria-live="polite"></p>
+</div></div><button type="button" id="mappingPreviewAction" class="button-outline">Check local workout conversion</button><div id="mappingPreviewResult" role="status" aria-live="polite"></div></div>
+<button type="button" id="cloudPreviewAction" class="button-outline">Preview possible conflicts (read-only)</button><div id="cloudPreviewResult" role="status" aria-live="polite"></div></div>
+</article></section>
 </main>
 <footer class="site-footer"><span>MYLIFTCOACH 2.0</span><span>STRONGER BY DESIGN · PREVIEW</span></footer>
 </div></div>
@@ -148,6 +217,31 @@
  <p class="rest-demo">Practice timer · no workout data is changed</p>
 </div>
 <div id="toast" role="status" class="toast" hidden></div>
+<script defer src="./exercise-catalog-344.js?v=1"></script>
+<script defer src="./legacy-media-review.js?v=1"></script>
+<script defer src="./custom-workouts.js?v=1"></script>
+<script defer src="./weekly-workout-schedule.js?v=1"></script>
+<script defer src="./session-draft.js?v=1"></script>
+<script defer src="./progress-migration.js?v=1"></script>
+<script defer src="./coach-attributes.js?v=1"></script>
+<script defer src="./coach-migration.js?v=1"></script>
+<script defer src="./coach-readiness.js?v=1"></script>
+<script defer src="./coach-trends.js?v=1"></script>
+<script defer src="./coach-post-workout.js?v=1"></script>
+<script defer src="./body-progress.js?v=1"></script>
+<script defer src="./legacy-storage-model.js?v=1"></script>
+<script defer src="./legacy-reconcile.js?v=1"></script>
+<script defer src="./recovery-export.js?v=1"></script>
+<script defer src="./recovery-import.js?v=1"></script>
+<script defer src="./data-health.js?v=1"></script>
+<script defer src="./legacy-mapping-preview.js?v=1"></script>
+<script defer src="./cloud-account-archive.js?v=1"></script>
+<script defer src="./cloud-migration-readiness.js?v=1"></script>
+<script defer src="./cloud-original-history.js?v=1"></script>
+<script defer src="./cloud-live-original-history.js?v=1"></script>
+<script defer src="./cloud-checkpoint-review.js?v=1"></script>
+<script defer src="./cloud-sync-preview.js?v=1"></script>
+<script defer src="./cloud-compatibility.js?v=1"></script>
 <script defer src="./app.js?v=3"></script>
 </body>
 </html>

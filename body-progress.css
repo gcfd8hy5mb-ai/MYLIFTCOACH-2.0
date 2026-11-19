@@ -1,0 +1,20 @@
+/* MYLIFTCOACH 2.0 — device-local body progress, original premium palette. */
+.mlc-body-progress{margin-top:18px}
+.mlc-body-progress p{line-height:1.55;color:#c9c5bb}
+.mlc-measurement-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin-top:15px}
+.mlc-measurement-form label,.mlc-progress-chart-label{display:block;color:#e2d2b2;font-size:.9rem}
+.mlc-measurement-form select,.mlc-progress-chart-label select,.mlc-measurement-form input{display:block;margin-top:7px;width:100%;min-width:0;box-sizing:border-box;border:1px solid rgba(216,181,108,.43);background:#121f24;color:#f4ebd7;border-radius:9px;padding:11px;font:inherit}
+.mlc-measurement-form button{grid-column:1/-1}
+.mlc-progress-chart-label{margin:17px 0 8px}
+.mlc-progress-chart-label select{max-width:250px}
+.mlc-measurement-chart{max-width:440px;margin:12px 0;color:#dac48f}
+.mlc-measurement-chart svg{display:block;width:100%;height:auto}
+.mlc-measurement-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(214,177,103,.2);padding:10px 0;color:#e1dccf}
+.mlc-measurement-row button,.mlc-photo-card button{background:transparent;border:1px solid rgba(209,168,93,.44);border-radius:8px;color:#dfc38d;padding:8px 10px;cursor:pointer}
+.mlc-photo-picker{display:inline-flex;gap:8px;flex-direction:column;background:#b99053;color:#101920;font-weight:700;padding:11px 15px;border-radius:9px;cursor:pointer}
+.mlc-photo-picker input{display:block;color:#101920;font-size:.85rem;max-width:250px}
+.mlc-photo-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:12px}
+.mlc-photo-card{background:#131f23;border:1px solid rgba(209,168,93,.3);border-radius:12px;overflow:hidden}
+.mlc-photo-card img{display:block;width:100%;height:180px;object-fit:cover}
+.mlc-photo-card div{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px;color:#e6d8c0}
+@media(max-width:650px){.mlc-measurement-form{grid-template-columns:1fr}.mlc-photo-list{grid-template-columns:repeat(2,minmax(0,1fr))}.mlc-photo-card img{height:145px}}

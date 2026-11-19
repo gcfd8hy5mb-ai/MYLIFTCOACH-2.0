@@ -31,6 +31,8 @@ let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
+let cloudHistorySnapshot=null; // in-memory, account-bound, original archive only
+let cloudHistoryRequestId=0; // invalidates any pending read when account or view changes
 
 let toastTimer;
 let muscleFilter='';
@@ -56,20 +58,24 @@ function getOriginalSnapshot(){
  const rawPlans=safeOriginal('customWorkoutsV5','array');
  const rawTracking=safeOriginal('dailyTrackingV1','object');
  const sessions=rawSessions.filter(x=>x&&typeof x==='object'&&Array.isArray(x.exercises)).map(x=>({
+  id:String(x.id??'').slice(0,100),
   title:String(x.workoutTitle||x.title||'Workout').slice(0,110),
   date:String(x.date||x.created||'').slice(0,35),
   exercises:x.exercises.filter(y=>y&&Array.isArray(y.sets)).map(y=>({
+   id:String(y.id||y.name||'Exercise').slice(0,110),
    name:String(y.name||y.id||'Exercise').slice(0,110),
    sets:y.sets.filter(z=>z&&Number.isFinite(Number(z.weight))&&Number.isFinite(Number(z.reps))&&Number(z.weight)>=0&&Number(z.reps)>0).slice(0,20).map(z=>({weight:Number(z.weight),reps:Number(z.reps)}))
   })).slice(0,55)
  }));
  const plans=rawPlans.filter(x=>x&&typeof x==='object'&&Array.isArray(x.exercises)).slice(0,100).map(x=>({
+  id:String(x.id??'').slice(0,100),
   title:String(x.name||x.title||'Custom workout').slice(0,110),
   exercises:x.exercises.slice(0,80).map(v=>String(v).slice(0,80))
  }));
  const water=Array.isArray(rawTracking.water)?rawTracking.water.filter(x=>x&&typeof x==='object'&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0).slice(0,1000).map(x=>({day:String(x.day||'').slice(0,10),amount:Number(x.amount)})):[];
  const weight=Array.isArray(rawTracking.weight)?rawTracking.weight.filter(x=>x&&typeof x==='object'&&Number.isFinite(Number(x.value))&&Number(x.value)>0).slice(0,1000).map(x=>({day:String(x.day||'').slice(0,10),value:Number(x.value)})):[];
- return {sessions,plans,water,weight};
+ const measurements=Array.isArray(rawTracking.measurements)?rawTracking.measurements.filter(x=>x&&['Waist','Chest','Arm','Thigh','Hips'].includes(x.area)&&/^\d{4}-\d{2}-\d{2}$/.test(String(x.day||''))&&Number.isFinite(Number(x.value))&&Number(x.value)>0&&Number(x.value)<=200).slice(0,1000).map(x=>({area:String(x.area),day:String(x.day),value:Number(x.value)})):[];
+ return {sessions,plans,water,weight,measurements};
 }
 function localDayString(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function loadLocalTracking(){
@@ -99,12 +105,14 @@ function renderTracking(){
  $('localTrackingSummary').textContent='Today: '+Math.round(total)+' mL water · '+weight.length+' weight entries';
  $('localTrackingList').innerHTML=trackingEntries.length?trackingEntries.slice(0,40).map(x=>'<div class="history-entry tracking-row"><div><strong>'+escapeHTML(x.type==='water'?'Water':'Body weight')+'</strong><small>'+escapeHTML(x.day)+' · '+escapeHTML(String(x.value))+(x.type==='water'?' mL':' lb')+'</small></div><button type="button" class="tracking-delete" data-remove-track="'+escapeHTML(x.id)+'" aria-label="Remove this 2.0 entry">Remove</button></div>').join(''):'<p class="empty-note">No 2.0 daily entries yet.</p>';
  $('legacyTrackingStatus').textContent=originalSnapshot?'Original device data loaded read-only.':'Not loaded';
- if(!originalSnapshot){$('originalTrackingSummary').textContent='';$('originalTrackingList').innerHTML='';return}
- $('originalTrackingSummary').textContent=originalSnapshot.water.length+' water entries · '+originalSnapshot.weight.length+' weight entries';
+ if(!originalSnapshot){$('originalTrackingSummary').textContent='';$('originalTrackingList').innerHTML='';if($('mlcOriginalMeasurements'))$('mlcOriginalMeasurements').innerHTML='';return}
+ $('originalTrackingSummary').textContent=originalSnapshot.water.length+' water entries · '+originalSnapshot.weight.length+' weight entries · '+(originalSnapshot.measurements?.length||0)+' body measurements';
  const combined=[...originalSnapshot.water.map(x=>({...x,type:'water'})),...originalSnapshot.weight.map(x=>({...x,type:'weight'}))].sort((a,b)=>b.day.localeCompare(a.day)).slice(0,60);
+ const oldMeasurements=$('mlcOriginalMeasurements');
+ if(oldMeasurements)oldMeasurements.innerHTML=(originalSnapshot.measurements||[]).slice().sort((a,b)=>b.day.localeCompare(a.day)).map(x=>'<div class="mlc-measurement-row"><span>'+escapeHTML(x.day)+' · '+escapeHTML(x.area)+': '+escapeHTML(String(x.value))+' in</span><span class="micro-tag">ORIGINAL</span></div>').join('')||'<p class="empty-note">No original measurements found on this browser.</p>';
  $('originalTrackingList').innerHTML=combined.length?combined.map(x=>'<div class="history-entry tracking-row"><div><strong>'+escapeHTML(x.type==='water'?'Water':'Body weight')+'</strong><small>'+escapeHTML(x.day)+' · '+escapeHTML(String(x.type==='water'?Math.round(x.amount):x.value))+(x.type==='water'?' mL':' lb')+'</small></div><span class="micro-tag">ORIGINAL</span></div>').join(''):'<p class="empty-note">No original daily tracking records found on this browser. Cloud data was not queried or altered.</p>';
 }
-function viewOriginal(){originalSnapshot=getOriginalSnapshot();renderHistory();renderTracking();renderOriginalPlans();notice('Original records checked locally. No original records were changed.')}
+function viewOriginal(){originalSnapshot=getOriginalSnapshot();renderHistory();renderTracking();renderOriginalPlans();renderProgress();notice('Original records checked locally. No original records were changed.')}
 function logDaily(event,type){
  event.preventDefault();
  const form=new FormData(event.currentTarget);
@@ -124,30 +132,57 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
  $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
  $('sidebar').classList.remove('open');document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
- if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
+ if(next==='coaching')renderCoach();if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
-function nextPlan(){return plans[demoSessions.length%plans.length]}
+function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:localStorage})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
  const plan=nextPlan();$('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
- $('todayExercises').innerHTML=plan.ids.map(id=>{const e=exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
+ $('todayExercises').innerHTML=plan.ids.map(id=>{const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
 function renderWorkouts(){
- $('workoutGrid').innerHTML=plans.map((p,i)=>'<button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>').join('');
+ window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
+  presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
+  storage:localStorage,onChanged:()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}
+ });
+ $('workoutGrid').innerHTML=(window.MLC2Custom?.allPlans(plans)||plans).map((p,i)=>'<div class="workout-item"><button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>'+window.MLC2Custom.controls(p,nextPlan().id)+'</div>').join('');
+}
+// An external catalog is optional. Never treat a readable file as visually approved.
+// The 344-item private release manifest can populate window.MLC2_EXERCISE_CATALOG
+// before app.js is loaded; the original demo catalog remains a safe fallback.
+function libraryExercises(){
+ const imported=window.MLC2_EXERCISE_CATALOG;
+ return Array.isArray(imported)&&imported.length?imported.filter(e=>e&&typeof e.id==='string'&&typeof e.name==='string'&&typeof e.group==='string'):exercises;
+}
+function approvedThumbnail(e){
+ const d=e.demonstration;
+ if(!d||d.status!=='approved'||typeof d.thumbnail!=='string')return '';
+ // Only same-site media paths. An unapproved or missing thumbnail displays the placeholder.
+ return /^(?:\.\/)?(?:assets|media|images)\/[A-Za-z0-9_./-]+\.(?:webp|png|jpg|jpeg)$/i.test(d.thumbnail)?d.thumbnail:'';
 }
 function renderLibrary(){
  const query=$('exerciseSearch').value.trim().toLowerCase();
- const matches=exercises.filter(e=>(!muscleFilter||e.group===muscleFilter)&&(e.name+' '+e.group).toLowerCase().includes(query));
+ const matches=libraryExercises().filter(e=>(!muscleFilter||e.group===muscleFilter)&&(e.name+' '+e.group).toLowerCase().includes(query));
  document.querySelectorAll('[data-muscle]').forEach(b=>b.classList.toggle('selected',b.dataset.muscle===muscleFilter));
- $('libraryGrid').innerHTML=matches.map(e=>'<article class="library-card reference-exercise"><img class="library-thumb" src="./assets/chest-press.svg" alt="" loading="lazy"><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+e.sets+' sets · '+escapeHTML(e.reps)+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue)+'</p></details></div><span class="library-chevron">›</span></article>').join('')||'<p class="empty-note">No exercises match that search.</p>';
+ $('libraryGrid').innerHTML=matches.map(e=>{
+  const image=approvedThumbnail(e);
+  const thumbnail=image?'<img class="library-thumb approved-thumb" src="'+escapeHTML(image)+'" alt="Approved demonstration of '+escapeHTML(e.name)+'" loading="lazy" data-approved-thumb>':'';
+  const placeholder='<div class="library-placeholder" aria-label="Demonstration coming soon"><span class="library-placeholder-icon" aria-hidden="true">◇</span><span>DEMONSTRATION<br>COMING SOON</span></div>';
+  return '<article class="library-card reference-exercise"><div class="library-media">'+placeholder+thumbnail+'</div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(String(e.sets||3))+' sets · '+escapeHTML(String(e.reps||'8–12'))+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue||'Follow correct setup and controlled movement.')+'</p></details></div><span class="library-chevron">›</span></article>';
+ }).join('')||'<p class="empty-note">No exercises match that search.</p>';
+ $('libraryGrid').querySelectorAll('img[data-approved-thumb]').forEach(img=>img.addEventListener('error',()=>img.remove(),{once:true}));
 }
 function renderProgress(){
+ window.MLC2PostWorkout?.render($('postWorkoutRecap'),demoSessions);
  const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
  $('progressSessions').textContent=demoSessions.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
  renderProgressChart();
+ window.MLC2Progress?.renderRecords($('demoRecords'),demoSessions,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
+ window.MLC2Progress?.renderRecords($('legacyRecords'),originalSnapshot?.sessions||[],'original',(id,name)=>libraryExercises().find(e=>e.id===id)?.name||name);
+ $('legacyRecordsNote').textContent=originalSnapshot?'Read-only snapshot from original device storage.':'Tap View original records in Workout History to load a local read-only snapshot. No cloud data is queried.';
  $('sessionHistory').innerHTML=demoSessions.length?demoSessions.map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">No demo sessions recorded yet. Open Workouts to start your first practice session.</div>';
 }
 function renderProgressChart(){
@@ -161,6 +196,7 @@ function renderProgressChart(){
  const fill='22,184 '+points+' '+xy[xy.length-1].x.toFixed(1)+',184';
  root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' locally saved practice sessions"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb-reps last session</p>';
 }
+function renderCoach(){const selected=nextPlan(),catalog=libraryExercises();window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected);window.MLC2CoachTrends?.render($('coachTrends'),demoSessions,window.MLC2CoachReadiness?.weeklyGoal()||4)}
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (production workout data is not loaded)':'Not signed in. You can still explore the demo.';
  $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
@@ -170,23 +206,40 @@ function renderSettings(){
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
 function openWorkout(id){
- const plan=plans.find(x=>x.id===id);if(!plan)return;activePlan=plan;
- session={sets:[]};
+ const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;
+ const draftAPI=window.MLC2SessionDraft;
+ const other=draftAPI?.read(localStorage);
+ if(other?.sets.length&&(other.planId!==id||JSON.stringify(other.ids)!==JSON.stringify(plan.ids))){
+  if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. The workout or exercise list differs. Start again and discard that older draft?'))return;
+ }
+ activePlan=plan;
+ session={sets:draftAPI?.resume(localStorage,plan)||[]};
+ try{draftAPI?.save(localStorage,plan,session.sets)}
+ catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
  openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p><div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
  renderWorkoutLog();
+ for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',()=>{
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
-  const entry={id:'demo-'+Date.now(),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets};
-  demoSessions.unshift(entry);demoSessions=demoSessions.slice(0,100);
-  try{storeDemo();closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.')}catch{notice('Could not save demo session; check browser storage.')}
+  const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set}))};
+  // Persist first. A failed local write must not create a phantom completed workout.
+  const proposed=[entry,...demoSessions].slice(0,100);
+  try{
+   const payload=JSON.stringify(proposed);
+   localStorage.setItem(DEMO_KEY,payload);
+   if(localStorage.getItem(DEMO_KEY)!==payload)throw Error('Workout was not retained in browser storage.');
+   demoSessions=proposed;
+   try{window.MLC2SessionDraft?.clear(localStorage,plan.id)}catch{}
+   closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
+  }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
 }
 function renderWorkoutLog(){
  if(!activePlan)return;
  $('workoutLog').innerHTML=activePlan.ids.map(id=>{
-  const e=exercises.find(x=>x.id===id);
+  const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
   const count=session.sets.filter(x=>x.exerciseId===id).length;
   return '<article class="log-card" data-exercise-card="'+id+'"><div class="log-title"><h4>'+escapeHTML(e.name)+'</h4><span class="logged-count" data-count="'+id+'">'+count+' logged</span></div><small>Target: '+e.sets+' sets × '+escapeHTML(e.reps)+' reps</small><div class="inputs"><label>Weight (lb)<input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+id+'" value="40"></label><label>Reps<input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+id+'" value="10"></label><button class="button-outline" data-addset="'+id+'" type="button">Log set</button></div><div class="set-feedback" data-feedback="'+id+'" role="status" aria-live="polite"></div><button class="undo-set" data-undo="'+id+'" type="button" hidden>Undo last set</button></article>'
  }).join('');
@@ -210,6 +263,8 @@ function addSet(id){
   notice('Enter a valid weight and rep count.');return;
  }
  session.sets.push({exerciseId:id,weight,reps});
+ try{window.MLC2SessionDraft?.save(localStorage,activePlan,session.sets)}
+ catch{notice('Set logged in memory, but browser draft saving failed.')}
  // Update only this exercise: never erase inputs, keyboard focus, or scroll position.
  updateExerciseFeedback(id);
 }
@@ -218,6 +273,8 @@ function undoSet(id){
  const index=session.sets.findLastIndex(x=>x.exerciseId===id);
  if(index<0)return;
  session.sets.splice(index,1);
+ try{window.MLC2SessionDraft?.save(localStorage,activePlan,session.sets)}
+ catch{notice('Set removed in memory, but browser draft saving failed.')}
  updateExerciseFeedback(id);
 }
 function stopRestClock(){
@@ -237,7 +294,7 @@ function closeRest(){
 function openRest(){
  restSeconds=90;restPaused=false;
  let next=activePlan?.ids.find(id=>!session?.sets.some(set=>set.exerciseId===id))||activePlan?.ids[0];
- const e=exercises.find(x=>x.id===next);
+ const e=libraryExercises().find(x=>x.id===next)||exercises.find(x=>x.id===next);
  $('restNextName').textContent=e?.name||'Continue workout';
  $('restNextReps').textContent=e?e.sets+' sets · '+e.reps+' reps':'';
  $('restScreen').hidden=false;
@@ -267,7 +324,7 @@ function saveAuth(data){originalSnapshot=null;
  const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
  sessionStorage.setItem(AUTH_KEY,JSON.stringify(session));auth=session;account=data.user;renderSettings();
 }
-function clearAuth(){sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;renderSettings();renderHistory();renderTracking();renderOriginalPlans()}
+function clearAuth(){cloudHistoryRequestId++;sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
 async function validateStoredAuth(){
  try{
   const saved=JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null');
@@ -312,7 +369,8 @@ function bind(){
  $('heroStart').addEventListener('click',()=>openWorkout(nextPlan().id));
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
  $('todayStart').addEventListener('click',()=>openWorkout(nextPlan().id));
- $('workoutGrid').addEventListener('click',e=>{const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
+ $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
+ $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts()}));
  ['loadOriginalHistory','loadOriginalTracking','loadOriginalPlans'].forEach(id=>$(id).addEventListener('click',viewOriginal));
  $('waterForm').addEventListener('submit',e=>logDaily(e,'water'));
  $('weightForm').addEventListener('submit',e=>logDaily(e,'weight'));
@@ -334,8 +392,234 @@ function bind(){
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ let pendingRecovery=null;
+ $('recoveryImportFile').addEventListener('change',async e=>{
+  pendingRecovery=null;
+  $('recoveryRestoreAction').disabled=true;
+  const status=$('recoveryImportResult'),file=e.target.files?.[0];
+  if(!file){status.textContent='No recovery file selected.';return}
+  if(file.size>4*1024*1024){status.textContent='Recovery file exceeds 4 MB.';return}
+  try{
+   const parsed=window.MLC2RecoveryImport.parse(await file.text());
+   const preview=window.MLC2RecoveryImport.planRestore(parsed,localStorage);
+   status.textContent='Backup '+parsed.created.slice(0,10)+': '+preview.writes.length+' categories absent, '+preview.identical.length+' already identical, '+preview.conflicts.length+' conflicting. '+(preview.canRestore?'Only absent categories can be restored.':'Conflicts detected: existing data will not be overwritten.')+' No photos or cloud records are included.';
+   if(preview.canRestore&&preview.writes.length){pendingRecovery=parsed;$('recoveryRestoreAction').disabled=false}
+  }catch(err){status.textContent='Rejected backup: '+String(err.message||err).slice(0,180)}
+ });
+ $('recoveryRestoreAction').addEventListener('click',()=>{
+  if(!pendingRecovery)return;
+  const preview=window.MLC2RecoveryImport.planRestore(pendingRecovery,localStorage);
+  if(!preview.canRestore){$('recoveryImportResult').textContent='Existing data changed or conflicts. Restore blocked.';$('recoveryRestoreAction').disabled=true;pendingRecovery=null;return}
+  if(!confirm('Restore '+preview.writes.length+' missing 2.0 storage categories in this browser? Existing records will NOT be replaced. Photos and cloud are unchanged.'))return;
+  try{
+   const result=window.MLC2RecoveryImport.restore(pendingRecovery,localStorage);
+   $('recoveryImportResult').textContent='Recovered '+result.restored+' missing storage categories. Reload this page to display recovered workout data.';
+   $('recoveryRestoreAction').disabled=true;pendingRecovery=null;
+  }catch(err){$('recoveryImportResult').textContent='Restore blocked: '+String(err.message||err).slice(0,180)}
+ });
+ $('dataHealthAction').addEventListener('click',()=>{
+  const output=$('dataHealthResult');
+  try{
+   const report=window.MLC2DataHealth.check(localStorage,libraryExercises(),plans);
+   output.replaceChildren();
+   const head=document.createElement('strong');head.textContent='Local data status: '+report.status.toUpperCase();output.append(head);
+   const summary=document.createElement('p');summary.textContent=Object.entries(report.counts).map(([key,value])=>key+': '+value).join(' · ');output.append(summary);
+   for(const line of [...report.errors,...report.warnings]){
+    const p=document.createElement('p');p.textContent=line;output.append(p);
+   }
+   if(report.status==='pass'){const note=document.createElement('p');note.textContent='No local data structure problems detected. This does not verify cloud sync or private photos.';output.append(note)}
+  }catch(err){output.textContent='Data check unavailable: '+String(err.message||err).slice(0,180)}
+ });
+ $('recoveryExportAction').addEventListener('click',()=>{
+  const output=$('recoveryExportResult');
+  try{
+   const result=window.MLC2Recovery.download(localStorage);
+   output.textContent='Local recovery file prepared ('+result.keys+' stored data categories; '+result.bytes+' bytes). Photos and account credentials are excluded.';
+  }catch(err){output.textContent='Backup export failed: '+String(err.message||err).slice(0,180)}
+ });
+ $('mappingPreviewAction').addEventListener('click',()=>{
+  const area=$('mappingPreviewResult');
+  try{
+   const plans=JSON.parse(localStorage.getItem('mlc2-custom-plans-v1')||'[]');
+   const result=window.MLC2LegacyMapper.summarize({
+    customPlans:plans,sessions:demoSessions,catalog:libraryExercises(),
+    existingPlans:originalSnapshot?.plans||[],existingSessions:originalSnapshot?.sessions||[]
+   });
+   const messages=[
+    'Convertible custom workouts: '+result.customWorkouts,
+    'Convertible sessions: '+result.sessions,
+    'Weighted sets: '+result.plannedSets,
+    'Rejected records: '+result.rejected.length,
+    'Potential ID collisions: '+(result.workoutIdCollisions.length+result.sessionIdCollisions.length)
+   ];
+   area.replaceChildren();
+   const summary=document.createElement('p');summary.textContent=messages.join(' · ');area.append(summary);
+   for(const message of result.warnings){const p=document.createElement('p');p.textContent=message;area.append(p)}
+   const safety=document.createElement('strong');safety.textContent='DRY RUN ONLY — no upload or restore is enabled.';area.append(safety);
+  }catch(err){area.textContent='Cannot prepare safe mapping: '+String(err.message||err).slice(0,200)}
+ });
+ $('checkpointCompareAction').addEventListener('click',async()=>{
+  const oldFile=$('checkpointBaselineFile').files?.[0];
+  const newFile=$('checkpointCurrentFile').files?.[0];
+  const output=$('checkpointReviewResult');output.replaceChildren();
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to the original account before comparing archives.';return}
+  if(!oldFile||!newFile){output.textContent='Choose both an older baseline and a newer cloud archive.';return}
+  if(oldFile.size>30*1024*1024||newFile.size>30*1024*1024){output.textContent='Archive exceeds the safe 30 MB limit.';return}
+  const owner=account.id,token=auth.access_token;
+  try{
+   const [baselineText,currentText]=await Promise.all([oldFile.text(),newFile.text()]);
+   if(account?.id!==owner||auth?.access_token!==token)throw Error('Account changed during comparison.');
+   const result=window.MLC2CheckpointReview.inspect({
+    baselineText,currentText,ownerId:owner,tables:window.PRISMStorageModel.TABLES,
+    archiveInspector:window.MLC2MigrationReadiness.inspectArchive
+   });
+   const heading=document.createElement('strong');heading.textContent='Cloud checkpoint comparison — no writes permitted';output.append(heading);
+   const numbers=[['Unchanged rows',result.changes.unchanged],['New rows',result.changes.added],
+    ['Changed rows',result.changes.changed],['Deleted rows',result.changes.deleted],
+    ['Revision anomalies',result.changes.revisionAnomalies],['Invalid revisions',result.changes.invalidRevision]];
+   for(const [label,n] of numbers){const p=document.createElement('p');p.textContent=label+': '+n;output.append(p)}
+   const notice=document.createElement('p');notice.textContent=result.checkpointCompatible?
+    'No deletion/revision anomalies found, but this is not a live or atomic checkpoint. Sync remains blocked.':
+    'Checkpoint anomalies or deletions detected. Sync remains blocked.';output.append(notice);
+   for(const reason of result.blockers){const p=document.createElement('p');p.textContent='Required: '+reason;output.append(p)}
+  }catch(error){output.textContent='Checkpoint comparison blocked: '+String(error.message||error).slice(0,190)}
+ });
+ $('loadCloudOriginalHistory').addEventListener('click',async()=>{
+  const button=$('loadCloudOriginalHistory'),output=$('cloudOriginalHistoryResults'),status=$('cloudOriginalHistoryStatus');
+  if(!account?.id||!auth?.access_token){status.textContent='Sign in to the original account to load cloud history.';return}
+  const owner=account.id,token=auth.access_token,requestId=++cloudHistoryRequestId;
+  button.disabled=true;cloudHistorySnapshot=null;output.replaceChildren();
+  status.textContent='Loading original cloud workout records (read-only). This may take several requests…';
+  try{
+   const view=await window.MLC2LiveOriginalHistory.load({
+    url:BACKEND,publishableKey:PUBLIC_KEY,token,userId:owner,
+    tables:window.PRISMStorageModel.TABLES,fetcher:fetch,makeUrl:address=>new URL(address),
+    archiveService:window.MLC2CloudArchive,historyViewer:window.MLC2CloudHistory,
+    inspector:window.MLC2MigrationReadiness.inspectArchive,storageModel:window.PRISMStorageModel,
+    stillAuthenticated:(userId,originalToken)=>requestId===cloudHistoryRequestId&&account?.id===userId&&auth?.access_token===originalToken
+   });
+   if(requestId!==cloudHistoryRequestId)return;
+   cloudHistorySnapshot=view;
+   window.MLC2CloudHistory.render(output,view,document);
+   status.textContent='Original cloud data loaded for this view only. '+view.sessionCount+' sessions · '+view.planCount+' custom workouts. Nothing was saved or synchronized.';
+  }catch(err){
+   if(requestId!==cloudHistoryRequestId)return;
+   cloudHistorySnapshot=null;output.replaceChildren();
+   status.textContent='Original cloud history unavailable: '+String(err.message||err).slice(0,200);
+  }finally{button.disabled=false}
+ });
+ $('cloudOriginalHistoryFile').addEventListener('change',async event=>{
+  const requestId=++cloudHistoryRequestId;
+  const output=$('cloudOriginalHistoryResults'),status=$('cloudOriginalHistoryStatus'),file=event.target.files?.[0];
+  output.replaceChildren();cloudHistorySnapshot=null;
+  status.textContent='No cloud archive loaded.';
+  if(!file)return;
+  if(file.size>30*1024*1024){status.textContent='Cloud archive is larger than 30 MB.';event.target.value='';return}
+  if(!account?.id||!auth?.access_token){status.textContent='Sign in to the original account before opening its history.';event.target.value='';return}
+  const owner=account.id,token=auth.access_token;
+  try{
+   const archiveText=await file.text();
+   if(requestId!==cloudHistoryRequestId||account?.id!==owner||auth?.access_token!==token)throw Error('Signed-in account or history view changed while reading archive');
+   const view=window.MLC2CloudHistory.open({
+    archiveText,ownerId:owner,tables:window.PRISMStorageModel.TABLES,
+    inspector:window.MLC2MigrationReadiness.inspectArchive,storageModel:window.PRISMStorageModel
+   });
+   if(requestId!==cloudHistoryRequestId)throw Error('Original archive view changed while loading');
+   cloudHistorySnapshot=view;
+   status.textContent='Original cloud archive opened for this session only. No cloud records or 2.0 history were changed.';
+   window.MLC2CloudHistory.render(output,view,document);
+  }catch(err){
+   if(requestId===cloudHistoryRequestId){
+    cloudHistorySnapshot=null;
+    status.textContent='Could not open original cloud history: '+String(err.message||err).slice(0,200);
+   }
+  }finally{event.target.value=''}
+ });
+ $('clearCloudOriginalHistory').addEventListener('click',()=>{
+  cloudHistoryRequestId++;cloudHistorySnapshot=null;$('cloudOriginalHistoryResults').replaceChildren();
+  $('cloudOriginalHistoryStatus').textContent='Original cloud archive cleared from memory.';
+ });
+ $('migrationReadinessFile').addEventListener('change',async e=>{
+  const file=e.target.files?.[0],output=$('migrationReadinessResult');
+  output.replaceChildren();
+  if(!file){output.textContent='No cloud archive chosen.';return}
+  if(file.size>30*1024*1024){output.textContent='Archive exceeds the safe 30 MB preview limit.';return}
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to the same original account before inspecting its archive.';return}
+  const owner=account.id;
+  try{
+   const contents=await file.text();
+   if(!account||account.id!==owner)throw Error('Signed-in account changed during inspection');
+   const plans=JSON.parse(localStorage.getItem('mlc2-custom-plans-v1')||'[]');
+   const sessions=JSON.parse(localStorage.getItem('mlc2-demo-workouts-v1')||'[]');
+   const result=window.MLC2MigrationReadiness.plan({
+    archiveText:contents,ownerId:owner,allowedTables:window.PRISMStorageModel.TABLES,
+    customPlans:plans,sessions,catalog:libraryExercises(),
+    mapper:window.MLC2LegacyMapper,storageModel:window.PRISMStorageModel
+   });
+   const metrics=[
+    ['Original cloud rows',result.cloudRows],['Original cloud workouts',result.originalWorkouts],
+    ['Original cloud sessions',result.originalSessions],['Local 2.0 custom workouts',result.localWorkouts],
+    ['Local 2.0 sessions',result.localSessions],['Convertible 2.0 workouts',result.convertibleWorkouts],
+    ['Convertible 2.0 sessions',result.convertibleSessions],['Convertible weighted sets',result.convertibleSets],
+    ['Rejected 2.0 records',result.rejected.length],['Original categories absent in archive',result.missingSourceCategories]
+   ];
+   const heading=document.createElement('strong');heading.textContent='Migration preview — READ ONLY; transfer blocked';output.append(heading);
+   for(const [label,value] of metrics){const row=document.createElement('p');row.textContent=label+': '+value;output.append(row)}
+   for(const message of result.blockers){const row=document.createElement('p');row.textContent='Blocked: '+message;output.append(row)}
+   for(const message of result.warnings.slice(0,6)){const row=document.createElement('p');row.textContent='Note: '+message;output.append(row)}
+  }catch(err){output.textContent='Cloud archive inspection blocked: '+String(err.message||err).slice(0,200)}
+  finally{e.target.value=''}
+ });
+ $('reviewLegacyMedia').addEventListener('click',()=>{
+  const root=$('legacyMediaReviewResults'),button=$('reviewLegacyMedia');
+  if(!root)return;
+  if(root.childElementCount){root.replaceChildren();button.textContent='Review 14 original image candidates';return}
+  try{
+   const report=window.MLC2LegacyMediaReview.render(root,libraryExercises(),document);
+   button.textContent='Hide original image candidates';
+   if(report.unmatched)notice(report.unmatched+' candidate images do not match a catalog ID.');
+  }catch(err){root.textContent='Media review unavailable: '+String(err.message||err).slice(0,180)}
+ });
+ $('cloudArchiveAction').addEventListener('click',async()=>{
+  const output=$('cloudArchiveResult'),button=$('cloudArchiveAction');
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before exporting original records.';return}
+  if(!confirm('Download a PRIVATE copy of your original cloud account records? The archive may contain personal health and workout information. Keep it somewhere secure. This will not synchronize or change any cloud data.'))return;
+  button.disabled=true;output.textContent='Reading your original account records (GET only)…';
+  const originalId=account.id,originalToken=auth.access_token;
+  try{
+   const archive=await window.MLC2CloudArchive.collect({
+    url:BACKEND,publishableKey:PUBLIC_KEY,token:originalToken,userId:originalId,
+    tables:window.PRISMStorageModel.TABLES,fetcher:fetch,makeUrl:address=>new URL(address)
+   });
+   // Do not allow an archive to be delivered if sign-in identity changed during the request.
+   if(account?.id!==originalId||auth?.access_token!==originalToken)throw Error('Account changed while reading; export cancelled');
+   const result=window.MLC2CloudArchive.download(archive,document,URL,Blob,callback=>setTimeout(callback,60000));
+   output.textContent='Original account archive prepared for download: '+result.records+' rows across '+result.tables+' table categories. Store this file privately. No data was changed.';
+  }catch(e){output.textContent='Cloud archive unavailable: '+String(e.message||e).slice(0,210)}
+  finally{button.disabled=false}
+ });
+ $('cloudPreviewAction').addEventListener('click',async()=>{
+  const output=$('cloudPreviewResult'),button=$('cloudPreviewAction');
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account first.';return}
+  button.disabled=true;output.textContent='Inspecting original cloud records without changing them…';
+  try{
+   const result=await window.MLC2SyncPreview.run({url:BACKEND,publishableKey:PUBLIC_KEY,token:auth.access_token,userId:account.id});
+   window.MLC2SyncPreview.render(output,result);
+  }catch(e){output.textContent='Read-only preview unavailable: '+String(e.message||e).slice(0,200)}
+  finally{button.disabled=false}
+ });
+ $('cloudAuditAction').addEventListener('click',async()=>{
+  const output=$('cloudAuditResult'),button=$('cloudAuditAction');
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before checking cloud compatibility.';return}
+  button.disabled=true;output.textContent='Checking authenticated records read-only…';
+  try{
+   const report=await window.MLC2CloudAudit.check({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,token:auth.access_token,userId:account.id});
+   window.MLC2CloudAudit.render(output,report);
+  }catch(err){output.textContent='Compatibility check unavailable: '+String(err.message||err).slice(0,160)}
+  finally{button.disabled=false}
+ });
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();
-document.body.classList.add('home-active');bind();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
+document.body.classList.add('home-active');bind();window.MLC2BodyProgress?.init();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
 })();
