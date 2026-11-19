@@ -26,7 +26,7 @@ function current(planId,day=today()){return read()[day+':'+planId]||'Normal'}
 function save(planId,value,day=today()){
  if(!planId||!DAYS.includes(value))return false;
  const entries=read();entries[day+':'+planId]=value;
- try{localStorage.setItem(KEY,JSON.stringify(entries));return true}catch{return false}
+ try{const payload=JSON.stringify(entries);localStorage.setItem(KEY,payload);return localStorage.getItem(KEY)===payload}catch{return false}
 }
 function weeklyGoal(storage=localStorage){
  try{const raw=storage.getItem(GOAL_KEY);if(raw===null)return 4;
