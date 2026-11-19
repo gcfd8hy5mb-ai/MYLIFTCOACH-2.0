@@ -202,8 +202,8 @@ function openWorkout(id){
  const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;
  const draftAPI=window.MLC2SessionDraft;
  const other=draftAPI?.read(localStorage);
- if(other?.sets.length&&other.planId!==id){
-  if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. Start a different workout and discard that draft?'))return;
+ if(other?.sets.length&&(other.planId!==id||JSON.stringify(other.ids)!==JSON.stringify(plan.ids))){
+  if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. The workout or exercise list differs. Start again and discard that older draft?'))return;
  }
  activePlan=plan;
  session={sets:draftAPI?.resume(localStorage,plan)||[]};
