@@ -451,6 +451,32 @@ function bind(){
    const safety=document.createElement('strong');safety.textContent='DRY RUN ONLY — no upload or restore is enabled.';area.append(safety);
   }catch(err){area.textContent='Cannot prepare safe mapping: '+String(err.message||err).slice(0,200)}
  });
+ $('checkpointCompareAction').addEventListener('click',async()=>{
+  const oldFile=$('checkpointBaselineFile').files?.[0];
+  const newFile=$('checkpointCurrentFile').files?.[0];
+  const output=$('checkpointReviewResult');output.replaceChildren();
+  if(!account?.id||!auth?.access_token){output.textContent='Sign in to the original account before comparing archives.';return}
+  if(!oldFile||!newFile){output.textContent='Choose both an older baseline and a newer cloud archive.';return}
+  if(oldFile.size>30*1024*1024||newFile.size>30*1024*1024){output.textContent='Archive exceeds the safe 30 MB limit.';return}
+  const owner=account.id,token=auth.access_token;
+  try{
+   const [baselineText,currentText]=await Promise.all([oldFile.text(),newFile.text()]);
+   if(account?.id!==owner||auth?.access_token!==token)throw Error('Account changed during comparison.');
+   const result=window.MLC2CheckpointReview.inspect({
+    baselineText,currentText,ownerId:owner,tables:window.PRISMStorageModel.TABLES,
+    archiveInspector:window.MLC2MigrationReadiness.inspectArchive
+   });
+   const heading=document.createElement('strong');heading.textContent='Cloud checkpoint comparison — no writes permitted';output.append(heading);
+   const numbers=[['Unchanged rows',result.changes.unchanged],['New rows',result.changes.added],
+    ['Changed rows',result.changes.changed],['Deleted rows',result.changes.deleted],
+    ['Revision anomalies',result.changes.revisionAnomalies],['Invalid revisions',result.changes.invalidRevision]];
+   for(const [label,n] of numbers){const p=document.createElement('p');p.textContent=label+': '+n;output.append(p)}
+   const notice=document.createElement('p');notice.textContent=result.checkpointCompatible?
+    'No deletion/revision anomalies found, but this is not a live or atomic checkpoint. Sync remains blocked.':
+    'Checkpoint anomalies or deletions detected. Sync remains blocked.';output.append(notice);
+   for(const reason of result.blockers){const p=document.createElement('p');p.textContent='Required: '+reason;output.append(p)}
+  }catch(error){output.textContent='Checkpoint comparison blocked: '+String(error.message||error).slice(0,190)}
+ });
  $('migrationReadinessFile').addEventListener('change',async e=>{
   const file=e.target.files?.[0],output=$('migrationReadinessResult');
   output.replaceChildren();
