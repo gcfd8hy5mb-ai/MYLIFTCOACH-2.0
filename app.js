@@ -135,7 +135,7 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
  if(next==='coaching')renderCoach();if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
-function nextPlan(){return window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
+function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:localStorage})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
@@ -144,6 +144,10 @@ function renderHome(){
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
 function renderWorkouts(){
+ window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
+  presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
+  storage:localStorage,onChanged:()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}
+ });
  $('workoutGrid').innerHTML=(window.MLC2Custom?.allPlans(plans)||plans).map((p,i)=>'<div class="workout-item"><button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>'+window.MLC2Custom.controls(p,nextPlan().id)+'</div>').join('');
 }
 // An external catalog is optional. Never treat a readable file as visually approved.
