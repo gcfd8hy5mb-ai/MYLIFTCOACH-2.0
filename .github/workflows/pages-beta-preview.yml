@@ -70,6 +70,8 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+      - name: Allow GitHub artifact metadata to become visible
+        run: sleep 20
       - name: Deploy to separate beta repository GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
