@@ -26,8 +26,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gcfd8hy5mb-ai/workout-tracker
-          ref: 703fadfebe67cb72825cef6b2693b8e1f0d729eb
+          ref: ac031d366887fcafa378dd40665b0eabe17c0083
           path: source
+          persist-credentials: false
+      - name: Checkout exact original approved visual assets (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 45f105cb94b72d16f15a67bcdb1a10722f1c44c8
+          path: original-approved
           persist-credentials: false
       - name: Package static beta preview only
         shell: bash
@@ -35,6 +42,12 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           cp -a source/myliftcoach2 dist/myliftcoach2
+          # Approved 11/16 marble texture and hero photography from the original
+          # visual preview. Never pull workout logic or user data from that repo.
+          cp original-approved/assets/approved-vertical-marble-sharp.webp dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
+          cp original-approved/assets/hero-dumbbells-photo.jpg dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
+          test -s dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
+          test -s dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
           cp -a source/persistence dist/persistence
           cp source/liftova-anatomy.css dist/liftova-anatomy.css
           python3 - <<'PY'
