@@ -1,0 +1,75 @@
+name: Publish isolated MYLIFTCOACH 2.0 iPhone beta preview
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/pages-beta-preview.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: myliftcoach2-beta-pages
+  cancel-in-progress: true
+
+jobs:
+  publish-beta-preview:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout approved MYLIFTCOACH 2.0 development snapshot (not production)
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/workout-tracker
+          ref: 361e1f867be7e1cdfdedc1e7f19f7a2ae8403278
+          path: source
+          persist-credentials: false
+      - name: Package static beta preview only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp -a source/myliftcoach2 dist/myliftcoach2
+          cp -a source/persistence dist/persistence
+          cp source/liftova-anatomy.css dist/liftova-anatomy.css
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class URLs(HTMLParser):
+              def __init__(self):super().__init__();self.urls=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag in ('script','img') and a.get('src'):self.urls.append(a['src'])
+                  if tag=='link' and a.get('href'):self.urls.append(a['href'])
+          root=Path('dist/myliftcoach2/index.html')
+          parser=URLs();parser.feed(root.read_text())
+          missing=[]
+          for raw in parser.urls:
+              uri=raw.split('?',1)[0]
+              if uri.startswith(('https:', 'http:', 'data:', '#', '/')):continue
+              if not (root.parent/uri).is_file():missing.append(uri)
+          if missing:raise SystemExit('Missing beta assets: '+repr(missing))
+          print('Verified',len(parser.urls),'HTML static asset links in isolated preview')
+          PY
+          cat > dist/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <meta http-equiv="refresh" content="0; url=./myliftcoach2/">
+          <title>MYLIFTCOACH 2.0 Beta</title></head>
+          <body><a href="./myliftcoach2/">Open MYLIFTCOACH 2.0 Beta</a></body>
+          </html>
+          HTML
+          touch dist/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy to separate beta repository GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
