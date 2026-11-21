@@ -30,5 +30,7 @@ jobs:
           node --check sync/cloud-session-inspection.js
           node --check sync/verified-auth.js
           node --check sync/completed-workout-bridge.js
+          node --check sync/account-recovery.js
+          node --check sync/account-draft-store.js
       - name: Run offline regression suite
         run: node tests/run-all.js
