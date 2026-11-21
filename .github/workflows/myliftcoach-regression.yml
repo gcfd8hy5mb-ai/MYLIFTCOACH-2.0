@@ -23,5 +23,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check integration JavaScript syntax
+        run: |
+          node --check app.js
+          node --check sync/account-workout-store.js
+          node --check sync/cloud-session-inspection.js
+          node --check sync/verified-auth.js
+          node --check sync/completed-workout-bridge.js
       - name: Run offline regression suite
         run: node tests/run-all.js
