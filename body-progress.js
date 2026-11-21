@@ -3,6 +3,9 @@
 (function(){
 'use strict';
 const MEASUREMENT_KEY='mlc2-measurements-v1';
+let owner=null;
+const measurementKey=()=>owner?MEASUREMENT_KEY+':user:'+owner:MEASUREMENT_KEY;
+function setOwner(id){if(id!==null&&!/^[a-zA-Z0-9_-]{1,128}$/.test(id||''))throw Error('Invalid measurement owner');owner=id;showMeasurements()}
 const PHOTO_DATABASE='mlc2-private-progress-photos-v1';
 const AREAS=['Waist','Chest','Arm','Thigh','Hips'];
 const MAX_PHOTOS=150;
@@ -17,11 +20,11 @@ function normalizeMeasurement(v){
 }
 function readMeasurements(){
  try{
-  const v=JSON.parse(localStorage.getItem(MEASUREMENT_KEY)||'[]');
+  const v=JSON.parse(localStorage.getItem(measurementKey())||'[]');
   return Array.isArray(v)?v.slice(0,1000).map(normalizeMeasurement).filter(Boolean):[];
  }catch{return []}
 }
-function saveMeasurements(rows){localStorage.setItem(MEASUREMENT_KEY,JSON.stringify(rows))}
+function saveMeasurements(rows){localStorage.setItem(measurementKey(),JSON.stringify(rows))}
 function measurementTrend(rows,area){
  return rows.filter(x=>x.area===area).sort((a,b)=>a.day.localeCompare(b.day)).slice(-12);
 }
@@ -153,5 +156,5 @@ function init(){
  showMeasurements();
  renderPhotos();
 }
-window.MLC2BodyProgress={AREAS,normalizeMeasurement,measurementTrend,readMeasurements,showMeasurements,renderPhotos,init};
+window.MLC2BodyProgress={AREAS,normalizeMeasurement,measurementTrend,readMeasurements,showMeasurements,renderPhotos,init,setOwner};
 })();
