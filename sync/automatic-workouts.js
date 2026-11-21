@@ -103,20 +103,24 @@
    const report=await inspected();
    if(!isActive())throw Error('Account changed');
    return {missing:report.missing.length,conflicts:report.conflicts.length,
-    existing:report.device.length,canRestore:report.conflicts.length===0&&
+    existing:report.device.length,canRestore:report.missing.length>0&&
     report.device.length+report.missing.length<=500};
   }
   async function restore({confirmRestore}={}){
    if(typeof confirmRestore!=='function')throw Error('Explicit restore confirmation required');
    const report=await inspected();
-   if(report.conflicts.length)throw Error('Cloud conflicts must be reviewed before restoration');
-   if(!report.missing.length)return {status:'up-to-date',restored:0};
+   // Conflicting same-ID records remain untouched, but independent missing
+   // cloud workouts can be restored safely and explicitly on this device.
+   if(!report.missing.length)return report.conflicts.length?
+    {status:'conflict',restored:0,conflicts:report.conflicts.length}:
+    {status:'up-to-date',restored:0,conflicts:0};
    if(report.device.length+report.missing.length>500)throw Error('Device workout limit reached');
    if(!await confirmRestore(report.missing.length))return {status:'cancelled',restored:0};
    if(!isActive())throw Error('Account changed while confirming recovery');
    // Re-fetch remotely and locally after confirmation, never trust a stale snapshot.
    const fresh=await inspected();
-   if(fresh.conflicts.length)throw Error('Cloud conflicts appeared; restoration blocked');
+   // Never overwrite an existing ID. A conflict in an unrelated existing
+   // record must not prevent restoring distinct, missing IDs.
    if(!isActive())throw Error('Account changed during restore');
    const latest=local(),byId=new Map(latest.map(x=>[x.id,x]));
    const added=[];
@@ -125,12 +129,14 @@
     else added.push(row);
    }
    if(latest.length+added.length>500)throw Error('Device workout limit reached');
-   if(!added.length)return {status:'up-to-date',restored:0};
+   if(!added.length)return {status:fresh.conflicts.length?'conflict':'up-to-date',
+    restored:0,conflicts:fresh.conflicts.length};
    const key=accountStore.key(owner),prior=storage.getItem(key);
    // Prevent concurrent edits from being overwritten.
    if(prior!==null&&prior!==JSON.stringify(latest))throw Error('Local history changed');
    accountStore.save(storage,owner,[...latest,...added].sort((a,b)=>Date.parse(b.created)-Date.parse(a.created)));
-   return {status:'restored',restored:added.length};
+   return {status:fresh.conflicts.length?'restored-with-conflicts':'restored',
+    restored:added.length,conflicts:fresh.conflicts.length};
   }
   return Object.freeze({queue,flush,previewRecovery,restore});
  }
