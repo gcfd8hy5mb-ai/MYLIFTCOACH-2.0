@@ -631,6 +631,36 @@ function bind(){
   }catch(err){output.textContent='Compatibility check unavailable: '+String(err.message||err).slice(0,160)}
   finally{button.disabled=false}
  });
+ $('inspectCloudSessions').addEventListener('click',async()=>{
+  const button=$('inspectCloudSessions'),output=$('inspectCloudSessionsStatus');
+  if(!verifiedOwnerId||account?.id!==verifiedOwnerId||!auth?.access_token){
+   output.textContent='Sign in and verify your account first.';return;
+  }
+  const owner=verifiedOwnerId,epoch=authEpoch;
+  button.disabled=true;output.textContent='Checking isolated cloud records (read only)…';
+  try{
+   const verifier=window.MLC2VerifiedAuth.create({
+    baseUrl:BACKEND,publishableKey:PUBLIC_KEY,enabled:true,
+    getSession:()=>auth,fetcher:fetch
+   });
+   const transport=window.MLC2SupabaseTransport.create({
+    baseUrl:BACKEND,publishableKey:PUBLIC_KEY,enabled:true,
+    getVerifiedAuth:()=>verifier.verify(owner),fetcher:fetch
+   });
+   const report=await window.MLC2CloudSessionInspection.inspect({
+    owner,auth:verifier,transport,local:demoSessions,
+    accountStillCurrent:id=>id===verifiedOwnerId&&id===account?.id&&epoch===authEpoch
+   });
+   if(epoch!==authEpoch||verifiedOwnerId!==owner)return;
+   output.textContent=report.cloudWorkouts+' cloud workouts available; '+
+     report.cloudOnly+' not present locally; '+report.idOverlaps+
+     ' matching IDs. Read-only inspection only. No workouts restored or uploaded.';
+  }catch(err){
+   if(epoch!==authEpoch||verifiedOwnerId!==owner)return;
+   output.textContent='Read-only cloud check unavailable: '+String(err.message||err).slice(0,145)+
+    '. Local history was not changed.';
+  }finally{button.disabled=false}
+ });
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();
