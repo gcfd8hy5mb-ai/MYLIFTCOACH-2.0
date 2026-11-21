@@ -119,3 +119,45 @@ test('same-ID conflicts with no other missing workouts report the conflict witho
  assert.equal(report.restored,0);assert.equal(report.conflicts,1);
  assert.equal(db.getItem(Store.key(owner)),before);
 });
+
+test('older owned Supabase session without ownerId restores safely with account owner stamped locally',async()=>{
+ const db=storage(),cloud=remote();
+ const historic=session('legacy-four');
+ delete historic.ownerId;
+ cloud.rows.set(owner+'/legacy-four',{owner,type:'session',id:'legacy-four',revision:1,deleted:false,payload:historic});
+ const eng=setup(db,cloud).engine;
+ const preview=await eng.previewRecovery();
+ assert.equal(preview.missing,1);
+ assert.equal(preview.conflicts,0);
+ const outcome=await eng.restore({confirmRestore:async n=>n===1});
+ assert.equal(outcome.restored,1);
+ const local=Store.read(db,owner);
+ assert.equal(local[0].ownerId,owner);
+ assert.equal(local[0].id,'legacy-four');
+ assert.equal(cloud.rows.get(owner+'/legacy-four').payload.ownerId,undefined,'cloud version stays unchanged');
+ assert.equal((await eng.flush()).status,'idle');
+ assert.equal(cloud.commits,0,'normalized legacy session is not uploaded as a duplicate');
+});
+test('existing local workout matching older cloud format is not a conflict',async()=>{
+ const db=storage(),cloud=remote(),recent=session('legacy-match');
+ Store.save(db,owner,[recent]);
+ const remoteCopy={...recent};delete remoteCopy.ownerId;
+ cloud.rows.set(owner+'/legacy-match',{owner,type:'session',id:'legacy-match',revision:1,deleted:false,payload:remoteCopy});
+ const report=await setup(db,cloud).engine.previewRecovery();
+ assert.equal(report.conflicts,0);assert.equal(report.missing,0);
+});
+test('legacy record is rejected when its verified cloud owner differs from the signed-in account',async()=>{
+ const db=storage(),cloud=remote(),historic=session('bad-owner');
+ delete historic.ownerId;
+ cloud.rows.set(owner+'/bad-owner',{owner:other,type:'session',id:'bad-owner',revision:1,deleted:false,payload:historic});
+ await assert.rejects(setup(db,cloud).engine.previewRecovery(),/Unverified|Invalid or unordered/);
+ assert.deepEqual(Store.read(db,owner),[]);
+});
+test('historic record carrying a different ownerId is never claimed for this account',async()=>{
+ const db=storage(),cloud=remote(),historic=session('foreign-payload',other);
+ cloud.rows.set(owner+'/foreign-payload',{owner,type:'session',id:'foreign-payload',revision:1,deleted:false,payload:historic});
+ const report=await setup(db,cloud).engine.previewRecovery();
+ assert.equal(report.missing,0);assert.equal(report.conflicts,1);
+ const response=await setup(db,cloud).engine.restore({confirmRestore:async()=>true});
+ assert.equal(response.status,'conflict');assert.equal(Store.read(db,owner).length,0);
+});
