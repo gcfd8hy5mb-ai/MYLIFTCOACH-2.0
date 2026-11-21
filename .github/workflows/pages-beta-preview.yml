@@ -60,6 +60,9 @@ jobs:
           mkdir -p dist/phone-test
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
             --exclude='*.md' phone-candidate/ dist/phone-test/
+          # Pin the same approved image assets as the unchanged beta.
+          cp original-approved/assets/approved-vertical-marble-sharp.webp dist/phone-test/assets/approved-vertical-marble-sharp.webp
+          cp original-approved/assets/hero-dumbbells-photo.jpg dist/phone-test/assets/hero-dumbbells-photo.jpg
           test -s dist/phone-test/index.html
           test -s dist/phone-test/app.js
           test -s dist/phone-test/sync/automatic-workouts.js
