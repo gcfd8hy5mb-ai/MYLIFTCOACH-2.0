@@ -941,9 +941,12 @@ function bind(){
     }
    });
    if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
-   if(result.status==='restored'){
+   if(result.status==='restored'||result.status==='restored-with-conflicts'){
     loadCurrentWorkouts();renderHome();renderProgress();renderHistory();if(page==='coaching')renderCoach();
-    setWorkoutSyncState('Recovered '+result.restored+' missing cloud workouts. Existing history preserved.');
+    setWorkoutSyncState('Recovered '+result.restored+' missing cloud workouts. '+
+      (result.conflicts?result.conflicts+' same-ID differences remain untouched.':'Existing history preserved.'));
+   }else if(result.status==='conflict'){
+    setWorkoutSyncState(result.conflicts+' same-ID workout differences need review. No workouts were overwritten or deleted.');
    }else setWorkoutSyncState(result.status==='cancelled'?'Recovery canceled; no records changed.':'All cloud workouts already present.');
   }catch(err){
    if(owner===verifiedOwnerId&&epoch===authEpoch)
