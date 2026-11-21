@@ -31,6 +31,7 @@ let verifiedOwnerId=null,authEpoch=0; // Never use an unverified cached identity
 let pendingAccountRecovery=null;
 let activeDraftStore=null,activeDraftOwner=null;
 let workoutSyncTimer=null,workoutSyncBusy=false,workoutSyncFailures=0;
+let syncAgainAfterCurrent=false;
 let workoutSyncText='Sign in to enable automatic workout sync.';
 let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
@@ -45,7 +46,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}workoutSyncFailures=0;verifiedOwnerId=owner;pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderSettings();if(page==='coaching')renderCoach();if(owner)scheduleWorkoutSync()}
+function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;verifiedOwnerId=owner;pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderSettings();if(page==='coaching')renderCoach();if(owner)scheduleWorkoutSync()}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
@@ -78,13 +79,15 @@ function syncEngine(owner){
 }
 function queueWorkoutForSync(entry){
  if(!verifiedOwnerId||entry?.ownerId!==verifiedOwnerId)return;
+ if(workoutSyncBusy){syncAgainAfterCurrent=true;setWorkoutSyncState('Workout saved locally — syncing after current upload.');return}
  try{syncEngine(verifiedOwnerId).queue(entry);
   setWorkoutSyncState(navigator.onLine?'Workout saved — queued for cloud sync.':'Saved offline — queued for cloud sync.');
  }catch{setWorkoutSyncState('Workout saved locally — cloud queue requires attention.')}
  scheduleWorkoutSync();
 }
 async function runWorkoutSync(){
- if(workoutSyncBusy||!verifiedOwnerId||account?.id!==verifiedOwnerId)return;
+ if(workoutSyncBusy){syncAgainAfterCurrent=true;return}
+ if(!verifiedOwnerId||account?.id!==verifiedOwnerId)return;
  if(!navigator.onLine){setWorkoutSyncState('Offline — workouts remain saved on device.');return}
  const owner=verifiedOwnerId,epoch=authEpoch;
  workoutSyncBusy=true;setWorkoutSyncState('Checking your private workout cloud…');
@@ -107,7 +110,7 @@ async function runWorkoutSync(){
   workoutSyncFailures=Math.min(6,workoutSyncFailures+1);
   setWorkoutSyncState('Cloud sync paused — workouts safe on device. Retrying.');
   scheduleWorkoutSync(Math.min(300000,5000*Math.pow(2,workoutSyncFailures-1)));
- }finally{workoutSyncBusy=false}
+ }finally{workoutSyncBusy=false;if(syncAgainAfterCurrent){syncAgainAfterCurrent=false;scheduleWorkoutSync(800)}}
 }
 
 
