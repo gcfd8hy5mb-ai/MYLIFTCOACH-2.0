@@ -67,8 +67,12 @@
     for(let i=0;i<aux.CONFIG.length;i++){
      if(!still())throw Error('Account changed');
      const config=aux.CONFIG[i],local=aux.loadLocal(storage,owner,config);
-     if(!local.exists||aux.empty(config,local.value)){skipped++;continue}
+     if(!local.exists){skipped++;continue}
      const row=records[i];
+     // An intentionally cleared category may be committed only when this
+     // device has a verified previous version. Never treat missing storage
+     // as permission to erase cloud data.
+     if(aux.empty(config,local.value)&&(!row||!baseline(config))){skipped++;continue}
      if(row?.deleted){conflicts++;continue}
      const existingPending=pending.find(op=>op.type===config.type&&op.id===aux.recordId(config));
      if(existingPending){
