@@ -44,6 +44,7 @@ const sessionRefresh=window.MLC2FreshAuth.create({
  }
 });
 let workoutSyncTimer=null,workoutSyncBusy=false,workoutSyncFailures=0;
+let auxSyncTimer=null,auxSyncAttempts=0,auxSyncMessage='Sign in for automatic fitness-data sync.';
 let syncAgainAfterCurrent=false,auxOperationBusy=false;
 let workoutSyncText='Sign in to enable automatic workout sync.';
 let demoSessions=loadDemo();
@@ -62,7 +63,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner)scheduleWorkoutSync()}
+function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
@@ -76,6 +77,51 @@ function scheduleWorkoutSync(delay=1500){
   workoutSyncTimer=null;
   if(owner===verifiedOwnerId&&epoch===authEpoch)void runWorkoutSync();
  },delay);
+}
+function setAuxSyncMessage(message){
+ auxSyncMessage=message;
+ const el=$('otherFitnessCloudStatus');if(el)el.textContent=message;
+}
+function scheduleAuxSync(delay=1800){
+ if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}
+ if(!verifiedOwnerId||account?.id!==verifiedOwnerId)return;
+ if(!navigator.onLine){setAuxSyncMessage('Offline — changes saved on device; backup retries when online.');return}
+ const owner=verifiedOwnerId,epoch=authEpoch;
+ auxSyncTimer=setTimeout(()=>{
+  auxSyncTimer=null;
+  if(owner===verifiedOwnerId&&epoch===authEpoch)void runAutomaticAuxSync();
+ },delay);
+}
+window.MLC2ScheduleAuxSync=()=>scheduleAuxSync(1800);
+async function runAutomaticAuxSync(){
+ if(!verifiedOwnerId||account?.id!==verifiedOwnerId)return;
+ if(workoutSyncBusy||auxOperationBusy){scheduleAuxSync(4000);return}
+ if(!navigator.onLine){setAuxSyncMessage('Offline — local fitness data is safe.');return}
+ const owner=verifiedOwnerId,epoch=authEpoch;
+ auxOperationBusy=true;
+ setAuxSyncMessage('Checking your account fitness-data backups…');
+ try{
+  const result=await auxEngine(owner).backup();
+  if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
+  if(result.status==='conflict'){
+   auxSyncAttempts=0;
+   setAuxSyncMessage('Needs review: another cloud version differs. No records overwritten.');
+   return;
+  }
+  if(result.status==='retry'||result.status==='unverified-ack')throw Error('Cloud backup needs retry');
+  if(result.status==='offline'){setAuxSyncMessage('Offline — account data safe on device.');return}
+  auxSyncAttempts=0;
+  if(result.pending>0){setAuxSyncMessage(result.pending+' queued fitness backups — retrying.');scheduleAuxSync(4000)}
+  else setAuxSyncMessage('Up to date · '+(result.uploaded||0)+' fitness categories uploaded.');
+ }catch{
+  if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
+  auxSyncAttempts=Math.min(6,auxSyncAttempts+1);
+  setAuxSyncMessage('Fitness data saved locally — cloud retry scheduled.');
+  scheduleAuxSync(Math.min(300000,5000*Math.pow(2,auxSyncAttempts-1)));
+ }finally{
+  auxOperationBusy=false;
+  renderSettings();
+ }
 }
 function auxEngine(owner){
  if(owner!==verifiedOwnerId||owner!==account?.id||!auth?.access_token)throw Error('Verified sign-in required');
@@ -178,7 +224,7 @@ function localDayString(){const d=new Date();return [d.getFullYear(),String(d.ge
 function loadLocalTracking(){
  try{const data=JSON.parse(localStorage.getItem(currentTrackingKey())||'[]');return Array.isArray(data)?data.filter(x=>x&&['water','weight'].includes(x.type)&&Number.isFinite(Number(x.value))&&Number(x.value)>0&&/^\d{4}-\d\d-\d\d$/.test(x.day)).slice(0,400):[]}catch{return []}
 }
-function persistLocalTracking(){const data=JSON.stringify(trackingEntries),key=currentTrackingKey();localStorage.setItem(key,data);if(localStorage.getItem(key)!==data)throw Error('Tracking data could not be verified')}
+function persistLocalTracking(){const data=JSON.stringify(trackingEntries),key=currentTrackingKey();localStorage.setItem(key,data);if(localStorage.getItem(key)!==data)throw Error('Tracking data could not be verified');try{window.MLC2ScheduleAuxSync?.()}catch{}}
 function formatDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString():String(value||'Unknown date')}
 function renderHistory(){
  const original=originalSnapshot?.sessions||[];
@@ -893,8 +939,8 @@ function bind(){
     setWorkoutSyncState('Recovery paused: '+String(err.message||err).slice(0,120)+'. Local records preserved.');
   }finally{button.disabled=!verifiedOwnerId}
  });
- window.addEventListener('online',()=>scheduleWorkoutSync(0));
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleWorkoutSync(1000)});
+ window.addEventListener('online',()=>{scheduleWorkoutSync(0);scheduleAuxSync(1200)});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){scheduleWorkoutSync(1000);scheduleAuxSync(1600)}});
  $('inspectCloudSessions').addEventListener('click',async()=>{
   const button=$('inspectCloudSessions'),output=$('inspectCloudSessionsStatus');
   if(!verifiedOwnerId||account?.id!==verifiedOwnerId||!auth?.access_token){
