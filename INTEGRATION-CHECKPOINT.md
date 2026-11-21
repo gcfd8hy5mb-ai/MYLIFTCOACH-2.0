@@ -61,3 +61,19 @@ The richer workout branch still stores 2.0 demo history under `mlc2-demo-workout
 3. Migrate auxiliary feature views still inspecting old demo keys, then verify all local-first Coach/workout/history views align after account changes.
 4. Run automated regressions on the integration branch and physical iPhone plus laptop acceptance.
 5. Only after verified RLS and recovery tests, separately authorize any real cloud writes and beta release promotion.
+
+## Read-only cloud inspection and no-eviction batch (2026-11-21)
+- Added `sync/cloud-session-inspection.js` with explicit owner-verified, paged read-only inspection of isolated 2.0 workout sessions. Checks remote owner and revision, rejects duplicate IDs/overlarge scans and account switching, compares IDs against signed-in local sessions. Returns counts only; **never restores or writes records**.
+- Added `Check cloud workouts` under Settings, wired to verified Supabase Auth and the existing isolated `mlc2_v1_list_sessions` RPC transport only on user click. Reports cloud-only/overlapping counts; rejects unverifiable accounts or unavailable RPCs without touching local data. Automatic upload remains OFF.
+- Fixed a malformed `catch` in the workout-completion handler; added explicit detection of owner change between opening and completing a workout.
+- Replaced silent `slice(0,100)` workout-history eviction with bounded, fail-closed storage up to 500 sessions. Old history is never dropped merely to save a new session.
+- Updated data-health reporting to examine active account sessions. Disabled the old guest-only recovery-export/restore UI for signed-in accounts to avoid a falsely complete backup or cross-account restore; account-aware recovery export remains outstanding.
+- Added `tests/cloud-session-inspection.test.cjs` and account-history retention cases to the test suite, plus CI `node --check` syntax checks for integration JavaScript.
+- Read-back verified new modules, HTML Settings button, script reference, regression runner inclusion, and preserved approved CSS link. **No passing CI result or browser/device acceptance is claimed here.** The container could not reach GitHub to run Node locally.
+
+### Next remaining critical tasks
+1. Verify GitHub Actions CI result, fix any test failure, and run physical iPhone/laptop inspection.
+2. Implement proper account-specific backup export/import with conflict-safe restore and on-device view refresh.
+3. Review isolated RPC availability/RLS with real two-account tests; only then introduce explicitly enabled upload and durable ack/retry.
+4. Confirm custom-plan priority, Coach and full exercise catalog on the integrated preview.
+5. Protect original production app and Supabase records from migration without separate authorization.
