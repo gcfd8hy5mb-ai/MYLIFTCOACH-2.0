@@ -28,7 +28,8 @@ const tests=[
  'automatic-workouts.test.cjs',
  'auxiliary-cloud.test.cjs',
  'account-custom-scoping.test.cjs',
- 'beta-access.test.cjs'
+ 'beta-access.test.cjs',
+ 'refresh-session.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
