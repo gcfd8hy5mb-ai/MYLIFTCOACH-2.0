@@ -1,0 +1,100 @@
+/* MYLIFTCOACH 2.0 beta — rich dark-teal card correction, 2026-11-20.
+   Presentation only. Preserve fixed marble wallpaper, gold outlines, layout,
+   navigational behavior, workout state, and production app. */
+
+:root {
+  --mlc-rich-teal-top:#04252d;
+  --mlc-rich-teal-mid:#04252d;
+  --mlc-rich-teal-base:#04252d;
+  --mlc-rich-teal-surface:linear-gradient(145deg,var(--mlc-rich-teal-top) 0%,var(--mlc-rich-teal-mid) 48%,var(--mlc-rich-teal-base) 100%);
+}
+
+/* Secondary content cards: one coherent teal material on every page. */
+#workouts .workout-card,
+#workouts .original-plan-panel,
+#library .library-card,
+#progress .metric,
+#progress .panel,
+#coaching .coach-card,
+#nutrition .panel,
+#settings .settings-panel,
+#history .panel,
+#tracking .panel,
+#home .home-below-fold .metric,
+#home .home-below-fold .panel,
+#home .home-below-fold .next-panel,
+#home .home-below-fold .activity-panel,
+#home .home-below-fold .preview-exercise,
+#home .home-below-fold .recent-item,
+.modal-panel .log-card,
+.rest-next {
+  background-color:#04252d!important;
+  background-image:var(--mlc-rich-teal-surface)!important;
+  background-position:center!important;
+  background-size:auto!important;
+}
+
+/* Secondary actions match cards without accidentally affecting gold primary CTAs. */
+#settings .account-menu button,
+#settings .button-outline,
+#settings .welcome-preview-link,
+#coaching .coach-links button,
+#library .filter-chips button:not(.selected),
+#home .home-below-fold .text-action,
+#home .home-below-fold .micro-tag,
+#history button.button-outline,
+#tracking button.button-outline,
+#workouts .original-plan-panel button.button-outline {
+  background-color:#04252d!important;
+  background-image:var(--mlc-rich-teal-surface)!important;
+  background-position:center!important;
+  background-size:auto!important;
+}
+
+/* Retain the six approved photo-backed home shortcuts, but reduce the
+   nearly-black photo tint so the teal material is visible. */
+#home .quick-grid button {
+  background-color:#04252d!important;
+  background-image:linear-gradient(110deg,rgba(3,32,38,.94),rgba(3,39,45,.88)),url('./assets/hero-dumbbells-photo.jpg?v=7')!important;
+  background-position:center,center 46%!important;
+  background-size:cover!important;
+}
+
+/* Do not alter the approved Today's Workout hero, marble background, navigation
+   bar, gold primary buttons, or modal entry fields. */
+
+/* One viewport-fixed wallpaper for every page, including Home.
+   Safari background-attachment:fixed on html/body is unreliable and can
+   change the marble crop as the document's scroll height changes. */
+@media(max-width:760px) {
+  html,
+  body,
+  body.home-active {
+    background-color:#0e5357!important;
+    background-image:none!important;
+    background-attachment:scroll!important;
+  }
+  body::before,
+  body.home-active::before,
+  body:not(.home-active)::before {
+    content:"";
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    pointer-events:none;
+    background-color:#0e5357;
+    background-image:url('./assets/approved-vertical-marble-sharp.webp?v=11');
+    background-position:center center;
+    background-size:cover;
+    background-repeat:no-repeat;
+  }
+  body .app-shell,
+  body.home-active .app-shell,
+  body:not(.home-active) .app-shell {
+    position:relative;
+    z-index:1;
+    background:transparent!important;
+  }
+}
