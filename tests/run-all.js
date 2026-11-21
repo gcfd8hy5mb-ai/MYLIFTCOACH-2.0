@@ -24,7 +24,8 @@ const tests=[
  'verified-auth.test.cjs',
  'cloud-session-inspection.test.cjs',
  'account-recovery.test.cjs',
- 'account-draft-store.test.cjs'
+ 'account-draft-store.test.cjs',
+ 'automatic-workouts.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
