@@ -36,5 +36,6 @@ jobs:
           node --check sync/auxiliary-cloud.js
           node --check custom-workouts.js
           node --check body-progress.js
+          node --check beta-access.js
       - name: Run offline regression suite
         run: node tests/run-all.js
