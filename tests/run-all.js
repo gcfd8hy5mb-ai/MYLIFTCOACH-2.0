@@ -27,6 +27,7 @@ const tests=[
  'account-draft-store.test.cjs',
  'automatic-workouts.test.cjs',
  'auxiliary-cloud.test.cjs',
+ 'auxiliary-revision.test.cjs',
  'account-custom-scoping.test.cjs',
  'beta-access.test.cjs',
  'refresh-session.test.cjs'
