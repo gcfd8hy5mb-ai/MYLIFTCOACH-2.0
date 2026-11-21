@@ -32,5 +32,6 @@ jobs:
           node --check sync/completed-workout-bridge.js
           node --check sync/account-recovery.js
           node --check sync/account-draft-store.js
+          node --check sync/automatic-workouts.js
       - name: Run offline regression suite
         run: node tests/run-all.js
