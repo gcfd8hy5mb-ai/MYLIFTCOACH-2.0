@@ -25,6 +25,7 @@ function save(storage,map){
  const json=JSON.stringify(map);
  storage.setItem(KEY,json);
  if(storage.getItem(KEY)!==json)throw Error('Weekly schedule was not retained');
+ try{if(typeof window!=='undefined')window.MLC2ScheduleAuxSync?.()}catch{}
  return map;
 }
 function assign(storage,day,id,plans){
@@ -49,6 +50,7 @@ function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date
 function clearOverride(storage){
  storage.removeItem(SELECTED);
  if(storage.getItem(SELECTED)!==null)throw Error('Unable to clear manual selection');
+ try{if(typeof window!=='undefined')window.MLC2ScheduleAuxSync?.()}catch{}
 }
 function render(root,{presets,custom,storage,onChanged,doc=document}){
  if(!root)return;
