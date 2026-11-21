@@ -4,6 +4,9 @@
 (function(){
 'use strict';
 const KEY='mlc2-coach-readiness-v1', GOAL_KEY='mlc2-weekly-goal-v1';
+let owner=null;
+const scoped=key=>owner?key+':user:'+owner:key;
+function setOwner(id){if(id!==null&&!/^[a-zA-Z0-9_-]{1,128}$/.test(id||''))throw Error('Invalid Coach account');owner=id}
 const DAYS=['Great','Normal','Tired'];
 const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
 function monday(date){
@@ -13,7 +16,7 @@ function monday(date){
 }
 function read(){
  try{
-  const raw=JSON.parse(localStorage.getItem(KEY)||'{}');
+  const raw=JSON.parse(localStorage.getItem(scoped(KEY))||'{}');
   if(!raw||typeof raw!=='object'||Array.isArray(raw))return {};
   const clean={};
   for(const [key,value] of Object.entries(raw).slice(-365)){
@@ -26,17 +29,17 @@ function current(planId,day=today()){return read()[day+':'+planId]||'Normal'}
 function save(planId,value,day=today()){
  if(!planId||!DAYS.includes(value))return false;
  const entries=read();entries[day+':'+planId]=value;
- try{const payload=JSON.stringify(entries);localStorage.setItem(KEY,payload);return localStorage.getItem(KEY)===payload}catch{return false}
+ try{const payload=JSON.stringify(entries);localStorage.setItem(scoped(KEY),payload);return localStorage.getItem(scoped(KEY))===payload}catch{return false}
 }
 function weeklyGoal(storage=localStorage){
- try{const raw=storage.getItem(GOAL_KEY);if(raw===null)return 4;
+ try{const raw=storage.getItem(scoped(GOAL_KEY));if(raw===null)return 4;
   const value=Number(raw);return Number.isInteger(value)&&value>=1&&value<=7?value:4;
  }catch{return 4}
 }
 function saveWeeklyGoal(value,storage=localStorage){
  const target=Number(value);
  if(!Number.isInteger(target)||target<1||target>7)return false;
- try{storage.setItem(GOAL_KEY,String(target));return storage.getItem(GOAL_KEY)===String(target)}catch{return false}
+ try{storage.setItem(scoped(GOAL_KEY),String(target));return storage.getItem(scoped(GOAL_KEY))===String(target)}catch{return false}
 }
 function weekSummary(sessions,now=new Date(),target=4){
  const start=monday(now),validTarget=Number.isInteger(target)&&target>=1&&target<=7?target:4;
@@ -69,7 +72,7 @@ function render(root,sessions,plan){
  '</select></label><p id="coachGoalNote" role="status" aria-live="polite"></p>'+
  '<div class="coach-weekly-progress" role="progressbar" aria-label="Weekly training goal" aria-valuemin="0" aria-valuemax="'+summary.target+'" aria-valuenow="'+Math.min(summary.sessions,summary.target)+'"><span style="width:'+target+'%"></span></div>'+
  '<p>'+summary.sessions+' of '+summary.target+' planned sessions · '+summary.sets+' weighted sets · '+Math.round(summary.volume).toLocaleString()+' lb total volume</p></div>'+
- '<p class="coach-readiness-help">Readiness is a personal check-in, not a medical assessment. No workout or training weight changes automatically. Saved only in this 2.0 browser.</p>';
+ '<p class="coach-readiness-help">Readiness is a personal check-in, not a medical assessment. No workout or training weight changes automatically. Saved to this 2.0 account on this device. Use Settings to back up your check-ins.</p>';
  root.querySelector('#coachWeeklyGoal').addEventListener('change',e=>{
   if(!saveWeeklyGoal(e.target.value)){
    root.querySelector('#coachGoalNote').textContent='Could not save weekly goal in this browser.';
@@ -84,5 +87,5 @@ function render(root,sessions,plan){
  });
 }
 function escapeText(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-window.MLC2CoachReadiness={monday,read,current,save,weeklyGoal,saveWeeklyGoal,weekSummary,render};
+window.MLC2CoachReadiness={monday,read,current,save,weeklyGoal,saveWeeklyGoal,weekSummary,render,setOwner};
 })();
