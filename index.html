@@ -186,6 +186,13 @@
 <button type="button" class="button-outline" id="restoreAccountWorkouts" disabled>Restore missing workouts</button>
 <p role="status" aria-live="polite" id="accountRecoveryStatus">Sign in to back up or recover this account's workouts.</p>
 </article>
+<article class="panel settings-panel" aria-label="Automatic isolated cloud sync">
+<div class="panel-heading"><h3>Automatic workout sync</h3><span class="micro-tag">ISOLATED 2.0</span></div>
+<p>Completed workouts are saved locally first, then synced to your verified account. Offline sessions retry on reconnect. Original MYLIFTCOACH records are not changed.</p>
+<p id="autoWorkoutSyncStatus" role="status" aria-live="polite">Sign in to enable automatic workout sync.</p>
+<button id="autoWorkoutSyncNow" type="button" class="button-outline">Sync workouts now</button>
+<button id="autoWorkoutRecover" type="button" class="button-outline">Restore missing cloud workouts</button>
+</article>
 <article class="panel settings-panel" aria-label="Read-only cloud workout check"><div class="panel-heading"><h3>Check cloud workouts</h3><span class="micro-tag">READ ONLY</span></div><p>See how many isolated 2.0 workouts are available for your signed-in account. No sessions are uploaded, restored, or overwritten.</p><button type="button" class="button-outline" id="inspectCloudSessions">Check cloud workouts</button><p id="inspectCloudSessionsStatus" role="status" aria-live="polite">Sign in to check the isolated cloud backup.</p></article><article class="panel mlc-legacy-media-panel"><div class="panel-heading"><h3>Original exercise images for review</h3><span class="micro-tag">14 SOURCE CANDIDATES · NOT APPROVED</span></div><p>Preview original-app exercise image candidates against their 2.0 exercise IDs. This does not import, approve, or replace exercise media. The independently approved 268 files still need their current manifest.</p><button id="reviewLegacyMedia" type="button" class="button-outline">Review 14 original image candidates</button><div id="legacyMediaReviewResults" aria-live="polite"></div></article>
 <article class="panel mlc-cloud-audit-panel"><div class="panel-heading"><h3>Cloud compatibility</h3><span class="micro-tag">READ-ONLY</span></div>
 <p>Check which original account record categories are accessible with your existing sign-in. This does not transfer, sync, edit, or delete any workout information. Run only when you want to verify compatibility.</p>
@@ -262,6 +269,7 @@
 <script defer src="./sync/cloud-session-inspection.js?v=1"></script>
 <script defer src="./sync/account-recovery.js?v=1"></script>
 <script defer src="./sync/account-draft-store.js?v=1"></script>
+<script defer src="./sync/automatic-workouts.js?v=1"></script>
 <!-- Isolated cloud dependencies are loaded but not activated; no automatic writes. -->
 <script defer src="./app.js?v=4"></script>
 </body>
