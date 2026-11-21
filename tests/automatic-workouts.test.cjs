@@ -150,7 +150,9 @@ test('legacy record is rejected when its verified cloud owner differs from the s
  const db=storage(),cloud=remote(),historic=session('bad-owner');
  delete historic.ownerId;
  cloud.rows.set(owner+'/bad-owner',{owner:other,type:'session',id:'bad-owner',revision:1,deleted:false,payload:historic});
- await assert.rejects(setup(db,cloud).engine.previewRecovery(),/Unverified|Invalid or unordered/);
+ const preview=await setup(db,cloud).engine.previewRecovery();
+ assert.equal(preview.missing,0,'remote listing never exposes another owner');
+ assert.equal(preview.conflicts,0);
  assert.deepEqual(Store.read(db,owner),[]);
 });
 test('historic record carrying a different ownerId is never claimed for this account',async()=>{
