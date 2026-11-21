@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: 1c8f99a3e6bc7cc2b287199e1d28edf593c038bd
+          ref: 9b463584c4aa6cef763310df834e25816cb0c87c
           path: phone-candidate
           persist-credentials: false
       - name: Package static beta preview only
