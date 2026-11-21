@@ -1,17 +1,40 @@
-/* MYLIFTCOACH 2.0 opt-in auxiliary cloud backup/recovery.
-   Reuses the original isolated RPC transport, journal and AuxData validators.
-   No automatic overwrite, deletion, guest transfer or original-app writes. */
+/* Account-scoped, opt-in auxiliary cloud backup and fill-only recovery.
+ * Supports continued backups via server revision checks against a previously
+ * confirmed account/device baseline. Never blindly overwrites cloud changes.
+ */
 (function(root,factory){
  const api=factory();
  if(typeof module==='object'&&module.exports)module.exports=api;
  else root.MLC2AuxCloud=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
+ const BASELINE_PREFIX='mlc2-aux-confirmed-v1:';
  function create({owner,storage,aux,Sync,transport,verify,active,online=()=>true}){
   if(!owner||!storage||!aux||!Sync||!transport||typeof verify!=='function'||typeof active!=='function')
    throw Error('Verified auxiliary backup dependencies required');
   let busy=false;
   const still=()=>active()===owner;
+  const baselineKey=config=>BASELINE_PREFIX+owner+':'+config.type+':'+aux.id;
+  function baseline(config){
+   const raw=storage.getItem(baselineKey(config));
+   if(raw===null)return null;
+   if(raw.length>120000)throw Error('Confirmed '+config.label+' baseline too large');
+   let b;
+   try{b=JSON.parse(raw)}catch{throw Error('Confirmed '+config.label+' baseline unreadable')}
+   if(!b||b.owner!==owner||b.type!==config.type||b.id!==aux.id||
+      !Number.isSafeInteger(b.revision)||b.revision<1||!aux.valid(config,b.entries))
+    throw Error('Confirmed '+config.label+' baseline invalid');
+   return b;
+  }
+  function remember(config,row){
+   const entries=aux.validateRemote(config,row);
+   const record=JSON.stringify({owner,type:config.type,id:aux.id,
+    revision:row.revision,entries});
+   if(record.length>120000)throw Error('Confirmed '+config.label+' baseline too large');
+   storage.setItem(baselineKey(config),record);
+   if(storage.getItem(baselineKey(config))!==record)
+    throw Error('Confirmed '+config.label+' baseline not retained');
+  }
   async function authorized(){
    if(!still())throw Error('Account changed');
    const auth=await verify(owner);
@@ -39,33 +62,63 @@
     const journal=Sync.create({owner,storage,transport,enabled:true});
     const pending=journal.list().items;
     let skipped=0,queued=0,conflicts=0;
-    const candidates=[];
-    for(let index=0;index<aux.CONFIG.length;index++){
+    const proposals=[],expected=new Map();
+    for(let i=0;i<aux.CONFIG.length;i++){
      if(!still())throw Error('Account changed');
-     const config=aux.CONFIG[index];
-     const local=aux.loadLocal(storage,owner,config);
+     const config=aux.CONFIG[i],local=aux.loadLocal(storage,owner,config);
      if(!local.exists||aux.empty(config,local.value)){skipped++;continue}
-     const row=records[index];
-     if(row&&!row.deleted){
-      const existing=aux.validateRemote(config,row);
-      if(aux.equal(existing,local.value))skipped++;else conflicts++;
-      continue;
-     }
+     const row=records[i];
      if(row?.deleted){conflicts++;continue}
-     if(pending.some(op=>op.type===config.type&&op.id===aux.id)){skipped++;continue}
-     candidates.push({config,value:local.value});
+     const existingPending=pending.find(op=>op.type===config.type&&op.id===aux.id);
+     if(existingPending){
+      if(existingPending.status==='conflict'||existingPending.kind!=='upsert'||
+         !aux.equal(existingPending.payload?.entries,local.value)){conflicts++;continue}
+      // Pending operation is immutable: replay the same ID rather than enqueue twice.
+      expected.set(config.type,existingPending.payload.entries);
+      skipped++;continue;
+     }
+     if(row){
+      const remote=aux.validateRemote(config,row);
+      if(aux.equal(remote,local.value)){
+       expected.set(config.type,local.value);
+       skipped++;continue;
+      }
+      // Update only if this device previously confirmed EXACTLY the version
+      // currently on the server. Never claim a foreign device's newer version.
+      const b=baseline(config);
+      if(!b||b.revision!==row.revision||!aux.equal(b.entries,remote)){
+       conflicts++;continue;
+      }
+      proposals.push({config,value:local.value,revision:row.revision});
+     }else proposals.push({config,value:local.value,revision:0});
+     expected.set(config.type,local.value);
     }
-    // Do not queue ANY new operation if a remote conflict exists.
     if(conflicts)return {status:'conflict',conflicts,queued:0,skipped,
       pending:journal.list().items.length};
-    for(const candidate of candidates){
+    for(const p of proposals){
      if(!still())throw Error('Account changed');
-     journal.enqueue(candidate.config.type,aux.id,aux.payload(candidate.value),0);queued++;
+     journal.enqueue(p.config.type,aux.id,aux.payload(p.value),p.revision);
+     queued++;
     }
     if(!still())throw Error('Account changed');
     const result=await journal.drain({verifiedOwner:owner,online:online(),maxOperations:50});
+    if(!still())throw Error('Account changed');
+    if(result.status==='conflict'||result.status==='retry'||result.status==='unverified-ack')
+     return {status:result.status,queued,uploaded:result.sent||0,skipped,
+       pending:result.pending,conflicts:result.status==='conflict'?1:0};
+    // Confirm actual cloud revisions before allowing a future local edit to
+    // overwrite a previously uploaded snapshot. Never store an unconfirmed base.
+    const after=await inspect();
+    let baselines=0;
+    for(let i=0;i<aux.CONFIG.length;i++){
+     const config=aux.CONFIG[i],row=after[i],wanted=expected.get(config.type);
+     if(!row||row.deleted||wanted===undefined)continue;
+     if(aux.equal(aux.validateRemote(config,row),wanted)){
+      remember(config,row);baselines++;
+     }
+    }
     return {status:result.status,queued,uploaded:result.sent||0,
-      skipped,pending:result.pending,conflicts:0};
+      skipped,pending:result.pending||0,conflicts:0,baselines};
    }finally{busy=false}
   }
   async function previewRecovery(){
@@ -89,7 +142,6 @@
     if(!first.canRestore)return {status:'up-to-date',restored:[]};
     if(!await confirmRestore(first.missing))return {status:'cancelled',restored:[]};
     if(!still())throw Error('Account changed during confirmation');
-    // Revalidate all records against current owner and local state after approval.
     const records=await inspect();
     if(!still())throw Error('Account changed');
     const restored=aux.restoreMissing(storage,owner,records.filter(Boolean));
@@ -98,5 +150,5 @@
   }
   return Object.freeze({backup,previewRecovery,restore});
  }
- return Object.freeze({create});
+ return Object.freeze({create,BASELINE_PREFIX});
 });
