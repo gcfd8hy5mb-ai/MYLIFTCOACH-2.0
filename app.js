@@ -30,6 +30,7 @@ let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
 let verifiedOwnerId=null,authEpoch=0; // Never use an unverified cached identity to access account history.
 let pendingAccountRecovery=null;
 let activeDraftStore=null,activeDraftOwner=null;
+let betaModeSaving=false;
 let workoutSyncTimer=null,workoutSyncBusy=false,workoutSyncFailures=0;
 let syncAgainAfterCurrent=false,auxOperationBusy=false;
 let workoutSyncText='Sign in to enable automatic workout sync.';
@@ -280,12 +281,33 @@ function renderProgressChart(){
  const fill='22,184 '+points+' '+xy[xy.length-1].x.toFixed(1)+',184';
  root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' locally saved practice sessions"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb-reps last session</p>';
 }
-function renderCoach(){const selected=nextPlan(),catalog=libraryExercises();window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected);window.MLC2CoachTrends?.render($('coachTrends'),demoSessions,window.MLC2CoachReadiness?.weeklyGoal()||4)}
+function renderCoach(){
+ const selected=nextPlan(),catalog=libraryExercises();
+ const mode=window.MLC2BetaAccess.resolve(verifiedOwnerId===account?.id?account:null);
+ const pro=mode.authorized&&mode.mode==='pro';
+ document.querySelectorAll('[data-pro-coach]').forEach(el=>{el.hidden=!pro});
+ const note=$('coachFreeNotice');if(note)note.hidden=pro;
+ if(pro){
+  window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
+  window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
+ }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren()}
+ window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
+ window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
+ window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected);
+ window.MLC2CoachTrends?.render($('coachTrends'),demoSessions,window.MLC2CoachReadiness?.weeklyGoal()||4);
+}
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (production workout data is not loaded)':'Not signed in. You can still explore the demo.';
  $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
  $('cloudPill').textContent=account?'ACCOUNT CONNECTED · DEMO':'DEMO WORKSPACE';
  $('authAction').textContent=account?'Sign out':'Sign in with existing account';
+ const beta=window.MLC2BetaAccess.resolve(verifiedOwnerId===account?.id?account:null);
+ const betaCard=$('betaAccessCard'),betaSelect=$('betaAccessSelect'),betaStatus=$('betaAccessStatus');
+ if(betaCard)betaCard.hidden=!beta.authorized;
+ if(betaSelect){betaSelect.disabled=!beta.authorized||betaModeSaving;betaSelect.value=beta.mode}
+ if(betaStatus&&!betaModeSaving)betaStatus.textContent=beta.authorized?
+   ('Current beta mode: '+beta.mode.toUpperCase()+' · saved in your account. No payment required.'):
+   'Beta switching is available only to server-authorized testers.';
  const syncNow=$('autoWorkoutSyncNow'),recoverCloud=$('autoWorkoutRecover');
  for(const key of ['backupOtherFitnessData','restoreOtherFitnessData']){const button=$(key);if(button)button.disabled=!verifiedOwnerId||auxOperationBusy}
  if(syncNow)syncNow.disabled=!verifiedOwnerId||workoutSyncBusy;
@@ -439,7 +461,7 @@ async function validateStoredAuth(){
   const user=await authRequest('user',null,token,'GET');
   if(thisEpoch!==authEpoch)return;
   if(!user?.id||user.id!==account?.id)clearAuth();
-  else switchWorkoutOwner(user.id);
+  else{account=user;auth.user=user;sessionStorage.setItem(AUTH_KEY,JSON.stringify(auth));switchWorkoutOwner(user.id)}
  }catch{if(thisEpoch===authEpoch)clearAuth()}
  if(thisEpoch===authEpoch)renderSettings();
 }
@@ -453,7 +475,7 @@ function openSignIn(){
    if(!response?.access_token||!response?.user?.id)throw Error('No verified account was returned.');
    const verified=await authRequest('user',null,response.access_token,'GET');
    if(!verified?.id||verified.id!==response.user.id)throw Error('Account identity could not be verified.');
-   authEpoch++;saveAuth(response);switchWorkoutOwner(verified.id);
+   authEpoch++;saveAuth({...response,user:verified});switchWorkoutOwner(verified.id);
    closeModal();notice('Account verified. Your local workouts are separated by account; cloud uploads remain off.');setPage('home');
   }catch(err){$('loginMessage').className='auth-error';$('loginMessage').textContent=err.name==='AbortError'?'The account service timed out.':/invalid/i.test(err.message)?'Email or password was not accepted.':'Could not sign in: '+String(err.message).slice(0,120)}
   finally{submit.disabled=false;submit.textContent='Sign in securely'}
@@ -811,6 +833,30 @@ function bind(){
  }
  $('backupOtherFitnessData').addEventListener('click',()=>void manageOtherData('backup'));
  $('restoreOtherFitnessData').addEventListener('click',()=>void manageOtherData('restore'));
+ $('betaAccessSelect').addEventListener('change',async valueEvent=>{
+  const select=valueEvent.currentTarget,output=$('betaAccessStatus'),requested=select.value;
+  const selectedOwner=verifiedOwnerId,epoch=authEpoch;
+  const before=window.MLC2BetaAccess.resolve(account).mode;
+  if(!selectedOwner||selectedOwner!==account?.id||betaModeSaving){select.value=before;return}
+  betaModeSaving=true;renderSettings();
+  output.textContent='Saving '+requested.toUpperCase()+' beta preference to this account…';
+  try{
+   const updated=await window.MLC2BetaAccess.change({
+    user:account,mode:requested,
+    verify:()=>authRequest('user',null,auth?.access_token,'GET'),
+    update:metadata=>authRequest('user',{data:metadata},auth?.access_token,'PUT'),
+    stillCurrent:id=>id===verifiedOwnerId&&id===account?.id&&epoch===authEpoch
+   });
+   if(epoch!==authEpoch||verifiedOwnerId!==selectedOwner)return;
+   const current=await authRequest('user',null,auth.access_token,'GET');
+   if(epoch!==authEpoch||current?.id!==selectedOwner)return;
+   account=current;auth.user=current;sessionStorage.setItem(AUTH_KEY,JSON.stringify(auth));
+   output.textContent=updated.mode.toUpperCase()+' beta access saved. No purchase required.';
+   renderCoach();
+  }catch(err){
+   if(epoch===authEpoch){output.textContent='Beta mode unchanged: '+String(err.message||err).slice(0,125);select.value=before}
+  }finally{betaModeSaving=false;renderSettings()}
+ });
  $('autoWorkoutSyncNow').addEventListener('click',()=>{scheduleWorkoutSync(0)});
  $('autoWorkoutRecover').addEventListener('click',async()=>{
   const button=$('autoWorkoutRecover'),output=$('autoWorkoutSyncStatus');
