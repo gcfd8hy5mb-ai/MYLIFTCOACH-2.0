@@ -24,7 +24,7 @@ function readMeasurements(){
   return Array.isArray(v)?v.slice(0,1000).map(normalizeMeasurement).filter(Boolean):[];
  }catch{return []}
 }
-function saveMeasurements(rows){localStorage.setItem(measurementKey(),JSON.stringify(rows))}
+function saveMeasurements(rows){localStorage.setItem(measurementKey(),JSON.stringify(rows));try{window.MLC2ScheduleAuxSync?.()}catch{}}
 function measurementTrend(rows,area){
  return rows.filter(x=>x.area===area).sort((a,b)=>a.day.localeCompare(b.day)).slice(-12);
 }
