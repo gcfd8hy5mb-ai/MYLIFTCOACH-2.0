@@ -70,3 +70,35 @@ test('a failed recovery read-back does not leave partial preferences behind',()=
  assert.throws(()=>Aux.restoreMissing(broken,owner,[record]),/write failed/);
  assert.equal(s.getItem(selected),null);
 });
+
+test('explicit account selection clear advances revision rather than restoring an old plan',async()=>{
+ const s=store(),remote=db();s.setItem(selected,'custom-press');
+ await engine(s,remote).backup();
+ s.setItem(selected,'');
+ const updated=await engine(s,remote).backup();
+ assert.equal(updated.uploaded,1);
+ const row=remote.records.get(owner+':goal:selected-workout-v1');
+ assert.equal(row.revision,2);assert.equal(row.payload.entries,'');
+ const second=store();const recovered=await engine(second,remote).restore({confirmRestore:async()=>true});
+ assert.equal(recovered.restored.includes('Selected workout'),false);
+ assert.equal(second.getItem(selected),null);
+});
+test('deleting last custom plan is backed up only after confirming a previous revision',async()=>{
+ const s=store(),remote=db(),key='mlc2-custom-plans-v1:user:'+owner;
+ s.setItem(key,JSON.stringify([{id:'custom-press',title:'Press',ids:['chest-press']}]));
+ await engine(s,remote).backup();
+ s.setItem(key,'[]');
+ const updated=await engine(s,remote).backup();
+ assert.equal(updated.uploaded,1);
+ assert.equal(remote.records.get(owner+':custom-plan:snapshot-v1').revision,2);
+ assert.deepEqual(remote.records.get(owner+':custom-plan:snapshot-v1').payload.entries,[]);
+});
+test('missing category storage never authorizes a cloud delete or empty snapshot',async()=>{
+ const s=store(),remote=db(),key='mlc2-custom-plans-v1:user:'+owner;
+ s.setItem(key,JSON.stringify([{id:'custom-press',title:'Press',ids:['chest-press']}]));
+ await engine(s,remote).backup();
+ s.removeItem(key);
+ const outcome=await engine(s,remote).backup();
+ assert.equal(outcome.uploaded,0);
+ assert.equal(remote.records.get(owner+':custom-plan:snapshot-v1').revision,1);
+});
