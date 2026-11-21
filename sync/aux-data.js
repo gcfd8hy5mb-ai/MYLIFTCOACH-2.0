@@ -87,9 +87,11 @@
   const written=[];
   try{
    for(const change of actions){
+    // Record the attempted mutation before read-back so even a partial or
+    // corrupted write is rolled back if verification fails.
+    written.push(change);
     store.setItem(change.key,change.value);
     if(store.getItem(change.key)!==change.value)throw Error('Write not verified');
-    written.push(change);
    }
   }catch{
    for(const change of [...written].reverse()){
