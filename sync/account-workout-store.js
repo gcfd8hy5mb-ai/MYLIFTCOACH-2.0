@@ -54,6 +54,17 @@
   if(storage.getItem(storageKey)!==payload)throw Error('Workout was not retained in browser storage');
   return entries;
  }
- function clear(storage,owner){storage.removeItem(key(owner))}
+ function clear(storage,owner){
+  if(owner!==null){storage.removeItem(key(owner));return}
+  const raw=storage.getItem(LEGACY_KEY);
+  if(raw===null)return;
+  const all=JSON.parse(raw);
+  if(!Array.isArray(all))throw Error('Legacy history invalid; cannot clear');
+  const protectedRows=all.filter(entry=>entry&&entry.ownerId);
+  // Validate before changing guest history. Preserve tagged records in-place.
+  if(protectedRows.length){const next=JSON.stringify(protectedRows);
+   read({getItem:()=>next},null);storage.setItem(LEGACY_KEY,next);
+  }else storage.removeItem(LEGACY_KEY);
+ }
  return Object.freeze({LEGACY_KEY,PREFIX,key,read,save,clear});
 });
