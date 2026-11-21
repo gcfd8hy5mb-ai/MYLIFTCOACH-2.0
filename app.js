@@ -210,6 +210,7 @@ function renderSettings(){
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
 function openWorkout(id){
+ const workoutStartedOwner=verifiedOwnerId;
  const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;
  const draftAPI=window.MLC2SessionDraft;
  const other=draftAPI?.read(localStorage);
@@ -226,17 +227,18 @@ function openWorkout(id){
  $('cancelWorkout').addEventListener('click',closeModal);
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',()=>{
+  if(workoutStartedOwner!==verifiedOwnerId){notice('Account changed during this workout. Return to the original account or restart before saving.');return}
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
   const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(verifiedOwnerId?{ownerId:verifiedOwnerId}:{})};
   // Persist first. A failed local write must not create a phantom completed workout.
-  const proposed=[entry,...demoSessions].slice(0,100);
+  const proposed=[entry,...demoSessions]; // No silent history eviction.
   try{
    window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed);
    demoSessions=proposed;
    // Safe no-op until account-scoped cloud journaling is explicitly enabled.
    try{window.MLC2CompletedSync?.stage({session:entry,verifiedOwner:account?.id,
     storage:localStorage,journal:null,enabled:false})}catch{}
-   try{window.MLC2SessionDraft?.clear(localStorage,plan.id)}catch{
+   try{window.MLC2SessionDraft?.clear(localStorage,plan.id)}catch{}
    closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
   }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
