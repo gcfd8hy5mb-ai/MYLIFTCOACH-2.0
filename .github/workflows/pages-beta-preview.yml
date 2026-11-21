@@ -70,10 +70,6 @@ jobs:
           test -s dist/phone-test/assets/approved-vertical-marble-sharp.webp
           test -s dist/phone-test/assets/hero-dumbbells-photo.jpg
           # A NEW URL defeats Safari/PWA caches from previous test versions.
-          cp -a dist/phone-test dist/phone-test-b
-          grep -q 'iPhone cloud test build 11-21B' dist/phone-test-b/index.html
-          grep -q 'restored-with-conflicts' dist/phone-test-b/sync/automatic-workouts.js
-          grep -q 'app.js?v=6' dist/phone-test-b/index.html
           cp -a dist/phone-test dist/phone-test-c
           grep -q 'iPhone cloud test build 11-21C' dist/phone-test-c/index.html
           grep -q 'normalizeCloudSession' dist/phone-test-c/sync/automatic-workouts.js
