@@ -20,7 +20,8 @@ const tests=[
  'supabase-transport.test.cjs',
  'aux-data.test.cjs',
  'completed-workout-bridge.test.cjs',
- 'account-workout-store.test.cjs'
+ 'account-workout-store.test.cjs',
+ 'verified-auth.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
