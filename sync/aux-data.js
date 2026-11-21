@@ -27,7 +27,7 @@
  }
  const equal=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
  function valid(config,payload){
-  if(config.kind==='selected-workout')return typeof payload==='string'&&planId.test(payload);
+  if(config.kind==='selected-workout')return typeof payload==='string'&&(payload===''||planId.test(payload));
   if(config.kind==='coach-weekly-goal')return Number.isInteger(payload)&&payload>=1&&payload<=7;
   if(config.kind==='weekly-schedule')
    return !!payload&&typeof payload==='object'&&!Array.isArray(payload)&&
