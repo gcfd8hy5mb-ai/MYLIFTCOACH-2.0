@@ -29,7 +29,7 @@ function current(planId,day=today()){return read()[day+':'+planId]||'Normal'}
 function save(planId,value,day=today()){
  if(!planId||!DAYS.includes(value))return false;
  const entries=read();entries[day+':'+planId]=value;
- try{const payload=JSON.stringify(entries);localStorage.setItem(scoped(KEY),payload);return localStorage.getItem(scoped(KEY))===payload}catch{return false}
+ try{const payload=JSON.stringify(entries);localStorage.setItem(scoped(KEY),payload);if(localStorage.getItem(scoped(KEY))!==payload)return false;try{window.MLC2ScheduleAuxSync?.()}catch{}return true}catch{return false}
 }
 function weeklyGoal(storage=localStorage){
  try{const raw=storage.getItem(scoped(GOAL_KEY));if(raw===null)return 4;
@@ -39,7 +39,7 @@ function weeklyGoal(storage=localStorage){
 function saveWeeklyGoal(value,storage=localStorage){
  const target=Number(value);
  if(!Number.isInteger(target)||target<1||target>7)return false;
- try{storage.setItem(scoped(GOAL_KEY),String(target));return storage.getItem(scoped(GOAL_KEY))===String(target)}catch{return false}
+ try{storage.setItem(scoped(GOAL_KEY),String(target));if(storage.getItem(scoped(GOAL_KEY))!==String(target))return false;try{window.MLC2ScheduleAuxSync?.()}catch{}return true}catch{return false}
 }
 function weekSummary(sessions,now=new Date(),target=4){
  const start=monday(now),validTarget=Number.isInteger(target)&&target>=1&&target<=7?target:4;
