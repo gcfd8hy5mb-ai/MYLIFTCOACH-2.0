@@ -315,7 +315,7 @@ function renderSettings(){
  $('authAction').textContent=account?'Sign out':'Sign in with existing account';
  const beta=window.MLC2BetaAccess.resolve(verifiedOwnerId===account?.id?account:null);
  const betaCard=$('betaAccessCard'),betaSelect=$('betaAccessSelect'),betaStatus=$('betaAccessStatus');
- if(betaCard)betaCard.hidden=!beta.authorized;
+ if(betaCard)betaCard.hidden=!verifiedOwnerId;
  if(betaSelect){betaSelect.disabled=!beta.authorized||betaModeSaving;betaSelect.value=beta.mode}
  if(betaStatus&&!betaModeSaving)betaStatus.textContent=beta.authorized?
    ('Current beta mode: '+beta.mode.toUpperCase()+' · saved in your account. No payment required.'):
