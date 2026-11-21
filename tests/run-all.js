@@ -19,7 +19,8 @@ const tests=[
  'sync-journal.test.cjs',
  'supabase-transport.test.cjs',
  'aux-data.test.cjs',
- 'completed-workout-bridge.test.cjs'
+ 'completed-workout-bridge.test.cjs',
+ 'account-workout-store.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
