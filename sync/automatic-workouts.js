@@ -12,6 +12,23 @@
   value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canon(value[k])])):value;
  const same=(a,b)=>JSON.stringify(canon(a))===JSON.stringify(canon(b));
  const idOk=id=>typeof id==='string'&&/^[a-zA-Z0-9_:.\-]{1,160}$/.test(id);
+ function normalizeCloudSession(row,owner){
+  if(!row||row.owner!==owner||row.type!=='session'||row.deleted||!idOk(row.id))return null;
+  const p=row.payload;
+  if(!p||typeof p!=='object'||Array.isArray(p)||p.id!==row.id||
+     (p.ownerId!==undefined&&p.ownerId!==owner)||
+     typeof p.title!=='string'||!p.title.trim()||p.title.length>200||
+     typeof p.created!=='string'||!Number.isFinite(Date.parse(p.created))||
+     typeof p.planId!=='string'||!idOk(p.planId)||
+     !Array.isArray(p.sets)||p.sets.length<1||p.sets.length>250||
+     !p.sets.every(x=>x&&typeof x==='object'&&!Array.isArray(x)&&
+       idOk(x.exerciseId)&&Number.isFinite(x.weight)&&x.weight>=0&&x.weight<=1500&&
+       Number.isInteger(x.reps)&&x.reps>=1&&x.reps<=100))return null;
+  // Trust the verified RPC envelope's authenticated owner, not an untrusted
+  // client-side or historical payload owner. Preserve all workout fields.
+  return {...p,ownerId:owner};
+ }
+
  function create({owner,storage,accountStore,Sync,transport,verify,active,online=()=>true}){
   if(!owner||!storage||!accountStore||!Sync||!transport||typeof verify!=='function'||
      typeof active!=='function')throw Error('Authenticated sync dependencies required');
@@ -47,20 +64,14 @@
     if(record.ownerId!==owner)throw Error('Foreign device workout');
     const cloud=byId.get(record.id);
     if(!cloud)newLocal.push(record);
-    else if(cloud.deleted||!same(cloud.payload,record))conflicts.push(record.id);
+    else if(cloud.deleted||!same(normalizeCloudSession(cloud,owner),record))conflicts.push(record.id);
     else matched.push(record.id);
    }
    const ids=new Set(device.map(row=>row.id));
    for(const row of rows){
     if(row.deleted||ids.has(row.id))continue;
-    const payload=row.payload;
-    if(!payload||payload.ownerId!==owner||payload.id!==row.id||
-       !idOk(payload.id)||!Array.isArray(payload.sets)||!payload.sets.length||
-       !payload.sets.every(s=>s&&typeof s.exerciseId==='string'&&
-         Number.isFinite(Number(s.weight))&&Number(s.weight)>=0&&
-         Number.isInteger(Number(s.reps))&&Number(s.reps)>0)){
-      conflicts.push(row.id);continue;
-    }
+    const payload=normalizeCloudSession(row,owner);
+    if(!payload){conflicts.push(row.id);continue}
     missing.push(payload);
    }
    return {device,rows,missing,conflicts,matched,newLocal};
@@ -140,5 +151,5 @@
   }
   return Object.freeze({queue,flush,previewRecovery,restore});
  }
- return Object.freeze({create,same});
+ return Object.freeze({create,same,normalizeCloudSession});
 });
