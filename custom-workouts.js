@@ -76,7 +76,7 @@ function handleClick(e,onChanged){
  const del=e.target.closest('[data-custom-delete]');if(del){
   const id=del.dataset.customDelete,items=read(),item=items.find(x=>x.id===id);if(!item)return true;
   if(!confirm('Delete '+item.title+'? Workout history will remain.'))return true;
-  try{persistPlans(items.filter(x=>x.id!==id));if(localStorage.getItem(scoped(TODAY))===id)localStorage.removeItem(scoped(TODAY))}catch{alert('Could not delete workout.');return true}
+  try{persistPlans(items.filter(x=>x.id!==id));if(localStorage.getItem(scoped(TODAY))===id){if(owner)localStorage.setItem(scoped(TODAY),'');else localStorage.removeItem(scoped(TODAY))}}catch{alert('Could not delete workout.');return true}
   onChanged?.();return true;
  }
  return false;
