@@ -338,6 +338,8 @@ async function validateStoredAuth(){
   let token=saved.access_token;
   if(saved.expires_at<Date.now()/1000+45&&saved.refresh_token){
     const refreshed=await authRequest('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
+    if(thisEpoch!==authEpoch)return; // Sign-out or account switch during refresh.
+    if(!refreshed?.user?.id||refreshed.user.id!==saved.user.id)throw Error('Refreshed account mismatch');
     saveAuth(refreshed);token=refreshed.access_token;
   }else{auth=saved;account=saved.user}
   const user=await authRequest('user',null,token,'GET');
