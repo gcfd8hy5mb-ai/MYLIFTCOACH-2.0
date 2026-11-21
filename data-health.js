@@ -12,7 +12,7 @@ const KEYS=[
 const SELECTED='mlc2-selected-workout-v1';
 const obj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const own=(v,k)=>Object.prototype.hasOwnProperty.call(v,k);
-function check(storage,catalog=[],presets=[]){
+function check(storage,catalog=[],presets=[],currentSessions=null){
  if(typeof storage?.getItem!=='function')throw Error('Browser storage is unavailable');
  const values=Object.create(null),errors=[],warnings=[],counts=Object.create(null),present=[];
  for(const key of KEYS){
@@ -23,7 +23,7 @@ function check(storage,catalog=[],presets=[]){
   catch{errors.push('Invalid JSON: '+key)}
  }
  const custom=values['mlc2-custom-plans-v1']??[];
- const sessions=values['mlc2-demo-workouts-v1']??[];
+ const sessions=currentSessions===null?(values['mlc2-demo-workouts-v1']??[]):currentSessions;
  const tracking=values['mlc2-local-daily-v1']??[];
  const measures=values['mlc2-measurements-v1']??[];
  const readiness=values['mlc2-coach-readiness-v1']??{};
