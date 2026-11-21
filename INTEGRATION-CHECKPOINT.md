@@ -137,3 +137,11 @@ The richer workout branch still stores 2.0 demo history under `mlc2-demo-workout
 1. See actual PR #3 regression workflow result and fix failures, if any.
 2. Provision trusted beta testers via server-side account metadata using authorized admin tools only; test Free/Pro change on the same account on iPhone and laptop.
 3. Confirm cloud recovery and custom-plan priority in the integrated branch and approve release only when the full regression suite passes.
+
+## Backend readiness and safe credential renewal — November 21, 2026
+- Connected PRISM Supabase project was inspected **read-only**: isolated RPCs `mlc2_v1_commit`, `mlc2_v1_read`, `mlc2_v1_list_sessions` exist; `mlc2_private.records` and `mlc2_private.receipts` have RLS enabled; all three RPC functions are security invoker.
+- Read-only authorization count: **0 accounts with either private beta tester app_metadata flag**. No user was enrolled and no account data changed. See `BETA-ACCESS-ADMIN-SETUP.md` for restricted tester provisioning.
+- Added `sync/refresh-session.js`, integrated into isolated workout syncing, auxiliary backups and private beta preference updates. It avoids expiry retry loops, shares a pending refresh across concurrent checks, verifies the server-returned user ID, and refuses to save a refreshed session after sign-out or account switching.
+- Added `tests/refresh-session.test.cjs` to the regression runner and CI JS parse check. Connector-executed smoke checks verified one refresh across two concurrent requests and reuse of the refreshed token; all edited modules parsed successfully.
+- Signed-in accounts now see the private-beta section even when unapproved, with a disabled selector and an authorization explanation. This avoids silently hiding the reason access is unavailable.
+- **Still not a green release:** PR #3 remains draft. No complete GitHub Actions result was returned by accessible checks, no live Auth user metadata update was attempted, and no physical iPhone/laptop acceptance was performed.
