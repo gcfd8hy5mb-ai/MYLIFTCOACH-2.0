@@ -50,7 +50,18 @@ let workoutSyncText='Sign in to enable automatic workout sync.';
 let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 const currentTrackingKey=()=>verifiedOwnerId?TRACK_KEY+':user:'+verifiedOwnerId:TRACK_KEY;
-const planStorage=()=>{const map=k=>verifiedOwnerId&&['mlc2-selected-workout-v1','mlc2-weekly-schedule-v1'].includes(k)?k+':user:'+verifiedOwnerId:k;return {getItem:k=>localStorage.getItem(map(k)),setItem:(k,v)=>localStorage.setItem(map(k),v),removeItem:k=>localStorage.removeItem(map(k))}};
+const planStorage=()=>{
+ const selected='mlc2-selected-workout-v1';
+ const map=k=>verifiedOwnerId&&[selected,'mlc2-weekly-schedule-v1'].includes(k)?k+':user:'+verifiedOwnerId:k;
+ return {
+  getItem:k=>{const raw=localStorage.getItem(map(k));return verifiedOwnerId&&k===selected&&raw===''?null:raw},
+  setItem:(k,v)=>localStorage.setItem(map(k),v),
+  removeItem:k=>{
+   if(verifiedOwnerId&&k===selected){localStorage.setItem(map(k),'');try{window.MLC2ScheduleAuxSync?.()}catch{}}
+   else localStorage.removeItem(map(k));
+  }
+ };
+};
 const healthStorage=()=>({getItem:k=>{const scoped=['mlc2-custom-plans-v1','mlc2-local-daily-v1','mlc2-measurements-v1','mlc2-selected-workout-v1','mlc2-weekly-schedule-v1','mlc2-coach-readiness-v1','mlc2-weekly-goal-v1'];return localStorage.getItem(verifiedOwnerId&&scoped.includes(k)?k+':user:'+verifiedOwnerId:k)}});
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
