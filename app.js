@@ -422,6 +422,7 @@ function bind(){
   }catch(err){status.textContent='Rejected backup: '+String(err.message||err).slice(0,180)}
  });
  $('recoveryRestoreAction').addEventListener('click',()=>{
+  if(verifiedOwnerId){$('recoveryImportResult').textContent='Legacy guest recovery cannot run while signed in. Account history was not changed.';return}
   if(!pendingRecovery)return;
   const preview=window.MLC2RecoveryImport.planRestore(pendingRecovery,localStorage);
   if(!preview.canRestore){$('recoveryImportResult').textContent='Existing data changed or conflicts. Restore blocked.';$('recoveryRestoreAction').disabled=true;pendingRecovery=null;return}
@@ -435,7 +436,7 @@ function bind(){
  $('dataHealthAction').addEventListener('click',()=>{
   const output=$('dataHealthResult');
   try{
-   const report=window.MLC2DataHealth.check(localStorage,libraryExercises(),plans);
+   const report=window.MLC2DataHealth.check(localStorage,libraryExercises(),plans,demoSessions);
    output.replaceChildren();
    const head=document.createElement('strong');head.textContent='Local data status: '+report.status.toUpperCase();output.append(head);
    const summary=document.createElement('p');summary.textContent=Object.entries(report.counts).map(([key,value])=>key+': '+value).join(' · ');output.append(summary);
@@ -447,6 +448,7 @@ function bind(){
  });
  $('recoveryExportAction').addEventListener('click',()=>{
   const output=$('recoveryExportResult');
+  if(verifiedOwnerId){output.textContent='This older backup format covers guest data only, not your signed-in account workouts. Export is blocked to avoid an incomplete recovery file.';return}
   try{
    const result=window.MLC2Recovery.download(localStorage);
    output.textContent='Local recovery file prepared ('+result.keys+' stored data categories; '+result.bytes+' bytes). Photos and account credentials are excluded.';
