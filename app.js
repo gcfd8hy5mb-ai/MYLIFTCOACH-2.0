@@ -50,7 +50,7 @@ let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 const currentTrackingKey=()=>verifiedOwnerId?TRACK_KEY+':user:'+verifiedOwnerId:TRACK_KEY;
 const planStorage=()=>{const map=k=>verifiedOwnerId&&['mlc2-selected-workout-v1','mlc2-weekly-schedule-v1'].includes(k)?k+':user:'+verifiedOwnerId:k;return {getItem:k=>localStorage.getItem(map(k)),setItem:(k,v)=>localStorage.setItem(map(k),v),removeItem:k=>localStorage.removeItem(map(k))}};
-const healthStorage=()=>({getItem:k=>{const scoped=['mlc2-custom-plans-v1','mlc2-local-daily-v1','mlc2-measurements-v1','mlc2-selected-workout-v1','mlc2-weekly-schedule-v1'];return localStorage.getItem(verifiedOwnerId&&scoped.includes(k)?k+':user:'+verifiedOwnerId:k)}});
+const healthStorage=()=>({getItem:k=>{const scoped=['mlc2-custom-plans-v1','mlc2-local-daily-v1','mlc2-measurements-v1','mlc2-selected-workout-v1','mlc2-weekly-schedule-v1','mlc2-coach-readiness-v1','mlc2-weekly-goal-v1'];return localStorage.getItem(verifiedOwnerId&&scoped.includes(k)?k+':user:'+verifiedOwnerId:k)}});
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
 let cloudHistorySnapshot=null; // in-memory, account-bound, original archive only
@@ -62,7 +62,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner)scheduleWorkoutSync()}
+function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner)scheduleWorkoutSync()}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
