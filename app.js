@@ -368,7 +368,7 @@ function renderCoach(){
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (production workout data is not loaded)':'Not signed in. You can still explore the demo.';
  $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
- $('cloudPill').textContent=account?'ACCOUNT CONNECTED · DEMO':'DEMO WORKSPACE';
+ $('cloudPill').textContent=verifiedOwnerId&&account?.id===verifiedOwnerId?'ACCOUNT CONNECTED · 2.0 SYNC':'DEMO WORKSPACE';
  $('authAction').textContent=account?'Sign out':'Sign in with existing account';
  const beta=window.MLC2BetaAccess.resolve(verifiedOwnerId===account?.id?account:null);
  const betaCard=$('betaAccessCard'),betaSelect=$('betaAccessSelect'),betaStatus=$('betaAccessStatus');
@@ -386,7 +386,12 @@ function renderSettings(){
  if(accountBackup)accountBackup.disabled=!verifiedOwnerId;
  if(accountFile)accountFile.disabled=!verifiedOwnerId;
  if(restore)restore.disabled=!verifiedOwnerId||!pendingAccountRecovery;
- if(!verifiedOwnerId&&$('accountRecoveryStatus'))$('accountRecoveryStatus').textContent='Sign in to back up or recover this account’s workouts.';
+ const backupStatus=$('accountRecoveryStatus');
+ if(backupStatus){
+  if(!verifiedOwnerId)backupStatus.textContent='Sign in to back up or recover this account’s workouts.';
+  else if(backupStatus.textContent.startsWith('Sign in'))
+   backupStatus.textContent='Signed in · account workout backup and recovery are available.';
+ }
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
