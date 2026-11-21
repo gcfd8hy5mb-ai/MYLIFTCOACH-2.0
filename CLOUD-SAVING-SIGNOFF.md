@@ -20,7 +20,7 @@ PR: https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/pull/3 (DRAFT, unmerged)
 - Tests are developer-side and mocked; **they are not a substitute for a full official Node/GitHub Actions run or an actual authenticated two-device acceptance pass.**
 
 ## Remaining release verification — NOT code development
-1. Full GitHub Actions Node regression result for draft PR #3 is unconfirmed; the reporting connector returns no PR run for current commits. Do not mark CI PASS.
+1. **PASS — GitHub Actions Node regression.** Run 44954019974 passed the "offline-regressions" job, including JavaScript syntax checks and the full `node tests/run-all.js` suite on merge-resolved candidate commit `2c465762b68ffefaa6c0a37c5b35dd2444cdc5e0`. See https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/actions/runs/44954019974.
 2. Genuine signed-in integrated iPhone + laptop check: complete a new workout, confirm upload, sign in with same account on second device, restore missing history, modify and recover a custom plan and Coach schedule, verify no cross-account access.
 3. Confirm browser storage restrictions, account session renewal and retry after network loss in the actual deployed candidate before merging.
 4. Review and approve promotion from draft PR #3 to `main`. No production merge has been performed.
@@ -30,4 +30,4 @@ PR: https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/pull/3 (DRAFT, unmerged)
 - Nutrition interface is still a placeholder. Existing supported local nutrition data may be backed up, but meal entry capability is a separate feature task.
 - No unauthorized beta users were granted Free/Pro switching; beta access authorization is independent of cloud saving.
 
-**Result: Core cloud-saving implementation is code-complete on the draft integration branch, NOT yet a confirmed live release.**
+**Result: Core cloud-saving implementation and official offline CI are complete on the draft integration branch. Physical iPhone/laptop acceptance and release authorization are still pending.**
