@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: 2b8144511ea89cfd6a0153d0355ba0a5b88ec2d4
+          ref: f1dede5135bc770686b481360b4ab076982d661d
           path: phone-candidate
           persist-credentials: false
       - name: Package static beta preview only
@@ -74,6 +74,10 @@ jobs:
           grep -q 'iPhone cloud test build 11-21B' dist/phone-test-b/index.html
           grep -q 'restored-with-conflicts' dist/phone-test-b/sync/automatic-workouts.js
           grep -q 'app.js?v=6' dist/phone-test-b/index.html
+          cp -a dist/phone-test dist/phone-test-c
+          grep -q 'iPhone cloud test build 11-21C' dist/phone-test-c/index.html
+          grep -q 'normalizeCloudSession' dist/phone-test-c/sync/automatic-workouts.js
+          grep -q 'app.js?v=7' dist/phone-test-c/index.html
           cp -a source/persistence dist/persistence
           cp source/liftova-anatomy.css dist/liftova-anatomy.css
           python3 - <<'PY'
