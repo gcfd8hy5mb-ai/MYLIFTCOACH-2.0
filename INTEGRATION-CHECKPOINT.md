@@ -77,3 +77,19 @@ The richer workout branch still stores 2.0 demo history under `mlc2-demo-workout
 3. Review isolated RPC availability/RLS with real two-account tests; only then introduce explicitly enabled upload and durable ack/retry.
 4. Confirm custom-plan priority, Coach and full exercise catalog on the integrated preview.
 5. Protect original production app and Supabase records from migration without separate authorization.
+
+## Account-specific recovery and draft isolation (2026-11-21)
+- New `sync/account-recovery.js` implements a local JSON backup containing only the verified account's completed workouts. The file includes no authentication token or photo data. Restoration is additive only; matching IDs with different content block the entire operation and no existing workout is replaced.
+- New Settings actions: `Download account workouts`, choose backup file, `Restore missing workouts`. Account owner is rechecked after file reading and after confirmation. Successful restores refresh the current Home/Progress/History/Coach views. No Supabase writes.
+- The previous guest-only backup remains separate; signed-in users now have their own account-workout export and recovery, instead of a misleading guest-only export.
+- New `sync/account-draft-store.js` scopes unfinished 2.0 workout drafts by owner. Guest data stays in the original draft key; account A and B drafts cannot be cross-resumed. Set logging and undo reject account switching during an active workout.
+- Added `tests/account-recovery.test.cjs` and `tests/account-draft-store.test.cjs` to the offline runner. CI syntax verification expanded for the new modules.
+- **Scope:** Integration branch only. Existing production app, GitHub Pages main beta, and original Supabase records remain unchanged. Automatic cloud upload remains OFF.
+- **Verification:** GitHub fetch confirms committed code and test files. GitHub Actions green status, physical-browser testing, and the new Settings UI are not independently confirmed in this session. An attempted local GitHub clone failed because github.com DNS was unavailable.
+- Existing prior automated cloud-sync test results remain retained. This is a new integration surface, not a request to repeat completed core sync testing.
+
+### Release blockers remain
+1. Full integration regression CI must pass, including login, account switch, completed workout, drafts, new backup/restore and Coach.
+2. Integrate the proven isolated automatic sync and recovery logic from the separate draft branch without overwriting the richer Coach/library branch.
+3. Confirm genuine 2.0 account-specific recovery on a second device as the integration acceptance delta; no production migration before sign-off.
+4. Finish beta Free/Pro entitlement and subscription separation.
