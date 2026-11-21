@@ -29,6 +29,7 @@ const $=(id)=>document.getElementById(id);
 let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
 let verifiedOwnerId=null,authEpoch=0; // Never use an unverified cached identity to access account history.
 let pendingAccountRecovery=null;
+let activeDraftStore=null,activeDraftOwner=null;
 let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
@@ -214,18 +215,19 @@ function renderSettings(){
  if(!verifiedOwnerId&&$('accountRecoveryStatus'))$('accountRecoveryStatus').textContent='Sign in to back up or recover this account’s workouts.';
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
-function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
+function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
 function openWorkout(id){
  const workoutStartedOwner=verifiedOwnerId;
  const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;
  const draftAPI=window.MLC2SessionDraft;
- const other=draftAPI?.read(localStorage);
+ const draftStore=window.MLC2AccountDraft.scope(localStorage,workoutStartedOwner);
+ const other=draftAPI?.read(draftStore);
  if(other?.sets.length&&(other.planId!==id||JSON.stringify(other.ids)!==JSON.stringify(plan.ids))){
   if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. The workout or exercise list differs. Start again and discard that older draft?'))return;
  }
- activePlan=plan;
- session={sets:draftAPI?.resume(localStorage,plan)||[]};
- try{draftAPI?.save(localStorage,plan,session.sets)}
+ activePlan=plan;activeDraftStore=draftStore;activeDraftOwner=workoutStartedOwner;
+ session={sets:draftAPI?.resume(draftStore,plan)||[]};
+ try{draftAPI?.save(draftStore,plan,session.sets)}
  catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
  openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p><div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
  renderWorkoutLog();
@@ -244,7 +246,7 @@ function openWorkout(id){
    // Safe no-op until account-scoped cloud journaling is explicitly enabled.
    try{window.MLC2CompletedSync?.stage({session:entry,verifiedOwner:account?.id,
     storage:localStorage,journal:null,enabled:false})}catch{}
-   try{window.MLC2SessionDraft?.clear(localStorage,plan.id)}catch{}
+   try{window.MLC2SessionDraft?.clear(activeDraftStore,plan.id)}catch{}
    closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
   }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
@@ -268,6 +270,7 @@ function updateExerciseFeedback(id){
 }
 function addSet(id){
  if(!session||!activePlan?.ids.includes(id))return;
+ if(activeDraftOwner!==verifiedOwnerId){notice('Account changed; restart the workout before logging sets.');return}
  const weightField=document.querySelector('[data-weight="'+id+'"]');
  const repsField=document.querySelector('[data-reps="'+id+'"]');
  if(!weightField||!repsField)return;
@@ -276,17 +279,18 @@ function addSet(id){
   notice('Enter a valid weight and rep count.');return;
  }
  session.sets.push({exerciseId:id,weight,reps});
- try{window.MLC2SessionDraft?.save(localStorage,activePlan,session.sets)}
+ try{window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)}
  catch{notice('Set logged in memory, but browser draft saving failed.')}
  // Update only this exercise: never erase inputs, keyboard focus, or scroll position.
  updateExerciseFeedback(id);
 }
 function undoSet(id){
  if(!session||!activePlan?.ids.includes(id))return;
+ if(activeDraftOwner!==verifiedOwnerId){notice('Account changed; restart the workout before changing sets.');return}
  const index=session.sets.findLastIndex(x=>x.exerciseId===id);
  if(index<0)return;
  session.sets.splice(index,1);
- try{window.MLC2SessionDraft?.save(localStorage,activePlan,session.sets)}
+ try{window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)}
  catch{notice('Set removed in memory, but browser draft saving failed.')}
  updateExerciseFeedback(id);
 }
