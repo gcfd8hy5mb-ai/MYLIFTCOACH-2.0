@@ -108,3 +108,18 @@ The richer workout branch still stores 2.0 demo history under `mlc2-demo-workout
 - Run GitHub CI and address any actual regression; verify account-specific backup and recovery with live 2.0 account across iPhone and laptop. Avoid repeating already-passed original automated tests.
 - Reconcile optional non-session auxiliary category cloud backups (custom plans, measurements, food, water/weight, goals), whose old keys may not yet match new owner scopes.
 - Cloud sync is implemented in the unmerged integration branch; not released to current users.
+
+## Auxiliary cloud data integration — 2026-11-21
+- Custom workout creation/edit/delete now operates on the account-specific `mlc2-custom-plans-v1:user:<owner>` key while guests retain `mlc2-custom-plans-v1`; selected workout and weekly schedule use owner-scoped browser keys. These operations do not migrate old guest data into an account automatically.
+- Daily water and weight entries now use owner-specific keys for signed-in accounts and guest keys otherwise; body measurement entries likewise use `mlc2-measurements-v1:user:<owner>`. Switching owner refreshes visible tracking/measurement/custom-workout data.
+- Added `sync/auxiliary-cloud.js`, backed by the pre-existing isolated transport, durable journal and `sync/aux-data.js` validators, for **user-triggered** cloud backup and fill-only recovery across supported, populated categories: custom workouts, measurements, daily tracking, meals and nutrition goals. The current Nutrition view is still a placeholder; meal/goal creation was **not** completed by this batch.
+- Added Settings actions `Back up other data` and `Recover missing data`. Before any new journal enqueue, the system checks every available remote snapshot and refuses the new backup if any existing snapshot differs. No automatic replacement, delete or guest-data migration.
+- Automatic completed-workout cloud sync pauses while an auxiliary backup or recovery operation uses the shared durable journal, then resumes. Original production app and database objects remain untouched.
+- Added `tests/auxiliary-cloud.test.cjs` and `tests/account-custom-scoping.test.cjs` to the integrated runner; expanded CI syntax checks. During this session the connector-fetched JS compiled successfully, simulated owner-scoped custom routines remained isolated, and a mocked auxiliary cloud flow uploaded once, avoided duplicate upload, and restored the water log to a second empty account workspace.
+- **No full GitHub CI green status or actual device / live RPC acceptance was confirmed in this session.** Previous automated cloud-sync verification is retained; only changed integration behavior needs additional checks.
+
+### Integration scope not to misstate as complete
+- Nutrition page is a placeholder, not a finished food/macro entry UI.
+- Existing guest data is preserved separately and needs explicit, user-approved migration if required.
+- Private progress photos are not included in auxiliary cloud snapshots.
+- An unmerged integration branch does not prove the live main beta has these changes.
