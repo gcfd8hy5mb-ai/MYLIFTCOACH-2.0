@@ -31,6 +31,9 @@ let verifiedOwnerId=null,authEpoch=0; // Never use an unverified cached identity
 let pendingAccountRecovery=null;
 let activeDraftStore=null,activeDraftOwner=null;
 let betaModeSaving=false;
+const GUEST_BETA_KEY='mlc2-guest-beta-mode-v1';
+const readGuestBeta=()=>{try{return sessionStorage.getItem(GUEST_BETA_KEY)||'free'}catch{return 'free'}};
+const betaView=()=>window.MLC2BetaAccess.resolve(verifiedOwnerId===account?.id?account:null,readGuestBeta());
 const sessionRefresh=window.MLC2FreshAuth.create({
  getSession:()=>auth,
  getOwner:()=>verifiedOwnerId===account?.id?verifiedOwnerId:null,
@@ -352,8 +355,8 @@ function renderProgressChart(){
 }
 function renderCoach(){
  const selected=nextPlan(),catalog=libraryExercises();
- const mode=window.MLC2BetaAccess.resolve(verifiedOwnerId===account?.id?account:null);
- const pro=mode.authorized&&mode.mode==='pro';
+ const mode=betaView();
+ const pro=mode.mode==='pro';
  document.querySelectorAll('[data-pro-coach]').forEach(el=>{el.hidden=!pro});
  const note=$('coachFreeNotice');if(note)note.hidden=pro;
  if(pro){
@@ -370,13 +373,13 @@ function renderSettings(){
  $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
  $('cloudPill').textContent=verifiedOwnerId&&account?.id===verifiedOwnerId?'ACCOUNT CONNECTED · 2.0 SYNC':'DEMO WORKSPACE';
  $('authAction').textContent=account?'Sign out':'Sign in with existing account';
- const beta=window.MLC2BetaAccess.resolve(verifiedOwnerId===account?.id?account:null);
+ const beta=betaView();
  const betaCard=$('betaAccessCard'),betaSelect=$('betaAccessSelect'),betaStatus=$('betaAccessStatus');
- if(betaCard)betaCard.hidden=!verifiedOwnerId;
- if(betaSelect){betaSelect.disabled=!beta.authorized||betaModeSaving;betaSelect.value=beta.mode}
- if(betaStatus&&!betaModeSaving)betaStatus.textContent=beta.authorized?
+ if(betaCard)betaCard.hidden=false;
+ if(betaSelect){betaSelect.disabled=betaModeSaving;betaSelect.value=beta.mode}
+ if(betaStatus&&!betaModeSaving)betaStatus.textContent=verifiedOwnerId?
    ('Current beta mode: '+beta.mode.toUpperCase()+' · saved in your account. No payment required.'):
-   'Beta switching is available only to server-authorized testers.';
+   ('Current beta mode: '+beta.mode.toUpperCase()+' · guest preview saved for this browser session. Sign in to save across devices.');
  const syncNow=$('autoWorkoutSyncNow'),recoverCloud=$('autoWorkoutRecover');
  for(const key of ['backupOtherFitnessData','restoreOtherFitnessData']){const button=$(key);if(button)button.disabled=!verifiedOwnerId||auxOperationBusy}
  if(syncNow)syncNow.disabled=!verifiedOwnerId||workoutSyncBusy;
@@ -910,8 +913,17 @@ function bind(){
  $('betaAccessSelect').addEventListener('change',async valueEvent=>{
   const select=valueEvent.currentTarget,output=$('betaAccessStatus'),requested=select.value;
   const selectedOwner=verifiedOwnerId,epoch=authEpoch;
-  const before=window.MLC2BetaAccess.resolve(account).mode;
-  if(!selectedOwner||selectedOwner!==account?.id||betaModeSaving){select.value=before;return}
+  const before=betaView().mode;
+  if(betaModeSaving){select.value=before;return}
+  if(!selectedOwner||selectedOwner!==account?.id){
+   if(!window.MLC2BetaAccess.modes.includes(requested)){select.value=before;return}
+   try{
+    sessionStorage.setItem(GUEST_BETA_KEY,requested);
+    output.textContent=requested.toUpperCase()+' preview enabled for this browser session. No payment required.';
+    renderCoach();
+   }catch{select.value=before;output.textContent='Unable to save this guest preview mode.'}
+   return;
+  }
   betaModeSaving=true;renderSettings();
   output.textContent='Saving '+requested.toUpperCase()+' beta preference to this account…';
   try{
