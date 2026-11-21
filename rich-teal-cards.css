@@ -3,9 +3,9 @@
    navigational behavior, workout state, and production app. */
 
 :root {
-  --mlc-rich-teal-top:#052b33;
-  --mlc-rich-teal-mid:#052b33;
-  --mlc-rich-teal-base:#052b33;
+  --mlc-rich-teal-top:#04252d;
+  --mlc-rich-teal-mid:#04252d;
+  --mlc-rich-teal-base:#04252d;
   --mlc-rich-teal-surface:linear-gradient(145deg,var(--mlc-rich-teal-top) 0%,var(--mlc-rich-teal-mid) 48%,var(--mlc-rich-teal-base) 100%);
 }
 
@@ -28,7 +28,7 @@
 #home .home-below-fold .recent-item,
 .modal-panel .log-card,
 .rest-next {
-  background-color:#052b33!important;
+  background-color:#04252d!important;
   background-image:var(--mlc-rich-teal-surface)!important;
   background-position:center!important;
   background-size:auto!important;
@@ -45,7 +45,7 @@
 #history button.button-outline,
 #tracking button.button-outline,
 #workouts .original-plan-panel button.button-outline {
-  background-color:#052b33!important;
+  background-color:#04252d!important;
   background-image:var(--mlc-rich-teal-surface)!important;
   background-position:center!important;
   background-size:auto!important;
@@ -54,8 +54,8 @@
 /* Retain the six approved photo-backed home shortcuts, but reduce the
    nearly-black photo tint so the teal material is visible. */
 #home .quick-grid button {
-  background-color:#052b33!important;
-  background-image:linear-gradient(110deg,rgba(3,37,43,.92),rgba(3,45,51,.84)),url('./assets/hero-dumbbells-photo.jpg?v=7')!important;
+  background-color:#04252d!important;
+  background-image:linear-gradient(110deg,rgba(3,32,38,.94),rgba(3,39,45,.88)),url('./assets/hero-dumbbells-photo.jpg?v=7')!important;
   background-position:center,center 46%!important;
   background-size:cover!important;
 }
