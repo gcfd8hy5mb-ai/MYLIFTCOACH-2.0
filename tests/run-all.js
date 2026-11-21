@@ -28,6 +28,7 @@ const tests=[
  'automatic-workouts.test.cjs',
  'auxiliary-cloud.test.cjs',
  'auxiliary-revision.test.cjs',
+ 'auxiliary-preferences.test.cjs',
  'account-custom-scoping.test.cjs',
  'beta-access.test.cjs',
  'refresh-session.test.cjs'
