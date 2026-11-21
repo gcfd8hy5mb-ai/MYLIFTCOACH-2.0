@@ -31,6 +31,18 @@ let verifiedOwnerId=null,authEpoch=0; // Never use an unverified cached identity
 let pendingAccountRecovery=null;
 let activeDraftStore=null,activeDraftOwner=null;
 let betaModeSaving=false;
+const sessionRefresh=window.MLC2FreshAuth.create({
+ getSession:()=>auth,
+ getOwner:()=>verifiedOwnerId===account?.id?verifiedOwnerId:null,
+ getEpoch:()=>authEpoch,
+ refresh:refreshToken=>authRequest('token?grant_type=refresh_token',{refresh_token:refreshToken}),
+ fetchUser:token=>authRequest('user',null,token,'GET'),
+ commit:session=>{
+  const serialized=JSON.stringify(session);
+  sessionStorage.setItem(AUTH_KEY,serialized);
+  auth=session;account=session.user;renderSettings();
+ }
+});
 let workoutSyncTimer=null,workoutSyncBusy=false,workoutSyncFailures=0;
 let syncAgainAfterCurrent=false,auxOperationBusy=false;
 let workoutSyncText='Sign in to enable automatic workout sync.';
@@ -67,14 +79,14 @@ function scheduleWorkoutSync(delay=1500){
 }
 function auxEngine(owner){
  if(owner!==verifiedOwnerId||owner!==account?.id||!auth?.access_token)throw Error('Verified sign-in required');
- const verifier=window.MLC2VerifiedAuth.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>auth,fetcher:fetch,enabled:true});
+ const verifier=window.MLC2VerifiedAuth.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>sessionRefresh.sessionFor(owner),fetcher:fetch,enabled:true});
  const transport=window.MLC2SupabaseTransport.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,fetcher:fetch,enabled:true,getVerifiedAuth:()=>verifier.verify(owner)});
  return window.MLC2AuxCloud.create({owner,storage:localStorage,aux:window.MLC2AuxData,Sync:window.MLC2Sync,transport,verify:id=>verifier.verify(id),active:()=>account?.id===verifiedOwnerId?verifiedOwnerId:null,online:()=>navigator.onLine});
 }
 function syncEngine(owner){
  if(owner!==verifiedOwnerId||owner!==account?.id||!auth?.access_token)throw Error('Verified sign-in required');
  const verifier=window.MLC2VerifiedAuth.create({
-  baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>auth,fetcher:fetch,enabled:true
+  baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>sessionRefresh.sessionFor(owner),fetcher:fetch,enabled:true
  });
  const transport=window.MLC2SupabaseTransport.create({
   baseUrl:BACKEND,publishableKey:PUBLIC_KEY,fetcher:fetch,enabled:true,
@@ -843,8 +855,8 @@ function bind(){
   try{
    const updated=await window.MLC2BetaAccess.change({
     user:account,mode:requested,
-    verify:()=>authRequest('user',null,auth?.access_token,'GET'),
-    update:metadata=>authRequest('user',{data:metadata},auth?.access_token,'PUT'),
+    verify:async()=>authRequest('user',null,(await sessionRefresh.sessionFor(selectedOwner)).access_token,'GET'),
+    update:async metadata=>authRequest('user',{data:metadata},(await sessionRefresh.sessionFor(selectedOwner)).access_token,'PUT'),
     stillCurrent:id=>id===verifiedOwnerId&&id===account?.id&&epoch===authEpoch
    });
    if(epoch!==authEpoch||verifiedOwnerId!==selectedOwner)return;
