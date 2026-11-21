@@ -26,13 +26,28 @@
    if(owner!==null&&entry.ownerId!==owner)throw Error('Workout belongs to another account');
    ids.add(entry.id);
   }
-  return entries;
+  // Earlier beta builds sometimes stamped an account ID into the shared demo
+  // key. Keep those records intact, but never expose them as guest workouts.
+  return owner===null?entries.filter(entry=>!entry.ownerId):entries;
  }
  function save(storage,owner,entries){
   if(!Array.isArray(entries)||entries.length>100)throw Error('Too many workouts');
   const storageKey=key(owner);
+  // Preserve old account-stamped records in the legacy shared key, without
+  // treating them as guest sessions or uploading them to another account.
+  let full=entries;
+  if(owner===null){
+   const raw=storage.getItem(LEGACY_KEY);
+   if(raw!==null){
+    const all=JSON.parse(raw);
+    if(!Array.isArray(all))throw Error('Legacy history invalid; cannot overwrite');
+    const protectedRows=all.filter(entry=>entry&&entry.ownerId);
+    full=[...protectedRows,...entries];
+   }
+  }
+  if(full.length>100)throw Error('Workout history limit reached; no records changed');
   // Reuse read's strict owner/shape/duplicate checks without touching actual storage.
-  const payload=JSON.stringify(entries);
+  const payload=JSON.stringify(full);
   const validationStore={getItem:()=>payload};
   read(validationStore,owner);
   storage.setItem(storageKey,payload);
