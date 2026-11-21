@@ -51,8 +51,8 @@ test('journal identity mismatch rejects without saving a receipt',()=>{
  assert.throws(()=>stage({session,verifiedOwner:'account-a',storage,journal:j,enabled:true}),/Journal owner mismatch/);
  assert.equal(storage.m.size,0);
 });
-test('storage write failure before queue never creates a receipt or operation',()=>{
+test('receipt write failure retains the durable queued operation',()=>{
  const storage={getItem(){return null},setItem(){throw Error('Quota exceeded')}},j=journal('account-a');
- assert.throws(()=>stage({session,verifiedOwner:'account-a',storage,journal:j,enabled:true}),/Quota exceeded/);
+ assert.equal(stage({session,verifiedOwner:'account-a',storage,journal:j,enabled:true}).status,'queued-receipt-unavailable');
  assert.equal(j.state.items.length,1,'journal already received operation and must retain pending work');
 });
