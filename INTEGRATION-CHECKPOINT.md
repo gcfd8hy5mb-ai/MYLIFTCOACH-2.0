@@ -45,3 +45,19 @@ The richer workout branch still stores 2.0 demo history under `mlc2-demo-workout
 3. Integrate an isolated, explicitly enabled journal plus transport only against the approved `mlc2_v1_*` RPCs and verify live RLS/account separation.
 4. Prevent replay and avoid destructive eviction of locally completed sessions before cloud acknowledgement; test across iPhone + desktop.
 5. Add a visible queued/acknowledged/conflict status and recovery path, then run automated and physical-browser verification.
+
+## Account separation / verified Auth batch (2026-11-20)
+- Introduced `sync/account-workout-store.js`. Verified accounts now persist completed 2.0 workouts under `mlc2-account-workouts-v1:<owner>`, while guest history remains at the preexisting demo key. Signed-in account history is switched only after a confirmed `auth/v1/user` lookup. Sign-out switches back to guest data and does not delete account history.
+- Legacy shared demo rows bearing `ownerId` are hidden from guest presentation and preserved across guest saves and guest clears. They are **not automatically migrated** into owner namespaces or sent to cloud.
+- New account-tagged workout completion writes to account-scoped local history first. The existing isolated journal bridge remains explicitly disabled (`journal:null,enabled:false`). No automatic upload, cloud recovery or new RPC call was enabled.
+- Added an asynchronous token-refresh epoch guard to prevent a stale refresh from reestablishing identity after account changes.
+- Added `sync/verified-auth.js` as an opt-in, read-only Supabase Auth boundary for later transport wiring. It requires a matching owner, non-expiring token, server-confirmed ID, and stable session after the request. It is **not activated** for cloud sync.
+- Added `tests/account-workout-store.test.cjs` and `tests/verified-auth.test.cjs` to the regression runner, covering account cross-contamination, guest record preservation, corrupt/failed storage, expiry, server mismatch, and mid-request account changes.
+- Verified repository files and script references after commits. The full Node regression suite was **not run locally** because the container could not reach GitHub for clone; CI outcomes and browser acceptance are unconfirmed.
+
+### Remaining release blockers
+1. Account-verified cloud transport initialization, explicit sync enablement, conflict-safe journal recovery, and non-destructive local history retention.
+2. Audit historical shared demo sessions for any explicitly approved, owner-specific migration. Do not auto-claim them.
+3. Migrate auxiliary feature views still inspecting old demo keys, then verify all local-first Coach/workout/history views align after account changes.
+4. Run automated regressions on the integration branch and physical iPhone plus laptop acceptance.
+5. Only after verified RLS and recovery tests, separately authorize any real cloud writes and beta release promotion.
