@@ -1,0 +1,35 @@
+name: MYLIFTCOACH 2.0 offline regression
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out pull request commit
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app.js
+          node --check sync/automatic-workouts.js
+          node --check sync/auxiliary-cloud.js
+          node --check sync/aux-data.js
+          node --check sync/refresh-session.js
+          node --check coach-readiness.js
+          node --check weekly-workout-schedule.js
+          node --check custom-workouts.js
+          node --check body-progress.js
+          node --check beta-access.js
+      - name: Run offline full integration regression suite
+        run: node tests/run-all.js
