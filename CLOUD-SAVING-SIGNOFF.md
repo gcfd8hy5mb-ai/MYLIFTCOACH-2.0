@@ -21,7 +21,7 @@ PR: https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/pull/3 (DRAFT, unmerged)
 
 ## Remaining release verification — NOT code development
 1. **PASS — GitHub Actions Node regression.** Run 44954019974 passed the "offline-regressions" job, including JavaScript syntax checks and the full `node tests/run-all.js` suite on merge-resolved candidate commit `2c465762b68ffefaa6c0a37c5b35dd2444cdc5e0`. See https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/actions/runs/44954019974.
-2. Genuine signed-in integrated iPhone + laptop check: complete a new workout, confirm upload, sign in with same account on second device, restore missing history, modify and recover a custom plan and Coach schedule, verify no cross-account access.
+2. **iPhone-only acceptance:** open the separate GitHub Pages `/phone-test/` candidate in regular iPhone Safari; sign in and complete a workout; confirm automatic cloud upload. On the SAME iPhone, use Safari Private browsing as an isolated browser session, sign in with the same account, then recover the missing workout and settings. Confirm that the original beta and original app remain unchanged. No laptop required.
 3. Confirm browser storage restrictions, account session renewal and retry after network loss in the actual deployed candidate before merging.
 4. Review and approve promotion from draft PR #3 to `main`. No production merge has been performed.
 
@@ -31,3 +31,6 @@ PR: https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/pull/3 (DRAFT, unmerged)
 - No unauthorized beta users were granted Free/Pro switching; beta access authorization is independent of cloud saving.
 
 **Result: Core cloud-saving implementation and official offline CI are complete on the draft integration branch. Physical iPhone/laptop acceptance and release authorization are still pending.**
+
+## Isolated iPhone test deployment
+The `main` GitHub Pages workflow packages the unchanged current beta under `/myliftcoach2/` and the fixed verified integration commit `3627bca871e7b7a74e0ed49d0fd607d44fd7b5c4` separately under `/phone-test/`. The workflow source update is committed; **public URL accessibility and deployment success are not yet independently confirmed** through the available tools. The iPhone test must pass before merging PR #3.
