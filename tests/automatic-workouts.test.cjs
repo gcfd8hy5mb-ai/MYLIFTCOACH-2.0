@@ -58,7 +58,9 @@ test('same id with different sets blocks all remote overwrites',async()=>{
  const engine=setup(db,cloud).engine;
  const result=await engine.flush();assert.equal(result.status,'conflict');
  assert.equal(cloud.commits,0);assert.equal(Store.read(db,owner)[0].sets[0].weight,100);
- await assert.rejects(engine.restore({confirmRestore:async()=>true}),/conflicts/);
+ const recovery=await engine.restore({confirmRestore:async()=>true});
+ assert.equal(recovery.status,'conflict');
+ assert.equal(recovery.restored,0);assert.equal(recovery.conflicts,1);
 });
 test('foreign owner and account changes cannot read or upload',async()=>{
  const db=storage(),cloud=remote();Store.save(db,owner,[session('only-a')]);
@@ -81,4 +83,39 @@ test('owner switching during explicit confirmation cancels before storage writes
  const context=setup(target,cloud);
  await assert.rejects(context.engine.restore({confirmRestore:async()=>{context.switchOwner(other);return true}}),/Account changed/);
  assert.equal(Store.read(target,owner).length,0);
+});
+
+test('restores independent missing workouts despite a different same-ID workout on this iPhone',async()=>{
+ const db=storage(),cloud=remote();
+ const local=session('same',owner,100),unrelated=session('cloud-only',owner,75);
+ Store.save(db,owner,[local]);
+ cloud.rows.set(owner+'/same',{owner,type:'session',id:'same',revision:1,deleted:false,payload:session('same',owner,50)});
+ cloud.rows.set(owner+'/cloud-only',{owner,type:'session',id:'cloud-only',revision:1,deleted:false,payload:unrelated});
+ const engine=setup(db,cloud).engine;
+ const preview=await engine.previewRecovery();
+ assert.equal(preview.missing,1);
+ assert.equal(preview.conflicts,1);
+ assert.equal(preview.canRestore,true);
+ let approvals=0;
+ const result=await engine.restore({confirmRestore:async n=>{approvals++;assert.equal(n,1);return true}});
+ assert.equal(approvals,1);
+ assert.equal(result.status,'restored-with-conflicts');
+ assert.equal(result.restored,1);
+ assert.equal(result.conflicts,1);
+ const rows=Store.read(db,owner);
+ assert.equal(rows.length,2);
+ assert.equal(rows.find(x=>x.id==='same').sets[0].weight,100,'local conflict unchanged');
+ assert.equal(rows.find(x=>x.id==='cloud-only').sets[0].weight,75);
+ assert.equal(cloud.rows.get(owner+'/same').payload.sets[0].weight,50,'remote conflict unchanged');
+ assert.equal(cloud.commits,0,'recovery never uploaded or overwrote cloud data');
+});
+test('same-ID conflicts with no other missing workouts report the conflict without changing history',async()=>{
+ const db=storage(),cloud=remote();
+ Store.save(db,owner,[session('same',owner,100)]);
+ cloud.rows.set(owner+'/same',{owner,type:'session',id:'same',revision:1,deleted:false,payload:session('same',owner,50)});
+ const before=db.getItem(Store.key(owner));
+ const report=await setup(db,cloud).engine.restore({confirmRestore:async()=>{throw Error('must not confirm')}});
+ assert.equal(report.status,'conflict');
+ assert.equal(report.restored,0);assert.equal(report.conflicts,1);
+ assert.equal(db.getItem(Store.key(owner)),before);
 });
