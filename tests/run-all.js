@@ -18,7 +18,8 @@ const tests=[
  'weekly-schedule.test.js',
  'sync-journal.test.cjs',
  'supabase-transport.test.cjs',
- 'aux-data.test.cjs'
+ 'aux-data.test.cjs',
+ 'completed-workout-bridge.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
