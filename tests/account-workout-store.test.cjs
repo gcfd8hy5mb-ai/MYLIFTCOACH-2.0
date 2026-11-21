@@ -60,3 +60,18 @@ test('previous account-tagged demo rows remain private and survive guest saves a
  assert.deepEqual(storeAPI.read(s,null),[]);
  assert.equal(JSON.parse(s.getItem(storeAPI.LEGACY_KEY))[0].id,'older-signed-in');
 });
+
+test('retain more than 100 account workouts without silent eviction',()=>{
+ const s=makeStore();
+ const history=Array.from({length:101},(_,i)=>session('session-'+i,'user-a'));
+ storeAPI.save(s,'user-a',history);
+ assert.equal(storeAPI.read(s,'user-a').length,101);
+ assert.equal(storeAPI.read(s,'user-a')[100].id,'session-100');
+});
+test('capacity overflow fails without replacing account history',()=>{
+ const s=makeStore(),history=Array.from({length:500},(_,i)=>session('session-'+i,'user-a'));
+ storeAPI.save(s,'user-a',history);
+ const previous=s.getItem(storeAPI.key('user-a'));
+ assert.throws(()=>storeAPI.save(s,'user-a',[session('extra','user-a'),...history]),/Too many workouts|limit/);
+ assert.equal(s.getItem(storeAPI.key('user-a')),previous);
+});
