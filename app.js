@@ -28,6 +28,7 @@ const plans=[
 const $=(id)=>document.getElementById(id);
 let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
 let verifiedOwnerId=null,authEpoch=0; // Never use an unverified cached identity to access account history.
+let pendingAccountRecovery=null;
 let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
@@ -41,7 +42,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){verifiedOwnerId=owner;loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();if(page==='coaching')renderCoach()}
+function switchWorkoutOwner(owner){verifiedOwnerId=owner;pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderSettings();if(page==='coaching')renderCoach()}
 
 // All original-app reads are opt-in and strictly read-only. Never call setItem
 // or removeItem with workoutHistoryV52, customWorkoutsV5 or dailyTrackingV1.
@@ -206,6 +207,11 @@ function renderSettings(){
  $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
  $('cloudPill').textContent=account?'ACCOUNT CONNECTED · DEMO':'DEMO WORKSPACE';
  $('authAction').textContent=account?'Sign out':'Sign in with existing account';
+ const accountBackup=$('exportAccountWorkouts'),accountFile=$('accountRecoveryFile'),restore=$('restoreAccountWorkouts');
+ if(accountBackup)accountBackup.disabled=!verifiedOwnerId;
+ if(accountFile)accountFile.disabled=!verifiedOwnerId;
+ if(restore)restore.disabled=!verifiedOwnerId||!pendingAccountRecovery;
+ if(!verifiedOwnerId&&$('accountRecoveryStatus'))$('accountRecoveryStatus').textContent='Sign in to back up or recover this account’s workouts.';
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
@@ -634,6 +640,56 @@ function bind(){
    window.MLC2CloudAudit.render(output,report);
   }catch(err){output.textContent='Compatibility check unavailable: '+String(err.message||err).slice(0,160)}
   finally{button.disabled=false}
+ });
+ $('exportAccountWorkouts').addEventListener('click',()=>{
+  const output=$('accountRecoveryStatus');
+  if(!verifiedOwnerId||verifiedOwnerId!==account?.id){output.textContent='Sign in to a verified account first.';return}
+  try{
+   const backup=window.MLC2AccountRecovery.make(localStorage,verifiedOwnerId);
+   const data=JSON.stringify(backup,null,2),blob=new Blob([data],{type:'application/json'});
+   const url=URL.createObjectURL(blob),link=document.createElement('a');
+   link.href=url;link.download='MYLIFTCOACH-2.0-account-workouts-'+backup.created.slice(0,10)+'.json';
+   document.body.appendChild(link);
+   try{link.click()}finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+   output.textContent='Downloaded '+backup.sessions.length+' account workouts. Save this file securely; no cloud records changed.';
+  }catch(err){output.textContent='Account backup unavailable: '+String(err.message||err).slice(0,160)}
+ });
+ $('accountRecoveryFile').addEventListener('change',async e=>{
+  const output=$('accountRecoveryStatus'),file=e.target.files?.[0];
+  pendingAccountRecovery=null;$('restoreAccountWorkouts').disabled=true;
+  if(!file)return;
+  if(!verifiedOwnerId||verifiedOwnerId!==account?.id){output.textContent='Sign in to a verified account first.';return}
+  if(file.size>4*1024*1024){output.textContent='Account backup exceeds 4 MB; nothing changed.';return}
+  const owner=verifiedOwnerId,epoch=authEpoch;
+  try{
+   const data=await file.text();
+   if(owner!==verifiedOwnerId||epoch!==authEpoch||owner!==account?.id)return;
+   const backup=window.MLC2AccountRecovery.parse(data,owner);
+   const plan=window.MLC2AccountRecovery.plan(localStorage,backup,owner);
+   if(!plan.canRestore){
+    output.textContent='Restore blocked: '+plan.conflicts.length+' conflicting IDs or storage limit. Existing history was not changed.';return
+   }
+   output.textContent=plan.missing.length+' missing workouts, '+plan.identical.length+' already present. Only missing workouts can be restored.';
+   if(plan.missing.length){pendingAccountRecovery={owner,epoch,backup};$('restoreAccountWorkouts').disabled=false}
+  }catch(err){output.textContent='Backup rejected: '+String(err.message||err).slice(0,160)}
+ });
+ $('restoreAccountWorkouts').addEventListener('click',()=>{
+  const output=$('accountRecoveryStatus'),pending=pendingAccountRecovery;
+  if(!pending||pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch||
+     pending.owner!==account?.id){output.textContent='Account changed. Select the backup again.';return}
+  try{
+   const plan=window.MLC2AccountRecovery.plan(localStorage,pending.backup,pending.owner);
+   if(!plan.canRestore)throw Error('Records conflict or account storage limit reached');
+   if(!plan.missing.length){pendingAccountRecovery=null;$('restoreAccountWorkouts').disabled=true;output.textContent='All backup workouts already exist locally.';return}
+   if(!confirm('Restore '+plan.missing.length+' missing workouts for this account? Existing workouts will not be overwritten.'))return;
+   // Re-check ownership and local state after the confirmation dialog.
+   if(pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch||
+      pending.owner!==account?.id)throw Error('Account changed; restore cancelled');
+   const report=window.MLC2AccountRecovery.restore(localStorage,pending.backup,pending.owner);
+   pendingAccountRecovery=null;$('restoreAccountWorkouts').disabled=true;
+   loadCurrentWorkouts();renderHome();renderProgress();renderHistory();if(page==='coaching')renderCoach();
+   output.textContent='Restored '+report.restored+' missing account workouts. Existing data was preserved; nothing uploaded to Supabase.';
+  }catch(err){output.textContent='Restore blocked: '+String(err.message||err).slice(0,160)}
  });
  $('inspectCloudSessions').addEventListener('click',async()=>{
   const button=$('inspectCloudSessions'),output=$('inspectCloudSessionsStatus');
