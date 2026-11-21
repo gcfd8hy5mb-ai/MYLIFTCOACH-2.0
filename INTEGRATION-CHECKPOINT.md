@@ -93,3 +93,18 @@ The richer workout branch still stores 2.0 demo history under `mlc2-demo-workout
 2. Integrate the proven isolated automatic sync and recovery logic from the separate draft branch without overwriting the richer Coach/library branch.
 3. Confirm genuine 2.0 account-specific recovery on a second device as the integration acceptance delta; no production migration before sign-off.
 4. Finish beta Free/Pro entitlement and subscription separation.
+
+## Direct automatic cloud-sync integration — 2026-11-21
+- Reused the earlier PR #1 logic for verified-owner isolated RPC access, paginated cloud comparison, journal enqueue/drain, retry after reconnect/visibility, and explicit fill-only cloud workout restore.
+- Added `sync/automatic-workouts.js` as a narrow adapter to the PR #2-derived `mlc2-account-workouts-v1:<owner>` local history. The existing `MLC2Sync`, `MLC2SupabaseTransport`, and `MLC2VerifiedAuth` modules perform journal transport and account validation; no new backend tables or migrations.
+- Hooked completed-workout saving to durable owner-specific queueing AFTER local save; delayed reconciliation when a workout arrives during an active upload to avoid concurrent journal overwrites.
+- Signed-in integration branch now runs automatic sync on verified sign-in, after completed workouts, when back online, and on foreground return. The Settings panel has live status, manual sync, and confirmation-based cloud recovery; existing records are not automatically overwritten.
+- Added `tests/automatic-workouts.test.cjs` for offline queue, idempotent retry, two-browser simulated recovery, conflict blocking, cancellation and account switching; wired it into the regression runner and CI parse checks.
+- In the current session, connector-retrieved app and sync code passed JavaScript syntax compilation, and a V8-driven simulated two-device execution verified queue -> upload -> repeat (no duplicate) -> second-device restore -> owner switch rejection.
+- **Not verified:** GitHub Actions full suite pass on latest commit; live authenticated isolated-RPC upload and PWA/laptop test for this integrated branch. The prior PR #1 automated cloud results are documented separately, not treated as proof this branch has passed end-to-end.
+- Original `workout-tracker`, live MYLIFTCOACH-2.0 `main`, approved dark teal styling and original Supabase production workout records unchanged.
+
+### Remaining cloud-only work
+- Run GitHub CI and address any actual regression; verify account-specific backup and recovery with live 2.0 account across iPhone and laptop. Avoid repeating already-passed original automated tests.
+- Reconcile optional non-session auxiliary category cloud backups (custom plans, measurements, food, water/weight, goals), whose old keys may not yet match new owner scopes.
+- Cloud sync is implemented in the unmerged integration branch; not released to current users.
