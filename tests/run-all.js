@@ -15,7 +15,10 @@ const tests=[
  'cloud-live-history.test.js',
  'post-workout-media.test.js',
  'legacy-media-review.test.js',
- 'weekly-schedule.test.js'
+ 'weekly-schedule.test.js',
+ 'sync-journal.test.cjs',
+ 'supabase-transport.test.cjs',
+ 'aux-data.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
