@@ -1,24 +1,22 @@
-# Private beta tester authorization — release setup
+# MYLIFTCOACH 2.0 — open Free/Pro beta mode
 
-MYLIFTCOACH 2.0 beta-mode switching is an authenticated **testing** feature, not a paid subscription entitlement.
+## Policy approved November 21, 2026
+**Everyone can switch between Free and Pro during the 2.0 beta without paying.** There is no tester account enrollment or admin authorization requirement during this stage.
 
-## Observed PRISM Supabase state — November 21, 2026
-- Project: PRISM (existing original authentication backend), ref `kirlpjflaoriiusfamsk`.
-- Read-only database verification found all three isolated RPCs available: `mlc2_v1_commit`, `mlc2_v1_read`, `mlc2_v1_list_sessions`.
-- `mlc2_private.records` and `mlc2_private.receipts` have RLS enabled.
-- **Zero accounts currently have the `mlc2_beta_tester` or `myliftcoach_beta_tester` server flag.** The Free/Pro selector is visible but disabled for unapproved signed-in accounts. This is intentional.
+- Signed-in users: Free/Pro is a UI feature-preview preference saved as `user_metadata.mlc2_private_beta_mode` on their existing Supabase Auth account. The mode survives account sign-ins and device changes.
+- Guests: Free/Pro can be previewed without signing in; their choice is stored temporarily for the current browser session only. Guest mode never grants cloud access or an authenticated account.
+- Both modes are test features, **not actual paid subscriptions**, account billing changes or production membership entitlements. `paidSubscription` always remains `false` in beta-access logic.
+- Switching should instantly show or hide Pro Coach progression and substitutions; it must not delete workouts or interfere with existing cloud sync.
 
-## Authorization requirement
-An administrator must select the specific intended tester accounts (never all users automatically), then assign `app_metadata.mlc2_beta_tester = true` **server-side** through the Supabase Auth Admin API or a trusted administrative process. Do not place service-role/secret credentials in this GitHub repository, browser, or GitHub Pages.
+## Security boundary
+Production subscription authorization cannot depend on editable `user_metadata`. Once real payments launch, subscriber access must be established from trusted billing-derived data, not this beta preview setting.
 
-The account's chosen Free/Pro mode is stored in authenticated `user_metadata.mlc2_private_beta_mode`, but that field alone **never authorizes** beta Pro; the server-controlled `app_metadata` flag must also be present in the verified Auth user.
+## Acceptance checklist
+1. Guest: Settings allows Free ↔ Pro; Pro panels respond; refresh within the same browser session retains preference.
+2. Any ordinary signed-in account: switch Free ↔ Pro with no admin flag, no purchase, no restart; server confirms preference.
+3. Sign out and back in with the same account: preference persists. Guest preview selection remains separately scoped.
+4. Pro preview does not set any production subscription entitlement.
+5. Regression runner, Coach gating, cloud sync, workout history and account switching remain functional.
 
-## Verification acceptance
-1. Approved account signs in: Settings displays Beta Access Mode.
-2. Select Pro: advanced Coach progression and substitutions appear without signing out; account preference is saved.
-3. Reload and sign in on laptop: same Pro beta preference is returned by Supabase Auth.
-4. Switch to Free: Pro-only panels disappear immediately, but workouts/history stay untouched.
-5. Unapproved account cannot activate beta Pro by editing its local browser state or its user metadata.
-6. Production subscription entitlements remain untouched. These beta preferences must not be used in a production payment authorization policy.
-
-**Status:** Code written and targeted tests passed in development environment. No admin tester flags were changed, no user records were modified, and real-device end-to-end acceptance remains outstanding.
+## Release state
+Implementation is on draft PR #3 and not yet merged to the original app. Do not modify Supabase Auth `app_metadata`, paid entitlements or production subscriber records to activate the preview.
