@@ -223,7 +223,7 @@ function openWorkout(id){
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',()=>{
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
-  const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set}))};
+  const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(account?.id&&auth?.access_token?{ownerId:account.id}:{})};
   // Persist first. A failed local write must not create a phantom completed workout.
   const proposed=[entry,...demoSessions].slice(0,100);
   try{
@@ -231,7 +231,10 @@ function openWorkout(id){
    localStorage.setItem(DEMO_KEY,payload);
    if(localStorage.getItem(DEMO_KEY)!==payload)throw Error('Workout was not retained in browser storage.');
    demoSessions=proposed;
-   try{window.MLC2SessionDraft?.clear(localStorage,plan.id)}catch{}
+   // Safe no-op until account-scoped cloud journaling is explicitly enabled.
+   try{window.MLC2CompletedSync?.stage({session:entry,verifiedOwner:account?.id,
+    storage:localStorage,journal:null,enabled:false})}catch{}
+   try{window.MLC2SessionDraft?.clear(localStorage,plan.id)}catch{
    closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
   }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
