@@ -17,7 +17,7 @@
   if(raw.length>2_500_000)throw Error('Workout history exceeds safety limit');
   let entries;
   try{entries=JSON.parse(raw)}catch{throw Error('Workout history cannot be parsed')}
-  if(!Array.isArray(entries)||entries.length>100)throw Error('Invalid workout history');
+  if(!Array.isArray(entries)||entries.length>500)throw Error('Invalid workout history');
   const ids=new Set();
   for(const entry of entries){
    if(!entry||typeof entry.id!=='string'||!Array.isArray(entry.sets)||
@@ -31,7 +31,7 @@
   return owner===null?entries.filter(entry=>!entry.ownerId):entries;
  }
  function save(storage,owner,entries){
-  if(!Array.isArray(entries)||entries.length>100)throw Error('Too many workouts');
+  if(!Array.isArray(entries)||entries.length>500)throw Error('Workout history limit reached; export before adding more');
   const storageKey=key(owner);
   // Preserve old account-stamped records in the legacy shared key, without
   // treating them as guest sessions or uploading them to another account.
@@ -45,7 +45,7 @@
     full=[...protectedRows,...entries];
    }
   }
-  if(full.length>100)throw Error('Workout history limit reached; no records changed');
+  if(full.length>500)throw Error('Workout history limit reached; no records changed');
   // Reuse read's strict owner/shape/duplicate checks without touching actual storage.
   const payload=JSON.stringify(full);
   const validationStore={getItem:()=>payload};
