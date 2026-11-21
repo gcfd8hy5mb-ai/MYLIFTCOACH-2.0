@@ -39,6 +39,7 @@
     const journal=Sync.create({owner,storage,transport,enabled:true});
     const pending=journal.list().items;
     let skipped=0,queued=0,conflicts=0;
+    const candidates=[];
     for(let index=0;index<aux.CONFIG.length;index++){
      if(!still())throw Error('Account changed');
      const config=aux.CONFIG[index];
@@ -52,11 +53,15 @@
      }
      if(row?.deleted){conflicts++;continue}
      if(pending.some(op=>op.type===config.type&&op.id===aux.id)){skipped++;continue}
-     journal.enqueue(config.type,aux.id,aux.payload(local.value),0);queued++;
+     candidates.push({config,value:local.value});
     }
-    // Avoid writing anything if a conflicting cloud category exists.
-    if(conflicts)return {status:'conflict',conflicts,queued,skipped,
+    // Do not queue ANY new operation if a remote conflict exists.
+    if(conflicts)return {status:'conflict',conflicts,queued:0,skipped,
       pending:journal.list().items.length};
+    for(const candidate of candidates){
+     if(!still())throw Error('Account changed');
+     journal.enqueue(candidate.config.type,aux.id,aux.payload(candidate.value),0);queued++;
+    }
     if(!still())throw Error('Account changed');
     const result=await journal.drain({verifiedOwner:owner,online:online(),maxOperations:50});
     return {status:result.status,queued,uploaded:result.sent||0,
