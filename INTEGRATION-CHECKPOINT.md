@@ -123,3 +123,17 @@ The richer workout branch still stores 2.0 demo history under `mlc2-demo-workout
 - Existing guest data is preserved separately and needs explicit, user-approved migration if required.
 - Private progress photos are not included in auxiliary cloud snapshots.
 - An unmerged integration branch does not prove the live main beta has these changes.
+
+## Private beta Free/Pro switching — 2026-11-21
+- Added `beta-access.js` and Settings **Beta Access Mode** selector (Free and Pro); this is independent of Stripe/App Store and does **not** change real paid entitlements or subscription records.
+- Authorization requires a server-controlled Supabase Auth `app_metadata.mlc2_beta_tester === true` (also recognizes `myliftcoach_beta_tester === true`). End users cannot set their own `app_metadata` through user metadata. **Tester authorization must be provisioned by an admin separately**; no admin keys or metadata writes were performed here.
+- Selected mode is written to `user_metadata.mlc2_private_beta_mode` using an authenticated `PUT /auth/v1/user`, then read and reverified from the server. It remains an owner-specific preference through refresh and subsequent sign-ins, including other devices using the same account once they sign in. No purchase required for authorized private beta testers.
+- In the beta branch, advanced progression and exercise-substitution Coach panels appear only in authorized Pro beta mode; Free retains workout tracking/history, readiness, next workout and technique. This is **beta display gating**, not production paid-subscription authorization.
+- Added `tests/beta-access.test.cjs` for authorized/unauthorized profiles, Free/Pro preference, server persistence, lost authorization, account-switch race and invalid modes; included syntax verification in CI. Connector-executed targeted smoke tests confirmed authorized Free->Pro and subsequent reload resolution, plus unauthorized fallback to Free. New files and complete `app.js` parsed in the available runtime.
+- **Not verified**: a full green GitHub Actions run for PR #3, live Supabase Auth user-metadata write on a provisioned beta account, physical-device instant switching and cross-device account persistence.
+- PR #3 stays draft; no merge, GitHub Pages production update, original app changes, or paid subscription activation.
+
+### Highest-priority next acceptance
+1. See actual PR #3 regression workflow result and fix failures, if any.
+2. Provision trusted beta testers via server-side account metadata using authorized admin tools only; test Free/Pro change on the same account on iPhone and laptop.
+3. Confirm cloud recovery and custom-plan priority in the integrated branch and approve release only when the full regression suite passes.
