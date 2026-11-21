@@ -27,6 +27,7 @@ const plans=[
 ];
 const $=(id)=>document.getElementById(id);
 let page='home',activePlan=null,session=null,guest=true,account=null,auth=null;
+let verifiedOwnerId=null,authEpoch=0; // Never use an unverified cached identity to access account history.
 let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 let trackingEntries=loadLocalTracking();
@@ -37,8 +38,11 @@ let cloudHistoryRequestId=0; // invalidates any pending read when account or vie
 let toastTimer;
 let muscleFilter='';
 let restSeconds=90,restPaused=true,restClock=null;
-function loadDemo(){try{const a=JSON.parse(localStorage.getItem(DEMO_KEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&Array.isArray(x.sets)).slice(0,100):[]}catch{return []}}
-function storeDemo(){localStorage.setItem(DEMO_KEY,JSON.stringify(demoSessions))}
+function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
+function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
+function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
+function switchWorkoutOwner(owner){verifiedOwnerId=owner;loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();if(page==='coaching')renderCoach()}
+
 // All original-app reads are opt-in and strictly read-only. Never call setItem
 // or removeItem with workoutHistoryV52, customWorkoutsV5 or dailyTrackingV1.
 function safeOriginal(key,kind){
@@ -223,13 +227,11 @@ function openWorkout(id){
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',()=>{
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
-  const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(account?.id&&auth?.access_token?{ownerId:account.id}:{})};
+  const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(verifiedOwnerId?{ownerId:verifiedOwnerId}:{})};
   // Persist first. A failed local write must not create a phantom completed workout.
   const proposed=[entry,...demoSessions].slice(0,100);
   try{
-   const payload=JSON.stringify(proposed);
-   localStorage.setItem(DEMO_KEY,payload);
-   if(localStorage.getItem(DEMO_KEY)!==payload)throw Error('Workout was not retained in browser storage.');
+   window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed);
    demoSessions=proposed;
    // Safe no-op until account-scoped cloud journaling is explicitly enabled.
    try{window.MLC2CompletedSync?.stage({session:entry,verifiedOwner:account?.id,
@@ -327,8 +329,9 @@ function saveAuth(data){originalSnapshot=null;
  const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
  sessionStorage.setItem(AUTH_KEY,JSON.stringify(session));auth=session;account=data.user;renderSettings();
 }
-function clearAuth(){cloudHistoryRequestId++;sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
+function clearAuth(){authEpoch++;switchWorkoutOwner(null);cloudHistoryRequestId++;sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
 async function validateStoredAuth(){
+ const thisEpoch=++authEpoch;
  try{
   const saved=JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null');
   if(!saved?.access_token||!saved?.user?.id)return;
@@ -338,9 +341,11 @@ async function validateStoredAuth(){
     saveAuth(refreshed);token=refreshed.access_token;
   }else{auth=saved;account=saved.user}
   const user=await authRequest('user',null,token,'GET');
-  if(!user?.id||user.id!==account.id)clearAuth();
- }catch{clearAuth()}
- renderSettings();
+  if(thisEpoch!==authEpoch)return;
+  if(!user?.id||user.id!==account?.id)clearAuth();
+  else switchWorkoutOwner(user.id);
+ }catch{if(thisEpoch===authEpoch)clearAuth()}
+ if(thisEpoch===authEpoch)renderSettings();
 }
 function openSignIn(){
  openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">The training area stays in demo mode until the legacy data mapping is verified.</p>');
@@ -350,7 +355,10 @@ function openSignIn(){
   try{
    const response=await authRequest('token?grant_type=password',{email:String(form.get('email')).trim(),password:String(form.get('password'))});
    if(!response?.access_token||!response?.user?.id)throw Error('No verified account was returned.');
-   saveAuth(response);closeModal();notice('Account verified. This workspace remains demo-only.');setPage('home');
+   const verified=await authRequest('user',null,response.access_token,'GET');
+   if(!verified?.id||verified.id!==response.user.id)throw Error('Account identity could not be verified.');
+   authEpoch++;saveAuth(response);switchWorkoutOwner(verified.id);
+   closeModal();notice('Account verified. Your local workouts are separated by account; cloud uploads remain off.');setPage('home');
   }catch(err){$('loginMessage').className='auth-error';$('loginMessage').textContent=err.name==='AbortError'?'The account service timed out.':/invalid/i.test(err.message)?'Email or password was not accepted.':'Could not sign in: '+String(err.message).slice(0,120)}
   finally{submit.disabled=false;submit.textContent='Sign in securely'}
  });
@@ -394,7 +402,7 @@ function bind(){
  $('restPause').addEventListener('click',()=>{restPaused=!restPaused;updateRestClock()});
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
- $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only MYLIFTCOACH 2.0 practice sessions stored in this browser?'))return;demoSessions=[];localStorage.removeItem(DEMO_KEY);renderProgress();renderHome();notice('Local demo history cleared. Production data untouched.')});
+ $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only the local 2.0 workout history for the current '+(verifiedOwnerId?'account':'guest')+'?'))return;try{window.MLC2AccountWorkouts.clear(localStorage,verifiedOwnerId);demoSessions=[];renderProgress();renderHome();notice('Current local workout history cleared. Production data untouched.')}catch{notice('Unable to clear this device history.')}});
  let pendingRecovery=null;
  $('recoveryImportFile').addEventListener('change',async e=>{
   pendingRecovery=null;
