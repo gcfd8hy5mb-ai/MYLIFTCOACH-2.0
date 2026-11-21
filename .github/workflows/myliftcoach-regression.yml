@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - feature/exercise-placeholder-migration-prep
+      - integration/coach-cloud-beta-20261120
   workflow_dispatch:
 
 permissions:
