@@ -22,7 +22,8 @@ const tests=[
  'completed-workout-bridge.test.cjs',
  'account-workout-store.test.cjs',
  'verified-auth.test.cjs',
- 'cloud-session-inspection.test.cjs'
+ 'cloud-session-inspection.test.cjs',
+ 'account-recovery.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
