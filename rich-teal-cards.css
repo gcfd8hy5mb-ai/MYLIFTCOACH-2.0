@@ -63,21 +63,38 @@
 /* Do not alter the approved Today's Workout hero, marble background, navigation
    bar, gold primary buttons, or modal entry fields. */
 
-/* iOS Safari: background-attachment:fixed on a scrolling body is unreliable.
-   Use the same viewport-fixed marble layer as Home on all other pages.
-   The page content scrolls above the layer; Home's approved treatment stays intact. */
+/* One viewport-fixed wallpaper for every page, including Home.
+   Safari background-attachment:fixed on html/body is unreliable and can
+   change the marble crop as the document's scroll height changes. */
 @media(max-width:760px) {
+  html,
+  body,
+  body.home-active {
+    background-color:#0e5357!important;
+    background-image:none!important;
+    background-attachment:scroll!important;
+  }
+  body::before,
+  body.home-active::before,
   body:not(.home-active)::before {
     content:"";
     position:fixed;
     inset:0;
+    width:100%;
+    height:100%;
     z-index:0;
     pointer-events:none;
-    background:#0e5357 url('./assets/approved-vertical-marble-sharp.webp?v=11') center center / cover no-repeat;
+    background-color:#0e5357;
+    background-image:url('./assets/approved-vertical-marble-sharp.webp?v=11');
+    background-position:center center;
+    background-size:cover;
+    background-repeat:no-repeat;
   }
+  body .app-shell,
+  body.home-active .app-shell,
   body:not(.home-active) .app-shell {
     position:relative;
     z-index:1;
+    background:transparent!important;
   }
-  /* Keep only the wallpaper stationary; do not freeze the content or tabs. */
 }
