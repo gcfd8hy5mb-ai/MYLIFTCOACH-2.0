@@ -31,3 +31,17 @@ No merge to `main`, no changes to the original `workout-tracker` app and no data
 
 ## Data model concern before enabling cloud writes
 The richer workout branch still stores 2.0 demo history under `mlc2-demo-workouts-v1`, whereas auxiliary recovery expects owner-scoped keys. Connect writes only after mapping account ownership and session IDs, verifying no guest/session leakage, and defining first-sync behavior for existing local records.
+
+## Completed-workout account binding (next batch)
+- Added `sync/completed-workout-bridge.js`: opt-in only, no network calls, requires matching owner IDs and a validated completed session, and deduplicates through an owner-scoped receipt and pending journal inspection.
+- In the richer workout implementation, **new** completed sessions gain an `ownerId` only when the beta has a signed-in account and token. Guest sessions and pre-existing unowned demo sessions remain unowned; they are not implicitly eligible for cloud upload.
+- Local workout persistence still completes **before** calling the bridge. The runtime invocation is hard-disabled (`enabled:false`, `journal:null`); this release neither queues uploads nor uploads any workout.
+- Added `tests/completed-workout-bridge.test.cjs` covering disabled behavior, owner rejection, invalid sessions, deduplication, journal mismatch, and receipt-write failure; included in the offline regression runner. The tests are committed but **not independently executed in this session**.
+- Original application, production Supabase tables, and live beta remain unchanged.
+
+### Required before enabling writes
+1. Verify the user session against Supabase Auth on every sync session, refreshing expired credentials and binding the journal to the exact owner.
+2. Ensure committed workouts are durably account-scoped at rest, including sign-out/account switching; the current demo history namespace is browser-wide.
+3. Integrate an isolated, explicitly enabled journal plus transport only against the approved `mlc2_v1_*` RPCs and verify live RLS/account separation.
+4. Prevent replay and avoid destructive eviction of locally completed sessions before cloud acknowledgement; test across iPhone + desktop.
+5. Add a visible queued/acknowledged/conflict status and recovery path, then run automated and physical-browser verification.
