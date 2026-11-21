@@ -48,3 +48,15 @@ test('correctly verify read-back of a committed session',()=>{
  const s=makeStore();storeAPI.save(s,'user-a',[session('ok','user-a')]);
  assert.equal(storeAPI.read(s,'user-a')[0].ownerId,'user-a');
 });
+
+test('previous account-tagged demo rows remain private and survive guest saves and clears',()=>{
+ const s=makeStore();const owned=session('older-signed-in','user-a');
+ s.setItem(storeAPI.LEGACY_KEY,JSON.stringify([owned,{id:'guest-before',sets:[{exerciseId:'press'}]}]));
+ assert.deepEqual(storeAPI.read(s,null).map(x=>x.id),['guest-before']);
+ storeAPI.save(s,null,[{id:'guest-after',sets:[{exerciseId:'press'}]}]);
+ assert.deepEqual(storeAPI.read(s,null).map(x=>x.id),['guest-after']);
+ assert.equal(JSON.parse(s.getItem(storeAPI.LEGACY_KEY)).some(x=>x.id==='older-signed-in'),true);
+ storeAPI.clear(s,null);
+ assert.deepEqual(storeAPI.read(s,null),[]);
+ assert.equal(JSON.parse(s.getItem(storeAPI.LEGACY_KEY))[0].id,'older-signed-in');
+});
