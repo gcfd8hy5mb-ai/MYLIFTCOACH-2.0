@@ -21,3 +21,13 @@
 
 ## Release boundary
 No merge to `main`, no changes to the original `workout-tracker` app and no database schema or records changes without separate approval and evidence.
+
+## Next staged integration batch
+- Brought forward exact `sync/sync-journal.js`, `sync/supabase-transport.js`, and `sync/aux-data.js` implementations from PR #1, plus their three existing Node test files.
+- Added these scripts to the Coach/catalog branch HTML **without instantiating the transport or enabling writes**. No account identity, token, or remote mutation is initiated by these imports alone.
+- Extended `tests/run-all.js` with the three isolated sync tests and configured the regression workflow for this integration branch.
+- Verified committed presence and HTML references for all three modules and all three tests by reading the branch back from GitHub.
+- **Not yet done:** binding authenticated owner-scoped completed workouts to the journal, authenticating the isolated RPC on two devices, executing/confirming fresh CI results, or publishing a test preview for this branch.
+
+## Data model concern before enabling cloud writes
+The richer workout branch still stores 2.0 demo history under `mlc2-demo-workouts-v1`, whereas auxiliary recovery expects owner-scoped keys. Connect writes only after mapping account ownership and session IDs, verifying no guest/session leakage, and defining first-sync behavior for existing local records.
