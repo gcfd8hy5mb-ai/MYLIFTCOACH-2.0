@@ -27,7 +27,8 @@ const tests=[
  'account-draft-store.test.cjs',
  'automatic-workouts.test.cjs',
  'auxiliary-cloud.test.cjs',
- 'account-custom-scoping.test.cjs'
+ 'account-custom-scoping.test.cjs',
+ 'beta-access.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);
