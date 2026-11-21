@@ -37,6 +37,7 @@ let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 const currentTrackingKey=()=>verifiedOwnerId?TRACK_KEY+':user:'+verifiedOwnerId:TRACK_KEY;
 const planStorage=()=>{const map=k=>verifiedOwnerId&&['mlc2-selected-workout-v1','mlc2-weekly-schedule-v1'].includes(k)?k+':user:'+verifiedOwnerId:k;return {getItem:k=>localStorage.getItem(map(k)),setItem:(k,v)=>localStorage.setItem(map(k),v),removeItem:k=>localStorage.removeItem(map(k))}};
+const healthStorage=()=>({getItem:k=>{const scoped=['mlc2-custom-plans-v1','mlc2-local-daily-v1','mlc2-measurements-v1','mlc2-selected-workout-v1','mlc2-weekly-schedule-v1'];return localStorage.getItem(verifiedOwnerId&&scoped.includes(k)?k+':user:'+verifiedOwnerId:k)}});
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
 let cloudHistorySnapshot=null; // in-memory, account-bound, original archive only
@@ -527,7 +528,7 @@ function bind(){
  $('dataHealthAction').addEventListener('click',()=>{
   const output=$('dataHealthResult');
   try{
-   const report=window.MLC2DataHealth.check(localStorage,libraryExercises(),plans,demoSessions);
+   const report=window.MLC2DataHealth.check(healthStorage(),libraryExercises(),plans,demoSessions);
    output.replaceChildren();
    const head=document.createElement('strong');head.textContent='Local data status: '+report.status.toUpperCase();output.append(head);
    const summary=document.createElement('p');summary.textContent=Object.entries(report.counts).map(([key,value])=>key+': '+value).join(' · ');output.append(summary);
