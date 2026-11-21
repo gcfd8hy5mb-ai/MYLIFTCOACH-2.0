@@ -36,6 +36,8 @@ jobs:
           node --check sync/auxiliary-cloud.js
           node --check custom-workouts.js
           node --check body-progress.js
+          node --check coach-readiness.js
+          node --check weekly-workout-schedule.js
           node --check beta-access.js
           node --check sync/refresh-session.js
       - name: Run offline regression suite
