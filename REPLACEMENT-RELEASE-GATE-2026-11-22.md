@@ -1,5 +1,15 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## Mandatory final Codex bug review — after all integration, before production replacement
+- [ ] Hand the **complete final combined source branch**, not individual feature previews, to Codex for a comprehensive code review.
+- [ ] Review startup and iPhone Safari/PWA rendering, navigation, Coach and exercise selection, custom routines and schedule precedence, 6/8/12-week goals, calorie estimates, entitlement switching, exercise media mappings, and performance/accessibility.
+- [ ] Audit account isolation, authentication/session refresh, Supabase cloud writes and recovery, offline queues, workout draft resume, duplicate prevention, concurrent uploads, local migration, and errors during refresh or interruption.
+- [ ] Have Codex **fix confirmed bugs** on a separate review branch or review PR, document each defect and fix, and avoid changes to approved styling or previously approved artwork unless necessary for correctness.
+- [ ] Run the **entire regression suite**, add tests for discovered bugs, run build/syntax/inventory checks, and review the resulting diff for unintended behavior.
+- [ ] Repeat the targeted review/tests until no known release-blocking defects remain; report any unresolved issues explicitly rather than claiming bug-free code.
+- [ ] Complete required iPhone acceptance, verify a production backup and rollback plan, and obtain explicit approval **before** merging to the published saved Home Screen app.
+- **Status: requested and added to release gate, not yet executed.** No autonomous future Codex run is implied by this checklist.
+
 ## iPhone acceptance start — November 22
 - [x] Prepared actionable iPhone acceptance matrix: `IPHONE-REPLACEMENT-ACCEPTANCE-2026-11-22.md` with isolated guest Safari tests for workout drafts, completed history, routines, goals and images.
 - [x] Explicitly separated **local preview** tests from future signed-in cloud checks. Preview CSP blocks authentication and backup; do not claim a live cloud pass.
