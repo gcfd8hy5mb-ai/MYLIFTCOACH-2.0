@@ -6,6 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function suggestion(id,sessions,catalog,range={min:8,max:10}){
  if(!Array.isArray(sessions)||!Array.isArray(catalog))return {status:'insufficient'};
  const exercise=catalog.find(x=>x.id===id);
+ if(exercise?.group==='Cardio')return {status:'unsupported',reason:'Cardio is tracked through time and distance, not automatic weight progression.'};
  if(!exercise||!Number.isFinite(range.min)||!Number.isFinite(range.max)||range.min<1||range.max<range.min)return {status:'insufficient'};
  const normalized=window.MLC2Progress?.normalizedSessions(sessions,'demo')||[];
  // Do not depend on imported array order: most recent valid workout must win.
@@ -20,7 +21,7 @@ function suggestion(id,sessions,catalog,range={min:8,max:10}){
  if(!recent.length)return {status:'insufficient',reason:'Log two working sets in at least two sessions.'};
  const last=recent[0],base={lastWeight:last.weight,lastReps:last.reps,range,status:'insufficient',sessionsUsed:recent.length};
  if(recent.length<2)return {...base,reason:'Another completed session is needed before recommending a change.'};
- const metadata=window.MLC2_COACH_ATTRIBUTES?.[id]||{};
+ const metadata=window.MLC2CoachCoverage?.classify(exercise,window.MLC2_COACH_ATTRIBUTES)||window.MLC2_COACH_ATTRIBUTES?.[id]||{};
  const dumbbell=metadata.equipment==='Dumbbell'||(!metadata.equipment&&String(exercise.equipment||'').toLowerCase().includes('dumbbell'));
  const increment=dumbbell||metadata.type==='Isolation'?2.5:5;
  const top=last.reps.every(x=>x>=range.max);
@@ -80,14 +81,17 @@ function renderTechnique(root,plan,catalog){
  }).join(''):'<p class="empty-note">No matching exercise notes are currently available.</p>';
 }
 function substitutions(id,catalog){
- const metadata=window.MLC2_COACH_ATTRIBUTES||{},current=catalog.find(e=>e.id===id),from=metadata[id];
- if(!current||!from?.pattern)return [];
+ const reviewed=window.MLC2_COACH_ATTRIBUTES||{},current=catalog.find(e=>e.id===id);
+ const enriched=window.MLC2CoachCoverage?.expand(catalog,reviewed)||reviewed;
+ const from=enriched[id];
+ if(!current||current.group==='Cardio'||!from?.substitutionEligible&&(!from?.pattern||from.pattern==='Cardio'))return [];
  return catalog.filter(e=>{
-  const item=metadata[e.id];
-  return e.id!==id&&item?.pattern===from.pattern&&
+  const item=enriched[e.id];
+  return e.id!==id&&e.group!=='Cardio'&&item?.pattern===from.pattern&&
+   item.pattern!=='Cardio'&&
    String(e.muscle||e.group).toLowerCase()===String(current.muscle||current.group).toLowerCase();
  }).map(e=>{
-  const to=metadata[e.id],same=to.equipment===from.equipment,
+  const to=enriched[e.id],same=to.equipment===from.equipment,
    shared=to.secondary.filter(v=>from.secondary.includes(v)).length,
    score=100+40+Math.min(shared,3)*9+(same?9:0)+(from.type===to.type?3:0);
   return {id:e.id,name:e.name,equipment:to.equipment,pattern:to.pattern,score,
@@ -96,11 +100,14 @@ function substitutions(id,catalog){
 }
 function renderTools(root,catalog,plan){
  if(!root)return;
- const tagged=catalog.filter(e=>window.MLC2_COACH_ATTRIBUTES?.[e.id]);
- const choices=tagged.filter(e=>substitutions(e.id,catalog).length);
- const current=(plan?.ids||[]).map(id=>choices.find(e=>e.id===id)).find(Boolean)||choices[0];
+ const choices=catalog.filter(e=>e.group!=='Cardio'&&substitutions(e.id,catalog).length);
+ // Do not suggest changing an unrelated exercise when the current plan
+ // has no matching movements. Free browsing is permitted when no plan exists.
+ const selected=(plan?.ids||[]).map(id=>choices.find(e=>e.id===id)).find(Boolean);
+ const current=selected||(plan?.ids?.length?null:choices[0]);
+ if(!current){root.textContent='No verified substitution matches your currently selected workout. Your routine is unchanged.';return}
  root.innerHTML='<label class="coach-sub-label">Exercise to replace <select id="coachSubChoice">'+
- choices.map(e=>'<option value="'+esc(e.id)+'" '+(e.id===current?.id?'selected':'')+'>'+esc(e.name)+'</option>').join('')+
+ (plan?.ids?.length?choices.filter(e=>plan.ids.includes(e.id)):choices).map(e=>'<option value="'+esc(e.id)+'" '+(e.id===current.id?'selected':'')+'>'+esc(e.name)+'</option>').join('')+
  '</select></label><div id="coachSubList"></div>'+
  '<p class="coach-sub-note">Suggestions are informational. They are limited to movements with matching technique metadata from the original app. Confirm available equipment and exercise suitability before changing your routine. No workout is edited automatically.</p>';
  const select=root.querySelector('#coachSubChoice'),list=root.querySelector('#coachSubList');
