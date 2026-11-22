@@ -124,6 +124,38 @@ test('The established Coach engine can recommend from two clearly synthetic sess
  assert.equal(result.weight,55);
 });
 
+
+test('Coach accepts only completed workouts belonging to the verified account',()=>{
+ const env=harness();
+ env.verifiedOwnerId='account-a';
+ env.demoSessions=[
+  {id:'real-a',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:50,reps:10}]},
+  {id:'foreign',ownerId:'account-b',sets:[{exerciseId:'chest-press',weight:95,reps:10}]},
+  {id:'SIMULATED-COACH-injected',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:100,reps:10}]},
+  {id:'guest',sets:[{exerciseId:'chest-press',weight:70,reps:10}]},
+  {id:'empty',ownerId:'account-a',sets:[]}
+ ];
+ assert.equal(vm.runInContext('coachEvidence().length',env),1);
+ assert.equal(vm.runInContext('coachEvidence()[0].id',env),'real-a');
+ assert.match(vm.runInContext('coachEvidenceLabel()',env),/1 saved 2.0 workout/);
+ env.verifiedOwnerId=null;
+ assert.equal(vm.runInContext('coachEvidence().length',env),1);
+ assert.equal(vm.runInContext('coachEvidence()[0].id',env),'guest');
+});
+test('Synthetic Coach evidence is always labeled and never mutates account history',()=>{
+ const env=harness();
+ env.location={pathname:'/MYLIFTCOACH-2.0-PREVIEW/coach-live-test/'};
+ const saved={id:'saved-1',sets:[{exerciseId:'chest-press',weight:40,reps:8}]};
+ env.demoSessions=[saved];
+ vm.runInContext('previewCoachHistory=generatePreviewCoachHistory(activePlan)',env);
+ assert.match(vm.runInContext('coachEvidenceLabel()',env),/SIMULATED TEST DATA/);
+ assert.equal(vm.runInContext('coachEvidence().length',env),2);
+ assert.strictEqual(env.demoSessions[0],saved);
+ vm.runInContext('previewCoachHistory=null',env);
+ assert.equal(vm.runInContext('coachEvidence().length',env),1);
+ assert.match(vm.runInContext('coachEvidenceLabel()',env),/personal history only/);
+});
+
 test('Active workout mounts Coach, uses existing draft and cloud paths, and avoids automatic plan changes',()=>{
  for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed)","queueWorkoutForSync(entry)","window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)"]){
   assert.ok(app.includes(marker),'missing '+marker);
