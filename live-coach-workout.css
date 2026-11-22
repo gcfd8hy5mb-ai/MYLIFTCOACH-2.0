@@ -69,3 +69,10 @@ details.live-coach-dropdown{display:block;padding:0;overflow:hidden;margin:10px 
 .coach-auto-panel .coach-auto-caution{color:#c5d7cf;font-size:11px}
 .coach-auto-panel button{margin-top:7px;min-height:44px;border-color:#e2bd83;color:#f6d7a2;background:#0a4448}
 .coach-auto-panel[hidden]{display:none!important}
+
+/* Owner-specific autonomous Coach preferences, touch-friendly on iPhone. */
+.coach-auto-preferences{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}
+.coach-auto-preferences label{display:block;font-size:11px;color:#e3c993;font-weight:650}
+.coach-auto-preferences select{display:block;width:100%;min-height:42px;margin-top:6px;padding:8px 6px;background:#082e35;border:1px solid #b29967;border-radius:9px;color:#f7f0df;font-size:12px}
+.coach-auto-preferences select:focus-visible{outline:2px solid #f2d398;outline-offset:2px}
+@media(max-width:540px){.coach-auto-preferences{grid-template-columns:repeat(2,minmax(0,1fr))}.coach-auto-preferences label:last-child{grid-column:1/-1}}
