@@ -7,12 +7,13 @@ function init(){
  const page=document.getElementById('progress');
  if(!page||page.dataset.compactProgressReady)return;
  const metrics=page.querySelector('.metrics');
+ const weekly=document.getElementById('progressWeeklyComparison')?.closest('.panel');
  const recap=document.getElementById('postWorkoutRecap')?.closest('.panel');
  const chart=document.getElementById('progressChart')?.closest('.panel');
  const history=document.getElementById('sessionHistory')?.closest('.panel');
  const records=document.getElementById('demoRecords')?.closest('.panel');
  const original=document.getElementById('legacyRecords')?.closest('.panel');
- if(!metrics||!recap||!chart||!history||!records||!original)return;
+ if(!metrics||!weekly||!recap||!chart||!history||!records||!original)return;
  page.classList.add('progress-compact');
  const heading=page.querySelector('.page-heading');
  const intro=heading?.querySelector('p');
@@ -39,7 +40,7 @@ function init(){
   panel.hidden=i!==0;groups[id]=panel;
  });
  // Existing data-driven panels retain their elements, IDs and event handlers.
- groups.overview.append(recap,chart);
+ groups.overview.append(weekly,recap,chart);
  groups.strength.append(records);
  const auditCard=document.createElement('article');
  auditCard.className='panel volume-audit-card';
