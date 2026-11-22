@@ -55,3 +55,6 @@ details.live-coach-dropdown{display:block;padding:0;overflow:hidden;margin:10px 
 .coach-test-tools p,.coach-test-tools small{font-size:11px;line-height:1.45;color:#d2e1d8;display:block;margin:7px 0}
 .coach-test-tools button{font:700 12px system-ui;border-radius:8px;padding:9px 10px;min-height:40px;margin:5px 8px 5px 0;background:#124c50;color:#f7e0ad;border:1px solid #bda16d;cursor:pointer}
 .coach-test-tools button:focus-visible{outline:2px solid #f6dc9e;outline-offset:2px}
+
+/* Always identify where Coach evidence comes from. */
+.live-coach-evidence-source{padding:8px 10px;border-radius:8px;background:rgba(244,213,144,.1);border:1px solid rgba(244,213,144,.35);font-size:11px!important;line-height:1.4;color:#ffe1a5!important;font-weight:650}
