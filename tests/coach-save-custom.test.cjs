@@ -20,6 +20,7 @@ test('Saving a Coach day adds a new custom workout without selecting it or alter
  store.setItem('mlc2-custom-plans-v1',JSON.stringify([{id:'custom-existing',title:'Original',ids:['press'],kind:'Custom'}]));
  const saved=window.MLC2Custom.saveCoachDay({day:2,exercises:[{id:'row'}]});
  assert.equal(saved.title,'Coach Day 2');
+ assert.equal(saved.coachSaved,true);
  assert.ok(saved.id.startsWith('custom-'));
  assert.equal(store.getItem('mlc2-selected-workout-v1'),'custom-existing');
  assert.equal(store.getItem('mlc2-weekly-schedule-v1'),'{"1":"custom-existing"}');
@@ -50,4 +51,16 @@ test('Unreadable stored workouts are never overwritten by Coach',()=>{
  store.setItem('mlc2-custom-plans-v1','{corrupt-json');
  assert.throws(()=>window.MLC2Custom.saveCoachDay({day:1,exercises:[{id:'row'}]}),/unreadable/);
  assert.equal(store.getItem('mlc2-custom-plans-v1'),'{corrupt-json');
+});
+
+test('Saving Coach does not change unscheduled Home fallback; explicit selection can activate it',()=>{
+ const {store,window}=setup();
+ const preset={id:'upper-a',title:'Original scheduled preset',ids:['press']};
+ const weekly=require('../weekly-workout-schedule.js');
+ const saved=window.MLC2Custom.saveCoachDay({day:1,exercises:[{id:'row'}]});
+ const custom=window.MLC2Custom.allPlans([]); 
+ assert.equal(weekly.resolve({presets:[preset],custom,storage:store,date:new Date('2026-11-23T12:00:00')}).id,'upper-a');
+ assert.equal(window.MLC2Custom.currentPlan([preset],0).id,'upper-a');
+ store.setItem('mlc2-selected-workout-v1',saved.id);
+ assert.equal(weekly.resolve({presets:[preset],custom,storage:store,date:new Date('2026-11-23T12:00:00')}).id,saved.id);
 });
