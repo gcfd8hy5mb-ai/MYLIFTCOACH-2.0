@@ -64,6 +64,13 @@ jobs:
           ref: 0cd53db474c864339c821579c48ce871ad02bab2
           path: phone-custom
           persist-credentials: false
+      - name: Checkout verified active workout UX candidate in isolated iPhone preview
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 32abc86f308ce4249f600494f15e9d371c65d0cc
+          path: phone-ux
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
@@ -131,6 +138,19 @@ jobs:
           test -s dist/phone-test-f/custom-workouts.js
           test -s dist/phone-test-f/weekly-workout-schedule.js
           test -s dist/phone-test-f/sync/automatic-workouts.js
+          # Version G isolates the streamlined logger from previous accepted builds.
+          mkdir -p dist/phone-test-g
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
+            --exclude='*.md' phone-ux/ dist/phone-test-g/
+          cp original-approved/assets/approved-vertical-marble-sharp.webp dist/phone-test-g/assets/approved-vertical-marble-sharp.webp
+          cp original-approved/assets/hero-dumbbells-photo.jpg dist/phone-test-g/assets/hero-dumbbells-photo.jpg
+          grep -q 'iPhone beta test build 11-21G' dist/phone-test-g/index.html
+          grep -q 'workout-active-ux.js?v=2' dist/phone-test-g/index.html
+          grep -q 'active-workout-ux.css?v=2' dist/phone-test-g/index.html
+          grep -q 'app.js?v=11' dist/phone-test-g/index.html
+          test -s dist/phone-test-g/workout-active-ux.js
+          test -s dist/phone-test-g/active-workout-ux.css
+          test -s dist/phone-test-g/sync/automatic-workouts.js
           cp -a source/persistence dist/persistence
           cp source/liftova-anatomy.css dist/liftova-anatomy.css
           python3 - <<'PY'
@@ -187,6 +207,15 @@ jobs:
               if not (custom.parent/uri).is_file():missing_custom.append(uri)
           if missing_custom:raise SystemExit('Missing custom workout beta assets: '+repr(missing_custom))
           print('Verified',len(custom_urls.urls),'custom workout beta HTML links')
+          active=Path('dist/phone-test-g/index.html')
+          active_urls=URLs();active_urls.feed(active.read_text())
+          missing_active=[]
+          for raw in active_urls.urls:
+              uri=raw.split('?',1)[0]
+              if uri.startswith(('https:', 'http:', 'data:', '#', '/')):continue
+              if not (active.parent/uri).is_file():missing_active.append(uri)
+          if missing_active:raise SystemExit('Missing active-workout UX assets: '+repr(missing_active))
+          print('Verified',len(active_urls.urls),'active workout UX HTML links')
           PY
           cat > dist/index.html <<'HTML'
           <!doctype html>
