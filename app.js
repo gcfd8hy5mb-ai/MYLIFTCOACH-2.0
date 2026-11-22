@@ -342,7 +342,9 @@ function renderCalorieGoal(){
  form.elements.namedItem('goal').value=p.goal;
  form.elements.namedItem('age').value=p.age;
  form.elements.namedItem('weightLb').value=(p.weightKg/0.45359237).toFixed(1);
- form.elements.namedItem('heightIn').value=(p.heightCm/2.54).toFixed(1);
+ const savedHeight=window.MLC2CalorieGoal.feetInchesFromCm(p.heightCm);
+ form.elements.namedItem('heightFt').value=String(savedHeight.feet);
+ form.elements.namedItem('heightIn').value=String(savedHeight.inches);
  form.elements.namedItem('sex').value=p.sex;
  form.elements.namedItem('activity').value=p.activity;
  const result=window.MLC2CalorieGoal.estimate(p);
@@ -1061,7 +1063,8 @@ function bind(){
   const form=event.currentTarget,field=name=>form.elements.namedItem(name).value;
   try{
    const profile={goal:field('goal'),age:Number(field('age')),weightKg:Number(field('weightLb'))*0.45359237,
-    heightCm:Number(field('heightIn'))*2.54,sex:field('sex'),activity:field('activity')};
+    heightCm:window.MLC2CalorieGoal.heightCmFromFeetInches(field('heightFt'),field('heightIn')),
+    sex:field('sex'),activity:field('activity')};
    const estimate=window.MLC2CalorieGoal.estimate(profile);
    const weeks=Number(field('programWeeks'));
    if(!window.MLC2GoalProgram.DURATIONS.includes(weeks))throw Error('Choose a 6, 8 or 12 week program');
