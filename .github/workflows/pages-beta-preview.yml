@@ -71,18 +71,26 @@ jobs:
           ref: 32abc86f308ce4249f600494f15e9d371c65d0cc
           path: phone-ux
           persist-credentials: false
+      - name: Checkout verified dark workout tabs and full-screen sign-in patch
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 5f255e49f02c962f7bdc572cb112efa3eb8012c8
+          path: phone-ui-h
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           # The existing saved redesign Home Screen app opens /myliftcoach2/.
-          # Advance that stable preview address to the fully regression-tested G
-          # candidate. The original workout-tracker production URL is untouched.
+          # Advance that stable preview address to regression-tested H.
+          # Keep G in its prior test path. Production workout-tracker stays untouched.
           mkdir -p dist/myliftcoach2
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-ux/ dist/myliftcoach2/
-          grep -q 'iPhone beta test build 11-21G' dist/myliftcoach2/index.html
+            --exclude='*.md' phone-ui-h/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
+          test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
           test -s dist/myliftcoach2/sync/automatic-workouts.js
           # Approved 11/16 marble texture and hero photography remain unchanged.
