@@ -30,3 +30,12 @@
 #workouts .workout-card-illustration img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
 #workouts .workout-card{overflow:hidden}
 @media(max-width:390px){#workouts .workout-card-illustration{height:92px}}
+
+/* Optional Coach-to-weekly schedule assignment. Existing page colors unchanged. */
+#workouts .coach-schedule-panel[hidden]{display:none!important}
+#workouts .coach-schedule-panel{margin:12px 0;border:1px solid #d2b479;background:linear-gradient(160deg,#0d4045,#052a33);border-radius:14px;padding:16px;color:#f1e8d2}
+#workouts .coach-schedule-panel label{display:block;font-size:12px;font-weight:750;color:#f4d49b;margin:10px 0 7px}
+#workouts .coach-schedule-panel select{display:block;width:100%;min-height:46px;background:#05262e;color:#f4e4cd;border:1px solid #c9a66e;border-radius:10px;padding:9px 12px;font-size:14px}
+#workouts .coach-schedule-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+#workouts .coach-schedule-actions button{min-height:44px;flex:1 1 140px}
+#workouts .custom-plan-actions [data-custom-schedule]{background:#103f43!important;color:#f3d395!important;border:1px solid #cbac72;border-radius:9px;min-height:41px}
