@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: '22'
       - name: Verify all 344 exercise visuals and image mappings
-        run: node --test tests/exercise-visuals-344.test.cjs tests/active-exercise-guide.test.cjs tests/exercise-instruction-coverage.test.cjs
+        run: node --test tests/exercise-visuals-344.test.cjs tests/active-exercise-guide.test.cjs tests/exercise-instruction-coverage.test.cjs tests/exercise-instruction-depth.test.cjs
