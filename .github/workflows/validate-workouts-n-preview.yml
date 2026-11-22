@@ -53,7 +53,7 @@ jobs:
       - name: Package offline review build (not GitHub Pages)
         run: |
           mkdir -p review-build
-          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' --exclude='*.md' ./ review-build/
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' --exclude='*.md' --exclude='review-build' ./ review-build/
           test -f review-build/index.html
           test -f review-build/workouts-tabs-n.js
           test -f review-build/workouts-tabs-n.css
