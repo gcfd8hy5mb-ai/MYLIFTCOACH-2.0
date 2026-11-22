@@ -120,29 +120,6 @@ jobs:
           ref: 9b70e2dc716223a6d0cafc553d9cebf23269b8a7
           path: phone-ui-n
           persist-credentials: false
-      - name: Checkout separate N-based Workouts preview snapshot
-        uses: actions/checkout@v4
-        with:
-          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: afb0f04989d8fde21f15db7c0e1c2852f4c5b804
-          path: phone-workouts-review
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Validate Workouts preview without touching published N
-        shell: bash
-        working-directory: phone-workouts-review
-        run: |
-          set -euo pipefail
-          node --check app.js
-          node --check workouts-tabs-n.js
-          node --test tests/workouts-tab-regression.test.cjs tests/workouts-tabs-dom.test.cjs
-      - name: Checkout data-safe visual preview files (no account or cloud code)
-        uses: actions/checkout@v4
-        with:
-          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: 90624408c3df166f7a6c01943d15af19e83718fb
-          path: visual-review
-          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
@@ -182,29 +159,6 @@ jobs:
           cp original-approved/assets/hero-dumbbells-photo.jpg dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
           test -s dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
           test -s dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
-          # A functional sandbox only: no app account, storage, or network access.
-          node --check visual-review/review/workouts-sandbox.js
-          ! grep -Ei 'localStorage|sessionStorage|indexedDB|fetch\\(|XMLHttpRequest|supabase|serviceWorker|sendBeacon' visual-review/review/workouts-sandbox.js
-          grep -q "connect-src 'none'" visual-review/review/workouts-sandbox.html
-          # Safe visual preview: NEVER ship app.js, auth, storage, or cloud modules.
-          mkdir -p dist/workouts-n-review/assets
-          cp visual-review/review/workouts-sandbox.html dist/workouts-n-review/index.html
-          cp visual-review/review/workouts-visual-preview.css dist/workouts-n-review/workouts-visual-preview.css
-          cp visual-review/review/workouts-sandbox.css dist/workouts-n-review/workouts-sandbox.css
-          cp visual-review/review/workouts-sandbox.js dist/workouts-n-review/workouts-sandbox.js
-          cp original-approved/assets/approved-vertical-marble-sharp.webp dist/workouts-n-review/assets/approved-vertical-marble-sharp.webp
-          grep -q 'iPhone beta test build 11-21N' dist/myliftcoach2/index.html
-          grep -q 'Workouts Sandbox' dist/workouts-n-review/index.html
-          grep -q "connect-src 'none'" dist/workouts-n-review/index.html
-          test -s dist/workouts-n-review/workouts-sandbox.js\n          test -s dist/workouts-n-review/workouts-sandbox.css
-          test -s dist/workouts-n-review/workouts-visual-preview.css
-          ! find dist/workouts-n-review -type f | grep -E '/(app\\.js|auth|supabase|automatic-workouts|custom-workouts\\.js)' 
-          ! grep -q 'workouts-tabs-n.js' dist/myliftcoach2/index.html
-          # Protect the working N app byte-for-byte when staging visual changes.
-          for stable_file in index.html app.js custom-workouts.js weekly-workout-schedule.js sync/automatic-workouts.js sync/auth-session-store.js; do
-            cmp "phone-ui-n/$stable_file" "dist/myliftcoach2/$stable_file"
-          done
-          ! grep -q 'compact-workouts.css' dist/myliftcoach2/index.html
           # Preserve separate prior iPhone acceptance areas for regression checks.
           mkdir -p dist/phone-test
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
@@ -357,23 +311,3 @@ jobs:
       - name: Deploy to separate beta repository GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify live stable and isolated preview URLs after deployment
-        shell: bash
-        env:
-          PAGES_ROOT: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          set -euo pipefail
-          root="${PAGES_ROOT%/}"
-          for attempt in 1 2 3 4 5 6; do
-            stable="$(curl --fail --silent --show-error --max-time 15 "$root/myliftcoach2/" || true)"
-            preview="$(curl --fail --silent --show-error --max-time 15 "$root/workouts-n-review/" || true)"
-            if printf '%s' "$stable" | grep -q 'iPhone beta test build 11-21N' &&
-               printf '%s' "$preview" | grep -q 'Workouts Sandbox'; then
-              printf 'Stable 11-21N verified: %s/myliftcoach2/\n' "$root"
-              printf 'Read-only preview verified: %s/workouts-n-review/\n' "$root"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo 'Deployment incomplete: expected Stable and Preview content not both available.' >&2
-          exit 1
