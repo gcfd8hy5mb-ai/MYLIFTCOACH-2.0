@@ -14,3 +14,13 @@
 .live-coach-set{margin-top:10px;padding:10px 12px;border-left:3px solid #d4ad61;border-radius:6px;background:rgba(4,77,78,.13);font-size:12px;line-height:1.5;color:inherit}
 .live-coach-set::before{content:'✦ Coach  ';font-weight:700;color:#c39a4e}
 @media(max-width:600px){.live-coach-box{padding:13px;margin:12px 0 15px}.live-coach-list{max-height:210px}}
+
+/* iPhone refinement: compact overview, optional detail without hiding live coaching */
+.live-coach-compact{padding:12px 14px;margin:10px 0 12px}
+.live-coach-compact .live-coach-title{margin-bottom:5px}
+.live-coach-compact .live-coach-readiness{margin:4px 0 7px}
+.live-coach-details summary{cursor:pointer;color:#f7dfa4;font-size:12px;line-height:1.45;font-weight:700;list-style-position:inside;padding:6px 0;touch-action:manipulation}
+.live-coach-details[open] summary{margin-bottom:7px}
+.live-coach-compact .live-coach-list{max-height:180px}
+.live-coach-compact>small{margin-top:6px;font-size:10px}
+.active-set-entry [data-weight]::placeholder{color:#b5cac4;opacity:.8}
