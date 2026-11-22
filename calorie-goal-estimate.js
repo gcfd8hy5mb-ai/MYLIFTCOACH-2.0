@@ -19,6 +19,20 @@
    throw Error('Check age, weight, height, calculation sex, activity, and goal');
   return {age,weightKg:weight,heightCm:height,sex:p.sex,activity:p.activity,goal:p.goal};
  }
+ function heightCmFromFeetInches(feet,inches){
+  const ft=Number(feet),inch=Number(inches);
+  if(!Number.isInteger(ft)||ft<3||ft>7||!Number.isInteger(inch)||inch<0||inch>11)
+   throw Error('Enter height as feet and inches (0–11 inches)');
+  const cm=(ft*12+inch)*2.54;
+  if(cm<120||cm>230)throw Error('Enter a height between 120 and 230 cm');
+  return cm;
+ }
+ function feetInchesFromCm(cm){
+  if(!Number.isFinite(Number(cm))||Number(cm)<120||Number(cm)>230)
+   throw Error('Saved height is invalid');
+  const totalInches=Math.round(Number(cm)/2.54);
+  return {feet:Math.floor(totalInches/12),inches:totalInches%12};
+ }
  function estimate(profile){
   const p=validate(profile);
   const bmr=10*p.weightKg+6.25*p.heightCm-5*p.age+(p.sex==='male'?5:-161);
@@ -39,5 +53,5 @@
   if(storage.getItem(k)!==payload)throw Error('Calorie profile did not persist');
   return p;
  }
- return Object.freeze({ACTIVITY,GOALS,key,validate,estimate,read,save});
+ return Object.freeze({ACTIVITY,GOALS,key,validate,estimate,read,save,heightCmFromFeetInches,feetInchesFromCm});
 });
