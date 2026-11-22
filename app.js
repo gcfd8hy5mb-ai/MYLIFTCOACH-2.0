@@ -169,10 +169,43 @@ function renderSettings(){
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;document.body.style.overflow='';activePlan=null;session=null}
+
+function coachHistory(id){
+ return demoSessions.flatMap(w=>(w.sets||[]).filter(set=>set.exerciseId===id).map(set=>({...set,created:w.created})))
+ .filter(set=>Number.isFinite(Number(set.weight))&&Number.isInteger(Number(set.reps))&&Number(set.reps)>0);
+}
+function coachTarget(id){
+ const e=exercises.find(x=>x.id===id);if(!e)return null;
+ const previous=coachHistory(id)[0];
+ const match=String(e.reps).match(/(\d+)\s*[–-]\s*(\d+)/);
+ return {e,previous,lo:match?Number(match[1]):8,hi:match?Number(match[2]):12};
+}
+function coachPreviewHTML(plan){
+ return '<section class="coach-workout-panel" aria-label="Coach recommendations before training"><div class="coach-workout-heading"><span class="coach-spark">✦</span><div><strong>Coach · Before you start</strong><small>Based on practice history on this device</small></div></div>'+
+ '<p>Review your targets. Your selected workout stays unchanged; Coach never replaces your plan.</p>'+
+ '<div class="coach-preview-list">'+plan.ids.map(id=>{
+ const t=coachTarget(id);if(!t)return '';
+ const suggestion=t.previous?('Previously logged: '+escapeHTML(String(t.previous.weight))+' lb × '+escapeHTML(String(t.previous.reps))+' reps. Use as a reference, then adjust for today.'):'No previous record. Choose a comfortable starting weight and log your first set.';
+ return '<div><strong>'+escapeHTML(t.e.name)+'</strong><small>'+t.e.sets+' sets · '+escapeHTML(t.e.reps)+' reps</small><span>'+suggestion+'</span></div>';
+ }).join('')+'</div></section>';
+}
+function coachSetAdvice(id){
+ const t=coachTarget(id),logged=session?.sets?.filter(x=>x.exerciseId===id)||[];
+ if(!t||!logged.length)return 'Coach will respond after you log a set.';
+ const last=logged[logged.length-1];
+ if(last.reps<t.lo)return 'Below today’s rep range. Consider reducing the load if your form or effort requires it.';
+ if(last.reps>t.hi)return 'Above the target rep range. Check your form and effort before considering an increase next session.';
+ return 'Within your planned rep range. Keep the next set controlled and adjust for fatigue if needed.';
+}
+function coachAfterHTML(entry){
+ const names=new Set(entry.sets.map(x=>x.exerciseId));
+ return '<div class="coach-workout-panel" role="status"><div class="coach-workout-heading"><span class="coach-spark">✦</span><div><strong>Coach · Session recap</strong><small>Saved practice session</small></div></div><p>You logged '+entry.sets.length+' sets across '+names.size+' exercises. Your actual results will inform the next session’s reference targets.</p></div>';
+}
+
 function openWorkout(id){
  const plan=plans.find(x=>x.id===id);if(!plan)return;activePlan=plan;
  session={sets:[]};
- openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p><div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
+ openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p>'+coachPreviewHTML(plan)+'<div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
  renderWorkoutLog();
  $('cancelWorkout').addEventListener('click',closeModal);
  $('startRest').addEventListener('click',openRest);
@@ -180,7 +213,7 @@ function openWorkout(id){
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
   const entry={id:'demo-'+Date.now(),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets};
   demoSessions.unshift(entry);demoSessions=demoSessions.slice(0,100);
-  try{storeDemo();closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.')}catch{notice('Could not save demo session; check browser storage.')}
+  try{storeDemo();closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');openModal(coachAfterHTML(entry))}catch{notice('Could not save demo session; check browser storage.')}
  });
 }
 function renderWorkoutLog(){
@@ -188,7 +221,7 @@ function renderWorkoutLog(){
  $('workoutLog').innerHTML=activePlan.ids.map(id=>{
   const e=exercises.find(x=>x.id===id);
   const count=session.sets.filter(x=>x.exerciseId===id).length;
-  return '<article class="log-card" data-exercise-card="'+id+'"><div class="log-title"><h4>'+escapeHTML(e.name)+'</h4><span class="logged-count" data-count="'+id+'">'+count+' logged</span></div><small>Target: '+e.sets+' sets × '+escapeHTML(e.reps)+' reps</small><div class="inputs"><label>Weight (lb)<input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+id+'" value="40"></label><label>Reps<input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+id+'" value="10"></label><button class="button-outline" data-addset="'+id+'" type="button">Log set</button></div><div class="set-feedback" data-feedback="'+id+'" role="status" aria-live="polite"></div><button class="undo-set" data-undo="'+id+'" type="button" hidden>Undo last set</button></article>'
+  return '<article class="log-card" data-exercise-card="'+id+'"><div class="log-title"><h4>'+escapeHTML(e.name)+'</h4><span class="logged-count" data-count="'+id+'">'+count+' logged</span></div><small>Target: '+e.sets+' sets × '+escapeHTML(e.reps)+' reps</small><div class="inputs"><label>Weight (lb)<input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+id+'" value="40"></label><label>Reps<input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+id+'" value="10"></label><button class="button-outline" data-addset="'+id+'" type="button">Log set</button></div><div class="set-feedback" data-feedback="'+id+'" role="status" aria-live="polite"></div><div class="coach-set-advice" data-coach-advice="'+id+'" aria-live="polite">'+escapeHTML(coachSetAdvice(id))+'</div><button class="undo-set" data-undo="'+id+'" type="button" hidden>Undo last set</button></article>'
  }).join('');
 }
 function updateExerciseFeedback(id){
@@ -199,6 +232,7 @@ function updateExerciseFeedback(id){
  if(count)count.textContent=sets.length+' logged';
  if(feedback)feedback.textContent=sets.length?('Last set: '+sets[sets.length-1].weight+' lb × '+sets[sets.length-1].reps+' reps'):'';
  if(undo)undo.hidden=sets.length===0;
+ const advice=document.querySelector('[data-coach-advice="'+id+'"]');if(advice)advice.textContent=coachSetAdvice(id);
 }
 function addSet(id){
  if(!session||!activePlan?.ids.includes(id))return;
