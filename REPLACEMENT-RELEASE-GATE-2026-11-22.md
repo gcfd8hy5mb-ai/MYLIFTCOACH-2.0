@@ -16,21 +16,22 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [x] Readiness tracking, selected-plan priority, simulated test isolation and automated regression checks.
 - [x] User-configurable goals, 3–5 weekly training days, and available equipment in the active automatic proposal; saved locally in owner-scoped preferences. Cloud synchronization of these NEW preferences is still pending.
 - [ ] Recovery-aware adaptation, bounded fatigue/volume deload logic and rest-day recommendations with safety limits.
-- [ ] Auto-rotating Coach sessions that respect manual schedule, custom plans, missed days and account sync across devices.
+- [ ] Auto-rotating Coach sessions that respect manual schedule, custom plans and missed days on the primary iPhone; cross-device Coach synchronization is not a release requirement.
 - [ ] Exercise substitutions when equipment is unavailable, with equivalent movement safeguards and visible reasoning.
 - [ ] Real iPhone acceptance: first session, progression after two qualifying sessions, edited targets, interrupted workout and no-history fallback.
 
 ## Requirements before the original application can be retired
 - [ ] Integrate and audit approved demonstration assets and precise exercise-ID mappings. No auto-approval of missing images.
 - [ ] Merge latest Coach, approved visual, and workout redesign changes in one isolated release candidate without overwriting protected features.
-- [ ] Confirm owner-specific completed workout, custom plan, selected schedule, Coach preferences, and auxiliary data cloud recovery between normal Safari and a clean second session.
+- [ ] Verify owner-specific completed workout, custom plan, selected schedule, Coach preferences and auxiliary data save and backup/recovery on the user's iPhone; second-device parity is not required.
 - [ ] Verify beta Free/Pro changes remain authorized and do not masquerade as paid subscriptions.
 - [ ] Validate all essential original-app functions, or explicitly agree on out-of-scope features (nutrition, photos, etc.).
-- [ ] Run full regression suite plus actual iPhone end-to-end workout and media checks.
+- [ ] Run full regression suite plus actual iPhone end-to-end workout, Home Screen PWA, save/restore and media checks.
 - [ ] Produce reversible backup of current published app and account data; verify rollback route before any merge/deployment.
 - [ ] Obtain explicit cutover approval, publish, verify Home Screen PWA version, and retain rollback.
 
 ## Deliberate exclusions
+- Cross-device synchronization and second-device acceptance are not required. Retain safe cloud backup/recovery for the primary iPhone.
 - No old workout-history migration (user confirmed none exists).
 - No unapproved production database writes or automatic replacement of custom plans.
 - The independent preview is separate from the stable GitHub Pages deployment.
