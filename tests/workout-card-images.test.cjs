@@ -13,7 +13,7 @@ test('Home and Workouts show approved exercise thumbnails without requiring an e
  assert.ok(source.includes("const exercise=(p.ids||[]).map(id=>byId.get(id)||exercises.find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e))"));
  assert.ok(source.includes("wireWorkoutPreviewImages($('todayExercises'))"));
  assert.ok(source.includes("wireWorkoutPreviewImages($('workoutGrid'))"));
- assert.ok(source.includes('data-workout="'+escapeHTML(p.id)+'\">')||source.includes("data-workout="));
+ assert.ok(source.includes('data-workout=')&&source.includes('escapeHTML(p.id)'));
 });
 test('Only approved and safe image paths can be used',()=>{
  const start=source.indexOf('function approvedThumbnail(e){');
