@@ -1,0 +1,19 @@
+name: Validate isolated Workouts tabs against approved 11-21N
+on:
+  push:
+    branches: ['feature/workouts-tabs-from-11-21n']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify protected N files and scoped tabs
+        run: node --test tests/workouts-tab-regression.test.cjs
