@@ -1,0 +1,41 @@
+/* Workouts tabs are isolated from every other MYLIFTCOACH page. */
+#workouts .workout-tabs-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:5px;margin:12px 0 16px;background:#052d34;border:1px solid #bc9b65;border-radius:15px}
+#workouts .workout-tabs-n button{min-height:43px;padding:8px 4px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid transparent;background:#082b32;color:#e5ddcc}
+#workouts .workout-tabs-n button[aria-selected="true"]{border-color:#e2bb7d;background:#16484c;color:#ffe3b7}
+#workouts .workout-tabs-n button:focus-visible{outline:2px solid #efd29b;outline-offset:2px}
+#workouts .workouts-n-panel[hidden]{display:none!important}
+#workouts .workouts-n-panel{min-width:0}
+#workouts .workouts-n-today{padding:20px 16px;border:1.5px solid #d7b476;border-radius:17px;background:#04252d;color:#f7e9d0;box-shadow:0 8px 24px rgba(0,17,21,.26)}
+#workouts .workouts-n-kicker{color:#e5bf80;font-size:11px;font-weight:800;letter-spacing:.13em}
+#workouts .workouts-n-today h2{margin:8px 0;font-size:clamp(23px,6vw,30px);line-height:1.2;color:#f7e7c8}
+#workouts .workouts-n-today p{font-size:13px;color:#d6dfd7}
+#workouts .workouts-n-actions{display:grid;grid-template-columns:1.2fr 1fr;gap:8px;margin-top:18px}
+#workouts .workouts-n-actions button{min-height:46px;padding:9px;border-radius:10px;font-size:12px}
+#workouts .workouts-n-actions .button-primary{background:#04252d!important;background-image:none!important;color:#f6d99d!important;border:1.5px solid #deb979!important;box-shadow:inset 0 1px 0 rgba(248,219,161,.26),0 4px 15px rgba(1,28,32,.3)!important;font-weight:800}
+#workouts .workouts-n-actions .button-outline{background:#04252d!important;background-image:none!important;color:#efd8ab;border:1px solid #d7b476}
+#workouts .workouts-n-priority{margin:12px 3px;color:#d1dfd5;font-size:12px}
+#workouts .workouts-n-list-heading h2{font-size:20px;color:#f3e1c1;margin:6px 0 14px}
+#workouts .custom-workout-toolbar{margin:0 0 14px}
+#workouts .workout-grid{margin-bottom:12px}
+#workouts .workout-item{margin-bottom:10px}
+#workouts .workout-card{min-height:0}
+#workouts .workouts-n-legacy{padding:13px;border:1px solid rgba(218,177,107,.55);border-radius:12px;background:#082d35;color:#efd9b2;margin-top:15px}
+#workouts .workouts-n-legacy summary{cursor:pointer;font-weight:700;font-size:12px}
+#workouts .workouts-n-legacy .original-plan-panel{margin:12px 0 0;padding:0;border:0;background:transparent;box-shadow:none}
+#workouts .workouts-n-panel>.panel{border-color:#caa76e}
+@media(max-width:375px){#workouts .workout-tabs-n button{font-size:11px}#workouts .workouts-n-actions{grid-template-columns:1fr}}
+
+/* Compact, always-visible approved artwork on each workout choice. */
+#workouts .workout-card-illustration{display:block;width:100%;height:110px;overflow:hidden;margin:0 0 12px;background:#062832;border:1px solid rgba(224,185,113,.55);border-radius:11px}
+#workouts .workout-card-illustration img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
+#workouts .workout-card{overflow:hidden}
+@media(max-width:390px){#workouts .workout-card-illustration{height:92px}}
+
+/* Optional Coach-to-weekly schedule assignment. Existing page colors unchanged. */
+#workouts .coach-schedule-panel[hidden]{display:none!important}
+#workouts .coach-schedule-panel{margin:12px 0;border:1px solid #d2b479;background:linear-gradient(160deg,#0d4045,#052a33);border-radius:14px;padding:16px;color:#f1e8d2}
+#workouts .coach-schedule-panel label{display:block;font-size:12px;font-weight:750;color:#f4d49b;margin:10px 0 7px}
+#workouts .coach-schedule-panel select{display:block;width:100%;min-height:46px;background:#05262e;color:#f4e4cd;border:1px solid #c9a66e;border-radius:10px;padding:9px 12px;font-size:14px}
+#workouts .coach-schedule-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+#workouts .coach-schedule-actions button{min-height:44px;flex:1 1 140px}
+#workouts .custom-plan-actions [data-custom-schedule]{background:#103f43!important;color:#f3d395!important;border:1px solid #cbac72;border-radius:9px;min-height:41px}

@@ -1,0 +1,146 @@
+/* MYLIFTCOACH 2.0 – compact Hevy/Strong-style organization.
+   Preserve approved fixed marble wallpaper, charcoal-teal surfaces and gold.
+   This stylesheet changes only the Workouts page, not logging or cloud data. */
+#workouts .workouts-page-heading{margin-bottom:16px!important}
+#workouts .workouts-page-heading h1{margin-bottom:7px!important}
+#workouts .workouts-page-heading p{font-size:13px;color:#d4dfd6!important}
+#workouts .workout-tab-nav{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;
+ background:#052e35!important;border:1px solid rgba(224,185,111,.48);
+ border-radius:15px;padding:5px;margin:0 0 16px;
+ box-shadow:0 6px 18px rgba(0,18,22,.24)
+}
+#workouts .workout-tab-nav button{
+ min-width:0;min-height:45px;padding:9px 4px;border:1px solid transparent;
+ border-radius:10px;background:#06282f!important;color:#d6e4db!important;
+ font-size:12px;font-weight:700;letter-spacing:.005em
+}
+#workouts .workout-tab-nav button[aria-selected="true"]{
+ background:#164c51!important;border-color:#e7bf81!important;
+ color:#ffe7b8!important;box-shadow:inset 0 1px rgba(255,225,171,.16)
+}
+#workouts .workout-tab-nav button:focus-visible{outline:2px solid #f7d6a0;outline-offset:3px}
+#workouts .workout-tab-panel[hidden]{display:none!important}
+#workouts .workout-tab-panel{min-width:0}
+#workouts .workout-today-card{
+ background-color:#04252d!important;
+ background-image:var(--mlc-rich-teal-surface,linear-gradient(145deg,#04252d,#04252d))!important;
+ border:1.5px solid #d7b476!important;border-radius:18px!important;
+ padding:22px 17px 18px;color:#f8e9d0;
+ box-shadow:0 10px 25px rgba(0,20,24,.3),inset 0 1px rgba(249,219,164,.11)
+}
+#workouts .workout-today-kicker{
+ color:#e8be7b!important;font-size:11px;letter-spacing:.13em;font-weight:800
+}
+#workouts .workout-today-card h2{
+ color:#f8e7c7!important;font-size:clamp(23px,6vw,30px)!important;
+ line-height:1.18;margin:9px 0!important
+}
+#workouts .workout-today-card p{color:#d5e0d9!important;font-size:13px;margin:5px 0}
+#workouts .workout-today-source{color:#e9c88e!important;font-size:12px!important}
+#workouts .workout-today-actions{
+ display:grid;grid-template-columns:1.2fr 1fr;gap:8px;margin-top:20px
+}
+#workouts .workout-today-actions button{min-height:48px;border-radius:11px;font-size:12px}
+#workouts .workout-today-actions .button-primary{
+ background:linear-gradient(#ffebba,#d7ae70)!important;border:1px solid #fff0cb!important;
+ color:#0a3033!important;font-weight:800
+}
+#workouts .workout-today-actions .button-outline{
+ background:#062b32!important;color:#f0d8ac!important;border:1px solid #d5b17a!important
+}
+#workouts .workout-today-note{color:#ccdad1!important;font-size:12px;line-height:1.6;margin:13px 3px 0}
+#workouts .workouts-list-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 15px}
+#workouts .workouts-list-top h2{font-size:21px;color:#f6e7ce!important;margin:0}
+#workouts .workouts-list-top .button-primary{min-height:40px;font-size:12px;padding:9px 12px!important;white-space:nowrap}
+#workouts .workout-routines-list{display:block!important;margin:0!important}
+#workouts .workout-compact-section{display:grid;gap:9px;margin-bottom:22px}
+#workouts .workout-compact-label{
+ font-size:11px!important;color:#e5bd7a!important;text-transform:uppercase;
+ letter-spacing:.11em;font-weight:800;margin:0 0 2px
+}
+#workouts .workout-compact-card{
+ display:block!important;background:#082e35!important;
+ background-image:linear-gradient(160deg,#0b3940,#062b32)!important;
+ border:1px solid rgba(213,176,109,.65)!important;border-radius:14px!important;
+ padding:13px!important;min-height:0!important;
+ box-shadow:0 5px 15px rgba(1,15,20,.18)
+}
+#workouts .workout-compact-card.is-selected{border-color:#f0d198!important}
+#workouts .workout-compact-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+#workouts .workout-compact-heading h3{color:#f9e9d0!important;font-size:16px!important;font-weight:750;margin:0 0 4px;line-height:1.25}
+#workouts .workout-compact-heading p{color:#bcd2cc!important;font-size:12px!important;margin:0}
+#workouts .workout-selected-tag{
+ white-space:nowrap;padding:5px 8px;border:1px solid #d2ad73;border-radius:99px;
+ background:#164b4d;color:#ffe2b2;font-size:10px;font-weight:700
+}
+#workouts .workout-compact-actions{
+ display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:12px
+}
+#workouts .workout-compact-actions button{
+ min-height:39px!important;padding:8px 12px!important;border-radius:10px!important;
+ font-size:11px!important;font-weight:700!important;box-shadow:none!important
+}
+#workouts .workout-compact-start{
+ background:linear-gradient(#f5deac,#d5ac72)!important;color:#082d32!important;
+ border:1px solid #f8e3bd!important
+}
+#workouts .workout-compact-select{
+ background:#06272e!important;border:1px solid #caa66e!important;color:#efddb8!important
+}
+#workouts .workout-compact-select:disabled{opacity:.7;cursor:default}
+#workouts .workout-compact-icon{
+ background:#0a343a!important;border:1px solid rgba(207,172,113,.5)!important;
+ color:#e0cdac!important
+}
+#workouts .workout-compact-delete{color:#d6b7a4!important}
+#workouts .workout-compact-empty{
+ background:rgba(5,41,47,.88);border:1px solid rgba(208,177,121,.35);
+ color:#c6d6cf;font-size:13px;padding:16px;border-radius:12px;margin:0
+}
+#workouts .workout-recovery-panel{
+ background:#092f36;border:1px solid #bf9d66;border-radius:13px;
+ padding:14px;margin-bottom:18px
+}
+#workouts .workout-recovery-panel[hidden]{display:none!important}
+#workouts .workout-recovery-panel h3{color:#f1dcba;font-size:15px;margin:0 0 8px}
+#workouts .workout-recovery-panel p,#workouts .workout-recovery-panel small{color:#cad9d0;font-size:12px}
+#workouts .workout-recovery-panel button{margin:8px 0}
+#workouts .workouts-legacy-details{
+ border:1px solid rgba(215,178,108,.45);background:#082e35;
+ border-radius:13px;padding:14px;color:#e6d5b6
+}
+#workouts .workouts-legacy-details summary{font-size:12px;cursor:pointer;font-weight:700}
+#workouts .workouts-legacy-details .original-plan-panel{
+ margin-top:14px!important;background:#082e35!important;border:none!important;
+ box-shadow:none!important;padding:0!important
+}
+#workouts .workouts-legacy-details p{color:#bbd0c9;font-size:12px}
+#workouts .workout-schedule-panel{
+ background:linear-gradient(155deg,#0b3d43,#062a32)!important;
+ border:1px solid #c9a96e!important;border-radius:15px;padding:17px!important
+}
+#workouts .workout-schedule-panel h2{color:#f3e2c3!important;font-size:20px!important}
+#workouts .workout-schedule-panel .mlc-weekly-schedule-grid select{
+ background:#052b31!important;color:#f5e5cc!important;border-color:#c2a16e!important
+}
+@media(max-width:760px){
+ #workouts .workouts-page-heading{padding-top:0!important}
+ #workouts .workout-tab-nav{position:relative;z-index:1}
+ #workouts .workout-today-card{padding:18px 14px}
+ #workouts .workout-compact-actions button{flex:0 0 auto}
+ #workouts .workout-compact-start{flex:1 1 115px!important}
+ #workouts .workout-compact-select{flex:1 1 110px!important}
+ #workouts .workout-compact-icon{flex:0 0 auto}
+}
+@media(max-width:375px){
+ #workouts .workout-tab-nav button{font-size:11px}
+ #workouts .workout-today-actions{grid-template-columns:1fr}
+ #workouts .workout-compact-actions{gap:5px}
+}
+
+/* Approved artwork in compact cards, keeping the original deep teal and gold layout. */
+#workouts .workout-compact-illustration{display:flex;align-items:center;justify-content:center;flex:none;width:64px;height:64px;background:#082f35;border:1px solid rgba(224,185,121,.28);border-radius:10px;overflow:hidden}
+#workouts .workout-compact-illustration img{width:100%;height:100%;object-fit:contain}
+#workouts .workout-compact-heading{align-items:center;gap:12px}
+@media(max-width:540px){#workouts .workout-compact-illustration{width:56px;height:56px}}

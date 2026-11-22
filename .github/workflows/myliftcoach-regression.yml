@@ -1,35 +1,45 @@
-name: MYLIFTCOACH 2.0 offline regression
+name: MYLIFTCOACH 2.0 regression
 
 on:
   pull_request:
     branches: [main]
+  push:
+    branches:
+      - feature/exercise-placeholder-migration-prep
+      - integration/coach-cloud-beta-20261120
+      - integration/replacement-visual-coach-20261122
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  candidate-regressions:
+  offline-regressions:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Check out pull request commit
+      - name: Check out draft branch
         uses: actions/checkout@v4
-      - name: Set up Node.js
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate JavaScript syntax
+      - name: Check integration JavaScript syntax
         run: |
           node --check app.js
+          node --check sync/account-workout-store.js
+          node --check sync/cloud-session-inspection.js
+          node --check sync/verified-auth.js
+          node --check sync/completed-workout-bridge.js
+          node --check sync/account-recovery.js
+          node --check sync/account-draft-store.js
           node --check sync/automatic-workouts.js
           node --check sync/auxiliary-cloud.js
-          node --check sync/aux-data.js
-          node --check sync/refresh-session.js
-          node --check coach-readiness.js
-          node --check weekly-workout-schedule.js
           node --check custom-workouts.js
           node --check body-progress.js
+          node --check coach-readiness.js
+          node --check weekly-workout-schedule.js
           node --check beta-access.js
-      - name: Run offline full integration regression suite
+          node --check sync/refresh-session.js
+      - name: Run offline regression suite
         run: node tests/run-all.js

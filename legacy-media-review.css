@@ -1,0 +1,8 @@
+/* Source-media inspection, intentionally separated from approved exercise demonstrations. */
+.mlc-media-review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:14px;margin-top:15px}
+.mlc-media-review-item{background:rgba(11,25,30,.52);border:1px solid rgba(214,177,103,.24);border-radius:13px;padding:12px;min-width:0}
+.mlc-media-review-item h4{margin:0 0 9px;color:#e9d6b6;font-size:.94rem}
+.mlc-media-review-item img{display:block;width:100%;aspect-ratio:4 / 3;object-fit:contain;border-radius:9px;background:#0c151a}
+.mlc-media-review-item a{color:#e9c17e;display:inline-block;margin-top:8px;font-size:.82rem}
+.mlc-media-review-meta{font-size:.78rem;color:#c4b8a3;margin:8px 0 0}
+.mlc-legacy-media-panel>p{line-height:1.55;color:#c7c3bb}

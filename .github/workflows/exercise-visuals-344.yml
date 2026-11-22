@@ -1,0 +1,20 @@
+name: Verify 344 Exercise Visuals
+on:
+  push:
+    branches:
+      - feature/344-approved-exercise-visuals
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-exercise-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out image integration branch
+        uses: actions/checkout@v4
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all 344 exercise visuals and image mappings
+        run: node --test tests/exercise-visuals-344.test.cjs tests/active-exercise-guide.test.cjs tests/exercise-instruction-coverage.test.cjs tests/exercise-instruction-depth.test.cjs tests/progress-compact.test.cjs tests/progress-real-volume.test.cjs tests/preview-persistence.test.cjs tests/coach-plan-preview.test.cjs tests/coach-program-builder.test.cjs tests/coach-save-custom.test.cjs tests/workout-card-images.test.cjs tests/coach-weekly-schedule.test.cjs tests/progress-weekly-summary.test.cjs tests/workout-simulation.test.cjs tests/workout-simulation-integration.test.cjs

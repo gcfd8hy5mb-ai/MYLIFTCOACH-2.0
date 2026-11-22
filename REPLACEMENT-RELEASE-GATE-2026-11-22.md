@@ -1,0 +1,191 @@
+# MYLIFTCOACH 2.0 — original-app replacement gate
+Date: 2026-11-22
+## Final integration safeguard — Coach workout handoff, November 22
+- [x] Refuse to open a stale Coach proposal after an account change, Free/Pro mode switch, or changes in generated workout day; regenerate the current candidate before opening it.
+- [x] Preserve user-defined custom and preset workout selection, including when Pro Coach access is disabled.
+- [x] Clear cached Coach proposals when verified workout account changes.
+- [x] Added direct regression tests for Free, Pro, stale day, account switching and custom routine precedence; complete regression suite passed on `197a465af8e2335aaa6fb2055b77bad95c98478e`.
+- [x] Source asset version `app.js?v=40` and isolated preview packaging gate updated.
+- [ ] Independently confirm preview publication and visually check Coach ↔ custom selection on iPhone; do not re-test already verified workout persistence.
+- [ ] Preserve the final Codex review, known data-backup results and explicit production replacement gate.
+
+## Mandatory final Codex bug review — after all integration, before production replacement
+- [ ] Hand the **complete final combined source branch**, not individual feature previews, to Codex for a comprehensive code review.
+- [ ] Review startup and iPhone Safari/PWA rendering, navigation, Coach and exercise selection, custom routines and schedule precedence, 6/8/12-week goals, calorie estimates, entitlement switching, exercise media mappings, and performance/accessibility.
+- [ ] Audit account isolation, authentication/session refresh, Supabase cloud writes and recovery, offline queues, workout draft resume, duplicate prevention, concurrent uploads, local migration, and errors during refresh or interruption.
+- [ ] Have Codex **fix confirmed bugs** on a separate review branch or review PR, document each defect and fix, and avoid changes to approved styling or previously approved artwork unless necessary for correctness.
+- [ ] Run the **entire regression suite**, add tests for discovered bugs, run build/syntax/inventory checks, and review the resulting diff for unintended behavior.
+- [ ] Repeat the targeted review/tests until no known release-blocking defects remain; report any unresolved issues explicitly rather than claiming bug-free code.
+- [ ] Complete required iPhone acceptance, verify a production backup and rollback plan, and obtain explicit approval **before** merging to the published saved Home Screen app.
+- **Status: requested and added to release gate, not yet executed.** No autonomous future Codex run is implied by this checklist.
+
+## Cloud recovery approval consistency — 2026-11-22
+- [x] Completed workout recovery now rechecks the approved missing-record IDs after confirmation; if a new cloud workout appears during confirmation, returns `changed-reconfirm` without importing anything.
+- [x] Auxiliary cloud recovery also checks for newly available data categories after user confirmation; recovery stops and requests fresh approval rather than silently adding more categories.
+- [x] Both Settings recovery controls explicitly explain that cloud data changed and instruct the user to tap Recover again.
+- [x] Added regression tests confirming changed cloud records do not overwrite or mutate existing device data, and fresh approval succeeds.
+- [x] Full GitHub source regression suite passed for `cae68202df556732fb48e1b51f6cd61227d931d0`.
+- [x] Updated independent cloud-blocked visual preview workflow for `app.js?v=39`; workflow deployment result not independently confirmed.
+- [ ] Live authenticated iPhone recovery remains unverified; isolated public preview intentionally blocks live cloud requests.
+- [ ] Final comprehensive Codex review and production cutover remain blocked pending acceptance and explicit authorization.
+
+## iPhone video acceptance — Free/Pro switch, 2026-11-22
+- [x] User-provided iPhone screen recording visibly shows guest beta switching Pro → Free.
+- [x] Home changes from Coach · Day 1 in Pro to the existing Lower Body B routine with Resume Workout in Free, without reloading the preview.
+- [x] Workout and set counts remain visible at 3 workouts / 24 sets during the switch.
+- [x] Approved teal marble, gold and dark card appearance remains intact in the recorded views.
+- [ ] This video does **not** establish authenticated beta-mode persistence, successful live cloud backup or cross-device recovery. Those checks remain pending.
+
+## Free/Pro immediate-navigation integration — November 22
+- [x] Corrected beta mode switching so Home, Today's Workout and Coach refresh together immediately, for both browser guest and verified account modes.
+- [x] Verified account metadata is re-fetched using an up-to-date session token; account owner and confirmed mode must agree before changing UI state.
+- [x] Existing workouts, custom plans and unfinished draft data are not mutated by this switch.
+- [x] Added dedicated Free/Pro live-refresh regression, included in full suite; full offline CI passed for `29b72785dbca1cadd6cc545dbbb4c9ee300acbc0`.
+- [x] Updated isolated preview candidate asset to `app.js?v=38` and added release workflow check for Free/Pro refresh.
+- [ ] User must confirm immediate Free↔Pro behavior in iPhone preview. Guest preview cannot prove account mode survives sign-in or cloud sync.
+- [ ] Signed-in cloud backup and recovery still require explicitly authorized cloud-enabled acceptance.
+- [ ] Mandatory Codex review and user-authorized production cutover remain blocked.
+
+## User-confirmed same-iPhone preview acceptance
+- [x] Resume Workout display issue fixed and visually confirmed by user in the iPhone preview.
+- [x] A completed workout persists after refreshing and reopening the iPhone preview, explicitly confirmed by user.
+- [ ] These confirmations establish **local preview persistence only**: no proof of signed-in cloud upload or cross-context recovery.
+- [ ] Remaining: actual iPhone authenticated cloud recovery, authorized Free/Pro switching persistence, complete media/navigation review and final Codex review before any cutover.
+- [ ] Production replacement remains blocked until explicit approval.
+
+## iPhone acceptance start — November 22
+- [x] Prepared actionable iPhone acceptance matrix: `IPHONE-REPLACEMENT-ACCEPTANCE-2026-11-22.md` with isolated guest Safari tests for workout drafts, completed history, routines, goals and images.
+- [x] Explicitly separated **local preview** tests from future signed-in cloud checks. Preview CSP blocks authentication and backup; do not claim a live cloud pass.
+- [ ] Obtain physical iPhone Stage A PASS results before declaring preview accepted.
+- [ ] Obtain authorized Stage B signed-in cloud acceptance before any production replacement. Do not enable a cloud-connected public preview or point disposable data at production.
+- [ ] Confirm complete rollback and explicit cutover approval. Original Home Screen app remains untouched.
+
+## Workout durability and resume safety — 2026-11-22
+- [x] Fixed concurrent upload handling: do not write to a potentially stale in-flight workout journal; save completed sessions first and rescan account history in the next upload pass.
+- [x] A workout finished while auxiliary data backup runs is queued and resumed after that backup; verified owner/record binding is required.
+- [x] Full regression tests passed for `9af0f83eef25cfa61669c48dac83a2881f8ad9be`, including new concurrency tests and account-draft resume tests.
+- [x] Home and Today's Workout now display Resume Workout for a stored, nonempty, matching draft belonging to the current account; edited exercise lists or another account cannot claim that draft.
+- [x] iPhone source asset version bumped to `app.js?v=36`; independent preview workflow tests both new behavior suites.
+- [ ] Verify actual in-Safari interruption, reopening, local draft resume, offline completion and subsequent cloud sync with signed-in iPhone, without relying on cloud-blocked visual preview.
+- [ ] Preview deployment's published state could not be confirmed from available deployment results; do not claim v36 is live.
+- [ ] Original saved Home Screen app and production branch remain unchanged; merge requires explicit approval.
+
+## Next-program correctness — 2026-11-22
+- [x] Fixed mismatch between Coach next-session rotation and Goals adherence count: both now use the same verified, owner-scoped, deduplicated completed-session records.
+- [x] Duplicate, empty, malformed, future-dated, out-of-cycle and unrelated workout records cannot advance a custom, Coach-generated, or mixed program.
+- [x] Existing user-selected custom routines and scheduled sessions retain priority over program suggestions.
+- [x] Full offline regression CI passed on commit `ae8ba3eb9c43beb8ad495ec5ece8a83517fb6d61`; source-aware tests run in isolated replacement preview workflow.
+- [ ] Validate the corrected 6/8/12-week rotation with completed workouts on actual iPhone Safari / saved app, including account backup and resume.
+- [ ] No original Home Screen app cutover until explicit approval.
+
+## Program continuity merge batch — 2026-11-22
+- [x] Integrated source-specific 6/8/12-week completed-session tracking (custom / generated / mixed), including weekly adherence and count of missed prior sessions.
+- [x] Count only real qualifying, uniquely identified completed workout logs inside the active program's time window. Duplicate imports, old history, wrong routines and empty sessions cannot advance program tracking.
+- [x] Show completed sessions, current week's session goal and missed prior sessions in the Goals screen, without forcing food logging or changing workout schedule.
+- [x] No automatic recording or pretending that missed sessions were completed. Manual custom workout and weekday-schedule precedence remains unchanged.
+- [x] Full offline regression passed for commit `bed57d696d1e1fbc6abd2924de4406896aa6aed1`.
+- [ ] Physically verify program adherence, cloud save and resumed sessions on iPhone; the isolated preview blocks network calls.
+- [ ] Do not merge the draft PR into production without explicit approval and rollback verification.
+
+## Continued merge batch — verified on November 22
+- [x] Unified qualified account-scoped completed workout evidence across Coach's next-session, readiness, trends, suggested-program and read-only training-plan panels.
+- [x] Coach readiness and weekly-goal changes refresh the same verified training trends; Free beta retains its readiness/trends without unlocking Pro-only features.
+- [x] Corrected Today to label Custom goal program vs Coach goal program vs preset; selected custom/manual and weekday schedule priority remain protected.
+- [x] Removed obsolete demo/practice wording from genuine completed-workout, Progress, and coaching screens. Preview-only simulation remains separated.
+- [x] Added dedicated regression suites for Coach evidence consistency and program labeling; full GitHub offline CI passed on commit `d98f34743619f513b7e65cf08ed43ee4087e66a6`.
+- [x] The approved dark `#04252d` teal Today card matches shared redesign card tokens, with original gold border and buttons retained.
+- [ ] Independently verify the new preview deployment and run actual iPhone acceptance; cloud-blocked preview cannot prove saving/recovery.
+- [ ] No production change or automatic merge authorized. Draft PR #7 stays open for human review.
+
+## Combined redesign candidate — November 22 release handoff
+- **Development candidate:** `integration/replacement-visual-coach-20261122`, based on the approved visual branch, not on production.
+- **Review PR:** https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/pull/7 (DRAFT; no merging or publication authorized).
+- **Isolated iPhone preview target:** https://gcfd8hy5mb-ai.github.io/MYLIFTCOACH-2.0-PREVIEW/replacement-candidate/ (GitHub Pages workflow triggered, actual URL needs a user/browser check; network/cloud blocked by preview CSP).
+- **Automated code verification:** GitHub Actions `MYLIFTCOACH 2.0 regression` passed for combined candidate commit `b03f0e467fd3b789118bebca96962d501780d83f`; image mapping/files, active workout, auth, custom priority, Coach program sources, program calendar, readiness, and backup validations are covered.
+- **Images:** all 263 approved catalog mappings have full-size images and thumbnails present in the combined candidate; the remaining 81 exercises intentionally retain the approved coming-soon placeholder. No new artwork was falsely approved.
+- **Restored design:** inline images on Home, compact Workouts cards, full workout exercise guide, expanded library, compact Progress with weekly comparison, original optional Coach program builder and read-only next-workout panel, plus the dark teal/marble/gold theme.
+- **Autonomous Coach:** selected 6/8/12-week program automatically appears on Home when there is no manual choice or weekday assignment. Custom > scheduled/manual precedence remains protected; unrelated custom sessions cannot advance pinned programs.
+- **Fitness goals:** strength/bulk/maintain/cut with estimated calorie targets only, no food/macro diary.
+- **Account recovery code:** new calendar, source, estimated calorie profile and Coach training preferences have owner-specific auxiliary cloud categories with fill-only recovery checks, and trigger existing automatic backup after edits.
+- **Still required before merge/publishing:** physical iPhone Safari and saved Home Screen visual acceptance; review of whether 81 placeholder images are acceptable; genuine account workout/Coach/goal restore on the iPhone (the isolated preview intentionally blocks cloud); verify Free/Pro beta switching in candidate; capture exact published-app backup and rollback; explicit cutover approval.
+- **No production cutover has occurred.** Do not assume automated mock tests prove device persistence or production cloud behavior.
+
+Status: CANDIDATE ONLY — no production cutover authorization
+
+## Product contract
+- iPhone-first, approved fixed marble wallpaper, dark teal + gold, no unintended redesign.
+- Selected custom workout > explicitly scheduled workout > preset. Autonomous Coach can propose sessions but cannot silently replace the chosen workout.
+- Zero-history accounts begin with catalog-based exercise suggestions; weight progression only after sufficient completed working sets.
+- No fabricated history, recommended load, paid entitlement, or media approval.
+- Synthetic Coach testing data lives only in RAM on the independent preview path, never in account progress, drafts, uploads, or reports.
+- Completed workouts are saved first, cloud queued afterward, and account boundaries are verified.
+
+## Requirements before autonomous Coach can be declared complete
+- [x] Catalog-driven automatic 4-day balanced program proposal without requiring history (initial version).
+- [x] Coach weight recommendations from qualifying completed sessions, opt-in next-set fill, live feedback and post-workout recap.
+- [x] Readiness tracking, selected-plan priority, simulated test isolation and automated regression checks.
+- [x] User-configurable goals, 3–5 weekly training days, and available equipment in the active automatic proposal; owner-scoped local preferences with auxiliary cloud backup hooks and guarded recovery unit tests. Actual iPhone cloud recovery remains unverified.
+- [x] Initial recovery-aware, phase-specific set-volume advice: optional +1 set only in Build phase after two qualifying sessions and Great readiness; recommend lighter volume on Tired or Consolidate; block load increases under recovery holds. Advice never edits saved routines or logged sets.
+- [ ] Extend recovery adaptation with more individualized progression, missed-session scheduling and physical iPhone acceptance; the current guidance is conservative, not fully autonomous.
+- [ ] Auto-rotating Coach sessions that respect manual schedule, custom plans and missed days on the primary iPhone; cross-device Coach synchronization is not a release requirement.
+- [ ] Exercise substitutions when equipment is unavailable, with equivalent movement safeguards and visible reasoning.
+- [ ] Real iPhone acceptance: first session, progression after two qualifying sessions, edited targets, interrupted workout and no-history fallback.
+
+## Goal calorie estimator — scoped implementation
+- [x] Adult profile inputs: age, weight, height, sex-based BMR equation, and activity; choose strength, bulk, maintain, or cut.
+- [x] Estimate calories using Mifflin-St Jeor with a modest default surplus/deficit; no food entries or macros required.
+- [x] Store validated, owner-scoped profile on the iPhone with no user data migration.
+- [x] Tests for formulas, invalid inputs, and owner isolation passed in latest branch CI.
+- [ ] Confirm the updated estimator screen in actual iPhone Safari/PWA and compare boundary cases.
+- [ ] Determine whether optional weight-trend-based recalculation should be added without relying on food logs; no automatic adjustment without user review.
+- [ ] Confirm on-device profile backup/recovery before original-app cutover.
+
+## Fixed-length fitness goal programs (2026-11-22)
+- [x] Strength, bulk, maintain and cut each offer selectable 6-, 8- and 12-week cycles.
+- [x] Per-account local calendar start, current week, foundation/build/consolidate phase labels and completion status.
+- [x] Coach-generated workout suggestions use the selected goal when a cycle is active, while preserving selected custom workouts.
+- [x] Saving profile changes without changing goal/duration preserves the cycle start date.
+- [x] Replacing or restarting a goal cycle requires user confirmation; completed workouts are not removed.
+- [x] CI coverage for valid durations, boundaries, elapsed time, profile isolation, and no food logging.
+- [ ] Verify the cycle UI in the independent iPhone preview and Home Screen PWA.
+- [ ] Add genuinely phase-specific training volume/recovery adaptations; current phase names are labels, not yet complete periodization.
+- [ ] Verify safe backup/recovery of goal cycle and calorie profile before production replacement.
+
+## Custom-workout goal programs
+- [x] Choose Custom / Coach-generated / Mixed as the workout source for each 6-, 8-, or 12-week goal.
+- [x] Optionally pin a named saved custom routine or rotate existing custom routines.
+- [x] Reference current saved custom plans by stable ID; edits to exercises are reflected without copying or overwriting their original record.
+- [x] Respect manually selected custom workouts and the weekly schedule; Coach suggestions remain an optional Start action.
+- [x] Pinned custom workouts fail closed when missing or deleted, rather than silently using another routine.
+- [x] Owner-scoped source settings are bound to the current goal/program start date, so new programs cannot claim old settings.
+- [x] Full offline regression suite passed on commit 91ed8bf6a3f53c3cc41c96f5eae706633bf3ccd9.
+- [ ] Test the new source selector, saved custom workout editing, mixed rotation, and restart in iPhone Safari.
+- [ ] Verify program source preferences are included in iPhone backup/recovery before retiring the original app.
+- [x] Add phase-specific custom-workout suggestions for sets, rep focus, load-increase gating and rest considerations without editing saved plans. CI passed on commit d8aab253d94da45b5c6c209c1e3bd9ff17aa7867.
+- [ ] Verify the new guidance on iPhone; implement any further individualized progression and calendar scheduling only after acceptance.
+
+## Requirements before the original application can be retired
+- [ ] Integrate and audit approved demonstration assets and precise exercise-ID mappings. No auto-approval of missing images.
+- [ ] Merge latest Coach, approved visual, and workout redesign changes in one isolated release candidate without overwriting protected features.
+- [ ] Verify owner-specific completed workout, custom plan, selected schedule, Coach preferences and auxiliary data save and backup/recovery on the user's iPhone; second-device parity is not required.
+- [ ] Verify beta Free/Pro changes remain authorized and do not masquerade as paid subscriptions.
+- [ ] Validate all essential original-app functions, or explicitly agree on out-of-scope features (nutrition, photos, etc.).
+- [ ] Run full regression suite plus actual iPhone end-to-end workout, Home Screen PWA, save/restore and media checks.
+- [ ] Produce reversible backup of current published app and account data; verify rollback route before any merge/deployment.
+- [ ] Obtain explicit cutover approval, publish, verify Home Screen PWA version, and retain rollback.
+
+## Deliberate exclusions
+- Cross-device synchronization and second-device acceptance are not required. Retain safe cloud backup/recovery for the primary iPhone.
+- No old workout-history migration (user confirmed none exists).
+- No unapproved production database writes or automatic replacement of custom plans.
+- The independent preview is separate from the stable GitHub Pages deployment.
+
+## Current code evidence
+- Autonomous proposal engine: coach-program-builder.js
+- Owner-scoped training preferences: coach-preferences.js
+- Autonomous preference tests: tests/coach-autonomous-preferences.test.cjs
+- Today tab integration: app.js / index.html
+- Automated suite includes tests/coach-autonomous-proposal.test.cjs and tests/coach-live-workout.test.cjs
+- Draft branch: feature/coach-live-workout-integration-20261122
+- Existing integration branch: integration/coach-cloud-beta-20261120
+- Separate approved visuals development branch: feature/344-approved-exercise-visuals
