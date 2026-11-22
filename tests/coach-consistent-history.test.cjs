@@ -36,12 +36,16 @@ test('Readiness callback refreshes selected plan with current qualified evidence
  used.callback();
  assert.equal(used.plan[0].id,'demo-good');
 });
-test('Free beta still shows readiness and trends but not paid Coach panel',()=>{
+test('Free beta still shows readiness and trends and refreshes weekly goal without paid Coach panels',()=>{
  const {used}=run('free');
  assert.equal(used.history,null);
  assert.equal(used.next.length,1);
  assert.equal(used.readiness.length,1);
  assert.equal(used.trends.length,1);
+ used.trends=null;
+ used.callback();
+ assert.equal(used.trends.length,1,'Free mode weekly goal refresh must update trend card');
+ assert.equal(used.plan,null,'Free beta may not render Pro plan');
 });
 test('Integrated Coach description no longer says working features are pending',()=>{
  const html=fs.readFileSync('index.html','utf8');
