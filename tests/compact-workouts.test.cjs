@@ -40,7 +40,7 @@ test('Weekly schedule and guest recovery remain available under correct tabs',()
  assert.match(app,/window\.MLC2Custom\.recoverGuest\(\)/);
 });
 test('Approved teal/gold styling stays scoped to Workouts; active logger, login and sync unaffected',()=>{
- assert.ok(html.includes('compact-workouts.css?v=2'));
+ assert.ok(html.includes('compact-workouts.css?v=3'));
  assert.match(css,/#workouts \.workout-today-card/);
  assert.match(css,/#workouts \.workout-compact-card/);
  assert.match(css,/background:#082e35!important/);
@@ -51,13 +51,13 @@ test('Approved teal/gold styling stays scoped to Workouts; active logger, login 
  assert.match(app,/window\.MLC2SessionDraft\?\.save\(activeDraftStore,activePlan,session.sets\)/);
 });
 
-test('Today workout uses the same approved dark teal as Coach without bright gradient',()=>{
+test('Today workout follows approved rich dark-teal card material, not the old light teal',()=>{
  const start=css.indexOf('#workouts .workout-today-card{');
  const end=css.indexOf('}',start);
  assert.ok(start>=0&&end>start,'Today card style exists');
  const today=css.slice(start,end+1);
- assert.match(today,/background:#06373b!important/);
- assert.match(today,/background-image:none!important/);
+ assert.match(today,/background-color:#04252d!important/);
+ assert.match(today,/background-image:var\(--mlc-rich-teal-surface/);
  assert.match(today,/border:1\.5px solid #d7b476!important/);
- assert.match(read('live-coach-workout.css'),/\.coach-auto-panel\{[^\n]*background:#06373b/);
+ assert.match(read('rich-teal-cards.css'),/--mlc-rich-teal-top:#04252d/);
 });
