@@ -295,6 +295,18 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
 window.MLC2ProgressNavigate=next=>{if(next==='history'||next==='tracking')setPage(next)};
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
 function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:planStorage()})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
+function wireWorkoutPreviewImages(root){
+ if(!root)return;
+ const placeholder='./assets/image-coming-approved.webp';
+ for(const image of root.querySelectorAll('img[data-workout-preview-image]')){
+  image.addEventListener('error',()=>{
+   if(!image.getAttribute('src')?.endsWith('image-coming-approved.webp')){
+    image.src=placeholder;
+    image.alt='Exercise artwork temporarily unavailable';
+   }
+  },{once:true});
+ }
+}
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
@@ -302,7 +314,15 @@ function renderHome(){
  $('heroStart').dataset.homeWorkout=plan.id;
  $('todayStart').dataset.homeWorkout=plan.id;
  $('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
- $('todayExercises').innerHTML=plan.ids.map(id=>{const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
+ $('todayExercises').innerHTML=plan.ids.map(id=>{
+  const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
+  if(!e)return '';
+  const approved=approvedThumbnail(e);
+  const picture=approved||'./assets/image-coming-approved.webp';
+  const alt=approved?'Approved demonstration of '+e.name:'Exercise image awaiting approval';
+  return '<div class="preview-exercise"><span class="preview-exercise-picture"><img src="'+escapeHTML(picture)+'" alt="'+escapeHTML(alt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><span class="preview-exercise-copy"><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</small></span></div>';
+ }).join('');
+ wireWorkoutPreviewImages($('todayExercises'));
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
 function renderWorkouts(){
@@ -316,7 +336,14 @@ function renderWorkouts(){
   presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
   storage:planStorage(),onChanged:()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}
  });
- $('workoutGrid').innerHTML=(window.MLC2Custom?.allPlans(plans)||plans).map((p,i)=>'<div class="workout-item"><button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>'+window.MLC2Custom.controls(p,nextPlan().id)+'</div>').join('');
+ const catalog=libraryExercises(),byId=new Map(catalog.map(e=>[e.id,e]));
+ $('workoutGrid').innerHTML=(window.MLC2Custom?.allPlans(plans)||plans).map((p,i)=>{
+  const exercise=(p.ids||[]).map(id=>byId.get(id)||exercises.find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e));
+  const picture=exercise?approvedThumbnail(exercise):'./assets/image-coming-approved.webp';
+  const alt=exercise?'Approved exercise illustration from '+exercise.name:'Exercise illustration awaiting approval';
+  return '<div class="workout-item"><button type="button" class="workout-card" data-workout="'+escapeHTML(p.id)+'"><span class="workout-card-illustration"><img src="'+escapeHTML(picture)+'" alt="'+escapeHTML(alt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>'+window.MLC2Custom.controls(p,nextPlan().id)+'</div>';
+ }).join('');
+ wireWorkoutPreviewImages($('workoutGrid'));
 }
 // An external catalog is optional. Never treat a readable file as visually approved.
 // The 344-item private release manifest can populate window.MLC2_EXERCISE_CATALOG
