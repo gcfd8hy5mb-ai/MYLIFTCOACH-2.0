@@ -13,10 +13,10 @@ const rows=[
  {planId:'custom-a',created:'2026-11-15T12:00:00Z'}
 ];
 function count(choice){
- const env={coachEvidence:()=>rows,programCustomOptions:()=>[{id:'custom-a'},{id:'custom-b'}],Date,Set};
+ const env={coachEvidence:()=>rows,programCustomOptions:()=>[{id:'custom-a'},{id:'custom-b'}],Date,Set,program,choice};
  vm.createContext(env);
  vm.runInContext(source,env);
- return vm.runInContext('programCompletedCount(program,choice)',{...env,program,choice});
+ return vm.runInContext('programCompletedCount(program,choice)',env);
 }
 test('Pinned custom program counts only enrolled routine',()=>{
  assert.equal(count({mode:'custom',customId:'custom-a'}),1);
