@@ -51,7 +51,13 @@
   width:100vw!important;height:100dvh!important;min-height:100dvh!important;
   margin:0!important;padding:0!important;display:flex!important;
   align-items:stretch!important;justify-content:stretch!important;
-  overflow:hidden!important;z-index:90!important;background:#062f35!important;
+  overflow:hidden!important;z-index:90!important;
+  /* Same approved fixed marble wallpaper as the rest of 2.0, not flat teal. */
+  background-color:#0e5357!important;
+  background-image:url('./assets/approved-vertical-marble-sharp.webp?v=11')!important;
+  background-position:center center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
  }
  #modal.auth-fullscreen .modal-panel{
   width:100%!important;max-width:none!important;min-width:0!important;
@@ -59,7 +65,8 @@
   border:0!important;border-radius:0!important;
   padding:calc(env(safe-area-inset-top) + 72px) max(22px,env(safe-area-inset-right)) calc(26px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left))!important;
   overflow-y:auto!important;-webkit-overflow-scrolling:touch;
-  background:linear-gradient(155deg,#0c484c 0%,#052c33 60%,#041e28 100%)!important;
+  /* Transparent wash keeps the marble visible without sacrificing form contrast. */
+  background:linear-gradient(165deg,rgba(4,45,51,.30),rgba(2,29,35,.50))!important;
   color:#f6ead8!important;box-shadow:none!important;
  }
  #modal.auth-fullscreen .modal-close{
