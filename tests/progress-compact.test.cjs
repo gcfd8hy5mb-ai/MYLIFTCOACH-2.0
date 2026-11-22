@@ -20,7 +20,8 @@ test('all existing progress data render targets are retained, not replaced',()=>
  }
  assert.ok(js.includes('groups.overview.append(recap,chart)'));
  assert.ok(js.includes('groups.strength.append(records)'));
- assert.ok(js.includes('groups.strength.append(auditCard,original)'));
+ assert.ok(js.includes('groups.strength.prepend(auditCard)'));
+ assert.ok(js.includes('groups.strength.append(original)'));
  assert.ok(js.includes("auditBody.id='progressVolumeAudit'"));
  assert.ok(js.includes('groups.history.append(history)'));
  assert.ok(js.includes('metrics.after(tabs,'));
