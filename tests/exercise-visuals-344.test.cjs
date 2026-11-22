@@ -71,3 +71,12 @@ test('library displays the approved dumbbell fallback without touching Coach/clo
  assert.ok(app.includes('approvedThumbnail(e)'),'approved demonstration thumbnails missing');
  assert.ok(app.includes('img.remove(),{once:true}'),'missing-image fallback removed');
 });
+
+test('library reports approved and withheld demonstration totals without claiming missing artwork is approved',()=>{
+ const html=read('index.html'),app=read('app.js');
+ assert.ok(html.includes('id="approvedMediaStatus"'));
+ assert.ok(app.includes('window.MLC2_VISUALS_344_READY===true&&catalog.length===344'));
+ assert.ok(app.includes("e.demonstration?.status==='approved'"));
+ assert.ok(app.includes("e.demonstration?.status==='withheld'"));
+ assert.ok(app.includes("Demonstration inventory not verified in this build"));
+});
