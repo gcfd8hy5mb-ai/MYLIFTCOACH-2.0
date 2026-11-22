@@ -42,5 +42,5 @@ test('Active Today UI includes account-scoped Coach preferences and no silent wo
  assert.match(app,/start\.disabled=true;return/);
  for(const id of ['coachAutoGoal','coachAutoDays','coachAutoEquipment','coachAutoPreferences'])assert.ok(html.includes('id="'+id+'"'));
  assert.ok(html.includes('coach-preferences.js?v=1'));
- assert.match(app,/coachAutonomousDraft\?\.id===id\?coachAutonomousDraft:null/);
+ assert.match(app,/const freshCoach=!selected&&betaView\(\)\.mode==='pro'\?coachAutonomousPlan\(\):null/);
 });
