@@ -77,7 +77,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
+function switchWorkoutOwner(owner){if(pendingCoachScheduleId)cancelCoachSchedule();if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
@@ -324,6 +324,43 @@ function renderHome(){
  }).join('');
  wireWorkoutPreviewImages($('todayExercises'));
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
+}
+let pendingCoachScheduleId=null;
+let pendingCoachScheduleOwner=null;
+function openCoachSchedule(plan){
+ if(!plan?.coachSaved||!plan.id)return;
+ pendingCoachScheduleId=plan.id;
+ pendingCoachScheduleOwner=verifiedOwnerId;
+ const panel=$('coachSchedulePanel');
+ $('coachScheduleName').textContent='Assign '+plan.title+' to a weekday. Your existing workouts and Today selection will not be replaced.';
+ $('coachScheduleStatus').textContent='';
+ panel.hidden=false;
+ panel.scrollIntoView({block:'nearest',behavior:'smooth'});
+ $('coachScheduleDay').focus();
+}
+function cancelCoachSchedule(){
+ pendingCoachScheduleId=null;
+ pendingCoachScheduleOwner=null;
+ $('coachSchedulePanel').hidden=true;
+ $('coachScheduleStatus').textContent='';
+}
+function assignCoachSchedule(){
+ const id=pendingCoachScheduleId;
+ if(!id||pendingCoachScheduleOwner!==verifiedOwnerId){cancelCoachSchedule();notice('Account changed; reopen the Coach workout before assigning a weekday.');return}
+ const plan=window.MLC2Custom?.allPlans(plans).find(p=>p.id===id&&p.coachSaved);
+ if(!plan){cancelCoachSchedule();notice('Saved Coach workout is no longer available.');return}
+ const day=$('coachScheduleDay').value;
+ const name=window.MLC2WeeklySchedule?.DAYS[Number(day)];
+ if(!name)return;
+ const current=window.MLC2WeeklySchedule.read(planStorage())[day];
+ const before=window.MLC2Custom?.allPlans(plans).find(p=>p.id===current)?.title||'the existing assignment';
+ if(!confirm('Assign '+plan.title+' to '+name+'? This will replace '+before+' on '+name+' only. Your manual Today selection will stay unchanged.'))return;
+ try{
+  window.MLC2WeeklySchedule.assign(planStorage(),day,id,window.MLC2Custom.allPlans(plans));
+  cancelCoachSchedule();
+  renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+  notice(plan.title+' is scheduled for '+name+'. Your manual Today selection remains unchanged.');
+ }catch(error){$('coachScheduleStatus').textContent='Schedule not saved: '+String(error.message||error).slice(0,130)}
 }
 function renderWorkouts(){
  const guestBox=$('guestWorkoutRecovery'),guestStatus=$('guestWorkoutRecoveryStatus');
@@ -706,8 +743,10 @@ function bind(){
  $('heroStart').addEventListener('click',()=>openWorkout($('heroStart').dataset.homeWorkout));
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
  $('todayStart').addEventListener('click',()=>openWorkout($('todayStart').dataset.homeWorkout));
- $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
+ $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openCoachSchedule))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
  $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
+ $('coachScheduleApply').addEventListener('click',assignCoachSchedule);
+ $('coachScheduleCancel').addEventListener('click',cancelCoachSchedule);
  $('recoverGuestWorkouts').addEventListener('click',()=>{
   if(!verifiedOwnerId||verifiedOwnerId!==account?.id){notice('Sign in to recover guest workouts.');return}
   const recovery=window.MLC2Custom?.guestRecovery();
