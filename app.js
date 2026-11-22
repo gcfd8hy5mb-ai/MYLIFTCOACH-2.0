@@ -640,6 +640,9 @@ function renderCoach(){
  window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,history,catalog);
  window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
  const updateCoachPlan=()=>{
+  const currentHistory=coachEvidence();
+  window.MLC2CoachTrends?.render($('coachTrends'),currentHistory,
+   window.MLC2CoachReadiness?.weeklyGoal()||4);
   if(betaView().mode!=='pro')return;
   if(nextPlan()?.id!==selected.id){renderCoach();return}
   window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,coachEvidence(),{
@@ -650,11 +653,6 @@ function renderCoach(){
     openWorkout(id);
    }
   });
-  // Weekly goal changes and readiness check-ins immediately refresh both
-  // trend progress and the currently selected program's advice.
-  const currentHistory=coachEvidence();
-  window.MLC2CoachTrends?.render($('coachTrends'),currentHistory,
-   window.MLC2CoachReadiness?.weeklyGoal()||4);
   if(page==='workouts')renderAutonomousCoach();
  };
  window.MLC2CoachReadiness?.render($('coachReadiness'),history,selected,updateCoachPlan);
