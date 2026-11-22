@@ -1507,6 +1507,7 @@ function bind(){
      window.MLC2BodyProgress?.showMeasurements();if(page==='coaching')renderCoach();
     }
     output.textContent=result.status==='restored'?'Restored '+result.restored.join(', ')+'. Existing data preserved.':
+     result.status==='changed-reconfirm'?'Cloud data changed during confirmation. Nothing imported. Tap Recover again to review the new categories.':
      result.status==='cancelled'?'Recovery canceled. No records changed.':'No missing fitness data found.';
    }
   }catch(err){
