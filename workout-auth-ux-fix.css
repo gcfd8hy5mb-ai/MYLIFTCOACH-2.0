@@ -1,0 +1,93 @@
+/* MYLIFTCOACH 2.0 — consistent workout controls and full-screen mobile login.
+   Scoped UX-only patch: original production and cloud-save behavior untouched. */
+#workouts .workout-item,
+#workouts .workout-card,
+#workouts .custom-plan-actions,
+#workouts .mlc-weekly-schedule-grid label,
+#workouts #weeklySchedule {
+ color:#f5e8cf;
+}
+#workouts .workout-card,
+#workouts .workout-item .workout-card,
+#workouts .original-plan-panel,
+#workouts .mlc-weekly-schedule-grid select,
+#workouts .custom-plan-actions button,
+#workouts #weeklySchedule>.button-outline,
+#workouts .custom-workout-toolbar button {
+ background:#042b31!important;
+ background-image:linear-gradient(150deg,#0c4247 0%,#04282f 80%)!important;
+ border:1px solid rgba(222,185,115,.68)!important;
+ color:#f6e7c9!important;
+ border-radius:12px!important;
+ box-shadow:inset 0 1px 0 rgba(238,206,145,.12),0 5px 15px rgba(1,14,20,.24)!important;
+}
+#workouts .workout-card h3,
+#workouts .workout-card p,
+#workouts .workout-card .workout-meta,
+#workouts .workout-card .number {color:#f5e6c8!important;}
+#workouts .workout-card p {color:#c9ded8!important;}
+#workouts .workout-card .number {color:#edc987!important;}
+#workouts .custom-plan-actions button,
+#workouts #weeklySchedule>.button-outline{min-height:42px}
+#workouts .custom-plan-actions button:active,
+#workouts .workout-card:active,
+#workouts #weeklySchedule>.button-outline:active{filter:brightness(1.15)!important}
+#workouts .custom-plan-actions button:focus-visible,
+#workouts .workout-card:focus-visible,
+#workouts .mlc-weekly-schedule-grid select:focus-visible{
+ outline:2px solid #f1ce91;outline-offset:3px
+}
+#workouts .workout-card[aria-pressed=true],
+#workouts .custom-plan-actions [data-custom-select]:is(:hover,:focus-visible){
+ border-color:#f5dca8!important;background-image:linear-gradient(145deg,#14535a,#064049)!important
+}
+#workouts .mlc-weekly-schedule-grid select option{background:#04282f;color:#fff1d7}
+#workouts .mlc-schedule-note{color:#dfd4bb}
+
+/* Auth is the one full-screen modal. Active workouts keep their distinct logger. */
+@media(max-width:760px){
+ #modal.auth-fullscreen{
+  position:fixed!important;inset:0!important;
+  width:100vw!important;height:100dvh!important;min-height:100dvh!important;
+  margin:0!important;padding:0!important;display:flex!important;
+  align-items:stretch!important;justify-content:stretch!important;
+  overflow:hidden!important;z-index:90!important;background:#062f35!important;
+ }
+ #modal.auth-fullscreen .modal-panel{
+  width:100%!important;max-width:none!important;min-width:0!important;
+  height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;
+  border:0!important;border-radius:0!important;
+  padding:calc(env(safe-area-inset-top) + 72px) max(22px,env(safe-area-inset-right)) calc(26px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left))!important;
+  overflow-y:auto!important;-webkit-overflow-scrolling:touch;
+  background:linear-gradient(155deg,#0c484c 0%,#052c33 60%,#041e28 100%)!important;
+  color:#f6ead8!important;box-shadow:none!important;
+ }
+ #modal.auth-fullscreen .modal-close{
+  position:absolute!important;top:calc(env(safe-area-inset-top) + 18px)!important;
+  right:20px!important;width:43px!important;height:43px!important;
+  border:1px solid #dab475!important;border-radius:50%!important;
+  background:#082a30!important;color:#ffedce!important;z-index:2!important
+ }
+ #modal.auth-fullscreen .modal-panel h2{
+  color:#f6e4bf!important;font-size:clamp(30px,9vw,42px)!important;
+  margin:10px 0 12px!important;line-height:1.13!important
+ }
+ #modal.auth-fullscreen .modal-panel p{
+  color:#d2e0d8!important;font-size:14px!important;line-height:1.65!important
+ }
+ #modal.auth-fullscreen .modal-panel .modal-eyebrow{
+  color:#e9bf78!important;font-weight:700!important;letter-spacing:.15em!important
+ }
+ #modal.auth-fullscreen .login-form{display:grid!important;gap:17px!important;margin-top:30px!important}
+ #modal.auth-fullscreen .login-form label{
+  color:#f2e3ca!important;font-size:13px!important;gap:9px!important
+ }
+ #modal.auth-fullscreen .login-form input{
+  width:100%!important;min-height:52px!important;border-radius:11px!important;
+  padding:12px 14px!important;background:#08252e!important;
+  border:1px solid rgba(231,191,115,.64)!important;color:#fff4df!important;
+  font-size:16px!important;box-sizing:border-box!important
+ }
+ #modal.auth-fullscreen #loginSubmit{min-height:52px!important;width:100%!important;margin-top:10px!important}
+ #modal.auth-fullscreen #loginMessage{min-height:20px}
+}
