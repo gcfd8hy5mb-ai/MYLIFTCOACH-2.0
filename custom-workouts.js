@@ -78,7 +78,7 @@ function allPlans(presets){return [...read(),...presets]}
 function currentPlan(presets,completed){const a=allPlans(presets);let id='';try{id=localStorage.getItem(scoped(TODAY))||''}catch{};return a.find(p=>p.id===id)||read().find(p=>!p.coachSaved)||presets[completed%presets.length]||a[0]}
 function controls(p,currentId){
  const custom=p.id.startsWith('custom-');
- return '<div class="custom-plan-actions"><button type="button" data-custom-select="'+esc(p.id)+'">'+(currentId===p.id?'Selected for today ✓':'Use for today')+'</button>'+(custom?'<button type="button" data-custom-edit="'+esc(p.id)+'">Edit</button><button type="button" data-custom-delete="'+esc(p.id)+'">Delete</button>':'')+'</div>';
+ return '<div class="custom-plan-actions"><button type="button" data-custom-select="'+esc(p.id)+'">'+(currentId===p.id?'Selected for today ✓':'Use for today')+'</button>'+(p.coachSaved?'<button type="button" data-custom-schedule="'+esc(p.id)+'">Schedule</button>':'')+(custom?'<button type="button" data-custom-edit="'+esc(p.id)+'">Edit</button><button type="button" data-custom-delete="'+esc(p.id)+'">Delete</button>':'')+'</div>';
 }
 function openEditor(id,unused,onChanged){
  const existing=read().find(p=>p.id===id);
@@ -128,7 +128,9 @@ function openEditor(id,unused,onChanged){
  });
  selectedView();options();$('customName').focus();
 }
-function handleClick(e,onChanged){
+function handleClick(e,onChanged,onSchedule){
+ const schedule=e.target.closest('[data-custom-schedule]');
+ if(schedule){const item=read().find(p=>p.id===schedule.dataset.customSchedule&&p.coachSaved);if(item)onSchedule?.(item);return true}
  const selection=e.target.closest('[data-custom-select]');if(selection){try{localStorage.setItem(scoped(TODAY),selection.dataset.customSelect);if(localStorage.getItem(scoped(TODAY))!==selection.dataset.customSelect)throw Error('Selection not retained')}catch{alert('Could not save selection.');return true}try{window.MLC2ScheduleAuxSync?.()}catch{}onChanged?.();return true}
  const edit=e.target.closest('[data-custom-edit]');if(edit){openEditor(edit.dataset.customEdit,null,onChanged);return true}
  const del=e.target.closest('[data-custom-delete]');if(del){
