@@ -1,8 +1,9 @@
 /* Exercise guide remains unobtrusive until expanded; workout set controls are unchanged. */
 .mlc-guide-wrap{margin:10px 0 12px;border:1px solid rgba(208,177,105,.48);border-radius:13px;background:linear-gradient(130deg,rgba(6,56,60,.89),rgba(8,40,45,.92));overflow:hidden;color:#f4eee0}
 .mlc-guide-bar{display:flex;align-items:center;gap:10px;padding:7px 9px}
-.mlc-guide-thumb{width:58px;height:58px;flex-shrink:0;border-radius:8px;border:1px solid rgba(235,199,119,.56);object-fit:cover;object-position:top;clip-path:inset(0 0 50% 0);transform:scale(1);/* intentionally cropped by container below */}
-.mlc-guide-bar{position:relative}.mlc-guide-thumb{clip-path:none;height:58px;object-fit:cover;object-position:center top}
+.mlc-guide-thumb-frame{width:58px;height:58px;flex:0 0 58px;overflow:hidden;border:1px solid rgba(235,199,119,.56);border-radius:8px;background:#031c1f;position:relative;display:block}
+.mlc-guide-thumb{display:block;position:absolute;inset:0;width:100%;height:200%;object-fit:cover;object-position:center top}
+.mlc-guide-thumb.mlc-guide-placeholder{height:100%}
 .mlc-guide-toggle{flex:1;min-width:0;border:1px solid #c9a66f;background:linear-gradient(160deg,#174d50,#093035);color:#f5d69a;border-radius:9px;padding:12px 8px;font-size:13px;font-weight:700;min-height:43px}
 .mlc-guide-quick{padding:2px 13px 14px;border-top:1px solid rgba(203,172,100,.28)}
 .mlc-guide-quick[hidden],.mlc-guide-overlay[hidden]{display:none!important}
@@ -22,4 +23,4 @@
 .mlc-guide-section h3{color:#f0d092;font-size:16px;margin:0 0 9px}
 .mlc-guide-section p,.mlc-guide-section li{font-size:13px;line-height:1.6;color:#eef4ed}
 .mlc-guide-section p{margin:0}.mlc-guide-section ul{margin:0;padding-left:20px}.mlc-guide-section li{margin:5px 0}
-@media(max-width:390px){.mlc-guide-thumb{width:48px;height:48px}.mlc-guide-toggle{font-size:12px}}
+@media(max-width:390px){.mlc-guide-thumb-frame{width:48px;height:48px;flex-basis:48px}.mlc-guide-toggle{font-size:12px}}
