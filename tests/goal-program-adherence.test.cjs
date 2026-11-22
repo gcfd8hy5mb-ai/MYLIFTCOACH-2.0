@@ -69,5 +69,5 @@ test('Integrated goal screen shows only account-filtered completed sessions',()=
  assert.match(app,/sessions:coachEvidence\(\)/);
  assert.match(app,/missed session\(s\) in previous weeks/);
  assert.match(html,/goal-program-adherence\.js\?v=1/);
- assert.match(html,/app\.js\?v=38/);
+ assert.match(html,/app\.js\?v=39/);
 });
