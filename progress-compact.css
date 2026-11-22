@@ -28,3 +28,13 @@
 
 /* Surface just the five newest saved sessions; full archive remains one tap away. */
 #progress .progress-compact-panel #sessionHistory .recent-item:nth-child(n+6){display:none}
+
+/* Expand individual actual saved sets only on demand; compact and read-only. */
+#progress .volume-audit-card{background:#04252d!important;background-image:none!important}
+#progress .volume-audit-note{font-size:12px;line-height:1.55;color:#c9d9d3;margin:8px 0 12px}
+#progress .volume-audit-session{border:1px solid rgba(212,176,118,.65);border-radius:12px;background:#062d32;margin:8px 0;overflow:hidden}
+#progress .volume-audit-session summary{cursor:pointer;padding:12px 13px;font-size:13px;font-weight:750;line-height:1.5;color:#efd3a0;list-style-position:inside}
+#progress .volume-audit-session[open] summary{border-bottom:1px solid rgba(212,176,118,.35)}
+#progress .volume-audit-sets{margin:10px 10px 8px;padding-left:25px;max-height:290px;overflow-y:auto}
+#progress .volume-audit-sets li{padding:5px 1px;font-size:12px;line-height:1.5;color:#e0e9e4;overflow-wrap:anywhere}
+#progress .volume-audit-subtotal{font-size:12px;color:#f1d19c;margin:9px 12px 13px;font-weight:750}
