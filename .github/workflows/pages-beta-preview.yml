@@ -113,18 +113,27 @@ jobs:
           ref: 412dae962d0fbfbd81674011ed5ecbd165e4193d
           path: phone-ui-m
           persist-credentials: false
+      - name: Checkout verified moving mobile topbar removal build
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 9b70e2dc716223a6d0cafc553d9cebf23269b8a7
+          path: phone-ui-n
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           # The existing saved redesign Home Screen app opens /myliftcoach2/.
-          # Update only the stable redesign preview address to regression-tested M.
+          # Update only the stable redesign preview address to regression-tested N.
           # Previous iPhone test paths and production workout-tracker remain intact.
           mkdir -p dist/myliftcoach2
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-ui-m/ dist/myliftcoach2/
-          grep -q 'iPhone beta test build 11-21M' dist/myliftcoach2/index.html
+            --exclude='*.md' phone-ui-n/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21N' dist/myliftcoach2/index.html
+          grep -q 'mobile-header-cleanup.css?v=1' dist/myliftcoach2/index.html
+          test -s dist/myliftcoach2/mobile-header-cleanup.css
           grep -q 'custom-workouts.js?v=2' dist/myliftcoach2/index.html
           grep -q 'guestWorkoutRecovery' dist/myliftcoach2/index.html
           grep -q 'active-workout-header' dist/myliftcoach2/app.js
@@ -140,7 +149,7 @@ jobs:
           grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/workout-auth-ux-fix.css
           # Verify H is not accidentally being republished to the saved app.
           ! grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
-          echo 'Existing saved redesign app: prepared guest recovery and current interface build 11-21M'
+          echo 'Existing saved redesign app: prepared cleaned iPhone header build 11-21N'
           sha256sum dist/myliftcoach2/index.html dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
