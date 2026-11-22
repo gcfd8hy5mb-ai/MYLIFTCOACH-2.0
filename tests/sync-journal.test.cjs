@@ -179,3 +179,17 @@ test('two devices can inspect the same saved cloud record without silently repla
  assert.equal((await deviceB.drain({verifiedOwner:'athlete-a'})).status,'conflict');
  assert.equal(server.rows.get('athlete-a/session/week-1').payload.sets[0].weight,75);
 });
+
+test('an acknowledgement retains operations enqueued by another journal while awaiting transport',async()=>{
+ const db=new Map();
+ const storage={getItem:key=>db.get(key)??null,setItem:(key,value)=>db.set(key,value)};
+ const opts={owner:'member',storage};
+ const transport={async commit(op){
+  create({...opts,makeId:()=> 'op-two'}).enqueue('tracking','second',{entries:[]});
+  return {owner:op.owner,opId:op.opId,revision:1};
+ }};
+ const journal=create({...opts,transport,enabled:true,makeId:()=> 'op-one'});
+ journal.enqueue('session','first',{});
+ await journal.drain({verifiedOwner:'member',types:['session']});
+ assert.deepEqual(journal.list().items.map(op=>op.id),['second']);
+});

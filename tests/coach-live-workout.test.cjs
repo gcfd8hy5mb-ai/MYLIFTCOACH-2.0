@@ -19,7 +19,7 @@ function harness(mode='pro',ready='Normal',suggestion={status:'ready',action:'ho
   betaView:()=>({mode}),libraryExercises:()=>[exercise],exercises:[exercise],
   demoSessions:[],session:{sets:[]},activePlan:plan,verifiedOwnerId:null,
   coachProgramAdvice:()=>null,
-  window:{MLC2Coach:{suggestion:()=>suggestion},MLC2CoachReadiness:{current:()=>ready},MLC2PostWorkout:{summarize:()=>({hasHistory:true,current:{sets:2,movements:1},previous:null})}},
+  window:{MLC2WorkoutUX:require('../workout-active-ux.js'),MLC2Coach:{suggestion:()=>suggestion},MLC2CoachReadiness:{current:()=>ready},MLC2PostWorkout:{summarize:()=>({hasHistory:true,current:{sets:2,movements:1},previous:null})}},
   escapeHTML:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&quot;'}[c]))
  };
  vm.createContext(env);
@@ -130,11 +130,13 @@ test('Coach accepts only completed workouts belonging to the verified account',(
  const env=harness();
  env.verifiedOwnerId='account-a';
  env.demoSessions=[
-  {id:'real-a',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:50,reps:10}]},
-  {id:'foreign',ownerId:'account-b',sets:[{exerciseId:'chest-press',weight:95,reps:10}]},
-  {id:'SIMULATED-COACH-injected',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:100,reps:10}]},
-  {id:'guest',sets:[{exerciseId:'chest-press',weight:70,reps:10}]},
-  {id:'empty',ownerId:'account-a',sets:[]}
+  {id:'real-a',created:'2026-11-19T12:00:00Z',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:50,reps:10}]},
+  {id:'foreign',created:'2026-11-19T12:00:00Z',ownerId:'account-b',sets:[{exerciseId:'chest-press',weight:95,reps:10}]},
+  {id:'SIMULATED-COACH-injected',created:'2026-11-19T12:00:00Z',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:100,reps:10}]},
+  {id:'guest',created:'2026-11-19T12:00:00Z',sets:[{exerciseId:'chest-press',weight:70,reps:10}]},
+  {id:'future',created:'2999-01-01T12:00:00Z',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:50,reps:10}]},
+  {id:'invalid',created:'2026-11-19T12:00:00Z',ownerId:'account-a',sets:[{exerciseId:'chest-press',weight:null,reps:10}]},
+  {id:'empty',created:'2026-11-19T12:00:00Z',ownerId:'account-a',sets:[]}
  ];
  assert.equal(vm.runInContext('coachEvidence().length',env),1);
  assert.equal(vm.runInContext('coachEvidence()[0].id',env),'real-a');
@@ -146,7 +148,7 @@ test('Coach accepts only completed workouts belonging to the verified account',(
 test('Synthetic Coach evidence is always labeled and never mutates account history',()=>{
  const env=harness();
  env.location={pathname:'/MYLIFTCOACH-2.0-PREVIEW/coach-live-test/'};
- const saved={id:'saved-1',sets:[{exerciseId:'chest-press',weight:40,reps:8}]};
+ const saved={id:'saved-1',created:'2026-11-19T12:00:00Z',sets:[{exerciseId:'chest-press',weight:40,reps:8}]};
  env.demoSessions=[saved];
  vm.runInContext('previewCoachHistory=generatePreviewCoachHistory(activePlan)',env);
  assert.match(vm.runInContext('coachEvidenceLabel()',env),/SIMULATED TEST DATA/);
@@ -158,10 +160,10 @@ test('Synthetic Coach evidence is always labeled and never mutates account histo
 });
 
 test('Active workout mounts Coach, uses existing draft and cloud paths, and avoids automatic plan changes',()=>{
- for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed)","queueWorkoutForSync(entry)","window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)"]){
+ for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.complete(localStorage,verifiedOwnerId,entry)","queueWorkoutForSync(proposed.find(row=>row.id===entry.id))","window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)"]){
   assert.ok(app.includes(marker),'missing '+marker);
  }
  assert.match(css,/\.live-coach-box/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
- assert.match(html,/app\.js\?v=40/);
+ assert.match(html,/app\.js\?v=41/);
 });

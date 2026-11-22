@@ -90,13 +90,21 @@ test('account scopes isolate a selected custom workout from guest and another si
  win.MLC2Custom.setOwner(null);
  assert.equal(chosen(win,db).id,'preset-a');
 });
-test('Home Start buttons are pinned to the displayed ID rather than recalculating nextPlan at click time',()=>{
+test('Home refuses to open a workout that differs from the displayed preview',()=>{
  const app=read('app.js');
- assert.match(app,/\$\('heroStart'\)\.dataset\.homeWorkout=plan\.id/);
- assert.match(app,/\$\('todayStart'\)\.dataset\.homeWorkout=plan\.id/);
- assert.match(app,/openWorkout\(\$\('heroStart'\)\.dataset\.homeWorkout\)/);
- assert.match(app,/openWorkout\(\$\('todayStart'\)\.dataset\.homeWorkout\)/);
- assert.doesNotMatch(app,/openWorkout\(nextPlan\(\)\.id\)/);
+ const start=app.indexOf('function workoutPreviewKey(');
+ const end=app.indexOf('function openWorkout(id)',start);
+ const opened=[],notices=[];
+ const planned={id:'same',title:'Workout',ids:['press']};
+ const context={planned,opened,loadCurrentWorkouts(){},renderHome(){},renderWorkouts(){},
+  notice:msg=>notices.push(msg),openWorkout:id=>opened.push(id)};
+ vm.runInNewContext(app.slice(start,end)+`
+  const button={dataset:{workoutPreview:workoutPreviewKey(planned)}};
+  startPreviewWorkout(button,()=>({...planned,ids:['row']}));
+  startPreviewWorkout(button,()=>planned);
+ `,context);
+ assert.equal(notices.length,1);
+ assert.deepEqual(opened,['same']);
 });
 
 test('guest workout recovery copies missing routines without deleting guest source or signed-in plans',()=>{

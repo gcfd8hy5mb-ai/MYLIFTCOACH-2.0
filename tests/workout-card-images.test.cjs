@@ -5,12 +5,12 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const source=fs.readFileSync('app.js','utf8');
 const home=fs.readFileSync('home-rebuild.css','utf8');
-const workouts=fs.readFileSync('workouts-tabs-n.css','utf8');
+const workouts=fs.readFileSync('compact-workouts.css','utf8');
 test('Home and Workouts show approved exercise thumbnails without requiring an exercise guide',()=>{
  assert.ok(source.includes('preview-exercise-picture'));
- assert.ok(source.includes('workout-card-illustration'));
+ assert.ok(source.includes('workout-compact-illustration'));
  assert.ok(source.includes("const approved=approvedThumbnail(e)"));
- assert.ok(source.includes("const exercise=(p.ids||[]).map(id=>byId.get(id)||exercises.find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e))"));
+ assert.ok(source.includes("const imageExercise=(p.ids||[]).map(id=>libraryExercises().find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e))"));
  assert.ok(source.includes("wireWorkoutPreviewImages($('todayExercises'))"));
  assert.ok(source.includes("wireWorkoutPreviewImages($('workoutGrid'))"));
  assert.ok(source.includes('data-workout=')&&source.includes('escapeHTML(p.id)'));
@@ -42,7 +42,7 @@ test('Preview image loading failures switch to the existing original approved pl
 test('New image styles are scoped to the approved teal/gold Home and Workouts screens',()=>{
  assert.ok(home.includes('#home .preview-exercise-picture'));
  assert.ok(home.includes('object-fit:contain'));
- assert.ok(workouts.includes('#workouts .workout-card-illustration'));
+ assert.ok(workouts.includes('#workouts .workout-compact-illustration'));
  assert.ok(workouts.includes('object-fit:contain'));
- assert.ok(!/\b(localStorage|sessionStorage|fetch|supabase)\b/.test(source.slice(source.indexOf('function wireWorkoutPreviewImages'),source.indexOf('function renderHome()'))));
+ assert.ok(!/\b(localStorage|sessionStorage|fetch|supabase)\b/.test(source.slice(source.indexOf('function wireWorkoutPreviewImages'),source.indexOf('function unfinishedDraftFor('))));
 });

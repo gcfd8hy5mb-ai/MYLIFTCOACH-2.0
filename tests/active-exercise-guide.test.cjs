@@ -10,7 +10,7 @@ test('interactive guide scripts parse and are included after application',()=>{
  const html=read('index.html');
  assert.ok(html.includes('active-exercise-guide.css'));
  assert.ok(html.includes('active-exercise-guide.js'));
- assert.ok(html.indexOf('app.js?v=15')<html.indexOf('active-exercise-guide.js'));
+ assert.ok(html.indexOf('src="./app.js?')<html.indexOf('active-exercise-guide.js'));
 });
 test('guide attaches to dynamically created workout modal without touching tracking',()=>{
  const js=read('active-exercise-guide.js');

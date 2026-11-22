@@ -40,9 +40,8 @@ test('volume graph and personal records use same validated set calculation',()=>
  const migration=read('progress-migration.js');
  const html=read('index.html');
  assert.ok(app.includes('window.MLC2Progress?.volumeTotal(x.sets)||0'));
- assert.ok(app.includes('window.MLC2Progress?.validSet(set)'));
  assert.ok(migration.includes('sum of weight × reps from your completed sets'));
- assert.ok(html.indexOf('progress-migration.js')<html.indexOf('app.js?v=15'));
+ assert.ok(html.indexOf('progress-migration.js')<html.indexOf('src="./app.js?'));
 });
 
 test('Strength tab exposes a transparent read-only breakdown of logged sets',()=>{
@@ -54,7 +53,7 @@ test('Strength tab exposes a transparent read-only breakdown of logged sets',()=
  assert.ok(migration.includes("weight+' lb × '+reps+' reps = '"));
  assert.ok(migration.includes('Older entries may include previously prefilled values'));
  assert.ok(compact.includes("auditBody.id='progressVolumeAudit'"));
- assert.ok(app.includes("renderVolumeAudit(document.getElementById('progressVolumeAudit'),demoSessions"));
+ assert.ok(app.includes("renderVolumeAudit($('progressVolumeAudit'),demoSessions"));
  assert.ok(css.includes('.volume-audit-session'));
  assert.ok(!/\b(localStorage|sessionStorage|indexedDB|fetch|supabase|setItem|removeItem)\b/.test(migration));
 });

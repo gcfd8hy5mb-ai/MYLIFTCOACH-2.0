@@ -102,8 +102,8 @@
     }
     // If a same-ID remote record differs, abort instead of writing or overwriting.
     if(report.conflicts.length)return {status:'conflict',conflicts:report.conflicts.length,
-      available:report.missing.length,pending:journal.list().items.length};
-    const sent=await journal.drain({verifiedOwner:owner,online:online(),maxOperations:50});
+      available:report.missing.length,pending:journal.list().items.filter(op=>op.type==='session').length};
+    const sent=await journal.drain({verifiedOwner:owner,online:online(),maxOperations:50,types:['session']});
     if(!isActive())return {status:'owner-changed'};
     if(sent.status==='retry'||sent.status==='unverified-ack')return {status:'retry',pending:sent.pending};
     return {status:sent.status,uploaded:sent.sent||0,pending:sent.pending||0,

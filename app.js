@@ -41,9 +41,10 @@ const sessionRefresh=window.MLC2FreshAuth.create({
  refresh:refreshToken=>authRequest('token?grant_type=refresh_token',{refresh_token:refreshToken}),
  fetchUser:token=>authRequest('user',null,token,'GET'),
  commit:session=>{
-  const serialized=JSON.stringify(session);
+  const previousMode=betaView().mode;
   authStore.save(sessionStorage,localStorage,session);
   auth=session;account=session.user;renderSettings();
+  if(betaView().mode!==previousMode){renderHome();renderWorkouts();renderCoach()}
  }
 });
 let workoutSyncTimer=null,workoutSyncBusy=false,workoutSyncFailures=0;
@@ -77,7 +78,28 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){coachAutonomousDraft=null;if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
+function switchWorkoutOwner(owner){
+ coachAutonomousDraft=null;
+ if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}
+ if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}
+ syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;
+ if(verifiedOwnerId!==owner){
+  closeModal(false);$('calorieGoalForm')?.reset();
+  for(const id of ['cloudPreviewResult','cloudAuditResult','cloudArchiveResult','inspectCloudSessionsStatus','accountRecoveryStatus','otherFitnessCloudStatus']){
+   $(id)?.replaceChildren();
+  }
+  workoutSyncText='Checking account workout backup status…';
+  auxSyncMessage='Checking account fitness backup status…';
+ }
+ verifiedOwnerId=owner;
+ window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);
+ trackingEntries=loadLocalTracking();pendingAccountRecovery=null;
+ const file=$('accountRecoveryFile');if(file)file.value='';
+ loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();
+ if(page==='nutrition')renderCalorieGoal();
+ if(page==='coaching')renderCoach();
+ if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}
+}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
@@ -143,12 +165,14 @@ async function runAutomaticAuxSync(){
 }
 function auxEngine(owner){
  if(owner!==verifiedOwnerId||owner!==account?.id||!auth?.access_token)throw Error('Verified sign-in required');
+ const epoch=authEpoch;
  const verifier=window.MLC2VerifiedAuth.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>sessionRefresh.sessionFor(owner),fetcher:fetch,enabled:true});
  const transport=window.MLC2SupabaseTransport.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,fetcher:fetch,enabled:true,getVerifiedAuth:()=>verifier.verify(owner)});
- return window.MLC2AuxCloud.create({owner,storage:localStorage,aux:window.MLC2AuxData,Sync:window.MLC2Sync,transport,verify:id=>verifier.verify(id),active:()=>account?.id===verifiedOwnerId?verifiedOwnerId:null,online:()=>navigator.onLine});
+ return window.MLC2AuxCloud.create({owner,storage:localStorage,aux:window.MLC2AuxData,Sync:window.MLC2Sync,transport,verify:id=>verifier.verify(id),active:()=>epoch===authEpoch&&account?.id===verifiedOwnerId?verifiedOwnerId:null,online:()=>navigator.onLine});
 }
 function syncEngine(owner){
  if(owner!==verifiedOwnerId||owner!==account?.id||!auth?.access_token)throw Error('Verified sign-in required');
+ const epoch=authEpoch;
  const verifier=window.MLC2VerifiedAuth.create({
   baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>sessionRefresh.sessionFor(owner),fetcher:fetch,enabled:true
  });
@@ -159,7 +183,7 @@ function syncEngine(owner){
  return window.MLC2AutoWorkouts.create({
   owner,storage:localStorage,accountStore:window.MLC2AccountWorkouts,
   Sync:window.MLC2Sync,transport,verify:id=>verifier.verify(id),
-  active:()=>verifiedOwnerId===account?.id?verifiedOwnerId:null,
+  active:()=>epoch===authEpoch&&verifiedOwnerId===account?.id?verifiedOwnerId:null,
   online:()=>navigator.onLine
  });
 }
@@ -261,11 +285,12 @@ function formatDate(value){const d=new Date(value);return Number.isFinite(d.getT
 function renderHistory(){
  const original=originalSnapshot?.sessions||[];
  const demo=demoSessions||[];
+ const exerciseNames=new Map(libraryExercises().map(exercise=>[exercise.id,exercise.name]));
  $('legacyHistoryStatus').textContent=originalSnapshot?original.length+' original sessions available on this browser (read-only).':'Not loaded. Tap View original records to check this browser. For signed-in original records, sign in to the same account first.';
  const setCount=original.reduce((n,x)=>n+x.exercises.reduce((m,e)=>m+e.sets.length,0),0);
  $('originalHistorySummary').textContent=originalSnapshot?original.length+' workouts · '+setCount+' sets':'';
  $('originalHistoryList').innerHTML=originalSnapshot?(original.length?original.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.date))+' · '+x.exercises.length+' movements</small></summary>'+x.exercises.map(y=>'<div class="history-exercise"><b>'+escapeHTML(y.name)+'</b><small>'+y.sets.map(t=>escapeHTML(String(t.weight))+' lb × '+escapeHTML(String(t.reps))).join(' · ')+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No original session records found in this browser. Your original app or Supabase may store them elsewhere; no data was changed.</p>'):'';
- $('detailedDemoHistory').innerHTML=demo.length?demo.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.created))+' · '+x.sets.length+' sets</small></summary>'+x.sets.map(y=>'<div class="history-exercise"><span>'+escapeHTML(exercises.find(e=>e.id===y.exerciseId)?.name||y.exerciseId||'Exercise')+'</span><small>'+escapeHTML(String(y.weight||0))+' lb × '+escapeHTML(String(y.reps||0))+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No 2.0 practice sessions yet. Completing a workout will add it here.</p>';
+ $('detailedDemoHistory').innerHTML=demo.length?demo.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.created))+' · '+x.sets.length+' sets</small></summary>'+x.sets.map(y=>'<div class="history-exercise"><span>'+escapeHTML(exerciseNames.get(y.exerciseId)||y.exerciseId||'Exercise')+'</span><small>'+escapeHTML(String(y.weight||0))+' lb × '+escapeHTML(String(y.reps||0))+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No 2.0 practice sessions yet. Completing a workout will add it here.</p>';
 }
 function renderOriginalPlans(){
  const el=$('originalPlansList');if(!el)return;
@@ -307,12 +332,11 @@ function renderGoalProgramSources(){
  const source=form.elements.namedItem('programSource'),selection=form.elements.namedItem('programCustom');
  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
  const saved=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
- const current=selection.value,custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
+ const custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
  selection.replaceChildren(new Option('All my custom workouts (rotate)',''));
  for(const plan of custom)selection.add(new Option(plan.title,plan.id));
  source.value=saved?.mode||'generated';
- selection.value=saved?.customId&&custom.some(p=>p.id===saved.customId)?saved.customId:
-  custom.some(p=>p.id===current)?current:'';
+ selection.value=saved?.customId&&custom.some(p=>p.id===saved.customId)?saved.customId:'';
  $('goalProgramCustomGroup').hidden=source.value==='generated';
 }
 function programCustomOptions(){
@@ -416,7 +440,7 @@ function unfinishedDraftFor(plan){
  try{
   const scoped=window.MLC2AccountDraft.scope(localStorage,verifiedOwnerId);
   const draft=window.MLC2SessionDraft?.read(scoped);
-  if(!draft?.sets?.length||draft.planId!==plan.id||
+  if(!draft?.sets?.length||(draft.workoutId&&demoSessions.some(row=>row.id===draft.workoutId))||draft.planId!==plan.id||
      JSON.stringify(draft.ids)!==JSON.stringify(plan.ids))return null;
   return draft;
  }catch{return null}
@@ -425,8 +449,7 @@ function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
  const plan=nextPlan();
- $('heroStart').dataset.homeWorkout=plan.id;
- $('todayStart').dataset.homeWorkout=plan.id;
+ $('heroStart').dataset.workoutPreview=$('todayStart').dataset.workoutPreview=workoutPreviewKey(plan);
  const unfinished=unfinishedDraftFor(plan);
  $('heroStart').innerHTML=unfinished?'Resume Workout <span aria-hidden="true">▶</span>':'Start Workout <span aria-hidden="true">▶</span>';
  $('todayStart').innerHTML=unfinished?'Resume this session <span aria-hidden="true">↗</span>':'Begin this session <span aria-hidden="true">↗</span>';
@@ -538,6 +561,7 @@ function renderAutonomousCoach(){
   (coachAutonomousDraft.programSource==='custom'?'Using your original custom routine. ':'Coach-generated routine. ')+
   names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.'+
   (phaseAdvice?.status==='ready'?' '+coachAdviceText(phaseAdvice):'');
+ start.dataset.workoutPreview=workoutPreviewKey(coachAutonomousDraft);
  start.disabled=false;
 }
 
@@ -559,6 +583,7 @@ function renderWorkouts(){
  const savedDraft=unfinishedDraftFor(selected);
  if(savedDraft&&source)source.textContent+=' · '+savedDraft.sets.length+' saved set(s) ready to resume';
  const start=$('workoutTodayStart');if(start){
+  start.dataset.workoutPreview=workoutPreviewKey(selected);
   start.dataset.workout=activeId;start.disabled=!activeId;
   start.textContent=savedDraft?'Resume workout':'Start workout';
  }
@@ -577,6 +602,7 @@ function renderWorkouts(){
    const imagePath=imageExercise?approvedThumbnail(imageExercise):'./assets/image-coming-approved.webp';
    const imageAlt=imageExercise?'Approved exercise illustration of '+imageExercise.name:'Exercise illustration awaiting approval';
    const current=p.id===activeId;
+   const pinned=current&&selected.scheduleSource==='manual';
    const isCustom=p.id.startsWith('custom-');
    return '<article class="workout-compact-card'+(current?' is-selected':'')+'">'+
     '<div class="workout-compact-heading"><span class="workout-compact-illustration"><img src="'+escapeHTML(imagePath)+'" alt="'+escapeHTML(imageAlt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><div><h3>'+escapeHTML(p.title)+'</h3>'+
@@ -584,7 +610,7 @@ function renderWorkouts(){
     (current?'<span class="workout-selected-tag">Today ✓</span>':'')+'</div>'+
     '<div class="workout-compact-actions">'+
     '<button type="button" class="workout-compact-start" data-workout="'+escapeHTML(p.id)+'">Start workout</button>'+
-    '<button type="button" class="workout-compact-select" data-custom-select="'+escapeHTML(p.id)+'"'+(current?' disabled':'')+'>'+(current?'Selected':'Use for today')+'</button>'+
+    '<button type="button" class="workout-compact-select" data-custom-select="'+escapeHTML(p.id)+'"'+(pinned?' disabled':'')+'>'+(pinned?'Selected':'Use for today')+'</button>'+
     (isCustom?'<button type="button" class="workout-compact-icon" data-custom-edit="'+escapeHTML(p.id)+'" aria-label="Edit '+escapeHTML(p.title)+'">Edit</button>'+
     '<button type="button" class="workout-compact-icon workout-compact-delete" data-custom-delete="'+escapeHTML(p.id)+'" aria-label="Delete '+escapeHTML(p.title)+'">Delete</button>':'')+
     '</div></article>';
@@ -648,6 +674,8 @@ function renderProgress(){
  const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
  $('progressSessions').textContent=demoSessions.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
  renderProgressChart();
+ const exerciseNames=new Map(libraryExercises().map(exercise=>[exercise.id,exercise.name]));
+ window.MLC2Progress?.renderVolumeAudit($('progressVolumeAudit'),demoSessions,id=>exerciseNames.get(id)||id);
  window.MLC2Progress?.renderRecords($('demoRecords'),demoSessions,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
  window.MLC2Progress?.renderRecords($('legacyRecords'),originalSnapshot?.sessions||[],'original',(id,name)=>libraryExercises().find(e=>e.id===id)?.name||name);
  $('legacyRecordsNote').textContent=originalSnapshot?'Read-only snapshot from original device storage.':'Tap View original records in Workout History to load a local read-only snapshot. No cloud data is queried.';
@@ -657,7 +685,7 @@ function renderProgressChart(){
  const root=$('progressChart');if(!root)return;
  const rows=demoSessions.slice(0,8).reverse();
  if(!rows.length){root.innerHTML='<div class="chart-empty">Your volume chart will appear after your first completed workout.<span>No invented progress numbers.</span></div>';return;}
- const values=rows.map(x=>x.sets.reduce((sum,set)=>sum+Number(set.weight||0)*Number(set.reps||0),0));
+ const values=rows.map(x=>window.MLC2Progress?.volumeTotal(x.sets)||0);
  const peak=Math.max(1,...values),count=values.length;
  const xy=values.map((n,i)=>({x:22+(i*(276/Math.max(1,count-1))),y:175-(n/peak)*142}));
  const points=xy.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
@@ -687,7 +715,7 @@ function renderCoach(){
    coach:window.MLC2Coach,
    onOpenWorkout:id=>{
     if(betaView().mode!=='pro')return;
-    if(nextPlan()?.id!==id){notice('Your workout selection changed. Review Today first.');renderCoach();return}
+    if(workoutPreviewKey(nextPlan())!==workoutPreviewKey(selected)){notice('Your workout selection changed. Review Today first.');renderCoach();return}
     openWorkout(id);
    }
   });
@@ -706,7 +734,7 @@ function renderCoach(){
    mode:'pro',readiness:window.MLC2CoachReadiness?.current(selected.id)||'Normal',
    coach:window.MLC2Coach,
    onOpenWorkout:id=>{
-    if(betaView().mode!=='pro'||nextPlan()?.id!==id){notice('Workout selection changed. Review Today first.');return}
+    if(betaView().mode!=='pro'||workoutPreviewKey(nextPlan())!==workoutPreviewKey(selected)){notice('Workout selection changed. Review Today first.');return}
     openWorkout(id);
    }
   });
@@ -744,7 +772,14 @@ function renderSettings(){
  }
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
-function closeModal(){previewCoachHistory=null;closeRest();$('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
+function closeModal(refresh=true){
+ const hadWorkout=!!activePlan;
+ previewCoachHistory=null;closeRest();
+ $('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');$('modalContent').replaceChildren();
+ document.body.style.overflow='';
+ activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null;
+ if(hadWorkout&&refresh){renderHome();renderWorkouts()}
+}
 
 
 /* Strictly isolated, RAM-only Coach demo history for the independent iPhone preview.
@@ -755,10 +790,12 @@ function coachEvidence(){
  if(isCoachTestPreview()&&previewCoachHistory)return previewCoachHistory;
  // Completed 2.0 sessions are loaded through account-scoped storage.
  // Never admit a synthetic sample into personal progression calculations.
+ const now=Date.now();
  return demoSessions.filter(row=>row&&typeof row.id==='string'&&
   !row.id.startsWith('SIMULATED-COACH-')&&
   (verifiedOwnerId===null?!row.ownerId:row.ownerId===verifiedOwnerId)&&
-  Array.isArray(row.sets)&&row.sets.length>0);
+  Number.isFinite(Date.parse(row.created))&&Date.parse(row.created)<=now&&
+  Array.isArray(row.sets)&&row.sets.some(set=>set?.exerciseId&&window.MLC2WorkoutUX.validSet(set,set.exerciseId)));
 }
 function coachEvidenceLabel(){
  if(isCoachTestPreview()&&previewCoachHistory)
@@ -868,6 +905,19 @@ function applyCoachWeight(id){
  return true;
 }
 
+function workoutPreviewKey(plan){
+ return plan?JSON.stringify([plan.id,plan.title,plan.ids,plan.programWeek]):'';
+}
+function startPreviewWorkout(button,resolve){
+ loadCurrentWorkouts();
+ const plan=resolve();
+ if(!plan||button.dataset.workoutPreview!==workoutPreviewKey(plan)){
+  renderHome();renderWorkouts();
+  notice('Your workout selection changed. Review the updated workout before starting.');
+  return;
+ }
+ openWorkout(plan.id);
+}
 function openWorkout(id){
  $('modal').classList.remove('auth-fullscreen');
  const workoutStartedOwner=verifiedOwnerId;
@@ -880,14 +930,20 @@ function openWorkout(id){
  if(freshCoach&&plan===freshCoach)coachAutonomousDraft=freshCoach;
  const draftAPI=window.MLC2SessionDraft;
  const draftStore=window.MLC2AccountDraft.scope(localStorage,workoutStartedOwner);
- const other=draftAPI?.read(draftStore);
+ let other=draftAPI?.read(draftStore);
+ loadCurrentWorkouts();
+ if(other?.workoutId&&demoSessions.some(row=>row.id===other.workoutId)){
+  try{draftAPI.clear(draftStore,other.planId,other.workoutId)}catch{notice('Could not clear a completed draft. Check browser storage.');return}
+  other=null;
+ }
  if(other?.sets.length&&(other.planId!==id||JSON.stringify(other.ids)!==JSON.stringify(plan.ids))){
   if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. The workout or exercise list differs. Start again and discard that older draft?'))return;
  }
- activePlan=plan;activeDraftStore=draftStore;activeDraftOwner=workoutStartedOwner;
  const restoredSets=draftAPI?.resume(draftStore,plan)||[];
+ const workoutId=(restoredSets.length&&other?.workoutId)||'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
+ activePlan={...plan,workoutId};activeDraftStore=draftStore;activeDraftOwner=workoutStartedOwner;
  session={sets:restoredSets};
- try{draftAPI?.save(draftStore,plan,session.sets)}
+ try{draftAPI?.save(draftStore,activePlan,session.sets)}
  catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
  openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div>'+ (restoredSets.length?'<p class="active-resume-confirmation" role="status">Resumed workout · '+restoredSets.length+' saved set'+(restoredSets.length===1?'':'s')+' restored. Finish workout when you are done.</p>':'')+'</div>'+liveCoachPreview(plan)+coachTestControls()+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
  renderWorkoutLog();
@@ -897,17 +953,17 @@ function openWorkout(id){
  $('finishWorkout').addEventListener('click',()=>{
   if(workoutStartedOwner!==verifiedOwnerId){notice('Account changed during this workout. Return to the original account or restart before saving.');return}
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
-  const entry={id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9),created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(verifiedOwnerId?{ownerId:verifiedOwnerId}:{})};
+  const entry={id:workoutId,created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(verifiedOwnerId?{ownerId:verifiedOwnerId}:{})};
   // Persist first. A failed local write must not create a phantom completed workout.
-  const proposed=[entry,...demoSessions]; // No silent history eviction.
-  try{
-   window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed);
-   demoSessions=proposed;
-   // Local write succeeded. Queue using the existing isolated Supabase journal.
-   queueWorkoutForSync(entry);
-   try{window.MLC2SessionDraft?.clear(activeDraftStore,plan.id)}catch{}
-   closeModal();renderHome();setPage('progress');notice('Workout saved on this device. Account backup will sync when connected.');if(betaView().mode==='pro')openModal(liveCoachRecap(proposed));
-  }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
+  let proposed;
+  try{proposed=window.MLC2AccountWorkouts.complete(localStorage,verifiedOwnerId,entry)}
+  catch{notice('Could not save the session; it stays open for retry. Check browser storage.');return}
+  demoSessions=proposed;
+  queueWorkoutForSync(proposed.find(row=>row.id===entry.id));
+  try{window.MLC2SessionDraft?.clear(activeDraftStore,plan.id,workoutId)}catch{}
+  closeModal(false);renderHome();setPage('progress');
+  notice(verifiedOwnerId?'Workout saved on this device. Account backup will sync when connected.':'Workout saved on this device.');
+  if(betaView().mode==='pro')openModal(liveCoachRecap(proposed));
  });
 }
 function renderWorkoutLog(){
@@ -920,14 +976,13 @@ function renderWorkoutLog(){
   const logged=session.sets.filter(x=>x.exerciseId===id);
   const prior=ux?.previous(id,demoSessions,activePlan.id);
   const last=prior?.sets?.[prior.sets.length-1];
-  const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:40,reps:10,source:'default'};
-  const hasKnownWeight=defaults.source!=='default';
+  const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:'',reps:''};
   const previousText=last?'Last workout: '+last.weight+' lb × '+last.reps+' reps':'No previous session for this workout';
   const coach=betaView().mode==='pro'&&e.group!=='Cardio'?window.MLC2Coach?.suggestion(id,coachEvidence(),catalog):null;
   const coachHint=coach?.status==='ready'?
    '<p class="active-coach-hint"><strong>✦ Coach</strong> '+escapeHTML(coach.action.toUpperCase()+': '+coach.weight+' lb suggested')+' · '+escapeHTML(coach.reason)+' <small>Optional · no weights changed</small><button type="button" class="coach-apply-weight" data-coach-apply="'+escapeHTML(id)+'">Use '+escapeHTML(String(coach.weight))+' lb for next set</button><span class="coach-applied-note" data-coach-applied="'+escapeHTML(id)+'" role="status"></span></p>':'';
   const count=logged.length;
-  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+(hasKnownWeight?defaults.weight:'')+'" placeholder="lb"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="live-coach-set" data-live-coach="'+escapeHTML(id)+'" aria-live="polite">'+escapeHTML(liveCoachFeedback(id))+'</div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
+  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+defaults.weight+'" placeholder="lb"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="live-coach-set" data-live-coach="'+escapeHTML(id)+'" aria-live="polite">'+escapeHTML(liveCoachFeedback(id))+'</div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
  }).join('');
  updateWorkoutProgress();
  for(const id of activePlan.ids)updateExerciseFeedback(id);
@@ -958,6 +1013,10 @@ function updateExerciseFeedback(id){
 function addSet(id){
  if(!session||!activePlan?.ids.includes(id))return;
  if(activeDraftOwner!==verifiedOwnerId){notice('Account changed; restart the workout before logging sets.');return}
+ if(session.sets.length>=window.MLC2SessionDraft.MAX_SETS){
+  notice('This workout has reached 250 sets. Finish the workout before logging more sets.');
+  return;
+ }
  const weightField=document.querySelector('[data-weight="'+id+'"]');
  const repsField=document.querySelector('[data-reps="'+id+'"]');
  if(!weightField||!repsField)return;
@@ -1069,11 +1128,15 @@ function openSignIn(){
  // the submit handler was attached. Avoid autofocus on iPhone to prevent keyboard jumps.
  $('loginForm').addEventListener('submit',async event=>{
   event.preventDefault();const submit=$('loginSubmit');submit.disabled=true;submit.textContent='Connecting…';$('loginMessage').textContent='';
-  const form=new FormData(event.currentTarget);
+  const loginForm=event.currentTarget,epoch=authEpoch;
+  const current=()=>epoch===authEpoch&&$('loginForm')===loginForm&&!$('modal').hidden;
+  const form=new FormData(loginForm);
   try{
    const response=await authRequest('token?grant_type=password',{email:String(form.get('email')).trim(),password:String(form.get('password'))});
+   if(!current())return;
    if(!response?.access_token||!response?.user?.id)throw Error('No verified account was returned.');
    const verified=await authRequest('user',null,response.access_token,'GET');
+   if(!current())return;
    if(!verified?.id||verified.id!==response.user.id)throw Error('Account identity could not be verified.');
    authEpoch++;saveAuth({...response,user:verified});switchWorkoutOwner(verified.id);
    if(verifiedOwnerId!==verified.id||account?.id!==verified.id||
@@ -1081,7 +1144,7 @@ function openSignIn(){
     throw Error('Account session was not retained; sign-in was not completed.');
    closeModal();setPage('home');renderSettings();
    notice('Signed in to your verified MYLIFTCOACH 2.0 account.');
-  }catch(err){$('loginMessage').className='auth-error';$('loginMessage').textContent=err.name==='AbortError'?'The account service timed out.':/invalid/i.test(err.message)?'Email or password was not accepted.':'Could not sign in: '+String(err.message).slice(0,120)}
+  }catch(err){if(!current())return;$('loginMessage').className='auth-error';$('loginMessage').textContent=err.name==='AbortError'?'The account service timed out.':/invalid/i.test(err.message)?'Email or password was not accepted.':'Could not sign in: '+String(err.message).slice(0,120)}
   finally{submit.disabled=false;submit.textContent='Sign in securely'}
  });
 }
@@ -1145,17 +1208,14 @@ function bind(){
  $('sidebarClose').addEventListener('click',()=>$('sidebar').classList.remove('open'));
  $('homeAccountBtn').addEventListener('click',()=>setPage('settings'));
 
- $('heroStart').addEventListener('click',()=>openWorkout($('heroStart').dataset.homeWorkout));
+ $('heroStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
- $('todayStart').addEventListener('click',()=>openWorkout($('todayStart').dataset.homeWorkout));
+ $('todayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
  $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
- $('workoutTodayStart').addEventListener('click',()=>{
-  const id=$('workoutTodayStart').dataset.workout;
-  if(id)openWorkout(id);
- });
+ $('workoutTodayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
- $('coachAutoStart').addEventListener('click',()=>{const proposal=coachAutonomousPlan();if(!proposal)return;coachAutonomousDraft=proposal;openWorkout(proposal.id)});
+ $('coachAutoStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,coachAutonomousPlan));
  $('coachAutoPreferences').addEventListener('change',()=>{
   if(betaView().mode!=='pro')return;
   try{
@@ -1421,21 +1481,23 @@ function bind(){
  $('cloudPreviewAction').addEventListener('click',async()=>{
   const output=$('cloudPreviewResult'),button=$('cloudPreviewAction');
   if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account first.';return}
+  const epoch=authEpoch;
   button.disabled=true;output.textContent='Inspecting original cloud records without changing them…';
   try{
    const result=await window.MLC2SyncPreview.run({url:BACKEND,publishableKey:PUBLIC_KEY,token:auth.access_token,userId:account.id});
-   window.MLC2SyncPreview.render(output,result);
-  }catch(e){output.textContent='Read-only preview unavailable: '+String(e.message||e).slice(0,200)}
+   if(epoch===authEpoch)window.MLC2SyncPreview.render(output,result);
+  }catch(e){if(epoch===authEpoch)output.textContent='Read-only preview unavailable: '+String(e.message||e).slice(0,200)}
   finally{button.disabled=false}
  });
  $('cloudAuditAction').addEventListener('click',async()=>{
   const output=$('cloudAuditResult'),button=$('cloudAuditAction');
   if(!account?.id||!auth?.access_token){output.textContent='Sign in to your existing account before checking cloud compatibility.';return}
+  const epoch=authEpoch;
   button.disabled=true;output.textContent='Checking authenticated records read-only…';
   try{
    const report=await window.MLC2CloudAudit.check({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,token:auth.access_token,userId:account.id});
-   window.MLC2CloudAudit.render(output,report);
-  }catch(err){output.textContent='Compatibility check unavailable: '+String(err.message||err).slice(0,160)}
+   if(epoch===authEpoch)window.MLC2CloudAudit.render(output,report);
+  }catch(err){if(epoch===authEpoch)output.textContent='Compatibility check unavailable: '+String(err.message||err).slice(0,160)}
   finally{button.disabled=false}
  });
  $('exportAccountWorkouts').addEventListener('click',()=>{
@@ -1511,6 +1573,7 @@ function bind(){
     if(result.status==='restored'){
      trackingEntries=loadLocalTracking();renderTracking();renderHome();renderWorkouts();
      window.MLC2BodyProgress?.showMeasurements();if(page==='coaching')renderCoach();
+    if(page==='nutrition')renderCalorieGoal();
     }
     output.textContent=result.status==='restored'?'Restored '+result.restored.join(', ')+'. Existing data preserved.':
      result.status==='changed-reconfirm'?'Cloud data changed during confirmation. Nothing imported. Tap Recover again to review the new categories.':
@@ -1589,7 +1652,10 @@ function bind(){
     setWorkoutSyncState('Recovery paused: '+String(err.message||err).slice(0,120)+'. Local records preserved.');
   }finally{button.disabled=!verifiedOwnerId}
  });
- window.addEventListener('online',()=>{scheduleWorkoutSync(0);scheduleAuxSync(1200)});
+ window.addEventListener('online',()=>{
+  if(!verifiedOwnerId){void validateStoredAuth();return}
+  scheduleWorkoutSync(0);scheduleAuxSync(1200);
+ });
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){scheduleWorkoutSync(1000);scheduleAuxSync(1600)}});
  $('inspectCloudSessions').addEventListener('click',async()=>{
   const button=$('inspectCloudSessions'),output=$('inspectCloudSessionsStatus');

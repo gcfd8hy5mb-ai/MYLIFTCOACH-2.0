@@ -26,7 +26,7 @@ test('instructions load before app and guide and Start Workout retains dark teal
  const html=read('index.html');
  const load=html.indexOf('exercise-instruction-coverage.js');
  assert.ok(load>html.indexOf('exercise-catalog-344.js'));
- assert.ok(load<html.indexOf('app.js?v=15'));
+ assert.ok(load<html.indexOf('src="./app.js?'));
  const css=read('workouts-tabs-n.css');
  assert.ok(css.includes('#workouts .workouts-n-today{')&&css.includes('background:#04252d;color:#f7e9d0;'));
  assert.ok(css.includes('#workouts .workouts-n-actions .button-primary{background:#04252d!important;background-image:none!important;'));

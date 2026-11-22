@@ -30,7 +30,7 @@ test('No invented recommendations, auto edits, cloud calls or storage mutations'
  assert.ok(app.includes('window.MLC2CoachPlan?.render('));
  assert.ok(app.includes('selected=nextPlan()'));
  assert.ok(app.includes("mode:'pro',readiness:window.MLC2CoachReadiness?.current(selected.id)"));
- assert.ok(app.includes("else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren();$('coachProgramBuilder').replaceChildren()}"));
+ assert.ok(app.includes("['coachSuggestions','coachSubstitutions','coachProgramBuilder','coachPlanPreview']"));
 });
 
 test('Tired readiness suppresses an increase recommendation without inventing a replacement load',()=>{
@@ -47,7 +47,7 @@ test('Coach open action targets selected plan; changed plan and Free mode are gu
  const plan=fs.readFileSync('coach-plan-preview.js','utf8');
  assert.ok(plan.includes("open.textContent='Open selected workout'"));
  assert.ok(plan.includes('options.onOpenWorkout(view.planId)'));
- assert.ok(app.includes("if(nextPlan().id!==id)"));
+ assert.ok(app.includes("workoutPreviewKey(nextPlan())!==workoutPreviewKey(selected)"));
  assert.ok(app.includes("if(betaView().mode!=='pro')return"));
  assert.ok(app.includes("openWorkout(id);"));
  assert.ok(readiness.includes("if(typeof onChange==='function')onChange()"));

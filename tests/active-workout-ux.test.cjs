@@ -42,10 +42,10 @@ test('invalid previous values are never shown or used as defaults',()=>{
  assert.deepEqual(UX.defaults('press',[],hist,'a'),{weight:'',reps:'',source:'empty'});
 });
 test('active workout uses inline checkmark logging and preserves existing draft/save pipeline',()=>{
- for(const token of ['id="workoutLog"','id="autoRestToggle"','id="activeWorkoutProgress"','data-addset','data-set-rows','data-undo','function updateExerciseFeedback(id)','window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)','window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed)','queueWorkoutForSync(entry)']){
+ for(const token of ['id="workoutLog"','id="autoRestToggle"','id="activeWorkoutProgress"','data-addset','data-set-rows','data-undo','function updateExerciseFeedback(id)','window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)','window.MLC2AccountWorkouts.complete(localStorage,verifiedOwnerId,entry)','queueWorkoutForSync(proposed.find(row=>row.id===entry.id))']){
   assert.ok(app.includes(token),'missing workflow element: '+token);
  }
- assert.ok(html.includes('workout-active-ux.js?v=2'));
+ assert.ok(html.includes('workout-active-ux.js?v=3'));
  assert.ok(html.includes('active-workout-ux.css?v=3'));
  assert.ok(app.includes("if($('autoRestToggle')?.checked)openRest()"));
  assert.ok(app.includes("betaView().mode==='pro'&&e.group!=='Cardio'"));
@@ -64,4 +64,12 @@ test('approved marble workout styling keeps wallpaper fixed behind readable card
  assert.match(css,/overflow-y:auto!important/);
  assert.match(css,/env\(safe-area-inset-bottom\)/);
  assert.ok(!app.includes('demoSessions=[]; // styling change'),'workout data must remain intact');
+});
+
+test('blank, null and future weights never prefill the next workout',()=>{
+ const hist=[session('2999-01-01T00:00:00Z','a','press',110,10),
+  session('2026-11-01T00:00:00Z','a','press','',10),
+  session('2026-11-02T00:00:00Z','a','press',null,10)];
+ assert.equal(UX.previous('press',hist,'a'),null);
+ assert.equal(UX.progress(['press'],[{exerciseId:'press',weight:'',reps:10}]).logged,0);
 });

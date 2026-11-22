@@ -3,9 +3,17 @@
 (function(){
 'use strict';
 const MEASUREMENT_KEY='mlc2-measurements-v1';
-let owner=null;
+let owner=null,photoEpoch=0,photoRender=0;
 const measurementKey=()=>owner?MEASUREMENT_KEY+':user:'+owner:MEASUREMENT_KEY;
-function setOwner(id){if(id!==null&&!/^[a-zA-Z0-9_-]{1,128}$/.test(id||''))throw Error('Invalid measurement owner');owner=id;showMeasurements()}
+function setOwner(id){
+ if(id!==null&&!/^[a-zA-Z0-9_-]{1,128}$/.test(id||''))throw Error('Invalid measurement owner');
+ if(owner===id)return;
+ owner=id;photoEpoch++;
+ const input=document.getElementById('mlcPhotoInput');if(input)input.value='';
+ document.getElementById('mlcPhotoList')?.replaceChildren();
+ setStatus('mlcPhotoStatus','');
+ showMeasurements();void renderPhotos();
+}
 const PHOTO_DATABASE='mlc2-private-progress-photos-v1';
 const AREAS=['Waist','Chest','Arm','Thigh','Hips'];
 const MAX_PHOTOS=150;
@@ -58,9 +66,17 @@ async function photoAction(mode,fn){
   tx.onabort=()=>reject(tx.error||new Error('Photo transaction aborted.'));
  })}finally{db.close()}
 }
-const listPhotos=()=>photoAction('readonly',store=>store.getAll());
+const scopedPhoto=(photo,scope)=>photo?.ownerId===scope;
+async function listPhotos(scope){
+ const all=await photoAction('readonly',store=>store.getAll());
+ return all.filter(photo=>scopedPhoto(photo,scope));
+}
 const savePhoto=record=>photoAction('readwrite',store=>store.put(record));
-const deletePhoto=id=>photoAction('readwrite',store=>store.delete(id));
+const deletePhoto=(id,scope,epoch)=>photoAction('readwrite',store=>{
+ const request=store.get(id);
+ request.addEventListener('success',()=>{if(epoch===photoEpoch&&scopedPhoto(request.result,scope))store.delete(id)});
+ return request;
+});
 function setStatus(id,message){const el=document.getElementById(id);if(el)el.textContent=message}
 function showMeasurements(){
  const list=document.getElementById('mlcMeasurementsList'),graph=document.getElementById('mlcMeasurementsChart');
@@ -72,9 +88,11 @@ function showMeasurements(){
 }
 async function renderPhotos(){
  const list=document.getElementById('mlcPhotoList');if(!list)return;
+ const scope=owner,epoch=photoEpoch,generation=++photoRender;
  revokePhotoUrls();
  try{
-  const rows=(await listPhotos()).filter(p=>p&&p.data instanceof Blob&&validDay(p.day)).sort((a,b)=>b.day.localeCompare(a.day));
+  const rows=(await listPhotos(scope)).filter(p=>p&&p.data instanceof Blob&&validDay(p.day)).sort((a,b)=>b.day.localeCompare(a.day));
+  if(epoch!==photoEpoch||generation!==photoRender)return;
   if(!rows.length){list.innerHTML='<p class="empty-note">No photos saved in this 2.0 preview. Original-app photos are not imported.</p>';return}
   list.replaceChildren();
   for(const p of rows){
@@ -86,7 +104,7 @@ async function renderPhotos(){
    const saveButton=document.createElement('button');saveButton.type='button';saveButton.textContent='Save copy';saveButton.dataset.photoExport=p.id;
    footer.append(caption,saveButton,button);item.append(img,footer);list.append(item);
   }
- }catch(e){setStatus('mlcPhotoStatus',e.message||'Photos unavailable on this device.')}
+ }catch(e){if(epoch===photoEpoch&&generation===photoRender)setStatus('mlcPhotoStatus',e.message||'Photos unavailable on this device.')}
 }
 async function preparePhoto(file){
  if(!file||!/^image\/(jpeg|png|webp|heic|heif)$/.test(file.type)||file.size>20_000_000)throw new Error('Choose a supported image under 20 MB.');
@@ -125,20 +143,25 @@ function init(){
  const input=document.getElementById('mlcPhotoInput');
  input?.addEventListener('change',async e=>{
   const file=e.currentTarget.files?.[0];if(!file)return;
+  const scope=owner,epoch=photoEpoch;
   try{
    setStatus('mlcPhotoStatus','Preparing photo locally…');
-   const existing=await listPhotos();if(existing.length>=MAX_PHOTOS)throw new Error('Device preview limit of 150 photos reached.');
+   const existing=await listPhotos(scope);if(existing.length>=MAX_PHOTOS)throw new Error('Device preview limit of 150 photos reached.');
    const blob=await preparePhoto(file);
-   await savePhoto({id:'photo-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),day:today(),data:blob});
+   if(epoch!==photoEpoch)return;
+   await savePhoto({ownerId:scope,id:'photo-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),day:today(),data:blob});
+   if(epoch!==photoEpoch)return;
    setStatus('mlcPhotoStatus','Saved privately on this device. No cloud upload occurred.');await renderPhotos();
-  }catch(err){setStatus('mlcPhotoStatus',err.message||'Could not save photo.')}
-  finally{input.value=''}
+  }catch(err){if(epoch===photoEpoch)setStatus('mlcPhotoStatus',err.message||'Could not save photo.')}
+  finally{if(epoch===photoEpoch)input.value=''}
  });
  document.getElementById('mlcPhotoList')?.addEventListener('click',async e=>{
+  const scope=owner,epoch=photoEpoch;
   const save=e.target.closest('[data-photo-export]');
   if(save){
    try{
-    const photo=(await listPhotos()).find(p=>p.id===save.dataset.photoExport);
+    const photo=(await listPhotos(scope)).find(p=>p.id===save.dataset.photoExport);
+    if(epoch!==photoEpoch)return;
     if(!photo||!(photo.data instanceof Blob))throw Error('Photo was not found');
     // Export one original locally held JPEG. No network transfer or remote processing.
     const url=URL.createObjectURL(photo.data),link=document.createElement('a');
@@ -146,12 +169,12 @@ function init(){
     document.body.appendChild(link);
     try{link.click()}finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
     setStatus('mlcPhotoStatus','Photo copy prepared for download. Keep it private.');
-   }catch{setStatus('mlcPhotoStatus','Could not export the photo from this browser.')}
+   }catch{if(epoch===photoEpoch)setStatus('mlcPhotoStatus','Could not export the photo from this browser.')}
    return;
   }
   const b=e.target.closest('[data-photo-delete]');if(!b||!confirm('Permanently remove this 2.0 photo from this device?'))return;
-  try{await deletePhoto(b.dataset.photoDelete);await renderPhotos();setStatus('mlcPhotoStatus','2.0 photo removed from this device.')}
-  catch{setStatus('mlcPhotoStatus','Could not remove photo.')}
+  try{await deletePhoto(b.dataset.photoDelete,scope,epoch);if(epoch!==photoEpoch)return;await renderPhotos();if(epoch===photoEpoch)setStatus('mlcPhotoStatus','2.0 photo removed from this device.')}
+  catch{if(epoch===photoEpoch)setStatus('mlcPhotoStatus','Could not remove photo.')}
  });
  showMeasurements();
  renderPhotos();

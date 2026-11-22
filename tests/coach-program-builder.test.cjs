@@ -51,9 +51,9 @@ test('Program builder never changes existing workout selections or persistent da
  const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8');
  assert.doesNotMatch(js,/\b(localStorage|sessionStorage|indexedDB|fetch|supabase|setItem|removeItem)\b/i);
  assert.ok(html.includes('coachProgramBuilder')&&html.includes('coach-program-builder.js'));
- assert.ok(app.includes("window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,demoSessions,{")); 
+ assert.ok(app.includes("window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,history,{"));
  assert.ok(app.includes("onSaveDay:day=>"));
- assert.ok(app.includes("$('coachProgramBuilder').replaceChildren()"));
+ assert.ok(app.includes("['coachSuggestions','coachSubstitutions','coachProgramBuilder','coachPlanPreview']"));
  assert.ok(app.includes('function nextPlan()'));
 });
 

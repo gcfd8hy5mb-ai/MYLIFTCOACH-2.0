@@ -54,6 +54,18 @@
   if(storage.getItem(storageKey)!==payload)throw Error('Workout was not retained in browser storage');
   return entries;
  }
+ function complete(storage,owner,entry){
+  const current=read(storage,owner);
+  const existing=current.find(record=>record.id===entry.id);
+  if(existing){
+   const {created:previousDate,...previous}=existing;
+   const {created:retryDate,...retry}=entry;
+   if(JSON.stringify(previous)!==JSON.stringify(retry))
+    throw Error('Workout ID was already completed with different details');
+   return current;
+  }
+  return save(storage,owner,[entry,...current]);
+ }
  function clear(storage,owner){
   if(owner!==null){storage.removeItem(key(owner));return}
   const raw=storage.getItem(LEGACY_KEY);
@@ -66,5 +78,5 @@
    read({getItem:()=>next},null);storage.setItem(LEGACY_KEY,next);
   }else storage.removeItem(LEGACY_KEY);
  }
- return Object.freeze({LEGACY_KEY,PREFIX,key,read,save,clear});
+ return Object.freeze({LEGACY_KEY,PREFIX,key,read,save,complete,clear});
 });

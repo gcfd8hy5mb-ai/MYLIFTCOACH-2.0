@@ -48,11 +48,11 @@ test('legacy and canonical duplicate-name exercises have identical instructions'
 });
 test("detailed descriptions load before app and do not change image mapping files",()=>{
  const h=read('index.html');
- for(const f of ['exercise-catalog-344.js','exercise-instruction-coverage.js','exercise-instruction-depth.js','app.js?v=15','active-exercise-guide.js']){
+ for(const f of ['exercise-catalog-344.js','exercise-instruction-coverage.js','exercise-instruction-depth.js','src="./app.js?','active-exercise-guide.js']){
   assert.ok(h.includes(f),f);
  }
  assert.ok(h.indexOf('exercise-instruction-coverage.js')<h.indexOf('exercise-instruction-depth.js'));
- assert.ok(h.indexOf('exercise-instruction-depth.js')<h.indexOf('app.js?v=15'));
+ assert.ok(h.indexOf('exercise-instruction-depth.js')<h.indexOf('src="./app.js?'));
  const code=read('exercise-instruction-depth.js');
  assert.ok(!/\b(localStorage|sessionStorage|indexedDB|fetch|supabase|setItem|removeItem)\b/.test(code));
 });

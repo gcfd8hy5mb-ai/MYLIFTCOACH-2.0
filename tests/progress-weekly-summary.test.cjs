@@ -42,9 +42,9 @@ test('weekly panel is present in compact Overview and recalculates during Progre
  const compact=fs.readFileSync('progress-compact.js','utf8');
  const app=fs.readFileSync('app.js','utf8');
  assert.ok(html.includes('id="progressWeeklyComparison"'));
- assert.ok(html.indexOf('progress-weekly-summary.js')<html.indexOf('app.js?v=15'));
+ assert.ok(html.indexOf('progress-weekly-summary.js')<html.indexOf('src="./app.js?'));
  assert.ok(compact.includes('groups.overview.append(weekly,recap,chart)'));
- assert.ok(app.includes("window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),demoSessions)"));
+ assert.ok(app.includes("window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),coachEvidence().filter"));
 });
 
 test('2.0 detailed workout History displays names from the full imported catalog',()=>{
@@ -53,6 +53,6 @@ test('2.0 detailed workout History displays names from the full imported catalog
  const end=app.indexOf('function renderOriginalPlans(){',start);
  assert.ok(start>=0&&end>start);
  const history=app.slice(start,end);
- assert.ok(history.includes("libraryExercises().find(e=>e.id===y.exerciseId)?.name"));
+ assert.ok(history.includes("exerciseNames.get(y.exerciseId)"));
  assert.ok(!history.includes("exercises.find(e=>e.id===y.exerciseId)?.name"));
 });

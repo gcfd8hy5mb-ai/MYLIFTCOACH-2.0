@@ -75,3 +75,20 @@ test('revision race is blocked by database-style optimistic conflict',async()=>{
  assert.equal(result.status,'conflict');
  assert.equal(c.rows.get(owner+'/tracking/snapshot-v1').payload.entries[0].id,'other-device');
 });
+test('a local edit after a lost cloud acknowledgement can advance the confirmed revision',async()=>{
+ const s=store(),c=cloud();
+ s.setItem(key,JSON.stringify(data('original')));
+ const commit=c.commit;
+ c.commit=async(...args)=>{
+  await commit(...args);
+  throw Error('Connection lost after commit');
+ };
+ assert.equal((await make(s,c).backup()).status,'retry');
+ c.commit=commit;
+ s.setItem(key,JSON.stringify(data('edited')));
+ const result=await make(s,c).backup();
+ assert.equal(result.status,'pending');
+ await make(s,c).backup();
+ assert.equal(c.writes,2);
+ assert.equal(c.rows.get(owner+'/tracking/snapshot-v1').payload.entries[0].id,'edited');
+});

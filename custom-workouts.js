@@ -2,23 +2,24 @@
 (function(){
 'use strict';
 const KEY='mlc2-custom-plans-v1', TODAY='mlc2-selected-workout-v1';
-let owner=null;
+let owner=null,closeEditor=null;
 const validOwner=o=>typeof o==='string'&&/^[a-zA-Z0-9_-]{1,128}$/.test(o);
-function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw Error('Verified owner required');owner=nextOwner}
+function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw Error('Verified owner required');if(nextOwner!==owner)closeEditor?.();owner=nextOwner}
 const scoped=key=>owner===null?key:key+':user:'+owner;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const catalog=()=>Array.isArray(window.MLC2_EXERCISE_CATALOG)?window.MLC2_EXERCISE_CATALOG:[];
 const byId=id=>catalog().find(e=>e.id===id);
 const newPlanId=()=> 'custom-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
 function persistPlans(next){const payload=JSON.stringify(next);localStorage.setItem(scoped(KEY),payload);if(localStorage.getItem(scoped(KEY))!==payload)throw Error('Workout changes were not retained.');try{window.MLC2ScheduleAuxSync?.()}catch{}}
-function read(){
+function read({forWrite=false}={}){
  try{
  const a=JSON.parse(localStorage.getItem(scoped(KEY))||'[]');
+ if(forWrite&&!Array.isArray(a))throw Error('Saved workouts are unreadable');
  return Array.isArray(a)?a.slice(0,60).filter(p=>p&&typeof p.id==='string'&&p.id.startsWith('custom-')&&Array.isArray(p.ids)).map(p=>({
   id:p.id,title:String(p.title||'My workout').slice(0,75),kind:'Custom',description:String(p.description||'Custom routine').slice(0,160),
   ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40),coachSaved:p.coachSaved===true
  })).filter(p=>p.ids.length):[];
- }catch{return []}
+ }catch(error){if(forWrite)throw error;return []}
 }
 function guestRecovery(){
  if(owner===null)return {available:0,conflicts:0};
@@ -81,13 +82,19 @@ function controls(p,currentId){
  return '<div class="custom-plan-actions"><button type="button" data-custom-select="'+esc(p.id)+'">'+(currentId===p.id?'Selected for today ✓':'Use for today')+'</button>'+(p.coachSaved?'<button type="button" data-custom-schedule="'+esc(p.id)+'">Schedule</button>':'')+(custom?'<button type="button" data-custom-edit="'+esc(p.id)+'">Edit</button><button type="button" data-custom-delete="'+esc(p.id)+'">Delete</button>':'')+'</div>';
 }
 function openEditor(id,unused,onChanged){
+ closeEditor?.();
+ const editorOwner=owner;
  const existing=read().find(p=>p.id===id);
  let selected=existing?[...existing.ids]:[];
  const root=document.createElement('div');root.className='custom-editor-backdrop';root.setAttribute('role','presentation');
  root.innerHTML='<div class="custom-editor-dialog" role="dialog" aria-modal="true" aria-label="Custom workout editor"><div class="custom-editor-heading"><h2>'+esc(existing?'Edit custom workout':'New custom workout')+'</h2><button type="button" data-editor-close aria-label="Close">✕</button></div><form id="mlc-custom-form"><label>Workout name<input id="customName" name="title" maxlength="75" required value="'+esc(existing?.title||'')+'" placeholder="My workout"></label><label>Description<input name="description" maxlength="160" value="'+esc(existing?.description||'')+'" placeholder="Optional notes"></label><h3>Selected exercises <span id="customCount"></span></h3><div id="customSelected"></div><label>Find exercises<input id="customSearch" type="search" placeholder="Search 344 exercises"></label><div id="customOptions"></div><div class="custom-editor-footer"><button type="button" data-editor-close>Cancel</button><button type="submit">Save workout</button></div></form></div>';
  document.body.appendChild(root);
  const $=id=>root.querySelector('#'+id);
- const close=()=>{document.removeEventListener('keydown',escapeKey);root.remove()};
+ const close=()=>{
+  document.removeEventListener('keydown',escapeKey);root.remove();
+  if(closeEditor===close)closeEditor=null;
+ };
+ closeEditor=close;
  const escapeKey=e=>{if(e.key==='Escape')close()};
  document.addEventListener('keydown',escapeKey);
  root.addEventListener('click',e=>{if(e.target===root||e.target.closest('[data-editor-close]'))close()});
@@ -113,17 +120,22 @@ function openEditor(id,unused,onChanged){
  });
  $('mlc-custom-form').addEventListener('submit',e=>{
   e.preventDefault();
+  if(editorOwner!==owner||closeEditor!==close)return;
   const form=e.currentTarget,name=form.elements.title.value.trim(),description=form.elements.description.value.trim();
   if(!name||!selected.length){alert('Enter a workout name and select at least one exercise.');return}
-  const plans=read();if(!existing&&plans.length>=60){alert('Maximum 60 custom workouts.');return}
+  let plans;
+  try{plans=read({forWrite:true})}catch{alert('Saved workouts are unreadable. Nothing was changed.');return}
+  if(existing&&!plans.some(plan=>plan.id===existing.id)){alert('This workout was deleted.');close();return}
+  if(!existing&&plans.length>=60){alert('Maximum 60 custom workouts.');return}
   const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',coachSaved:existing?.coachSaved===true,description:description.slice(0,160),ids:[...selected]};
   const next=existing?plans.map(p=>p.id===existing.id?updated:p):[updated,...plans];
   try{persistPlans(next)}catch{alert('Browser storage is unavailable; workout was not saved.');return}
   // Editing a Coach suggestion must not silently override the Home workout.
   // An explicit "Use for today" action is still available in Workouts.
-  if(!updated.coachSaved){
+  if(!existing&&!updated.coachSaved){
    try{localStorage.setItem(scoped(TODAY),updated.id)}catch{alert('Workout saved, but selecting it for today failed. You can select it from Workouts.')}
   }
+  try{window.MLC2ScheduleAuxSync?.()}catch{}
   close();onChanged?.();
  });
  selectedView();options();$('customName').focus();

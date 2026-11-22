@@ -9,7 +9,7 @@ test('Previously approved Coach planning panels remain present in combined redes
  assert.match(source,/MLC2CoachPlan\?\.render/);
  assert.match(source,/MLC2ProgramBuilder\?\.render/);
  assert.match(source,/MLC2Custom\?\.saveCoachDay\(day\)/);
- assert.match(source,/if\(nextPlan\(\)\?\.id!==id\)/);
+ assert.match(source,/workoutPreviewKey\(nextPlan\(\)\)!==workoutPreviewKey\(selected\)/);
  assert.match(source,/renderHome\(\);renderWorkouts\(\);return saved/);
 });
 test('Read-only selected-workout Coach plan will not invent loads from no workout history',()=>{

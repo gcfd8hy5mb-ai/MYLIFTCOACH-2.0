@@ -8,7 +8,7 @@ test('progress compact scripts parse, load after app, and do not access persiste
  const js=read('progress-compact.js');
  assert.doesNotThrow(()=>new vm.Script(js));
  const html=read('index.html');
- assert.ok(html.indexOf('progress-compact.js?v=1')>html.indexOf('app.js?v=15'));
+ assert.ok(html.indexOf('progress-compact.js?v=1')>html.indexOf('src="./app.js?'));
  assert.ok(html.includes('progress-compact.css?v=1'));
  assert.ok(!/\b(localStorage|sessionStorage|indexedDB|fetch|supabase|delete|removeItem|setItem)\b/.test(js));
 });

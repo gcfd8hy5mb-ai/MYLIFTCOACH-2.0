@@ -40,8 +40,6 @@ before('legacy-reconcile.js','cloud-sync-preview.js');
 assert.match(app,/function nextPlan\(\)\{/);
 assert.match(app,/window\.MLC2WeeklySchedule\?\.resolve/);
 assert.match(app,/if\(standard\?\.scheduleSource==='manual'\|\|standard\?\.scheduleSource==='weekly'\)return standard/);
-assert.match(app,/\$\('todayStart'\)\.dataset\.homeWorkout=plan\.id/);
-assert.match(app,/\$\('todayStart'\)\.addEventListener\('click',\(\)=>openWorkout\(\$\('todayStart'\)\.dataset\.homeWorkout\)\)/);
 assert.match(app,/renderNextWorkout\(\$\('coachNextWorkout'\),selected,history,catalog\)/);
 assert.match(app,/renderTechnique\(\$\('coachTechnique'\),selected,catalog\)/);
 const cloud=file('cloud-sync-preview.js');
@@ -56,3 +54,4 @@ for(const id of ['chest-press','lat-pulldown','shoulder-press','triceps-push','l
   'leg-curl','calf-raise','cable-crunch','pec-deck','seated-row','biceps-curl','leg-extension'])
  assert.ok(registry.some(e=>e.id===id),'preset exercise missing '+id);
 console.log('MYLIFTCOACH static integration contracts: PASS');
+assert.match(app,/startPreviewWorkout\(event.currentTarget,nextPlan\)/);

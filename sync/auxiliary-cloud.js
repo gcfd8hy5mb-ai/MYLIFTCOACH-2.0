@@ -64,24 +64,26 @@
     const pending=journal.list().items;
     let skipped=0,queued=0,conflicts=0;
     const proposals=[],expected=new Map();
+    let followUp=0;
     for(let i=0;i<aux.CONFIG.length;i++){
      if(!still())throw Error('Account changed');
      const config=aux.CONFIG[i],local=aux.loadLocal(storage,owner,config);
-     if(!local.exists){skipped++;continue}
      const row=records[i];
      // An intentionally cleared category may be committed only when this
      // device has a verified previous version. Never treat missing storage
      // as permission to erase cloud data.
-     if(aux.empty(config,local.value)&&(!row||!baseline(config))){skipped++;continue}
-     if(row?.deleted){conflicts++;continue}
      const existingPending=pending.find(op=>op.type===config.type&&op.id===aux.recordId(config));
      if(existingPending){
-      if(existingPending.status==='conflict'||existingPending.kind!=='upsert'||
-         !aux.equal(existingPending.payload?.entries,local.value)){conflicts++;continue}
+      if(row?.deleted||existingPending.status==='conflict'||existingPending.kind!=='upsert'||
+         !aux.valid(config,existingPending.payload?.entries)){conflicts++;continue}
       // Pending operation is immutable: replay the same ID rather than enqueue twice.
+      if(local.exists&&!aux.equal(existingPending.payload.entries,local.value))followUp++;
       expected.set(expectedKey(config),existingPending.payload.entries);
       skipped++;continue;
      }
+     if(!local.exists){skipped++;continue}
+     if(aux.empty(config,local.value)&&(!row||!baseline(config))){skipped++;continue}
+     if(row?.deleted){conflicts++;continue}
      if(row){
       const remote=aux.validateRemote(config,row);
       if(aux.equal(remote,local.value)){
@@ -106,7 +108,15 @@
      queued++;
     }
     if(!still())throw Error('Account changed');
-    const result=await journal.drain({verifiedOwner:owner,online:online(),maxOperations:50});
+    const result=await journal.drain({verifiedOwner:owner,online:online(),maxOperations:50,
+     types:aux.CONFIG.map(config=>config.type),
+     onAcknowledged:(op,ack)=>{
+      if(!still())throw Error('Account changed');
+      const config=aux.CONFIG.find(item=>item.type===op.type&&aux.recordId(item)===op.id);
+      if(config&&op.kind==='upsert')remember(config,{owner,type:op.type,id:op.id,
+       revision:ack.revision,deleted:false,payload:op.payload});
+     }});
+
     if(!still())throw Error('Account changed');
     if(result.status==='conflict'||result.status==='retry'||result.status==='unverified-ack')
      return {status:result.status,queued,uploaded:result.sent||0,skipped,
@@ -122,8 +132,8 @@
       remember(config,row);baselines++;
      }
     }
-    return {status:result.status,queued,uploaded:result.sent||0,
-      skipped,pending:result.pending||0,conflicts:0,baselines};
+    return {status:followUp?'pending':result.status,queued,uploaded:result.sent||0,
+      skipped,pending:(result.pending||0)+followUp,conflicts:0,baselines};
    }finally{busy=false}
   }
   async function previewRecovery(){

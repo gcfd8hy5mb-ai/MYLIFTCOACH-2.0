@@ -28,6 +28,7 @@
   const key=PREFIX+owner;
   const random=makeId||(()=>{if(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')return crypto.randomUUID();throw Error('Secure random ID unavailable')});
   let state=load(storage,owner),busy=false;
+  const reload=()=>{state=load(storage,owner)};
   function persist(next){
    // Treat failed write as no-op so displayed state never outruns durable data.
    storage.setItem(key,JSON.stringify(next));
@@ -36,6 +37,7 @@
   function validate(type,id){if(!TYPES.has(type)||!validId(id))throw Error('Unsupported sync record')}
   function enqueue(type,id,value,baseRevision=0){
    validate(type,id);
+   reload();
    if(!Number.isSafeInteger(baseRevision)||baseRevision<0)throw Error('Invalid base revision');
    if(value===undefined)throw Error('Record payload required');
    const payload=clone(value);
@@ -50,6 +52,7 @@
   }
   function enqueueDelete(type,id,baseRevision){
    validate(type,id);
+   reload();
    if(!Number.isSafeInteger(baseRevision)||baseRevision<1)throw Error('Delete needs known server revision');
    const opId=random();
    if(!validId(opId))throw Error('Invalid operation ID');
@@ -58,38 +61,48 @@
    persist({...state,items:[...state.items,item]});
    return clone(item);
   }
-  function list(){return clone(state)}
-  async function drain({verifiedOwner,online=true,maxOperations=50}={}){
-   if(!enabled)return {status:'disabled',pending:state.items.length};
-   if(verifiedOwner!==owner)return {status:'owner-unverified',pending:state.items.length};
-   if(!online)return {status:'offline',pending:state.items.length};
+  function list(){reload();return clone(state)}
+  async function drain({verifiedOwner,online=true,maxOperations=50,types=null,onAcknowledged}={}){
+   reload();
+   const selected=()=>state.items.filter(item=>!types||types.includes(item.type));
+   if(!enabled)return {status:'disabled',pending:selected().length};
+   if(verifiedOwner!==owner)return {status:'owner-unverified',pending:selected().length};
+   if(!online)return {status:'offline',pending:selected().length};
    if(!transport||typeof transport.commit!=='function')throw Error('Verified cloud transport missing');
-   if(busy)return {status:'busy',pending:state.items.length};
+   if(busy)return {status:'busy',pending:selected().length};
    busy=true;
    try{
     let sent=0;
-    for(const item of [...state.items].slice(0,Math.min(50,maxOperations))){
-     if(item.status==='conflict')return {status:'conflict',pending:state.items.length};
+    for(const snapshot of selected().slice(0,Math.min(50,maxOperations))){
+     reload();
+     const item=state.items.find(op=>op.opId===snapshot.opId);
+     if(!item)continue;
+     if(item.status==='conflict')return {status:'conflict',pending:selected().length};
      if(verifiedOwner!==owner)break;
      const next={...item,attempts:item.attempts+1};
      persist({...state,items:state.items.map(x=>x.opId===item.opId?next:x)});
      let ack;
      try{ack=await transport.commit(clone(next),owner)}
      catch(err){
+      reload();
+      if(!state.items.some(op=>op.opId===item.opId))continue;
       if(err?.status===409||err?.code==='CONFLICT'){
        const conflict={...next,status:'conflict',serverRevision:Number(err.revision)||null};
        persist({...state,items:state.items.map(x=>x.opId===item.opId?conflict:x),conflicts:[...state.conflicts,{opId:item.opId,type:item.type,id:item.id}]});
-       return {status:'conflict',pending:state.items.length};
+       return {status:'conflict',pending:selected().length};
       }
       // Network/server failure: leave the SAME immutable operation ID queued for retry.
-      return {status:'retry',pending:state.items.length};
+      return {status:'retry',pending:selected().length};
      }
+     reload();
+     if(!state.items.some(op=>op.opId===item.opId))continue;
      if(ack?.owner!==owner||ack?.opId!==item.opId||!Number.isSafeInteger(ack.revision)||ack.revision<=item.baseRevision)
-      return {status:'unverified-ack',pending:state.items.length};
+      return {status:'unverified-ack',pending:selected().length};
+     onAcknowledged?.(next,ack);
      persist({...state,items:state.items.filter(x=>x.opId!==item.opId)});
      sent++;
     }
-    return {status:state.items.length?'pending':'idle',sent,pending:state.items.length};
+    return {status:selected().length?'pending':'idle',sent,pending:selected().length};
    }finally{busy=false}
   }
   async function inspectRemote(type,id,{verifiedOwner}={}){
@@ -106,6 +119,7 @@
     localPending:state.items.some(x=>x.type===type&&x.id===id)};
   }
   function resolveConflict(opId,{strategy,revision}={}){
+   reload();
    const item=state.items.find(x=>x.opId===opId&&x.status==='conflict');
    if(!item)throw Error('No matching conflict');
    if(strategy==='keep-server'){

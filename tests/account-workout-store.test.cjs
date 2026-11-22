@@ -75,3 +75,16 @@ test('capacity overflow fails without replacing account history',()=>{
  assert.throws(()=>storeAPI.save(s,'user-a',[session('extra','user-a'),...history]),/Too many workouts|limit/);
  assert.equal(s.getItem(storeAPI.key('user-a')),previous);
 });
+
+test('completing from a stale screen preserves all durable workouts and is idempotent',()=>{
+ const storage={data:new Map(),getItem(key){return this.data.get(key)??null},
+  setItem(key,value){this.data.set(key,value)}};
+ const sets=[{exerciseId:'press',weight:75,reps:8}];
+ const owner='account-a';
+ const other={id:'other',ownerId:owner,sets};
+ const completed={id:'draft-1',ownerId:owner,sets};
+ storeAPI.save(storage,owner,[other]);
+ assert.deepEqual(storeAPI.complete(storage,owner,completed),[completed,other]);
+ assert.deepEqual(storeAPI.complete(storage,owner,completed),[completed,other]);
+ assert.throws(()=>storeAPI.complete(storage,owner,{...completed,sets:[]}),/already completed/);
+});

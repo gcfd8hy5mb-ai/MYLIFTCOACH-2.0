@@ -56,3 +56,24 @@ test('full-screen login attaches submit handler without querying CSS via ID-only
  assert.match(body,/\$\('loginForm'\)\.addEventListener\('submit',async event=>/);
  assert.match(body,/event\.preventDefault\(\)/);
 });
+
+test('closing sign-in during a pending password request prevents late authentication',async()=>{
+ const vm=require('node:vm');
+ const source=require('node:fs').readFileSync('app.js','utf8');
+ const start=source.indexOf('function openSignIn(){'),end=source.indexOf('function bind(){',start);
+ let handler,reply,commits=0;
+ const loginForm={addEventListener:(_,callback)=>{handler=callback}};
+ const elements={loginForm,modal:{hidden:false,classList:{add(){}}},loginSubmit:{},loginMessage:{}};
+ const context={
+  authEpoch:0,$:id=>elements[id],openModal(){},
+  FormData:class{get(){return 'fixture'}},
+  authRequest:()=>new Promise(resolve=>{reply=resolve}),
+  saveAuth(){commits++}
+ };
+ vm.runInNewContext(source.slice(start,end)+';openSignIn()',context);
+ const signingIn=handler({preventDefault(){},currentTarget:loginForm});
+ elements.modal.hidden=true;delete elements.loginForm;
+ reply({access_token:'fixture-token',user:{id:'fixture-account'}});
+ await signingIn;
+ assert.equal(commits,0);
+});

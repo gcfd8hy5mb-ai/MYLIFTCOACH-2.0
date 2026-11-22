@@ -38,5 +38,5 @@ test('User chosen custom routine remains valid when Pro is disabled',()=>{
  assert.equal(x.notices.length,0);
 });
 test('Account changes explicitly invalidate stale cached Coach proposals',()=>{
- assert.match(app,/function switchWorkoutOwner\(owner\)\{coachAutonomousDraft=null/);
+ assert.match(app,/function switchWorkoutOwner\(owner\)\{\s*coachAutonomousDraft=null/);
 });

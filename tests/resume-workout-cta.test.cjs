@@ -8,8 +8,8 @@ assert.ok(begin>=0&&end>begin);
 const source=app.slice(begin,end);
 const plan={id:'custom-upper',title:'Upper Body',ids:['press','row']};
 function storage(){const m=new Map();return {getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)}}
-function lookup(store,owner,p){
- const env={localStorage:store,verifiedOwnerId:owner,JSON,window:{MLC2AccountDraft:scoping,MLC2SessionDraft:draft}};
+function lookup(store,owner,p,demoSessions=[]){
+ const env={localStorage:store,verifiedOwnerId:owner,demoSessions,JSON,window:{MLC2AccountDraft:scoping,MLC2SessionDraft:draft}};
  vm.createContext(env);vm.runInContext(source,env);env.plan=p;return vm.runInContext('unfinishedDraftFor(plan)',env);
 }
 test('Matching saved workout exposes resume state for same account',()=>{
@@ -57,6 +57,13 @@ test('Workout modal distinguishes restored draft from finish and save actions',(
  const style=fs.readFileSync('live-coach-workout.css','utf8');
  const html=fs.readFileSync('index.html','utf8');
  assert.match(style,/\.active-resume-confirmation/);
- assert.match(html,/app\.js\?v=40/);
+ assert.match(html,/app\.js\?v=41/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
+});
+
+test('completed draft IDs cannot offer Resume again after a failed draft cleanup',()=>{
+ const db=storage();
+ draft.save(scoping.scope(db,'owner-a'),{...plan,workoutId:'demo-completed'},[{exerciseId:'press',weight:80,reps:8}]);
+ assert.equal(lookup(db,'owner-a',plan,[{id:'demo-completed'}]),null);
+ assert.equal(lookup(db,'owner-a',plan,[]).workoutId,'demo-completed');
 });

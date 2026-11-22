@@ -54,10 +54,22 @@ const tests=[
  'auxiliary-revision.test.cjs',
  'auxiliary-preferences.test.cjs',
  'account-custom-scoping.test.cjs',
+ 'body-photo-owner.test.cjs',
  'beta-access.test.cjs',
  'beta-live-refresh.test.cjs',
  'auth-persistence-iphone.test.cjs',
- 'refresh-session.test.cjs'
+ 'refresh-session.test.cjs',
+ 'exercise-visuals-344.test.cjs',
+ 'active-exercise-guide.test.cjs',
+ 'exercise-instruction-coverage.test.cjs',
+ 'exercise-instruction-depth.test.cjs',
+ 'workout-card-images.test.cjs',
+ 'progress-real-volume.test.cjs',
+ 'progress-compact.test.cjs',
+ 'progress-weekly-summary.test.cjs',
+ 'coach-plan-preview.test.cjs',
+ 'coach-program-builder.test.cjs',
+ 'coach-save-custom.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);

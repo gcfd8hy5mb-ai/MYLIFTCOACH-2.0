@@ -5,13 +5,14 @@
  else root.MLC2WorkoutUX=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- function validSet(s,id){return s?.exerciseId===id&&Number.isFinite(Number(s.weight))&&
+ function validSet(s,id){return s?.exerciseId===id&&[s.weight,s.reps].every(value=>
+  (typeof value==='number'||typeof value==='string')&&String(value).trim()!=='')&&Number.isFinite(Number(s.weight))&&
   Number(s.weight)>=0&&Number(s.weight)<=1500&&Number.isInteger(Number(s.reps))&&
   Number(s.reps)>0&&Number(s.reps)<=100}
  function previous(id,sessions,planId){
   if(typeof id!=='string'||!Array.isArray(sessions))return null;
   const valid=sessions.filter(s=>s&&Array.isArray(s.sets)&&(!planId||s.planId===planId)&&
-   Number.isFinite(Date.parse(s.created||'')))
+   Number.isFinite(Date.parse(s.created||''))&&Date.parse(s.created)<=Date.now())
    .sort((a,b)=>Date.parse(b.created)-Date.parse(a.created));
   const found=valid.find(s=>s.sets.some(set=>validSet(set,id)));
   if(!found)return null;
@@ -26,9 +27,10 @@
   const s=own[own.length-1];return {weight:Number(s.weight),reps:Number(s.reps)};
  }
  function progress(ids,sets){
-  const all=Array.isArray(sets)?sets:[],unique=new Set(all.filter(s=>s&&ids.includes(s.exerciseId)).map(s=>s.exerciseId));
+  const all=Array.isArray(sets)?sets.filter(s=>s&&ids.includes(s.exerciseId)&&validSet(s,s.exerciseId)):[];
+  const unique=new Set(all.map(s=>s.exerciseId));
   return {logged:all.length,completedExercises:unique.size,totalExercises:ids.length,
-   volume:all.reduce((n,s)=>n+(Number.isFinite(Number(s.weight))&&Number.isInteger(Number(s.reps))?Number(s.weight)*Number(s.reps):0),0)};
+   volume:all.reduce((n,s)=>n+Number(s.weight)*Number(s.reps),0)};
  }
  function defaults(id,sets,sessions,planId){
   const last=latest(id,sets);if(last)return {...last,source:'current'};
