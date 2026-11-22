@@ -19,6 +19,9 @@
 #modal .active-log-card .logged-count{white-space:nowrap;color:#efd49f!important;font-size:11px!important}
 #modal .active-exercise-context{display:flex;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;margin:10px 0 13px;color:#bdcec7;font-size:11px}
 #modal .active-previous{color:#edd09c}
+#modal .active-coach-hint{margin:0 0 13px!important;padding:10px 12px;border:1px solid rgba(223,183,113,.4);border-radius:10px;background:rgba(220,178,100,.09)!important;color:#e8e0cb!important;font-size:12px!important;line-height:1.55!important}
+#modal .active-coach-hint strong{color:#e9c88f}
+#modal .active-coach-hint small{display:block;font-size:10px!important;color:#b9d0cb!important}
 #modal .active-set-header,#modal .active-set-entry,#modal .active-logged-row{display:grid!important;grid-template-columns:35px minmax(52px,1fr) minmax(62px,1fr) minmax(53px,.72fr) 44px;align-items:center;gap:5px}
 #modal .active-set-header{padding:0 3px 8px;color:#a7beb8;font-size:9px;font-weight:800;letter-spacing:.06em;text-align:center;border-bottom:1px solid rgba(222,184,109,.24)}
 #modal .active-set-rows{display:grid;gap:2px}
