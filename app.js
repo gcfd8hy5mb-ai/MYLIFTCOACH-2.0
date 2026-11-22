@@ -335,7 +335,7 @@ function renderLibrary(){
  document.querySelectorAll('[data-muscle]').forEach(b=>b.classList.toggle('selected',b.dataset.muscle===muscleFilter));
  $('libraryGrid').innerHTML=matches.map(e=>{
   const image=approvedThumbnail(e);
-  const thumbnail=image?'<img class="library-thumb approved-thumb" src="'+escapeHTML(image)+'" alt="Approved demonstration of '+escapeHTML(e.name)+'" loading="lazy" data-approved-thumb>':'';
+  const thumbnail=image?'<img class="library-thumb approved-thumb" src="'+escapeHTML(image)+'" alt="Approved demonstration of '+escapeHTML(e.name)+'" loading="lazy" data-approved-thumb>':'<img class="library-thumb approved-coming-thumb" src="./assets/image-coming-approved.webp" alt="Image coming — realistic dumbbell placeholder" loading="lazy" data-approved-thumb>';
   const placeholder='<div class="library-placeholder" aria-label="Demonstration coming soon"><span class="library-placeholder-icon" aria-hidden="true">◇</span><span>DEMONSTRATION<br>COMING SOON</span></div>';
   return '<article class="library-card reference-exercise"><div class="library-media">'+placeholder+thumbnail+'</div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(String(e.sets||3))+' sets · '+escapeHTML(String(e.reps||'8–12'))+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue||'Follow correct setup and controlled movement.')+'</p></details></div><span class="library-chevron">›</span></article>';
  }).join('')||'<p class="empty-note">No exercises match that search.</p>';
