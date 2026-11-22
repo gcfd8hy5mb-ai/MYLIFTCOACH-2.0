@@ -48,6 +48,7 @@ const tests=[
  'account-draft-store.test.cjs',
  'automatic-workouts.test.cjs',
  'concurrent-workout-sync.test.cjs',
+ 'resume-workout-cta.test.cjs',
  'auxiliary-cloud.test.cjs',
  'auxiliary-revision.test.cjs',
  'auxiliary-preferences.test.cjs',
