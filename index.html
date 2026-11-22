@@ -110,7 +110,19 @@
     <p class="safety-note"><strong>Development preview.</strong> Demo workout entries stay in this browser. Original workout history remains unchanged.</p>
   </div>
  </section>
- <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Your workouts</h1><p>Create and edit custom workouts using the complete 344-exercise catalog. Select any workout to show on Home.</p></div><div class="custom-workout-toolbar"><button type="button" id="createWorkout" class="button-primary">+ Create custom workout</button><small>Development preview · local only · original records are unchanged</small></div><article class="panel"><div class="panel-heading"><h3>Weekly workout schedule</h3><span class="micro-tag">CUSTOM PLANS FIRST</span></div><div id="weeklySchedule"></div></article><div id="guestWorkoutRecovery" class="panel" hidden>
+ <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Your workouts</h1><p>Create and edit custom workouts using the complete 344-exercise catalog. Select any workout to show on Home.</p></div><div class="custom-workout-toolbar"><button type="button" id="createWorkout" class="button-primary">+ Create custom workout</button><small>Development preview · local only · original records are unchanged</small></div><article class="panel"><div class="panel-heading"><h3>Weekly workout schedule</h3><span class="micro-tag">CUSTOM PLANS FIRST</span></div><div id="weeklySchedule"></div></article>
+ <article id="coachSchedulePanel" class="panel coach-schedule-panel" hidden aria-label="Schedule a saved Coach workout">
+ <div class="panel-heading"><h3>Schedule saved Coach workout</h3><span class="micro-tag">MANUAL CHOICE</span></div>
+ <p id="coachScheduleName" class="mlc-schedule-note"></p>
+ <label for="coachScheduleDay">Choose weekday</label>
+ <select id="coachScheduleDay">
+  <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option>
+  <option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+ </select>
+ <p class="mlc-schedule-note">Only the chosen weekday will change. If you previously selected a workout using “Use for today,” that manual choice will still take priority until you select “Follow weekly schedule.”</p>
+ <div class="coach-schedule-actions"><button id="coachScheduleApply" type="button" class="button-primary">Assign to weekday</button><button id="coachScheduleCancel" type="button" class="button-outline">Cancel</button></div>
+ <p id="coachScheduleStatus" class="mlc-schedule-note" role="status" aria-live="polite"></p>
+ </article><div id="guestWorkoutRecovery" class="panel" hidden>
  <h3>Recover workouts created before sign-in</h3>
  <p id="guestWorkoutRecoveryStatus" role="status">Guest routines found on this device.</p>
  <button id="recoverGuestWorkouts" type="button" class="button-outline">Copy missing guest workouts to my account</button>
