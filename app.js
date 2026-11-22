@@ -287,6 +287,15 @@ function renderCalorieGoal(){
  const form=$('calorieGoalForm'),out=$('calorieGoalResult');
  if(!form||!out)return;
  const p=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const status=$('goalProgramProgress');
+ if(status)status.textContent=program?
+  (()=>{const x=window.MLC2GoalProgram.progress(program);
+   return (x.status==='completed'?'Program completed':'Program active')+
+    ' · Week '+x.week+' of '+x.totalWeeks+' · '+x.phase+' phase · Ends '+x.endDate+
+    '. Custom workouts and history remain unchanged.'})():
+  'Choose a goal and a 6, 8 or 12 week program to get started.';
+ if(program)form.elements.namedItem('programWeeks').value=String(program.weeks);
  if(!p){out.textContent='Enter your profile to see an estimated daily calorie target. No food tracking needed.';return}
  form.elements.namedItem('goal').value=p.goal;
  form.elements.namedItem('age').value=p.age;
@@ -343,15 +352,21 @@ function coachAutonomousPlan(){
  if(betaView().mode!=='pro'||!window.MLC2ProgramBuilder)return null;
  const sessions=coachEvidence(),catalog=libraryExercises();
  // Four days is a transparent starting default; training preferences are not inferred.
- const options=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{goal:'balanced',days:4,equipment:'Any'};
+ const preferences=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{goal:'balanced',days:4,equipment:'Any'};
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const progress=program?window.MLC2GoalProgram.progress(program):null;
+ if(progress?.status==='completed')return null;
+ const focus=program?({strength:'strength',bulk:'muscle',maintain:'balanced',cut:'balanced'}[program.goal]):preferences.goal;
+ const options={...preferences,goal:focus};
  const proposal=window.MLC2ProgramBuilder.build(catalog,sessions,options);
  if(proposal?.status!=='ready')return null;
- const completed=sessions.filter(row=>typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
+ const completed=sessions.filter(row=>typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')&&
+  (!program||Date.parse(row.created||'')>=Date.parse(program.startDate+'T00:00:00Z'))).length;
  const day=proposal.days[completed%proposal.days.length];
  if(!day?.exercises?.length)return null;
  return {id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
-  description:'Coach-generated '+options.goal+' session. Review exercises and loads before training.',
-  kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day};
+  description:'Coach-generated '+options.goal+' session'+(progress?' · Week '+progress.week+' of '+progress.totalWeeks:'')+'. Review exercises and loads before training.',
+  kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day,programWeek:progress?.week||null};
 }
 function renderAutonomousCoach(){
  const panel=$('coachAutoPanel'),title=$('coachAutoTitle'),details=$('coachAutoDetails'),start=$('coachAutoStart');
@@ -360,18 +375,26 @@ function renderAutonomousCoach(){
  panel.hidden=!enabled;
  if(!enabled){coachAutonomousDraft=null;return}
  const preferences=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{goal:'balanced',days:4,equipment:'Any'};
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const progress=program?window.MLC2GoalProgram.progress(program):null;
  for(const [key,id] of [['goal','coachAutoGoal'],['days','coachAutoDays'],['equipment','coachAutoEquipment']]){
   const field=$(id);if(field)field.value=String(preferences[key]);
  }
+ const goalField=$('coachAutoGoal');
+ if(goalField&&program){
+  goalField.value={strength:'strength',bulk:'muscle',maintain:'balanced',cut:'balanced'}[program.goal];
+  goalField.disabled=progress?.status==='active';
+ }else if(goalField)goalField.disabled=false;
  coachAutonomousDraft=coachAutonomousPlan();
  if(!coachAutonomousDraft){
-  title.textContent='No matching workout available';
-  details.textContent='Try a different equipment category. No current workout or history was changed.';
+  title.textContent=progress?.status==='completed'?'Your program is complete':'No matching workout available';
+  details.textContent=progress?.status==='completed'?'Your '+program.weeks+'-week program has ended. Review your progress or choose a new program under Your Calorie Goal.':'Try a different equipment category. No current workout or history was changed.';
   start.disabled=true;return;
  }
  title.textContent=coachAutonomousDraft.title;
  const names=coachAutonomousDraft.ids.map(id=>libraryExercises().find(e=>e.id===id)?.name).filter(Boolean);
- details.textContent=names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.';
+ details.textContent=(progress?'Week '+progress.week+' of '+progress.totalWeeks+' · '+progress.phase+' phase. ':'')+
+  names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.';
  start.disabled=false;
 }
 
@@ -840,8 +863,15 @@ function bind(){
    const profile={goal:field('goal'),age:Number(field('age')),weightKg:Number(field('weightLb'))*0.45359237,
     heightCm:Number(field('heightIn'))*2.54,sex:field('sex'),activity:field('activity')};
    const estimate=window.MLC2CalorieGoal.estimate(profile);
+   const weeks=Number(field('programWeeks'));
+   if(!window.MLC2GoalProgram.DURATIONS.includes(weeks))throw Error('Choose a 6, 8 or 12 week program');
+   const old=window.MLC2GoalProgram.read(localStorage,verifiedOwnerId);
+   if(old&&(old.goal!==profile.goal||old.weeks!==weeks)&&
+      !confirm('Start a new '+weeks+'-week '+profile.goal+' program? The old program date will be replaced, but your workout history and custom routines will be preserved.'))return;
+   if(!old||old.goal!==profile.goal||old.weeks!==weeks)
+    window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:profile.goal,weeks});
    window.MLC2CalorieGoal.save(localStorage,verifiedOwnerId,profile);
-   renderCalorieGoal();
+   renderCalorieGoal();renderWorkouts();
    if(estimate.needsReview)notice('Calorie estimate requires review before use.');
    else notice('Estimated calorie target saved on this iPhone.');
   }catch(e){$('calorieGoalResult').textContent='Could not calculate: '+String(e.message||e).slice(0,120)}
