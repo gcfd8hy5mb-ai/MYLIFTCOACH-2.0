@@ -23,7 +23,8 @@
 #workouts .workout-tab-panel[hidden]{display:none!important}
 #workouts .workout-tab-panel{min-width:0}
 #workouts .workout-today-card{
- background:linear-gradient(145deg,#0b4549,#063239 78%)!important;
+ background:#06373b!important;
+ background-image:none!important;
  border:1.5px solid #d7b476!important;border-radius:18px!important;
  padding:22px 17px 18px;color:#f8e9d0;
  box-shadow:0 10px 25px rgba(0,20,24,.3),inset 0 1px rgba(249,219,164,.11)
