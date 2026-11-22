@@ -42,3 +42,39 @@ test('App calorie goal is optional and not a macro or meal counter',()=>{
  assert.match(app,/MLC2CalorieGoal\.save\(localStorage,verifiedOwnerId,profile\)/);
  assert.doesNotMatch(html.slice(html.indexOf('<section id="nutrition"'),html.indexOf('<section id="settings"')),/foodLog|scanBarcode|macroInput/i);
 });
+
+test('Feet and inches height inputs produce exact centimeter height for the calorie formula',()=>{
+ assert.equal(calorie.heightCmFromFeetInches(6,0),182.88);
+ assert.equal(calorie.heightCmFromFeetInches('5','11'),180.34);
+ assert.equal(calorie.heightCmFromFeetInches(5,8),172.72);
+ const p={...base,heightCm:calorie.heightCmFromFeetInches(6,0)};
+ assert.equal(calorie.estimate(p).target,calorie.estimate({...p,heightCm:182.88}).target);
+});
+test('Previously saved centimeter height restores as feet and inches without changing profile or goal',()=>{
+ const db=store(),saved=calorie.save(db,'account-a',{...base,heightCm:182.88,goal:'bulk'});
+ assert.deepEqual(calorie.feetInchesFromCm(saved.heightCm),{feet:6,inches:0});
+ assert.deepEqual(calorie.feetInchesFromCm(180.34),{feet:5,inches:11});
+ assert.deepEqual(calorie.read(db,'account-a'),saved);
+ assert.equal(calorie.read(db,'account-a').goal,'bulk');
+});
+test('Invalid feet and inches never calculate or modify a saved calorie profile',()=>{
+ const db=store(),saved=calorie.save(db,'account-a',base);
+ for(const value of [[6,12],[6,-1],[6,1.5],[2,0],[8,0],['abc',2],[0,0]]){
+  assert.throws(()=>calorie.heightCmFromFeetInches(...value));
+ }
+ assert.deepEqual(calorie.read(db,'account-a'),saved);
+});
+test('Mobile nutrition screen shows distinct feet and inches controls and preserves existing stored cm schema',()=>{
+ const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8'),
+ css=fs.readFileSync('live-coach-workout.css','utf8');
+ const nutrition=html.slice(html.indexOf('<section id="nutrition"'),html.indexOf('<section id="settings"'));
+ assert.match(nutrition,/name="heightFt"/);
+ assert.match(nutrition,/name="heightIn"/);
+ assert.match(nutrition,/class="calorie-height-pair"/);
+ assert.doesNotMatch(nutrition,/Height \(inches\)/);
+ assert.match(app,/heightCmFromFeetInches\(field\('heightFt'\),field\('heightIn'\)\)/);
+ assert.match(app,/feetInchesFromCm\(p.heightCm\)/);
+ assert.match(css,/\.calorie-height-pair\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(html,/calorie-goal-estimate\.js\?v=2/);
+ assert.match(html,/live-coach-workout\.css\?v=11/);
+});
