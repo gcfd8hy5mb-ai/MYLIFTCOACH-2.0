@@ -92,25 +92,34 @@ jobs:
           ref: dd0d230c8a6444a401ac7f799a1fed9cb4e489d1
           path: phone-ui-j
           persist-credentials: false
+      - name: Checkout verified full-screen login submit-handler repair
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 099c684bde0a29488f1a42775028fdec092e8e9d
+          path: phone-ui-k
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           # The existing saved redesign Home Screen app opens /myliftcoach2/.
-          # Update only the stable redesign preview address to tested J.
+          # Update only the stable redesign preview address to regression-tested K.
           # Previous iPhone test paths and production workout-tracker remain intact.
           mkdir -p dist/myliftcoach2
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-ui-j/ dist/myliftcoach2/
-          grep -q 'iPhone beta test build 11-21J' dist/myliftcoach2/index.html
+            --exclude='*.md' phone-ui-k/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21K' dist/myliftcoach2/index.html
+          grep -q 'app.js?v=14' dist/myliftcoach2/index.html
+          ! grep -Fq "\$('loginForm input[name=" dist/myliftcoach2/app.js
           grep -q 'auth-session-store.js?v=1' dist/myliftcoach2/index.html
           test -s dist/myliftcoach2/sync/auth-session-store.js
           grep -q 'workout-auth-ux-fix.css?v=2' dist/myliftcoach2/index.html
           grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/workout-auth-ux-fix.css
           # Verify H is not accidentally being republished to the saved app.
           ! grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
-          echo 'Existing saved redesign app: prepared verified login build 11-21J'
+          echo 'Existing saved redesign app: prepared repaired login build 11-21K'
           sha256sum dist/myliftcoach2/index.html dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
