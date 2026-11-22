@@ -48,7 +48,8 @@ function init(){
  auditHeading.append(auditTitle);
  const auditBody=document.createElement('div');auditBody.id='progressVolumeAudit';
  auditCard.append(auditHeading,auditBody);
- groups.strength.append(auditCard,original);
+ groups.strength.prepend(auditCard);
+ groups.strength.append(original);
  groups.history.append(history);
  const openHistory=document.createElement('button');
  openHistory.type='button';openHistory.className='progress-compact-link';
