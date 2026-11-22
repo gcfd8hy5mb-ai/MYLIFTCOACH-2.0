@@ -296,7 +296,10 @@ function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,cus
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
- const plan=nextPlan();$('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
+ const plan=nextPlan();
+ $('heroStart').dataset.homeWorkout=plan.id;
+ $('todayStart').dataset.homeWorkout=plan.id;
+ $('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
  $('todayExercises').innerHTML=plan.ids.map(id=>{const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
@@ -572,11 +575,11 @@ function bind(){
  $('sidebarClose').addEventListener('click',()=>$('sidebar').classList.remove('open'));
  $('homeAccountBtn').addEventListener('click',()=>setPage('settings'));
 
- $('heroStart').addEventListener('click',()=>openWorkout(nextPlan().id));
+ $('heroStart').addEventListener('click',()=>openWorkout($('heroStart').dataset.homeWorkout));
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
- $('todayStart').addEventListener('click',()=>openWorkout(nextPlan().id));
- $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
- $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts()}));
+ $('todayStart').addEventListener('click',()=>openWorkout($('todayStart').dataset.homeWorkout));
+ $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
+ $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
  ['loadOriginalHistory','loadOriginalTracking','loadOriginalPlans'].forEach(id=>$(id).addEventListener('click',viewOriginal));
  $('waterForm').addEventListener('submit',e=>logDaily(e,'water'));
  $('weightForm').addEventListener('submit',e=>logDaily(e,'weight'));
