@@ -310,6 +310,15 @@ function programCompletedCount(program,source){
   Date.parse(row.created||'')>=Date.parse(program.startDate+'T00:00:00Z')).length;
 }
 
+function goalProgramAdherence(program,progress){
+ if(!program||!progress)return null;
+ const source=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
+ const preferences=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{days:4};
+ return window.MLC2ProgramAdherence?.summary({
+  program,progress,source,sessions:coachEvidence(),customPlans:programCustomOptions(),
+  days:preferences.days
+ })||null;
+}
 function renderCalorieGoal(){
  const form=$('calorieGoalForm'),out=$('calorieGoalResult');
  if(!form||!out)return;
@@ -320,9 +329,13 @@ function renderCalorieGoal(){
  const restart=$('goalProgramRestart');if(restart)restart.hidden=!program;
  if(status)status.textContent=program?
   (()=>{const x=window.MLC2GoalProgram.progress(program);
+   const adherence=goalProgramAdherence(program,x);
+   const count=adherence?' · '+adherence.completed+' qualifying workouts logged · '+
+    adherence.weekCompleted+' this week (goal '+adherence.weekTarget+')'+
+    (adherence.missedPriorSessions?' · '+adherence.missedPriorSessions+' missed session(s) in previous weeks':''):'';
    return (x.status==='completed'?'Program completed':'Program active')+
-    ' · Week '+x.week+' of '+x.totalWeeks+' · '+x.phase+' phase · Ends '+x.endDate+
-    '. Custom workouts and history remain unchanged.'})():
+    ' · Week '+x.week+' of '+x.totalWeeks+' · '+x.phase+' phase · Ends '+x.endDate+count+
+    '. Missed sessions are never recorded as complete. Your custom routines and history remain unchanged.'})():
   'Choose a goal and a 6, 8 or 12 week program to get started.';
  if(program)form.elements.namedItem('programWeeks').value=String(program.weeks);
  if(!p){out.textContent='Enter your profile to see an estimated daily calorie target. No food tracking needed.';return}
