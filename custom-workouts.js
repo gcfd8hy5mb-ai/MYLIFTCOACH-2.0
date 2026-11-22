@@ -16,7 +16,7 @@ function read(){
  const a=JSON.parse(localStorage.getItem(scoped(KEY))||'[]');
  return Array.isArray(a)?a.slice(0,60).filter(p=>p&&typeof p.id==='string'&&p.id.startsWith('custom-')&&Array.isArray(p.ids)).map(p=>({
   id:p.id,title:String(p.title||'My workout').slice(0,75),kind:'Custom',description:String(p.description||'Custom routine').slice(0,160),
-  ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40)
+  ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40),coachSaved:p.coachSaved===true
  })).filter(p=>p.ids.length):[];
  }catch{return []}
 }
@@ -70,12 +70,12 @@ function saveCoachDay(day){
  while(existing.some(p=>p.id===id))id=newPlanId();
  const number=Number(day.day);
  const title='Coach Day '+(Number.isInteger(number)&&number>=1&&number<=7?number:1);
- const plan={id,title,kind:'Custom',description:'Coach-generated starting point. Review and edit your exercises as needed.',ids};
+ const plan={id,title,kind:'Custom',coachSaved:true,description:'Coach-generated starting point. Review and edit your exercises as needed.',ids};
  persistPlans([plan,...existing]);
  return plan;
 }
 function allPlans(presets){return [...read(),...presets]}
-function currentPlan(presets,completed){const a=allPlans(presets);let id='';try{id=localStorage.getItem(scoped(TODAY))||''}catch{};return a.find(p=>p.id===id)||read()[0]||presets[completed%presets.length]}
+function currentPlan(presets,completed){const a=allPlans(presets);let id='';try{id=localStorage.getItem(scoped(TODAY))||''}catch{};return a.find(p=>p.id===id)||read().find(p=>!p.coachSaved)||presets[completed%presets.length]||a[0]}
 function controls(p,currentId){
  const custom=p.id.startsWith('custom-');
  return '<div class="custom-plan-actions"><button type="button" data-custom-select="'+esc(p.id)+'">'+(currentId===p.id?'Selected for today ✓':'Use for today')+'</button>'+(custom?'<button type="button" data-custom-edit="'+esc(p.id)+'">Edit</button><button type="button" data-custom-delete="'+esc(p.id)+'">Delete</button>':'')+'</div>';
