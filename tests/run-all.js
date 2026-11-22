@@ -18,6 +18,7 @@ const tests=[
  'home-program-priority.test.cjs',
  'combined-coach-panels.test.cjs',
  'coach-consistent-history.test.cjs',
+ 'today-program-labels.test.cjs',
  'coach-periodization.test.cjs',
  'replacement-media-merge.test.cjs',
  'coach-program-cloud-backup.test.cjs',
