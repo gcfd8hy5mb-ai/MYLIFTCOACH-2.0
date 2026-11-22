@@ -1,0 +1,46 @@
+name: MYLIFTCOACH replacement candidate verification
+on:
+  push:
+    branches:
+      - integration/replacement-visual-coach-20261122
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  combined-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check combined runtime and integrated media syntax
+        run: |
+          node --check app.js
+          node --check exercise-visuals-344.js
+          node --check approved-visuals-manifest.js
+          node --check active-exercise-guide.js
+          node --check coach-periodization.js
+          node --check goal-program-calendar.js
+          node --check goal-program-source.js
+      - name: Run complete Coach, account and workout regression suite
+        run: node tests/run-all.js
+      - name: Verify approved artwork, exercise guides and picture mappings
+        run: |
+          node --test tests/exercise-visuals-344.test.cjs tests/active-exercise-guide.test.cjs tests/exercise-instruction-coverage.test.cjs tests/exercise-instruction-depth.test.cjs
+          node --test tests/workout-card-images.test.cjs
+      - name: Check complete media inventory
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm');
+          const catalogContext={window:{}};
+          vm.runInNewContext(fs.readFileSync('exercise-catalog-344.js','utf8'),catalogContext);
+          vm.runInNewContext(fs.readFileSync('approved-visuals-manifest.js','utf8'),catalogContext);
+          const catalog=catalogContext.window.MLC2_EXERCISE_CATALOG||[];
+          const manifest=catalogContext.window.MLC2_APPROVED_VISUALS||[];
+          if(catalog.length!==344||manifest.length!==263)throw Error('Catalog or approved manifest count mismatch');
+          const missing=manifest.flatMap(x=>[x.image,x.thumbnail].filter(p=>!fs.existsSync(p)));
+          if(missing.length)throw Error('Missing approved images: '+missing.slice(0,12).join(', '));
+          console.log('Verified 344 exercises, 263 unique approved image mappings and all paired image files');
+          NODE
