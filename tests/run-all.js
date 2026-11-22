@@ -16,6 +16,7 @@ const tests=[
  'goal-program-source.test.cjs',
  'coach-periodization.test.cjs',
  'replacement-media-merge.test.cjs',
+ 'coach-program-cloud-backup.test.cjs',
  'coach-catalog-coverage.test.cjs',
  'custom-home-priority.test.cjs',
  'active-workout-ux.test.cjs',
