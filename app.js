@@ -331,6 +331,11 @@ function approvedThumbnail(e){
  // Only same-site media paths. An unapproved or missing thumbnail displays the placeholder.
  return /^(?:\.\/)?(?:assets|media|images)\/[A-Za-z0-9_./-]+\.(?:webp|png|jpg|jpeg)$/i.test(d.thumbnail)?d.thumbnail:'';
 }
+function approvedFullImage(e){
+ const d=e.demonstration;
+ if(!d||d.status!=='approved'||typeof d.image!=='string')return '';
+ return /^assets\/exercise-demonstrations\/[A-Za-z0-9._-]+\.webp$/.test(d.image)?'./'+d.image:'';
+}
 function renderLibrary(){
  const catalog=libraryExercises();
  const status=$('approvedMediaStatus');
@@ -347,9 +352,16 @@ function renderLibrary(){
   const image=approvedThumbnail(e);
   const thumbnail=image?'<img class="library-thumb approved-thumb" src="'+escapeHTML(image)+'" alt="Approved demonstration of '+escapeHTML(e.name)+'" loading="lazy" data-approved-thumb>':'<img class="library-thumb approved-coming-thumb" src="./assets/image-coming-approved.webp" alt="Image coming — realistic dumbbell placeholder" loading="lazy" data-approved-thumb>';
   const placeholder='<div class="library-placeholder" aria-label="Demonstration coming soon"><span class="library-placeholder-icon" aria-hidden="true">◇</span><span>DEMONSTRATION<br>COMING SOON</span></div>';
-  return '<article class="library-card reference-exercise"><div class="library-media">'+placeholder+thumbnail+'</div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(String(e.sets||3))+' sets · '+escapeHTML(String(e.reps||'8–12'))+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue||'Follow correct setup and controlled movement.')+'</p></details></div><span class="library-chevron">›</span></article>';
+  const full=approvedFullImage(e);
+  const demonstration=full?'<details class="library-full-guide"><summary>View approved exercise demonstration</summary><img src="'+escapeHTML(full)+'" alt="Approved full-size demonstration of '+escapeHTML(e.name)+'" loading="lazy" data-library-full><p class="library-image-error" hidden>Full-size demonstration unavailable in this build.</p></details>':'';
+  return '<article class="library-card reference-exercise"><div class="library-media">'+placeholder+thumbnail+'</div><div class="library-info"><h3>'+escapeHTML(e.name)+'</h3><p>'+escapeHTML(e.group)+' · '+escapeHTML(String(e.sets||3))+' sets · '+escapeHTML(String(e.reps||'8–12'))+' reps</p><details><summary>Technique notes</summary><p>'+escapeHTML(e.cue||'Follow correct setup and controlled movement.')+'</p></details>'+demonstration+'</div><span class="library-chevron">›</span></article>';
  }).join('')||'<p class="empty-note">No exercises match that search.</p>';
  $('libraryGrid').querySelectorAll('img[data-approved-thumb]').forEach(img=>img.addEventListener('error',()=>img.remove(),{once:true}));
+ $('libraryGrid').querySelectorAll('img[data-library-full]').forEach(img=>img.addEventListener('error',()=>{
+  img.hidden=true;
+  const feedback=img.nextElementSibling;
+  if(feedback)feedback.hidden=false;
+ },{once:true}));
 }
 function renderProgress(){
  window.MLC2PostWorkout?.render($('postWorkoutRecap'),demoSessions);
