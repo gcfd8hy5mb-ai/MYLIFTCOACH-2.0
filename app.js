@@ -396,6 +396,27 @@ function coachAutonomousPlan(){
   customPlans:programCustomOptions(),generated,completed})||null;
  return choice;
 }
+
+function coachProgramAdvice(plan){
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const progress=program&&window.MLC2GoalProgram.progress(program);
+ if(!progress||progress.status!=='active'||!plan?.ids?.length)return null;
+ const current=coachAutonomousPlan();
+ // Never relabel an unrelated manual workout or routine as this program.
+ if(!current||current.id!==plan.id)return null;
+ const readiness=window.MLC2CoachReadiness?.current(plan.id)||'Normal';
+ return window.MLC2Periodization?.propose({program,progress,plan,
+  sessions:coachEvidence(),readiness,catalog:libraryExercises()})||null;
+}
+function coachAdviceText(advice){
+ if(advice?.status!=='ready')return '';
+ const example=advice.recommendations?.slice(0,2).map(x=>x.adjustment===0?'keep '+x.originalSets+' sets':
+  x.adjustment>0?'consider '+x.sets+' sets instead of '+x.originalSets:'consider '+x.sets+' sets instead of '+x.originalSets).join(' · ');
+ return 'Week '+advice.week+'/'+advice.totalWeeks+' · '+advice.phase+
+  ' · '+advice.goalTarget+'. '+advice.rationale+(example?' '+example+'.':'')+
+  ' Suggestions only; your routine and logged weights remain unchanged.';
+}
+
 function renderAutonomousCoach(){
  const panel=$('coachAutoPanel'),title=$('coachAutoTitle'),details=$('coachAutoDetails'),start=$('coachAutoStart');
  if(!panel||!title||!details||!start)return;
@@ -424,9 +445,11 @@ function renderAutonomousCoach(){
  }
  title.textContent=coachAutonomousDraft.title;
  const names=coachAutonomousDraft.ids.map(id=>libraryExercises().find(e=>e.id===id)?.name).filter(Boolean);
+ const phaseAdvice=coachProgramAdvice(coachAutonomousDraft);
  details.textContent=(progress?'Week '+progress.week+' of '+progress.totalWeeks+' · '+progress.phase+' phase. ':'')+
   (coachAutonomousDraft.programSource==='custom'?'Using your original custom routine. ':'Coach-generated routine. ')+
-  names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.';
+  names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.'+
+  (phaseAdvice?.status==='ready'?' '+coachAdviceText(phaseAdvice):'');
  start.disabled=false;
 }
 
@@ -628,6 +651,13 @@ function liveCoachSuggestion(id){
  if(betaView().mode!=='pro')return {e,message:'Free beta mode: follow your planned targets. Pro enables progression advice.'};
  if(e?.group==='Cardio')return {e,message:'Follow your planned cardio targets and adjust effort as needed.'};
  const v=window.MLC2Coach?.suggestion(id,coachEvidence(),catalog);
+ const phase=coachProgramAdvice(activePlan);
+ if(v?.status==='ready'&&v.action==='increase'&&phase?.status==='ready'&&!phase.allowLoadIncrease){
+  const safe=Number(v.lastWeight);
+  return {e,advice:Number.isFinite(safe)&&safe>0?{...v,action:'hold',weight:safe,
+   reason:'Program recovery guidance: hold the last completed working weight.'}:{status:'insufficient'},
+   message:'Recovery phase: do not increase load. Keep your most recent working weight only if comfortable.'};
+ }
  return {e,advice:v,message:v?.status==='ready'?v.action.toUpperCase()+' · '+v.weight+' lb suggested. '+v.reason :'Log more completed working sets to unlock weight progression.'};
 }
 function liveCoachPreview(plan){
@@ -637,9 +667,11 @@ function liveCoachPreview(plan){
  const ready=review.filter(row=>row.advice?.status==='ready').length;
  const summary=ready?ready+' weight recommendation'+(ready===1?'':'s')+' available':'Workout guidance';
  const rows=review.map(({e,message})=>'<div><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' sets × '+escapeHTML(String(e.reps||'8–12'))+' reps</small><p>'+escapeHTML(message)+'</p></div>').join('');
+ const phase=coachProgramAdvice(plan);
+ const phaseLabel=phase?.status==='ready'?'<p class="live-coach-phase">'+escapeHTML(coachAdviceText(phase))+'</p>':'';
  return '<details class="live-coach-box live-coach-dropdown" aria-label="Coach before workout">'+
  '<summary class="live-coach-dropdown-toggle"><span class="live-coach-dropdown-heading"><strong>✦ Coach · Before you start</strong><small>'+escapeHTML(summary)+'</small></span><span class="live-coach-dropdown-side"><span class="live-coach-mode">'+escapeHTML(betaView().mode.toUpperCase())+'</span><span class="live-coach-chevron" aria-hidden="true">⌄</span></span></summary>'+
- '<div class="live-coach-dropdown-content"><p class="live-coach-evidence-source">'+escapeHTML(coachEvidenceLabel())+'</p><p class="live-coach-readiness">'+escapeHTML(status)+'</p><div class="live-coach-list">'+rows+'</div>'+
+ '<div class="live-coach-dropdown-content"><p class="live-coach-evidence-source">'+escapeHTML(coachEvidenceLabel())+'</p>'+phaseLabel+'<p class="live-coach-readiness">'+escapeHTML(status)+'</p><div class="live-coach-list">'+rows+'</div>'+
  '<small>Your chosen workout and logged values never change automatically.</small></div></details>';
 }
 
