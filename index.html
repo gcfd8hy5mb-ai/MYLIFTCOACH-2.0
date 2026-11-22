@@ -217,7 +217,22 @@
     <button type="button" data-coach-link="settings">♡ &nbsp; Recovery &amp; Readiness <span>›</span></button>
   </div>
  </section>
- <section id="nutrition" class="page" hidden><div class="page-heading"><div class="eyebrow">FUEL & RECOVER</div><h1>Nutrition &amp; Hydration</h1><p>The full nutrition, water, weight, and macro-tracking features from your original app will return here after data compatibility testing.</p></div><article class="panel"><h3>Coming from your original app</h3><p>Daily water, food logs, calorie goals, saved meals, and weight history. No entries are being written to your production data.</p></article></section>
+ <section id="nutrition" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">FUEL YOUR GOAL</div><h1>Your Calorie Goal</h1><p>An estimated daily target for your fitness goal. No food logging or macro counting required.</p></div>
+ <article class="panel nutrition-goal-panel">
+  <form id="calorieGoalForm" class="calorie-goal-form">
+   <label>Fitness goal<select name="goal" required><option value="strength">Build strength</option><option value="bulk">Bulk / gain muscle</option><option value="maintain">Maintain weight</option><option value="cut">Cut / lose weight</option></select></label>
+   <label>Age<input name="age" type="number" inputmode="numeric" min="18" max="100" required placeholder="Years"></label>
+   <label>Weight (lb)<input name="weightLb" type="number" inputmode="decimal" min="66" max="880" step="0.1" required placeholder="Current weight"></label>
+   <label>Height (inches)<input name="heightIn" type="number" inputmode="decimal" min="47" max="91" step="0.1" required placeholder="Total height"></label>
+   <label>Sex used for estimate<select name="sex" required><option value="male">Male equation</option><option value="female">Female equation</option></select></label>
+   <label>Usual activity<select name="activity" required><option value="sedentary">Mostly seated</option><option value="light">Light activity</option><option value="moderate">Moderately active</option><option value="active">Very active</option></select></label>
+   <button class="button-primary" type="submit">Calculate my calorie goal</button>
+  </form>
+  <div id="calorieGoalResult" class="calorie-goal-result" role="status" aria-live="polite"></div>
+  <p class="calorie-goal-note">This is an adult-only starting estimate, not a precise measurement or medical prescription. Activity includes ordinary exercise; no exercise-calorie double counting. Goal changes are never applied without your input. Review the target if you have specific medical or nutritional needs.</p>
+ </article>
+</section>
  <section id="settings" class="page" hidden><div class="account-brand"><img src="./assets/myliftcoach-mark.svg?v=6" alt=""><h2>My Account</h2><p>Manage your profile, training and settings</p></div><div class="account-menu" aria-label="Additional training tools"><button type="button" data-account-page="library"><span>▣</span> Exercise Library <b>›</b></button><button type="button" data-account-page="history"><span>▤</span> Workout History <b>›</b></button><button type="button" data-account-page="tracking"><span>◉</span> Daily Tracking <b>›</b></button><button type="button" data-account-page="coaching"><span>✦</span> Coaching &amp; Guidance <b>›</b></button></div><div class="page-heading"><div class="eyebrow">YOUR ACCOUNT</div><h1>Settings</h1><p>Sign in with your existing MYLIFTCOACH account. Training data import remains off until validated.</p></div><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen design ↗</button><article class="panel settings-panel" id="betaAccessCard" hidden>
 <div class="panel-heading"><h3>Beta Access Mode</h3><span class="micro-tag">PRIVATE BETA</span></div>
 <p>Everyone can switch between Free and Pro features during the private beta without purchasing a subscription. Signed-in choices save to your account; guest choices last for this browser session. This is a feature preview, not a paid subscription entitlement.</p>
@@ -306,6 +321,7 @@
 <script defer src="./coach-migration.js?v=3"></script>
 <script defer src="./coach-program-builder.js?v=1"></script>
 <script defer src="./coach-preferences.js?v=1"></script>
+<script defer src="./calorie-goal-estimate.js?v=1"></script>
 <script defer src="./coach-readiness.js?v=1"></script>
 <script defer src="./coach-trends.js?v=1"></script>
 <script defer src="./coach-post-workout.js?v=1"></script>
@@ -338,6 +354,6 @@
 <script defer src="./sync/auxiliary-cloud.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=24"></script>
+<script defer src="./app.js?v=25"></script>
 </body>
 </html>
