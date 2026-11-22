@@ -10,3 +10,13 @@
 #progress.simulation-active #simulationStatus{color:#ffe0a0;font-weight:750}
 #coaching .simulation-notice{background:#09363e;color:#f5d599;border:1px solid #d5b175;border-radius:12px;padding:13px;font-size:12px;font-weight:700;line-height:1.5;margin:0 0 15px}
 #coaching .simulation-notice[hidden]{display:none!important}
+
+/* Simulated History and integrity checks use the existing deep teal palette. */
+#history .mlc-sim-history-note{padding:12px 13px;border:1px solid #d3ad73;border-radius:11px;background:#082f37;color:#f6d49a;font-size:12px;line-height:1.55}
+#history .mlc-sim-history-note[hidden],#progress .simulation-audit[hidden]{display:none!important}
+#progress .simulation-audit{margin-top:13px;border-top:1px solid rgba(215,179,115,.42);padding-top:12px}
+#progress .simulation-audit-heading{color:#f5d79f!important;font-weight:800;font-size:13px!important}
+#progress .simulation-audit-list{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}
+#progress .simulation-audit-list li{background:#062d35;border:1px solid rgba(205,170,105,.35);border-radius:9px;padding:8px 10px;font-size:11px;line-height:1.45;color:#e4eadf}
+#progress .simulation-audit-list li.simulation-audit-fail{border-color:#e7aa75;color:#ffcb9c}
+#progress .simulation-audit-disclaimer{color:#bfd3cd;font-size:11px;line-height:1.5}
