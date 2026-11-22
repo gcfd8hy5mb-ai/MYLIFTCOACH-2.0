@@ -77,7 +77,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){window.MLC2Simulation?.clear();if(pendingCoachScheduleId)cancelCoachSchedule();if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
+function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
@@ -242,15 +242,12 @@ function persistLocalTracking(){const data=JSON.stringify(trackingEntries),key=c
 function formatDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString():String(value||'Unknown date')}
 function renderHistory(){
  const original=originalSnapshot?.sessions||[];
- const demo=viewedHistory();
- const simulated=window.MLC2Simulation?.active()===true;
- $('history2SourceLabel').textContent=simulated?'SIMULATED · TEST DATA':'SAVED 2.0 RECORDS';
- $('history2SimulationNotice').hidden=!simulated;
+ const demo=demoSessions||[];
  $('legacyHistoryStatus').textContent=originalSnapshot?original.length+' original sessions available on this browser (read-only).':'Not loaded. Tap View original records to check this browser. For signed-in original records, sign in to the same account first.';
  const setCount=original.reduce((n,x)=>n+x.exercises.reduce((m,e)=>m+e.sets.length,0),0);
  $('originalHistorySummary').textContent=originalSnapshot?original.length+' workouts · '+setCount+' sets':'';
  $('originalHistoryList').innerHTML=originalSnapshot?(original.length?original.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.date))+' · '+x.exercises.length+' movements</small></summary>'+x.exercises.map(y=>'<div class="history-exercise"><b>'+escapeHTML(y.name)+'</b><small>'+y.sets.map(t=>escapeHTML(String(t.weight))+' lb × '+escapeHTML(String(t.reps))).join(' · ')+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No original session records found in this browser. Your original app or Supabase may store them elsewhere; no data was changed.</p>'):'';
- $('detailedDemoHistory').innerHTML=demo.length?demo.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.created))+' · '+x.sets.length+' sets</small></summary>'+x.sets.map(y=>'<div class="history-exercise"><span>'+escapeHTML(libraryExercises().find(e=>e.id===y.exerciseId)?.name||y.exerciseId||'Exercise')+'</span><small>'+escapeHTML(String(y.weight||0))+' lb × '+escapeHTML(String(y.reps||0))+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No 2.0 practice sessions yet. Completing a workout will add it here.</p>';
+ $('detailedDemoHistory').innerHTML=demo.length?demo.slice(0,80).map(x=>'<details class="history-entry"><summary><strong>'+escapeHTML(x.title)+'</strong><small>'+escapeHTML(formatDate(x.created))+' · '+x.sets.length+' sets</small></summary>'+x.sets.map(y=>'<div class="history-exercise"><span>'+escapeHTML(exercises.find(e=>e.id===y.exerciseId)?.name||y.exerciseId||'Exercise')+'</span><small>'+escapeHTML(String(y.weight||0))+' lb × '+escapeHTML(String(y.reps||0))+'</small></div>').join('')+'</details>').join(''):'<p class="empty-note">No 2.0 practice sessions yet. Completing a workout will add it here.</p>';
 }
 function renderOriginalPlans(){
  const el=$('originalPlansList');if(!el)return;
@@ -286,31 +283,67 @@ function logDaily(event,type){
 
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notice(message){const t=$('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
+function renderGoalProgramSources(){
+ const form=$('calorieGoalForm');
+ if(!form)return;
+ const source=form.elements.namedItem('programSource'),selection=form.elements.namedItem('programCustom');
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const saved=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
+ const current=selection.value,custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
+ selection.replaceChildren(new Option('All my custom workouts (rotate)',''));
+ for(const plan of custom)selection.add(new Option(plan.title,plan.id));
+ source.value=saved?.mode||'generated';
+ selection.value=saved?.customId&&custom.some(p=>p.id===saved.customId)?saved.customId:
+  custom.some(p=>p.id===current)?current:'';
+ $('goalProgramCustomGroup').hidden=source.value==='generated';
+}
+function programCustomOptions(){
+ return window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
+}
+function programCompletedCount(program,source){
+ const all=coachEvidence(),custom=programCustomOptions(),eligibleIds=new Set(custom.map(p=>p.id));
+ return all.filter(row=>row&&typeof row.planId==='string'&&
+  (row.planId.startsWith('coach-auto-day-')||eligibleIds.has(row.planId))&&
+  Date.parse(row.created||'')>=Date.parse(program.startDate+'T00:00:00Z')).length;
+}
+
+function renderCalorieGoal(){
+ const form=$('calorieGoalForm'),out=$('calorieGoalResult');
+ if(!form||!out)return;
+ renderGoalProgramSources();
+ const p=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const status=$('goalProgramProgress');
+ const restart=$('goalProgramRestart');if(restart)restart.hidden=!program;
+ if(status)status.textContent=program?
+  (()=>{const x=window.MLC2GoalProgram.progress(program);
+   return (x.status==='completed'?'Program completed':'Program active')+
+    ' · Week '+x.week+' of '+x.totalWeeks+' · '+x.phase+' phase · Ends '+x.endDate+
+    '. Custom workouts and history remain unchanged.'})():
+  'Choose a goal and a 6, 8 or 12 week program to get started.';
+ if(program)form.elements.namedItem('programWeeks').value=String(program.weeks);
+ if(!p){out.textContent='Enter your profile to see an estimated daily calorie target. No food tracking needed.';return}
+ form.elements.namedItem('goal').value=p.goal;
+ form.elements.namedItem('age').value=p.age;
+ form.elements.namedItem('weightLb').value=(p.weightKg/0.45359237).toFixed(1);
+ form.elements.namedItem('heightIn').value=(p.heightCm/2.54).toFixed(1);
+ form.elements.namedItem('sex').value=p.sex;
+ form.elements.namedItem('activity').value=p.activity;
+ const result=window.MLC2CalorieGoal.estimate(p);
+ out.textContent=result.needsReview?
+  'Estimated target: '+result.target+' calories/day. This estimate is unusually low; consult a qualified clinician or dietitian before using it.':
+  'Estimated goal: '+result.target+' calories/day · maintenance estimate: '+result.maintenance+' calories/day. No meals to log.';
+}
 function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking'].includes(next))return;page=next;
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
  $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
  $('sidebar').classList.remove('open');document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
- if(next==='coaching')renderCoach();if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
+ if(next==='coaching')renderCoach();if(next==='nutrition')renderCalorieGoal();if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
 }
-// Narrow navigation hook for the compact Progress tabs. No state or storage changes.
-window.MLC2ProgressNavigate=next=>{if(next==='history'||next==='tracking')setPage(next)};
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
-const viewedHistory=()=>window.MLC2Simulation?.view(demoSessions)||demoSessions;
 function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:planStorage()})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
-function wireWorkoutPreviewImages(root){
- if(!root)return;
- const placeholder='./assets/image-coming-approved.webp';
- for(const image of root.querySelectorAll('img[data-workout-preview-image]')){
-  image.addEventListener('error',()=>{
-   if(!image.getAttribute('src')?.endsWith('image-coming-approved.webp')){
-    image.src=placeholder;
-    image.alt='Exercise artwork temporarily unavailable';
-   }
-  },{once:true});
- }
-}
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
@@ -318,74 +351,149 @@ function renderHome(){
  $('heroStart').dataset.homeWorkout=plan.id;
  $('todayStart').dataset.homeWorkout=plan.id;
  $('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
- $('todayExercises').innerHTML=plan.ids.map(id=>{
-  const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
-  if(!e)return '';
-  const approved=approvedThumbnail(e);
-  const picture=approved||'./assets/image-coming-approved.webp';
-  const alt=approved?'Approved demonstration of '+e.name:'Exercise image awaiting approval';
-  return '<div class="preview-exercise"><span class="preview-exercise-picture"><img src="'+escapeHTML(picture)+'" alt="'+escapeHTML(alt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><span class="preview-exercise-copy"><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</small></span></div>';
- }).join('');
- wireWorkoutPreviewImages($('todayExercises'));
+ $('todayExercises').innerHTML=plan.ids.map(id=>{const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
-let pendingCoachScheduleId=null;
-let pendingCoachScheduleOwner=null;
-function openCoachSchedule(plan){
- if(!plan?.coachSaved||!plan.id)return;
- pendingCoachScheduleId=plan.id;
- pendingCoachScheduleOwner=verifiedOwnerId;
- const panel=$('coachSchedulePanel');
- $('coachScheduleName').textContent='Assign '+plan.title+' to a weekday. Your existing workouts and Today selection will not be replaced.';
- $('coachScheduleStatus').textContent='';
- panel.hidden=false;
- if(typeof window.MLC2WorkoutsSelectTab==='function')window.MLC2WorkoutsSelectTab('schedule');
- panel.scrollIntoView({block:'nearest',behavior:'smooth'});
- $('coachScheduleDay').focus();
+let workoutTab='today';
+function setWorkoutTab(tab){
+ if(!['today','routines','schedule'].includes(tab))return;
+ workoutTab=tab;
+ for(const name of ['today','routines','schedule']){
+  const cap=name[0].toUpperCase()+name.slice(1);
+  const panel=$('workoutPanel'+(name==='routines'?'Routines':cap));
+  const button=$('workoutTab'+(name==='routines'?'Routines':cap));
+  const active=name===tab;
+  if(panel)panel.hidden=!active;
+  if(button){
+   button.setAttribute('aria-selected',String(active));
+   button.tabIndex=active?0:-1;
+  }
+ }
 }
-function cancelCoachSchedule(){
- pendingCoachScheduleId=null;
- pendingCoachScheduleOwner=null;
- $('coachSchedulePanel').hidden=true;
- $('coachScheduleStatus').textContent='';
+
+/* Automatic Coach proposal: generated from the catalog and completed sessions.
+   A user's selected custom/scheduled workout is never changed by this proposal. */
+let coachAutonomousDraft=null;
+function coachAutonomousPlan(){
+ if(betaView().mode!=='pro'||!window.MLC2ProgramBuilder)return null;
+ const sessions=coachEvidence(),catalog=libraryExercises();
+ // Four days is a transparent starting default; training preferences are not inferred.
+ const preferences=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{goal:'balanced',days:4,equipment:'Any'};
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const progress=program?window.MLC2GoalProgram.progress(program):null;
+ if(progress?.status==='completed')return null;
+ const focus=program?({strength:'strength',bulk:'muscle',maintain:'balanced',cut:'balanced'}[program.goal]):preferences.goal;
+ const options={...preferences,goal:focus};
+ const proposal=window.MLC2ProgramBuilder.build(catalog,sessions,options);
+ const source=program?window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program):null;
+ const completed=program?programCompletedCount(program,source):sessions.filter(row=>
+  typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
+ const day=proposal?.status==='ready'?proposal.days[completed%proposal.days.length]:null;
+ const generated=day?.exercises?.length?{id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
+  description:'Coach-generated '+options.goal+' session'+(progress?' · Week '+progress.week+' of '+progress.totalWeeks:'')+'. Review exercises and loads before training.',
+  kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day,programWeek:progress?.week||null}:null;
+ const choice=window.MLC2ProgramSource?.choose({source:source||{mode:'generated',customId:''},
+  customPlans:programCustomOptions(),generated,completed})||null;
+ return choice;
 }
-function assignCoachSchedule(){
- const id=pendingCoachScheduleId;
- if(!id||pendingCoachScheduleOwner!==verifiedOwnerId){cancelCoachSchedule();notice('Account changed; reopen the Coach workout before assigning a weekday.');return}
- const plan=window.MLC2Custom?.allPlans(plans).find(p=>p.id===id&&p.coachSaved);
- if(!plan){cancelCoachSchedule();notice('Saved Coach workout is no longer available.');return}
- const day=$('coachScheduleDay').value;
- const name=window.MLC2WeeklySchedule?.DAYS[Number(day)];
- if(!name)return;
- const current=window.MLC2WeeklySchedule.read(planStorage())[day];
- const before=window.MLC2Custom?.allPlans(plans).find(p=>p.id===current)?.title||'the existing assignment';
- if(!confirm('Assign '+plan.title+' to '+name+'? This will replace '+before+' on '+name+' only. Your manual Today selection will stay unchanged.'))return;
- try{
-  window.MLC2WeeklySchedule.assign(planStorage(),day,id,window.MLC2Custom.allPlans(plans));
-  cancelCoachSchedule();
-  renderHome();renderWorkouts();if(page==='coaching')renderCoach();
-  notice(plan.title+' is scheduled for '+name+'. Your manual Today selection remains unchanged.');
- }catch(error){$('coachScheduleStatus').textContent='Schedule not saved: '+String(error.message||error).slice(0,130)}
+
+function coachProgramAdvice(plan){
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const progress=program&&window.MLC2GoalProgram.progress(program);
+ if(!progress||progress.status!=='active'||!plan?.ids?.length)return null;
+ const current=coachAutonomousPlan();
+ // Never relabel an unrelated manual workout or routine as this program.
+ if(!current||current.id!==plan.id)return null;
+ const readiness=window.MLC2CoachReadiness?.current(plan.id)||'Normal';
+ return window.MLC2Periodization?.propose({program,progress,plan,
+  sessions:coachEvidence(),readiness,catalog:libraryExercises()})||null;
 }
+function coachAdviceText(advice){
+ if(advice?.status!=='ready')return '';
+ const example=advice.recommendations?.slice(0,2).map(x=>x.adjustment===0?'keep '+x.originalSets+' sets':
+  x.adjustment>0?'consider '+x.sets+' sets instead of '+x.originalSets:'consider '+x.sets+' sets instead of '+x.originalSets).join(' · ');
+ return 'Week '+advice.week+'/'+advice.totalWeeks+' · '+advice.phase+
+  ' · '+advice.goalTarget+'. '+advice.rationale+(example?' '+example+'.':'')+
+  ' Suggestions only; your routine and logged weights remain unchanged.';
+}
+
+function renderAutonomousCoach(){
+ const panel=$('coachAutoPanel'),title=$('coachAutoTitle'),details=$('coachAutoDetails'),start=$('coachAutoStart');
+ if(!panel||!title||!details||!start)return;
+ const enabled=betaView().mode==='pro';
+ panel.hidden=!enabled;
+ if(!enabled){coachAutonomousDraft=null;return}
+ const preferences=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{goal:'balanced',days:4,equipment:'Any'};
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const progress=program?window.MLC2GoalProgram.progress(program):null;
+ for(const [key,id] of [['goal','coachAutoGoal'],['days','coachAutoDays'],['equipment','coachAutoEquipment']]){
+  const field=$(id);if(field)field.value=String(preferences[key]);
+ }
+ const goalField=$('coachAutoGoal');
+ if(goalField&&program){
+  goalField.value={strength:'strength',bulk:'muscle',maintain:'balanced',cut:'balanced'}[program.goal];
+  goalField.disabled=progress?.status==='active';
+ }else if(goalField)goalField.disabled=false;
+ coachAutonomousDraft=coachAutonomousPlan();
+ if(!coachAutonomousDraft){
+  title.textContent=progress?.status==='completed'?'Your program is complete':'No matching workout available';
+  const source=program?window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program):null;
+  details.textContent=progress?.status==='completed'?'Your '+program.weeks+'-week program has ended. Review your progress or choose a new program under Your Calorie Goal.':
+   source?.mode==='custom'?'The selected custom routine is missing or was deleted. Choose another routine under Your Calorie Goal.':
+   'No matching routine is available. Check your equipment and workout source under Your Calorie Goal. Your current workout is unchanged.';
+  start.disabled=true;return;
+ }
+ title.textContent=coachAutonomousDraft.title;
+ const names=coachAutonomousDraft.ids.map(id=>libraryExercises().find(e=>e.id===id)?.name).filter(Boolean);
+ const phaseAdvice=coachProgramAdvice(coachAutonomousDraft);
+ details.textContent=(progress?'Week '+progress.week+' of '+progress.totalWeeks+' · '+progress.phase+' phase. ':'')+
+  (coachAutonomousDraft.programSource==='custom'?'Using your original custom routine. ':'Coach-generated routine. ')+
+  names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.'+
+  (phaseAdvice?.status==='ready'?' '+coachAdviceText(phaseAdvice):'');
+ start.disabled=false;
+}
+
 function renderWorkouts(){
+ const selected=nextPlan();
+ const activeId=selected?.id||'';
+ const ownerReady=!!verifiedOwnerId&&account?.id===verifiedOwnerId;
+ const custom=(window.MLC2Custom?.allPlans(plans)||plans).filter(p=>p.id.startsWith('custom-'));
+ const all=[...custom,...plans];
+ const top=$('workoutTodayName'),meta=$('workoutTodayMeta'),source=$('workoutTodaySource');
+ if(top)top.textContent=selected?.title||'Choose a workout';
+ if(meta)meta.textContent=selected?selected.ids.length+' exercises · '+(selected.kind==='Custom'?'Custom routine':'Preset routine'):'';
+ if(source)source.textContent=selected?(selected.scheduleSource==='manual'?'Selected by you':selected.scheduleSource==='weekly'?'From your weekly schedule':'Recommended next session'):'';
+ const start=$('workoutTodayStart');if(start){start.dataset.workout=activeId;start.disabled=!activeId}
  const guestBox=$('guestWorkoutRecovery'),guestStatus=$('guestWorkoutRecoveryStatus');
- const guestStatusData=verifiedOwnerId&&account?.id===verifiedOwnerId?
-  window.MLC2Custom?.guestRecovery():null;
- if(guestBox)guestBox.hidden=!(guestStatusData?.available>0);
- if(guestStatus&&guestStatusData?.available>0)
-  guestStatus.textContent=guestStatusData.available+' guest workout(s) available to copy to this verified account. Nothing will be overwritten.';
+ const recoverable=ownerReady?window.MLC2Custom?.guestRecovery():null;
+ if(guestBox)guestBox.hidden=!(recoverable?.available>0);
+ if(guestStatus&&recoverable?.available>0)
+  guestStatus.textContent=recoverable.available+' guest workout(s) available to copy to this verified account. Existing workouts will not be replaced.';
  window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
-  presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
+  presets:plans,custom,
   storage:planStorage(),onChanged:()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}
  });
- const catalog=libraryExercises(),byId=new Map(catalog.map(e=>[e.id,e]));
- $('workoutGrid').innerHTML=(window.MLC2Custom?.allPlans(plans)||plans).map((p,i)=>{
-  const exercise=(p.ids||[]).map(id=>byId.get(id)||exercises.find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e));
-  const picture=exercise?approvedThumbnail(exercise):'./assets/image-coming-approved.webp';
-  const alt=exercise?'Approved exercise illustration from '+exercise.name:'Exercise illustration awaiting approval';
-  return '<div class="workout-item"><button type="button" class="workout-card" data-workout="'+escapeHTML(p.id)+'"><span class="workout-card-illustration"><img src="'+escapeHTML(picture)+'" alt="'+escapeHTML(alt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>'+window.MLC2Custom.controls(p,nextPlan().id)+'</div>';
- }).join('');
- wireWorkoutPreviewImages($('workoutGrid'));
+ const section=(items,label)=>{
+  const cards=items.map(p=>{
+   const current=p.id===activeId;
+   const isCustom=p.id.startsWith('custom-');
+   return '<article class="workout-compact-card'+(current?' is-selected':'')+'">'+
+    '<div class="workout-compact-heading"><div><h3>'+escapeHTML(p.title)+'</h3>'+
+    '<p>'+p.ids.length+' exercises · '+(isCustom?'Custom':'Preset')+'</p></div>'+
+    (current?'<span class="workout-selected-tag">Today ✓</span>':'')+'</div>'+
+    '<div class="workout-compact-actions">'+
+    '<button type="button" class="workout-compact-start" data-workout="'+escapeHTML(p.id)+'">Start workout</button>'+
+    '<button type="button" class="workout-compact-select" data-custom-select="'+escapeHTML(p.id)+'"'+(current?' disabled':'')+'>'+(current?'Selected':'Use for today')+'</button>'+
+    (isCustom?'<button type="button" class="workout-compact-icon" data-custom-edit="'+escapeHTML(p.id)+'" aria-label="Edit '+escapeHTML(p.title)+'">Edit</button>'+
+    '<button type="button" class="workout-compact-icon workout-compact-delete" data-custom-delete="'+escapeHTML(p.id)+'" aria-label="Delete '+escapeHTML(p.title)+'">Delete</button>':'')+
+    '</div></article>';
+  }).join('');
+  return '<div class="workout-compact-section"><h3 class="workout-compact-label">'+label+'</h3>'+
+   (cards||'<p class="workout-compact-empty">No custom routines yet. Create one to get started.</p>')+ '</div>';
+ };
+ $('workoutGrid').innerHTML=section(custom,'Your custom workouts')+section(plans,'Ready-made presets');
+ renderAutonomousCoach();
+ setWorkoutTab(workoutTab);
 }
 // An external catalog is optional. Never treat a readable file as visually approved.
 // The 344-item private release manifest can populate window.MLC2_EXERCISE_CATALOG
@@ -433,84 +541,40 @@ function renderLibrary(){
  },{once:true}));
 }
 function renderProgress(){
- const progressData=viewedHistory();
- const sim=window.MLC2Simulation?.status();
- $('simulationStatus').textContent=sim?.active?'SIMULATION ACTIVE · '+sim.sessions+' fictional workouts over '+sim.days+' days. Charts, records and Coach show TEST DATA only. Real history is unchanged.':'Simulation is off. Your saved 2.0 history is shown normally.';
- $('simulationClear').disabled=!sim?.active;
- $('progressWeeklySourceLabel').textContent=sim?.active?'SIMULATED TEST DATA':'ACTUAL 2.0 LOGS';
- const auditRoot=$('simulationAudit');
- auditRoot.hidden=!sim?.active;
- if(sim?.active){
-  const result=window.MLC2SimulationAudit?.audit(progressData,libraryExercises(),window.MLC2Progress,window.MLC2ProgressWeekly,window.MLC2Coach);
-  window.MLC2SimulationAudit?.render(auditRoot,result);
- }else auditRoot.replaceChildren();
- document.getElementById('progress').classList.toggle('simulation-active',Boolean(sim?.active));
- window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),progressData);
- window.MLC2PostWorkout?.render($('postWorkoutRecap'),progressData);
- const movements=new Set(progressData.flatMap(x=>x.sets.map(y=>y.exerciseId)));
- $('progressSessions').textContent=progressData.length;$('progressSets').textContent=progressData.reduce((n,x)=>n+x.sets.length,0);$('progressMovements').textContent=movements.size;
- renderProgressChart(progressData);
- window.MLC2Progress?.renderRecords($('demoRecords'),progressData,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
- window.MLC2Progress?.renderVolumeAudit(document.getElementById('progressVolumeAudit'),progressData,(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
+ window.MLC2PostWorkout?.render($('postWorkoutRecap'),demoSessions);
+ const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
+ $('progressSessions').textContent=demoSessions.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
+ renderProgressChart();
+ window.MLC2Progress?.renderRecords($('demoRecords'),demoSessions,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
  window.MLC2Progress?.renderRecords($('legacyRecords'),originalSnapshot?.sessions||[],'original',(id,name)=>libraryExercises().find(e=>e.id===id)?.name||name);
  $('legacyRecordsNote').textContent=originalSnapshot?'Read-only snapshot from original device storage.':'Tap View original records in Workout History to load a local read-only snapshot. No cloud data is queried.';
- $('sessionHistory').innerHTML=progressData.length?progressData.map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">No demo sessions recorded yet. Open Workouts to start your first practice session.</div>';
+ $('sessionHistory').innerHTML=demoSessions.length?demoSessions.map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">No demo sessions recorded yet. Open Workouts to start your first practice session.</div>';
 }
-function renderProgressChart(progressData=viewedHistory()){
+function renderProgressChart(){
  const root=$('progressChart');if(!root)return;
- const chartSource=window.MLC2Simulation?.active()?'simulated test sessions':'saved practice sessions';
- const rows=progressData.filter(x=>Array.isArray(x?.sets)&&x.sets.some(set=>window.MLC2Progress?.validSet(set))).slice(0,8).reverse();
+ const rows=demoSessions.slice(0,8).reverse();
  if(!rows.length){root.innerHTML='<div class="chart-empty">Your volume chart will appear here after you finish a practice workout.<span>No invented progress numbers.</span></div>';return;}
- const values=rows.map(x=>window.MLC2Progress?.volumeTotal(x.sets)||0);
+ const values=rows.map(x=>x.sets.reduce((sum,set)=>sum+Number(set.weight||0)*Number(set.reps||0),0));
  const peak=Math.max(1,...values),count=values.length;
  const xy=values.map((n,i)=>({x:22+(i*(276/Math.max(1,count-1))),y:175-(n/peak)*142}));
  const points=xy.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
  const fill='22,184 '+points+' '+xy[xy.length-1].x.toFixed(1)+',184';
- root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' '+chartSource+' with weighted sets"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' '+chartSource+' · '+Math.round(values[values.length-1]).toLocaleString()+' lb training volume last session</p>';
+ root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' locally saved practice sessions"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb-reps last session</p>';
 }
 function renderCoach(){
- const coachData=viewedHistory();
- const simulated=window.MLC2Simulation?.active()===true;
- const simNotice=$('coachSimulationNotice');if(simNotice)simNotice.hidden=!simulated;
  const selected=nextPlan(),catalog=libraryExercises();
  const mode=betaView();
  const pro=mode.mode==='pro';
  document.querySelectorAll('[data-pro-coach]').forEach(el=>{el.hidden=!pro});
  const note=$('coachFreeNotice');if(note)note.hidden=pro;
- const updateCoachPlan=()=>{
-  if(betaView().mode!=='pro')return;
-  window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,coachData,{
-   mode:'pro',readiness:window.MLC2CoachReadiness?.current(selected.id)||'Normal',
-   coach:window.MLC2Coach,
-   onOpenWorkout:id=>{
-    if(simulated){notice('Disable simulated history in Progress before opening a real workout from Coach.');return}
-    if(betaView().mode!=='pro')return;
-    if(nextPlan().id!==id){notice('Selected workout changed. Review your current workout first.');renderCoach();return}
-    openWorkout(id);
-   }
-  });
- };
-
  if(pro){
-  window.MLC2Coach?.render($('coachSuggestions'),coachData,catalog);
+  window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
-  window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,coachData,{
-   mode:'pro',
-   onSaveDay:day=>{
-    if(simulated)throw Error('Disable test history before saving a Coach workout');
-    if(betaView().mode!=='pro')throw Error('Pro beta mode is required');
-    const saved=window.MLC2Custom.saveCoachDay(day);
-    renderWorkouts();
-    renderHome();
-    return saved;
-   }
-  });
-  updateCoachPlan();
- }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren();$('coachProgramBuilder').replaceChildren()}
- window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,coachData,catalog);
+ }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren()}
+ window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
  window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
- window.MLC2CoachReadiness?.render($('coachReadiness'),coachData,selected,updateCoachPlan);
- window.MLC2CoachTrends?.render($('coachTrends'),coachData,window.MLC2CoachReadiness?.weeklyGoal()||4);
+ window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected);
+ window.MLC2CoachTrends?.render($('coachTrends'),demoSessions,window.MLC2CoachReadiness?.weeklyGoal()||4);
 }
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (production workout data is not loaded)':'Not signed in. You can still explore the demo.';
@@ -541,11 +605,134 @@ function renderSettings(){
  }
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
-function closeModal(){closeRest();$('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
+function closeModal(){previewCoachHistory=null;closeRest();$('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
+
+
+/* Strictly isolated, RAM-only Coach demo history for the independent iPhone preview.
+   Never enters demoSessions, workout drafts, progress, or the cloud sync journal. */
+const isCoachTestPreview=()=>typeof location!=='undefined'&&/(?:^|\/)coach-live-test(?:\/|$)/.test(location.pathname||'');
+let previewCoachHistory=null;
+function coachEvidence(){
+ if(isCoachTestPreview()&&previewCoachHistory)return previewCoachHistory;
+ // Completed 2.0 sessions are loaded through account-scoped storage.
+ // Never admit a synthetic sample into personal progression calculations.
+ return demoSessions.filter(row=>row&&typeof row.id==='string'&&
+  !row.id.startsWith('SIMULATED-COACH-')&&
+  (verifiedOwnerId===null?!row.ownerId:row.ownerId===verifiedOwnerId)&&
+  Array.isArray(row.sets)&&row.sets.length>0);
+}
+function coachEvidenceLabel(){
+ if(isCoachTestPreview()&&previewCoachHistory)
+  return 'SIMULATED TEST DATA · '+previewCoachHistory.length+' example sessions; not your workout history';
+ const rows=coachEvidence();
+ return rows.length?
+  rows.length+' saved 2.0 workout'+(rows.length===1?'':'s')+' · personal history only':
+  'No saved 2.0 workout history · Coach will learn as you log sessions';
+}
+function generatePreviewCoachHistory(plan){
+ if(!isCoachTestPreview()||!plan?.ids?.length)return [];
+ const catalog=libraryExercises();
+ return [0,1].map(n=>({
+  id:'SIMULATED-COACH-'+n,planId:plan.id,title:'SIMULATED Coach evidence',
+  created:n===0?'2026-11-12T12:00:00Z':'2026-11-19T12:00:00Z',
+  sets:plan.ids.flatMap(id=>{
+   const e=catalog.find(x=>x.id===id)||exercises.find(x=>x.id===id);
+   if(!e||e.group==='Cardio')return [];
+   // Two sets per session at the same load. The latest session reaches the
+   // Coach engine's default 8-10 rep range, enabling a sample increase.
+   return [0,1].map(()=>({exerciseId:id,weight:50,reps:n===0?8:10}));
+  })
+ }));
+}
+function coachTestControls(){
+ if(!isCoachTestPreview())return '';
+ return '<div class="coach-test-tools" role="group" aria-label="Simulated Coach history controls">'+
+ '<strong>SIMULATED COACH TEST DATA</strong><p>Use two fictional completed sessions to test weight recommendations. This is not your real workout history.</p>'+
+ '<button type="button" data-coach-test="load">Load sample Coach history</button>'+
+ '<button type="button" data-coach-test="clear">Clear sample Coach history</button>'+
+ '<small>Preview-only memory. Refreshing clears sample evidence; no workout history, draft, or cloud account is changed.</small></div>';
+}
+function toggleCoachTestHistory(action){
+ if(!isCoachTestPreview()||!activePlan||!session)return;
+ if(session.sets.length){notice('Finish or exit the current practice sets before changing test history.');return}
+ if(action==='load')previewCoachHistory=generatePreviewCoachHistory(activePlan);
+ else if(action==='clear')previewCoachHistory=null;
+ else return;
+ const old=document.querySelector('.live-coach-dropdown');
+ const opened=Boolean(old?.open);
+ const replacement=document.createElement('div');replacement.innerHTML=liveCoachPreview(activePlan);
+ if(old){const next=replacement.firstElementChild;next.open=opened;old.replaceWith(next)}
+ renderWorkoutLog();
+ notice(action==='load'?'SIMULATED Coach history loaded for this preview only.':'SIMULATED Coach history cleared.');
+}
+
+function liveCoachSuggestion(id){
+ const catalog=libraryExercises(),e=catalog.find(x=>x.id===id)||exercises.find(x=>x.id===id);
+ if(betaView().mode!=='pro')return {e,message:'Free beta mode: follow your planned targets. Pro enables progression advice.'};
+ if(e?.group==='Cardio')return {e,message:'Follow your planned cardio targets and adjust effort as needed.'};
+ const v=window.MLC2Coach?.suggestion(id,coachEvidence(),catalog);
+ const phase=coachProgramAdvice(activePlan);
+ if(v?.status==='ready'&&v.action==='increase'&&phase?.status==='ready'&&!phase.allowLoadIncrease){
+  const safe=Number(v.lastWeight);
+  return {e,advice:Number.isFinite(safe)&&safe>0?{...v,action:'hold',weight:safe,
+   reason:'Program recovery guidance: hold the last completed working weight.'}:{status:'insufficient'},
+   message:'Recovery phase: do not increase load. Keep your most recent working weight only if comfortable.'};
+ }
+ return {e,advice:v,message:v?.status==='ready'?v.action.toUpperCase()+' · '+v.weight+' lb suggested. '+v.reason :'Log more completed working sets to unlock weight progression.'};
+}
+function liveCoachPreview(plan){
+ const readiness=window.MLC2CoachReadiness?.current(plan.id)||'Normal';
+ const status=readiness==='Tired'?'Tired · Lower the effort or rest if needed.':readiness==='Great'?'Great · Progress carefully with good form.':'Normal · Follow your plan and adjust to comfort.';
+ const review=plan.ids.map(id=>({id,...liveCoachSuggestion(id)})).filter(row=>row.e);
+ const ready=review.filter(row=>row.advice?.status==='ready').length;
+ const summary=ready?ready+' weight recommendation'+(ready===1?'':'s')+' available':'Workout guidance';
+ const rows=review.map(({e,message})=>'<div><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' sets × '+escapeHTML(String(e.reps||'8–12'))+' reps</small><p>'+escapeHTML(message)+'</p></div>').join('');
+ const phase=coachProgramAdvice(plan);
+ const phaseLabel=phase?.status==='ready'?'<p class="live-coach-phase">'+escapeHTML(coachAdviceText(phase))+'</p>':'';
+ return '<details class="live-coach-box live-coach-dropdown" aria-label="Coach before workout">'+
+ '<summary class="live-coach-dropdown-toggle"><span class="live-coach-dropdown-heading"><strong>✦ Coach · Before you start</strong><small>'+escapeHTML(summary)+'</small></span><span class="live-coach-dropdown-side"><span class="live-coach-mode">'+escapeHTML(betaView().mode.toUpperCase())+'</span><span class="live-coach-chevron" aria-hidden="true">⌄</span></span></summary>'+
+ '<div class="live-coach-dropdown-content"><p class="live-coach-evidence-source">'+escapeHTML(coachEvidenceLabel())+'</p>'+phaseLabel+'<p class="live-coach-readiness">'+escapeHTML(status)+'</p><div class="live-coach-list">'+rows+'</div>'+
+ '<small>Your chosen workout and logged values never change automatically.</small></div></details>';
+}
+
+function liveCoachFeedback(id){
+ const {e,message}=liveCoachSuggestion(id);
+ const sets=session?.sets?.filter(x=>x.exerciseId===id)||[];
+ if(!sets.length)return (liveCoachSuggestion(id).advice?.status==='ready')?message:'✦ Coach ready · Log a set for feedback.';
+ const latest=sets[sets.length-1],range=String(e?.reps||'').match(/(\d+)\s*[–-]\s*(\d+)/);
+ const lo=range?Number(range[1]):null,hi=range?Number(range[2]):null;
+ const feedback=lo!==null&&latest.reps<lo?'Last set below target reps; consider reducing load or resting if needed.':hi!==null&&latest.reps>hi?'Last set above target reps; future increases require completed-session history.':'Last set within the planned rep range. Keep form controlled.';
+ return message+' '+feedback+(window.MLC2CoachReadiness?.current(activePlan?.id)==='Tired'?' Readiness is Tired: do not force a progression.':'');
+}
+function liveCoachRecap(history){
+ const v=window.MLC2PostWorkout?.summarize(history);
+ if(!v?.hasHistory)return '';
+ return '<section class="live-coach-box" role="status"><div class="live-coach-title"><strong>✦ Coach · Workout recap</strong></div><p>'+v.current.sets+' weighted working sets across '+v.current.movements+' exercises saved.</p>'+
+ (v.previous?'<p>'+escapeHTML(String(Math.round(v.deltaVolume)))+' lb volume difference from your previous saved session of the same workout. '+v.improvedExercises+' exercises improved their top logged weight.</p>':'<p>No previous completed session of this exact workout is available for comparison.</p>')+
+ '<p>Future recommendations will reflect completed history. No workout plan was changed automatically.</p></section>';
+}
+
+function applyCoachWeight(id){
+ if(!session||!activePlan?.ids.includes(id))return false;
+ if(activeDraftOwner!==verifiedOwnerId){notice('Account changed; restart this workout before applying a Coach suggestion.');return false}
+ if(betaView().mode!=='pro'){notice('Pro beta is required for weight recommendations.');return false}
+ const result=liveCoachSuggestion(id).advice;
+ const weight=Number(result?.weight);
+ if(result?.status!=='ready'||!Number.isFinite(weight)||weight<=0||weight>1500){notice('No verified weight recommendation is available for this exercise.');return false}
+ const card=[...document.querySelectorAll('[data-exercise-card]')].find(el=>el.dataset.exerciseCard===id);
+ const input=card?.querySelector('[data-weight]');
+ if(!input){notice('Weight input is unavailable for this exercise.');return false}
+ // Explicit opt-in edits only the next unlogged set field. It does not save, complete, or overwrite a set.
+ input.value=String(weight);
+ const status=card.querySelector('[data-coach-applied]');
+ if(status)status.textContent='Suggested '+weight+' lb filled in. Review it before logging the next set.';
+ return true;
+}
+
 function openWorkout(id){
  $('modal').classList.remove('auth-fullscreen');
  const workoutStartedOwner=verifiedOwnerId;
- const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;
+ const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id)||(coachAutonomousDraft?.id===id?coachAutonomousDraft:null);if(!plan)return;
  const draftAPI=window.MLC2SessionDraft;
  const draftStore=window.MLC2AccountDraft.scope(localStorage,workoutStartedOwner);
  const other=draftAPI?.read(draftStore);
@@ -556,7 +743,7 @@ function openWorkout(id){
  session={sets:draftAPI?.resume(draftStore,plan)||[]};
  try{draftAPI?.save(draftStore,plan,session.sets)}
  catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
- openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div><div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
+ openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div>'+liveCoachPreview(plan)+coachTestControls()+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
  renderWorkoutLog();
  for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
@@ -573,7 +760,7 @@ function openWorkout(id){
    // Local write succeeded. Queue using the existing isolated Supabase journal.
    queueWorkoutForSync(entry);
    try{window.MLC2SessionDraft?.clear(activeDraftStore,plan.id)}catch{}
-   closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
+   closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');if(betaView().mode==='pro')openModal(liveCoachRecap(proposed));
   }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
 }
@@ -587,13 +774,14 @@ function renderWorkoutLog(){
   const logged=session.sets.filter(x=>x.exerciseId===id);
   const prior=ux?.previous(id,demoSessions,activePlan.id);
   const last=prior?.sets?.[prior.sets.length-1];
-  const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:'',reps:''};
+  const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:40,reps:10,source:'default'};
+  const hasKnownWeight=defaults.source!=='default';
   const previousText=last?'Last workout: '+last.weight+' lb × '+last.reps+' reps':'No previous session for this workout';
-  const coach=betaView().mode==='pro'&&e.group!=='Cardio'?window.MLC2Coach?.suggestion(id,demoSessions,catalog):null;
+  const coach=betaView().mode==='pro'&&e.group!=='Cardio'?window.MLC2Coach?.suggestion(id,coachEvidence(),catalog):null;
   const coachHint=coach?.status==='ready'?
-   '<p class="active-coach-hint"><strong>✦ Coach</strong> '+escapeHTML(coach.action.toUpperCase()+': '+coach.weight+' lb suggested')+' · '+escapeHTML(coach.reason)+' <small>Optional · no weights changed</small></p>':'';
+   '<p class="active-coach-hint"><strong>✦ Coach</strong> '+escapeHTML(coach.action.toUpperCase()+': '+coach.weight+' lb suggested')+' · '+escapeHTML(coach.reason)+' <small>Optional · no weights changed</small><button type="button" class="coach-apply-weight" data-coach-apply="'+escapeHTML(id)+'">Use '+escapeHTML(String(coach.weight))+' lb for next set</button><span class="coach-applied-note" data-coach-applied="'+escapeHTML(id)+'" role="status"></span></p>':'';
   const count=logged.length;
-  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+defaults.weight+'"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
+  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+(hasKnownWeight?defaults.weight:'')+'" placeholder="lb"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="live-coach-set" data-live-coach="'+escapeHTML(id)+'" aria-live="polite">'+escapeHTML(liveCoachFeedback(id))+'</div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
  }).join('');
  updateWorkoutProgress();
  for(const id of activePlan.ids)updateExerciseFeedback(id);
@@ -614,6 +802,7 @@ function updateExerciseFeedback(id){
  if(count)count.textContent=sets.length+' logged';
  if(feedback)feedback.textContent=sets.length?'✓ Set saved to your workout draft':'';
  if(undo)undo.hidden=sets.length===0;
+ const coachText=card.querySelector('[data-live-coach]');if(coachText)coachText.textContent=liveCoachFeedback(id);
  if(rows){
   rows.innerHTML=sets.map((set,i)=>'<div class="active-logged-row"><span>'+(i+1)+'</span><span>—</span><strong>'+escapeHTML(String(set.weight))+' lb</strong><strong>'+escapeHTML(String(set.reps))+'</strong><span class="active-done-check" aria-label="Set completed">✓</span></div>').join('');
  }
@@ -751,6 +940,49 @@ function openSignIn(){
  });
 }
 function bind(){
+ $('goalProgramSource').addEventListener('change',()=>{
+  $('goalProgramCustomGroup').hidden=$('goalProgramSource').value==='generated';
+ });
+ $('goalProgramRestart').addEventListener('click',()=>{
+  const profile=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
+  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+  if(!profile||!program)return;
+  if(!confirm('Restart this '+program.weeks+'-week '+program.goal+' program from today? Workout history and custom routines will be kept.'))return;
+  try{
+   const previousSource=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
+   const renewed=window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:program.goal,weeks:program.weeks});
+   if(previousSource)window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,renewed,previousSource);
+   renderCalorieGoal();renderWorkouts();notice('New '+program.weeks+'-week program started. Your prior workouts are retained.');
+  }catch(e){notice('Could not restart program: '+String(e.message||e).slice(0,100))}
+ });
+ $('calorieGoalForm').addEventListener('submit',event=>{
+  event.preventDefault();
+  const form=event.currentTarget,field=name=>form.elements.namedItem(name).value;
+  try{
+   const profile={goal:field('goal'),age:Number(field('age')),weightKg:Number(field('weightLb'))*0.45359237,
+    heightCm:Number(field('heightIn'))*2.54,sex:field('sex'),activity:field('activity')};
+   const estimate=window.MLC2CalorieGoal.estimate(profile);
+   const weeks=Number(field('programWeeks'));
+   if(!window.MLC2GoalProgram.DURATIONS.includes(weeks))throw Error('Choose a 6, 8 or 12 week program');
+   const old=window.MLC2GoalProgram.read(localStorage,verifiedOwnerId);
+   if(old&&(old.goal!==profile.goal||old.weeks!==weeks)&&
+      !confirm('Start a new '+weeks+'-week '+profile.goal+' program? The old program date will be replaced, but your workout history and custom routines will be preserved.'))return;
+   const mode=field('programSource'),customId=field('programCustom');
+   if(!window.MLC2ProgramSource.MODES.includes(mode))throw Error('Select a workout source');
+   if(mode!=='generated'&&!programCustomOptions().length)
+    throw Error('Create a custom workout before choosing custom or combined programs');
+   if(customId&&!programCustomOptions().some(p=>p.id===customId))
+    throw Error('Selected custom routine is unavailable');
+   const next=(!old||old.goal!==profile.goal||old.weeks!==weeks)?
+    window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:profile.goal,weeks}):old;
+   window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,next,{mode,customId:mode==='generated'?'':customId});
+   window.MLC2CalorieGoal.save(localStorage,verifiedOwnerId,profile);
+   renderCalorieGoal();renderWorkouts();
+   if(estimate.needsReview)notice('Calorie estimate requires review before use.');
+   else notice('Estimated calorie target saved on this iPhone.');
+  }catch(e){$('calorieGoalResult').textContent='Could not calculate: '+String(e.message||e).slice(0,120)}
+ });
+
  document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.page)));
  $('avatarBtn').addEventListener('click',()=>setPage('settings'));
  $('previewWelcome').addEventListener('click',()=>setPage('welcome'));
@@ -767,10 +999,35 @@ function bind(){
  $('heroStart').addEventListener('click',()=>openWorkout($('heroStart').dataset.homeWorkout));
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
  $('todayStart').addEventListener('click',()=>openWorkout($('todayStart').dataset.homeWorkout));
- $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openCoachSchedule))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
+ $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
  $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
- $('coachScheduleApply').addEventListener('click',assignCoachSchedule);
- $('coachScheduleCancel').addEventListener('click',cancelCoachSchedule);
+ $('workoutTodayStart').addEventListener('click',()=>{
+  const id=$('workoutTodayStart').dataset.workout;
+  if(id)openWorkout(id);
+ });
+ $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
+ $('coachAutoStart').addEventListener('click',()=>{const proposal=coachAutonomousPlan();if(!proposal)return;coachAutonomousDraft=proposal;openWorkout(proposal.id)});
+ $('coachAutoPreferences').addEventListener('change',()=>{
+  if(betaView().mode!=='pro')return;
+  try{
+   const options={goal:$('coachAutoGoal').value,days:Number($('coachAutoDays').value),equipment:$('coachAutoEquipment').value};
+   window.MLC2CoachPreferences.save(localStorage,verifiedOwnerId,options);
+   renderAutonomousCoach();notice('Coach training preferences saved on this device.');
+  }catch(err){notice('Coach preference update failed: '+String(err.message||err).slice(0,100));renderAutonomousCoach()}
+ });
+ document.querySelectorAll('[data-workout-tab]').forEach(button=>{
+  button.addEventListener('click',()=>setWorkoutTab(button.dataset.workoutTab));
+  button.addEventListener('keydown',event=>{
+   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+   event.preventDefault();
+   const order=['today','routines','schedule'];
+   const current=order.indexOf(button.dataset.workoutTab);
+   const target=event.key==='Home'?0:event.key==='End'?2:(current+(event.key==='ArrowLeft'?-1:1)+3)%3;
+   setWorkoutTab(order[target]);
+   document.querySelector('[data-workout-tab="'+order[target]+'"]')?.focus();
+  });
+ });
+
  $('recoverGuestWorkouts').addEventListener('click',()=>{
   if(!verifiedOwnerId||verifiedOwnerId!==account?.id){notice('Sign in to recover guest workouts.');return}
   const recovery=window.MLC2Custom?.guestRecovery();
@@ -795,28 +1052,13 @@ function bind(){
  $('libraryChips').addEventListener('click',event=>{const el=event.target.closest('[data-muscle]');if(!el)return;muscleFilter=el.dataset.muscle;renderLibrary()});
  document.querySelectorAll('[data-account-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.accountPage)));
 
- $('modalContent').addEventListener('click',e=>{const add=e.target.closest('[data-addset]');if(add){addSet(add.dataset.addset);return}const undo=e.target.closest('[data-undo]');if(undo)undoSet(undo.dataset.undo)});
+ $('modalContent').addEventListener('click',e=>{const simulation=e.target.closest('[data-coach-test]');if(simulation){toggleCoachTestHistory(simulation.dataset.coachTest);return}const suggest=e.target.closest('[data-coach-apply]');if(suggest){applyCoachWeight(suggest.dataset.coachApply);return}const add=e.target.closest('[data-addset]');if(add){addSet(add.dataset.addset);return}const undo=e.target.closest('[data-undo]');if(undo)undoSet(undo.dataset.undo)});
  $('closeModal').addEventListener('click',closeModal);
  $('restClose').addEventListener('click',closeRest);
  $('restSkip').addEventListener('click',closeRest);
  $('restPause').addEventListener('click',()=>{restPaused=!restPaused;updateRestClock()});
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
- // Simulation is memory-only: never call workout save, sync journal or draft APIs.
- for(const days of [30,90]){
-  $('simulation'+days).addEventListener('click',()=>{
-   try{
-    const result=window.MLC2Simulation.start(libraryExercises(),nextPlan(),days);
-    renderHistory();
-    renderProgress();if(page==='coaching')renderCoach();
-    notice(result.sessions+' simulated workouts loaded for testing. Saved workouts remain unchanged.');
-   }catch(error){$('simulationStatus').textContent='Could not build simulated history: '+String(error.message||error).slice(0,130)}
-  });
- }
- $('simulationClear').addEventListener('click',()=>{
-  window.MLC2Simulation?.clear();renderProgress();renderHistory();if(page==='coaching')renderCoach();
-  notice('Simulation cleared. Actual saved workout history is back.');
- });
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only the local 2.0 workout history for the current '+(verifiedOwnerId?'account':'guest')+'?'))return;try{window.MLC2AccountWorkouts.clear(localStorage,verifiedOwnerId);demoSessions=[];renderProgress();renderHome();notice('Current local workout history cleared. Production data untouched.')}catch{notice('Unable to clear this device history.')}});
  let pendingRecovery=null;
  $('recoveryImportFile').addEventListener('change',async e=>{
