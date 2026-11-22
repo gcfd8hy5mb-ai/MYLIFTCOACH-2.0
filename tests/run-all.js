@@ -10,6 +10,7 @@ const tests=[
  'coach-regression.test.js',
  'coach-catalog-coverage.test.cjs',
  'custom-home-priority.test.cjs',
+ 'active-workout-ux.test.cjs',
  'cloud-archive.test.js',
  'cloud-migration-readiness.test.js',
  'cloud-checkpoint-review.test.js',
