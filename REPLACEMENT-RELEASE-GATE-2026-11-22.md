@@ -29,6 +29,17 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [ ] Determine whether optional weight-trend-based recalculation should be added without relying on food logs; no automatic adjustment without user review.
 - [ ] Confirm on-device profile backup/recovery before original-app cutover.
 
+## Fixed-length fitness goal programs (2026-11-22)
+- [x] Strength, bulk, maintain and cut each offer selectable 6-, 8- and 12-week cycles.
+- [x] Per-account local calendar start, current week, foundation/build/consolidate phase labels and completion status.
+- [x] Coach-generated workout suggestions use the selected goal when a cycle is active, while preserving selected custom workouts.
+- [x] Saving profile changes without changing goal/duration preserves the cycle start date.
+- [x] Replacing or restarting a goal cycle requires user confirmation; completed workouts are not removed.
+- [x] CI coverage for valid durations, boundaries, elapsed time, profile isolation, and no food logging.
+- [ ] Verify the cycle UI in the independent iPhone preview and Home Screen PWA.
+- [ ] Add genuinely phase-specific training volume/recovery adaptations; current phase names are labels, not yet complete periodization.
+- [ ] Verify safe backup/recovery of goal cycle and calorie profile before production replacement.
+
 ## Requirements before the original application can be retired
 - [ ] Integrate and audit approved demonstration assets and precise exercise-ID mappings. No auto-approval of missing images.
 - [ ] Merge latest Coach, approved visual, and workout redesign changes in one isolated release candidate without overwriting protected features.
