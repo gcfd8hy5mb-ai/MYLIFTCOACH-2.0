@@ -1,5 +1,14 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## Final integration safeguard — Coach workout handoff, November 22
+- [x] Refuse to open a stale Coach proposal after an account change, Free/Pro mode switch, or changes in generated workout day; regenerate the current candidate before opening it.
+- [x] Preserve user-defined custom and preset workout selection, including when Pro Coach access is disabled.
+- [x] Clear cached Coach proposals when verified workout account changes.
+- [x] Added direct regression tests for Free, Pro, stale day, account switching and custom routine precedence; complete regression suite passed on `197a465af8e2335aaa6fb2055b77bad95c98478e`.
+- [x] Source asset version `app.js?v=40` and isolated preview packaging gate updated.
+- [ ] Independently confirm preview publication and visually check Coach ↔ custom selection on iPhone; do not re-test already verified workout persistence.
+- [ ] Preserve the final Codex review, known data-backup results and explicit production replacement gate.
+
 ## Mandatory final Codex bug review — after all integration, before production replacement
 - [ ] Hand the **complete final combined source branch**, not individual feature previews, to Codex for a comprehensive code review.
 - [ ] Review startup and iPhone Safari/PWA rendering, navigation, Coach and exercise selection, custom routines and schedule precedence, 6/8/12-week goals, calorie estimates, entitlement switching, exercise media mappings, and performance/accessibility.
