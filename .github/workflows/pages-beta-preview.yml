@@ -140,7 +140,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: f4896587d4cc455ffa02c816e83353d6dfc45a1b
+          ref: ea5df102a8030a691379a2a3a262aa99a2313d83
           path: visual-review
           persist-credentials: false
       - name: Package static beta preview only
@@ -182,16 +182,21 @@ jobs:
           cp original-approved/assets/hero-dumbbells-photo.jpg dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
           test -s dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
           test -s dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
+          # A functional sandbox only: no app account, storage, or network access.
+          node --check visual-review/review/workouts-sandbox.js
+          ! grep -Ei 'localStorage|sessionStorage|indexedDB|fetch\\(|XMLHttpRequest|supabase|serviceWorker|sendBeacon' visual-review/review/workouts-sandbox.js
+          grep -q "connect-src 'none'" visual-review/review/workouts-sandbox.html
           # Safe visual preview: NEVER ship app.js, auth, storage, or cloud modules.
           mkdir -p dist/workouts-n-review/assets
-          cp visual-review/review/workouts-visual-preview.html dist/workouts-n-review/index.html
+          cp visual-review/review/workouts-sandbox.html dist/workouts-n-review/index.html
           cp visual-review/review/workouts-visual-preview.css dist/workouts-n-review/workouts-visual-preview.css
-          cp visual-review/review/workouts-visual-preview.js dist/workouts-n-review/workouts-visual-preview.js
+          cp visual-review/review/workouts-sandbox.css dist/workouts-n-review/workouts-sandbox.css
+          cp visual-review/review/workouts-sandbox.js dist/workouts-n-review/workouts-sandbox.js
           cp original-approved/assets/approved-vertical-marble-sharp.webp dist/workouts-n-review/assets/approved-vertical-marble-sharp.webp
           grep -q 'iPhone beta test build 11-21N' dist/myliftcoach2/index.html
-          grep -q 'SAFE UI Preview' dist/workouts-n-review/index.html
+          grep -q 'Workouts Sandbox' dist/workouts-n-review/index.html
           grep -q "connect-src 'none'" dist/workouts-n-review/index.html
-          test -s dist/workouts-n-review/workouts-visual-preview.js
+          test -s dist/workouts-n-review/workouts-sandbox.js\n          test -s dist/workouts-n-review/workouts-sandbox.css
           test -s dist/workouts-n-review/workouts-visual-preview.css
           ! find dist/workouts-n-review -type f | grep -E '/(app\\.js|auth|supabase|automatic-workouts|custom-workouts\\.js)' 
           ! grep -q 'workouts-tabs-n.js' dist/myliftcoach2/index.html
@@ -363,7 +368,7 @@ jobs:
             stable="$(curl --fail --silent --show-error --max-time 15 "$root/myliftcoach2/" || true)"
             preview="$(curl --fail --silent --show-error --max-time 15 "$root/workouts-n-review/" || true)"
             if printf '%s' "$stable" | grep -q 'iPhone beta test build 11-21N' &&
-               printf '%s' "$preview" | grep -q 'SAFE UI Preview'; then
+               printf '%s' "$preview" | grep -q 'Workouts Sandbox'; then
               printf 'Stable 11-21N verified: %s/myliftcoach2/\n' "$root"
               printf 'Read-only preview verified: %s/workouts-n-review/\n' "$root"
               exit 0
