@@ -650,6 +650,11 @@ function renderCoach(){
     openWorkout(id);
    }
   });
+  // Weekly goal changes and readiness check-ins immediately refresh both
+  // trend progress and the currently selected program's advice.
+  const currentHistory=coachEvidence();
+  window.MLC2CoachTrends?.render($('coachTrends'),currentHistory,
+   window.MLC2CoachReadiness?.weeklyGoal()||4);
   if(page==='workouts')renderAutonomousCoach();
  };
  window.MLC2CoachReadiness?.render($('coachReadiness'),history,selected,updateCoachPlan);
