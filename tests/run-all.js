@@ -35,6 +35,7 @@ const tests=[
  'auxiliary-preferences.test.cjs',
  'account-custom-scoping.test.cjs',
  'beta-access.test.cjs',
+ 'auth-persistence-iphone.test.cjs',
  'refresh-session.test.cjs'
 ];
 for(const test of tests){
