@@ -47,7 +47,7 @@ test('App links custom program mode to actual selected workout without overwriti
  assert.match(app,/MLC2ProgramSource\?\.choose/);
  assert.match(app,/MLC2ProgramSource\.save\(localStorage,verifiedOwnerId,next/);
  assert.match(app,/MLC2ProgramSource\.save\(localStorage,verifiedOwnerId,renewed,previousSource\)/);
- assert.match(app,/coachAutonomousDraft\?\.id===id\?coachAutonomousDraft:null/);
+ assert.match(app,/const plan=selected\|\|\(freshCoach\?\.id===id\?freshCoach:null\)/);
  assert.match(html,/name="programSource"/);
  assert.match(html,/name="programCustom"/);
  assert.match(html,/goal-program-source\.js\?v=1/);
