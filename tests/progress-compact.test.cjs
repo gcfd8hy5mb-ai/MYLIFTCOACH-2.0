@@ -18,7 +18,7 @@ test('all existing progress data render targets are retained, not replaced',()=>
  for(const id of ['postWorkoutRecap','progressChart','sessionHistory','demoRecords','legacyRecords','progressSessions','progressSets','progressMovements']){
   assert.ok(html.includes('id="'+id+'"'),id);
  }
- assert.ok(js.includes('groups.overview.append(recap,chart)'));
+ assert.ok(js.includes('groups.overview.append(weekly,recap,chart)'));
  assert.ok(js.includes('groups.strength.append(records)'));
  assert.ok(js.includes('groups.strength.prepend(auditCard)'));
  assert.ok(js.includes('groups.strength.append(original)'));
