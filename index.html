@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="./body-progress.css?v=1">
 <link rel="stylesheet" href="./rich-teal-cards.css?v=6">
 <link rel="stylesheet" href="./active-workout-ux.css?v=2">
+<link rel="stylesheet" href="./workout-auth-ux-fix.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -197,7 +198,7 @@
 <button type="button" class="button-outline" id="restoreAccountWorkouts" disabled>Restore missing workouts</button>
 <p role="status" aria-live="polite" id="accountRecoveryStatus">Sign in to back up or recover this account's workouts.</p>
 </article>
-<p id="phoneBuildMarker" class="mlc-schedule-note" role="status">iPhone beta test build 11-21G · streamlined workout logging</p>
+<p id="phoneBuildMarker" class="mlc-schedule-note" role="status">iPhone beta test build 11-21H · dark workouts and full-screen login</p>
 <article class="panel settings-panel" aria-label="Automatic isolated cloud sync">
 <div class="panel-heading"><h3>Automatic workout sync</h3><span class="micro-tag">ISOLATED 2.0</span></div>
 <p>Completed workouts are saved locally first, then synced to your verified account. Offline sessions retry on reconnect. Original MYLIFTCOACH records are not changed.</p>
@@ -295,6 +296,6 @@
 <script defer src="./sync/auxiliary-cloud.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=11"></script>
+<script defer src="./app.js?v=12"></script>
 </body>
 </html>
