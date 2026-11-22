@@ -16,7 +16,11 @@
   {type:'goal',id:'weekly-schedule-v1',key:'mlc2-weekly-schedule-v1',label:'Weekly workout schedule',kind:'weekly-schedule',max:7},
   {type:'goal',id:'selected-workout-v1',key:'mlc2-selected-workout-v1',label:'Selected workout',kind:'selected-workout',max:1},
   {type:'goal',id:'coach-weekly-goal-v1',key:'mlc2-weekly-goal-v1',label:'Coach weekly goal',kind:'coach-weekly-goal',max:1},
-  {type:'goal',id:'coach-readiness-v1',key:'mlc2-coach-readiness-v1',label:'Coach readiness',kind:'coach-readiness',max:365}
+  {type:'goal',id:'coach-readiness-v1',key:'mlc2-coach-readiness-v1',label:'Coach readiness',kind:'coach-readiness',max:365},
+  {type:'goal',id:'coach-training-preferences-v1',key:'mlc2-auto-coach-preferences-v1',label:'Coach training preferences',kind:'coach-training-preferences',max:1},
+  {type:'goal',id:'goal-calorie-estimate-v1',key:'mlc2-estimated-calorie-goal-v1',label:'Estimated calorie goal profile',kind:'calorie-estimate',max:1},
+  {type:'goal',id:'goal-program-calendar-v1',key:'mlc2-goal-program-v1',label:'Fixed-duration fitness goal program',kind:'goal-program',max:1},
+  {type:'goal',id:'goal-program-source-v1',key:'mlc2-goal-program-source-v1',label:'Program workout source',kind:'goal-program-source',max:1}
  ]);
  const id='snapshot-v1',planId=/^[a-z0-9][a-z0-9-]{0,99}$/;
  const recordId=config=>config.id||id;
@@ -39,6 +43,26 @@
     Object.keys(payload).length<=365&&
     Object.entries(payload).every(([key,value])=>/^\d{4}-\d{2}-\d{2}:.{1,100}$/.test(key)&&
      ['Great','Normal','Tired'].includes(value));
+  const obj=payload&&typeof payload==='object'&&!Array.isArray(payload);
+  if(config.kind==='coach-training-preferences')return obj&&
+   ['balanced','strength','muscle'].includes(payload.goal)&&[3,4,5].includes(payload.days)&&
+   ['Any','Machine','Dumbbell','Bodyweight','Cable','Barbell'].includes(payload.equipment);
+  if(config.kind==='calorie-estimate')return obj&&
+   Number.isFinite(payload.age)&&payload.age>=18&&payload.age<=100&&
+   Number.isFinite(payload.weightKg)&&payload.weightKg>=30&&payload.weightKg<=400&&
+   Number.isFinite(payload.heightCm)&&payload.heightCm>=120&&payload.heightCm<=230&&
+   ['male','female'].includes(payload.sex)&&
+   ['sedentary','light','moderate','active'].includes(payload.activity)&&
+   ['strength','bulk','maintain','cut'].includes(payload.goal);
+  if(config.kind==='goal-program')return obj&&
+   ['strength','bulk','maintain','cut'].includes(payload.goal)&&[6,8,12].includes(payload.weeks)&&
+   typeof payload.startDate==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(payload.startDate)&&
+   Number.isFinite(Date.parse(payload.startDate+'T00:00:00Z'))&&
+   new Date(payload.startDate+'T00:00:00Z').toISOString().slice(0,10)===payload.startDate;
+  if(config.kind==='goal-program-source')return obj&&
+   ['custom','generated','mixed'].includes(payload.mode)&&
+   typeof payload.customId==='string'&&(payload.customId===''||/^custom-[A-Za-z0-9_-]{1,100}$/.test(payload.customId))&&
+   typeof payload.signature==='string'&&/^\\d{4}-\\d{2}-\\d{2}:(strength|bulk|maintain|cut):(6|8|12)$/.test(payload.signature);
   if(config.type==='goal')return payload&&typeof payload==='object'&&!Array.isArray(payload)&&
    Number.isFinite(payload.calories)&&payload.calories>0&&payload.calories<=15000&&
    Number.isFinite(payload.protein)&&payload.protein>=0&&payload.protein<=1500;
