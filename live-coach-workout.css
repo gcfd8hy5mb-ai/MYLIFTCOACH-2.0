@@ -58,3 +58,14 @@ details.live-coach-dropdown{display:block;padding:0;overflow:hidden;margin:10px 
 
 /* Always identify where Coach evidence comes from. */
 .live-coach-evidence-source{padding:8px 10px;border-radius:8px;background:rgba(244,213,144,.1);border:1px solid rgba(244,213,144,.35);font-size:11px!important;line-height:1.4;color:#ffe1a5!important;font-weight:650}
+
+/* Autonomous Coach suggestion is adjacent to Today's workout, never its replacement. */
+.coach-auto-panel{margin-top:12px;padding:15px;background:#06373b;color:#e4eee9;border:1px solid rgba(226,189,131,.45);border-radius:15px}
+.coach-auto-panel .panel-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.coach-auto-panel h3,.coach-auto-panel h4{color:#f5dcac;margin:6px 0}
+.coach-auto-panel h3{font-size:15px}
+.coach-auto-panel h4{font-size:14px}
+.coach-auto-panel p{font-size:12px;line-height:1.5;color:#d2e5de;margin:8px 0}
+.coach-auto-panel .coach-auto-caution{color:#c5d7cf;font-size:11px}
+.coach-auto-panel button{margin-top:7px;min-height:44px;border-color:#e2bd83;color:#f6d7a2;background:#0a4448}
+.coach-auto-panel[hidden]{display:none!important}
