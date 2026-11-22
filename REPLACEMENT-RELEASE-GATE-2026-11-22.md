@@ -10,6 +10,13 @@ Date: 2026-11-22
 - [ ] Complete required iPhone acceptance, verify a production backup and rollback plan, and obtain explicit approval **before** merging to the published saved Home Screen app.
 - **Status: requested and added to release gate, not yet executed.** No autonomous future Codex run is implied by this checklist.
 
+## User-confirmed same-iPhone preview acceptance
+- [x] Resume Workout display issue fixed and visually confirmed by user in the iPhone preview.
+- [x] A completed workout persists after refreshing and reopening the iPhone preview, explicitly confirmed by user.
+- [ ] These confirmations establish **local preview persistence only**: no proof of signed-in cloud upload or cross-context recovery.
+- [ ] Remaining: actual iPhone authenticated cloud recovery, authorized Free/Pro switching persistence, complete media/navigation review and final Codex review before any cutover.
+- [ ] Production replacement remains blocked until explicit approval.
+
 ## iPhone acceptance start — November 22
 - [x] Prepared actionable iPhone acceptance matrix: `IPHONE-REPLACEMENT-ACCEPTANCE-2026-11-22.md` with isolated guest Safari tests for workout drafts, completed history, routines, goals and images.
 - [x] Explicitly separated **local preview** tests from future signed-in cloud checks. Preview CSP blocks authentication and backup; do not claim a live cloud pass.
