@@ -21,14 +21,12 @@
 <link rel="stylesheet" href="./coach-readiness.css?v=1">
 <link rel="stylesheet" href="./body-progress.css?v=1">
 <link rel="stylesheet" href="./rich-teal-cards.css?v=6">
-<link rel="stylesheet" href="./active-exercise-guide.css?v=1">
-<link rel="stylesheet" href="./progress-compact.css?v=1">
-<link rel="stylesheet" href="./progress-weekly-summary.css?v=1">
-<link rel="stylesheet" href="./workout-simulation.css?v=1">
 <link rel="stylesheet" href="./active-workout-ux.css?v=3">
 <link rel="stylesheet" href="./workout-auth-ux-fix.css?v=2">
 <link rel="stylesheet" href="./mobile-header-cleanup.css?v=1">
-<link rel="stylesheet" href="./workouts-tabs-n.css?v=1">
+<link rel="stylesheet" href="./compact-workouts.css?v=1">
+<link rel="stylesheet" href="./live-coach-workout.css?v=10">
+<link rel="stylesheet" href="./active-exercise-guide.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -112,36 +110,45 @@
     <p class="safety-note"><strong>Development preview.</strong> Demo workout entries stay in this browser. Original workout history remains unchanged.</p>
   </div>
  </section>
- <section id="workouts" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR ROUTINE</div><h1>Your workouts</h1><p>Create and edit custom workouts using the complete 344-exercise catalog. Select any workout to show on Home.</p></div><div class="custom-workout-toolbar"><button type="button" id="createWorkout" class="button-primary">+ Create custom workout</button><small>Development preview · local only · original records are unchanged</small></div><article class="panel"><div class="panel-heading"><h3>Weekly workout schedule</h3><span class="micro-tag">CUSTOM PLANS FIRST</span></div><div id="weeklySchedule"></div></article>
- <article id="coachSchedulePanel" class="panel coach-schedule-panel" hidden aria-label="Schedule a saved Coach workout">
- <div class="panel-heading"><h3>Schedule saved Coach workout</h3><span class="micro-tag">MANUAL CHOICE</span></div>
- <p id="coachScheduleName" class="mlc-schedule-note"></p>
- <label for="coachScheduleDay">Choose weekday</label>
- <select id="coachScheduleDay">
-  <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option>
-  <option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
- </select>
- <p class="mlc-schedule-note">Only the chosen weekday will change. If you previously selected a workout using “Use for today,” that manual choice will still take priority until you select “Follow weekly schedule.”</p>
- <div class="coach-schedule-actions"><button id="coachScheduleApply" type="button" class="button-primary">Assign to weekday</button><button id="coachScheduleCancel" type="button" class="button-outline">Cancel</button></div>
- <p id="coachScheduleStatus" class="mlc-schedule-note" role="status" aria-live="polite"></p>
- </article><div id="guestWorkoutRecovery" class="panel" hidden>
- <h3>Recover workouts created before sign-in</h3>
- <p id="guestWorkoutRecoveryStatus" role="status">Guest routines found on this device.</p>
- <button id="recoverGuestWorkouts" type="button" class="button-outline">Copy missing guest workouts to my account</button>
- <p class="mlc-schedule-note">Existing account routines and guest copies will be preserved. Nothing will be deleted or replaced.</p>
- </div><div class="workout-grid" id="workoutGrid"></div><article class="panel original-plan-panel"><div class="panel-heading"><h3>My original custom workouts</h3><span class="micro-tag">READ-ONLY</span></div><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></article></section>
- <section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>Explore all 344 movements, with technique notes and approved demonstrations as they become available.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button><button type="button" data-muscle="Cardio">Cardio</button></div><p id="approvedMediaStatus" class="library-media-status" role="status" aria-live="polite"></p><div class="library-grid" id="libraryGrid"></div></section>
- <section id="progress" class="page" hidden><div class="panel simulation-panel" id="simulationPanel">
- <div class="panel-heading"><h3>Simulated workout history</h3><span class="micro-tag">TEST MODE ONLY</span></div>
- <p>Preview Progress and Coach using sample sessions. No test records are saved, uploaded, or mixed with your actual history. Reloading this page also clears the simulation.</p>
- <div class="simulation-actions">
-  <button id="simulation30" type="button" class="button-outline">Load 30 days</button>
-  <button id="simulation90" type="button" class="button-outline">Load 90 days</button>
-  <button id="simulationClear" type="button" class="button-outline" disabled>Clear test history</button>
+ <section id="workouts" class="page" hidden>
+ <div class="page-heading workouts-page-heading"><div class="eyebrow">YOUR TRAINING</div><h1>Workouts</h1><p>Start your next session or manage your routines.</p></div>
+ <div class="workout-tab-nav" role="tablist" aria-label="Workout sections">
+  <button type="button" role="tab" id="workoutTabToday" data-workout-tab="today" aria-selected="true" aria-controls="workoutPanelToday">Today</button>
+  <button type="button" role="tab" id="workoutTabRoutines" data-workout-tab="routines" aria-selected="false" aria-controls="workoutPanelRoutines" tabindex="-1">My Workouts</button>
+  <button type="button" role="tab" id="workoutTabSchedule" data-workout-tab="schedule" aria-selected="false" aria-controls="workoutPanelSchedule" tabindex="-1">Schedule</button>
  </div>
- <p id="simulationStatus" role="status" aria-live="polite">Simulation is off. Your saved 2.0 history is shown normally.</p>
- <div id="simulationAudit" class="simulation-audit" hidden aria-live="polite"></div>
- </div><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><article class="panel progress-weekly-card"><div class="panel-heading"><h3>Weekly training comparison</h3><span class="micro-tag" id="progressWeeklySourceLabel">ACTUAL 2.0 LOGS</span></div><div id="progressWeeklyComparison" aria-live="polite"></div></article><article class="panel"><div class="panel-heading"><h3>Latest saved workout recap</h3><span class="micro-tag">SAME-PLAN COMPARISON</span></div><div id="postWorkoutRecap"></div></article><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div><article class="panel"><div class="panel-heading"><h3>2.0 personal records and weekly training volume</h3><span class="micro-tag">LOCAL PRACTICE</span></div><div id="demoRecords"></div></article><article class="panel"><div class="panel-heading"><h3>Original app personal records</h3><span class="micro-tag">READ-ONLY</span></div><p id="legacyRecordsNote">Tap View original records in Workout History to load a local snapshot.</p><div id="legacyRecords"></div></article></section>
+ <section id="workoutPanelToday" class="workout-tab-panel" role="tabpanel" aria-labelledby="workoutTabToday">
+  <article class="workout-today-card"><div class="workout-today-kicker">TODAY'S WORKOUT</div><h2 id="workoutTodayName">Your next workout</h2><p id="workoutTodayMeta"></p><p id="workoutTodaySource" class="workout-today-source"></p>
+  <div class="workout-today-actions"><button type="button" id="workoutTodayStart" class="button-primary">Start workout</button><button type="button" id="workoutTodayChange" class="button-outline">Change workout</button></div></article>
+  <p class="workout-today-note">Your own selected routine always takes priority over presets and Coach suggestions.</p>
+  <article class="panel coach-auto-panel" id="coachAutoPanel" hidden>
+   <div class="panel-heading"><h3>✦ Coach-generated next session</h3><span class="micro-tag">PRO · AUTOMATIC</span></div>
+   <div class="coach-auto-preferences" id="coachAutoPreferences">
+    <label>Goal<select id="coachAutoGoal"><option value="balanced">Balanced</option><option value="strength">Strength</option><option value="muscle">Muscle building</option></select></label>
+    <label>Training days<select id="coachAutoDays"><option value="3">3 per week</option><option value="4">4 per week</option><option value="5">5 per week</option></select></label>
+    <label>Equipment<select id="coachAutoEquipment"><option value="Any">Any</option><option value="Machine">Machine</option><option value="Dumbbell">Dumbbell</option><option value="Bodyweight">Bodyweight</option><option value="Cable">Cable</option><option value="Barbell">Barbell</option></select></label>
+   </div>
+   <h4 id="coachAutoTitle">Coach proposal</h4>
+   <p id="coachAutoDetails"></p>
+   <p class="coach-auto-caution">Starts a proposed session only when you choose it. Your custom workout and schedule remain untouched. Review the suggested exercises and loads before training.</p>
+   <button type="button" id="coachAutoStart" class="button-outline">Start Coach session</button>
+  </article>
+ </section>
+ <section id="workoutPanelRoutines" class="workout-tab-panel" role="tabpanel" aria-labelledby="workoutTabRoutines" hidden>
+  <div class="workouts-list-top"><h2>My routines</h2><button type="button" id="createWorkout" class="button-primary">+ New workout</button></div>
+  <div id="guestWorkoutRecovery" class="workout-recovery-panel" hidden><h3>Recover workouts created before sign-in</h3><p id="guestWorkoutRecoveryStatus" role="status">Guest routines found on this device.</p>
+   <button id="recoverGuestWorkouts" type="button" class="button-outline">Copy missing guest workouts to my account</button><small>Guest copies and existing account routines will be kept.</small></div>
+  <div class="workout-grid workout-routines-list" id="workoutGrid"></div>
+  <details class="workouts-legacy-details"><summary>Original app routines (read-only)</summary>
+   <div class="original-plan-panel"><p>View plans stored by the original MYLIFTCOACH app on this device.</p><button id="loadOriginalPlans" class="button-outline" type="button">View original plans</button><div id="originalPlansList" class="legacy-list"></div></div>
+  </details>
+ </section>
+ <section id="workoutPanelSchedule" class="workout-tab-panel" role="tabpanel" aria-labelledby="workoutTabSchedule" hidden>
+  <article class="panel workout-schedule-panel"><div class="panel-heading"><h2>Weekly schedule</h2><span class="micro-tag">YOUR PLAN</span></div><div id="weeklySchedule"></div></article>
+ </section>
+</section>
+<section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>Explore all 344 movements, with technique notes and approved demonstrations as they become available.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button><button type="button" data-muscle="Cardio">Cardio</button></div><p id="approvedMediaStatus" class="library-media-status" role="status" aria-live="polite"></p><div class="library-grid" id="libraryGrid"></div></section>
+ <section id="progress" class="page" hidden><div class="page-heading"><div class="eyebrow">YOUR CONSISTENCY</div><h1>Progress</h1><p>See your saved practice sessions in this isolated preview workspace.</p></div><div class="metrics"><article class="metric"><span>SESSIONS</span><strong id="progressSessions">0</strong><small>Demo only</small></article><article class="metric"><span>SETS</span><strong id="progressSets">0</strong><small>Demo only</small></article><article class="metric"><span>MOVEMENTS</span><strong id="progressMovements">0</strong><small>Tracked in demo sessions</small></article></div><article class="panel"><div class="panel-heading"><h3>Latest saved workout recap</h3><span class="micro-tag">SAME-PLAN COMPARISON</span></div><div id="postWorkoutRecap"></div></article><div class="panel progress-chart-panel"><div class="panel-heading"><div><div class="eyebrow">VOLUME TREND</div><h3>Strength over time</h3></div><span class="micro-tag">DEMO DATA</span></div><div id="progressChart" class="chart-frame" aria-label="Total weight lifted across saved demo sessions"></div></div><div class="panel"><div class="panel-heading"><h3>Session history</h3><span class="micro-tag">LOCAL DEMO</span></div><div id="sessionHistory" class="recent-list"></div></div><article class="panel"><div class="panel-heading"><h3>2.0 personal records and weekly training volume</h3><span class="micro-tag">LOCAL PRACTICE</span></div><div id="demoRecords"></div></article><article class="panel"><div class="panel-heading"><h3>Original app personal records</h3><span class="micro-tag">READ-ONLY</span></div><p id="legacyRecordsNote">Tap View original records in Workout History to load a local snapshot.</p><div id="legacyRecords"></div></article></section>
  <section id="history" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">TRAINING ARCHIVE</div><h1>Workout history</h1><p>Review completed sessions and exercise records. Original-app records are shown read-only; 2.0 practice sessions remain separate.</p></div>
  <article class="panel"><div class="panel-heading"><div><div class="eyebrow">ON THIS DEVICE</div><h3>Original MYLIFTCOACH records</h3></div></div>
@@ -156,7 +163,7 @@
 <p id="cloudOriginalHistoryStatus" role="status" aria-live="polite">No cloud archive loaded.</p>
 <div id="cloudOriginalHistoryResults" class="legacy-list"></div>
 </article>
- <article class="panel"><div class="panel-heading"><h3>MYLIFTCOACH 2.0 sessions</h3><span class="micro-tag" id="history2SourceLabel">SAVED 2.0 RECORDS</span></div><p id="history2SimulationNotice" class="mlc-sim-history-note" role="status" hidden>SIMULATION ACTIVE — fictional workouts shown below for testing only. Original records above are unchanged. Turn off Simulation Mode under Progress to restore your actual 2.0 history.</p><div id="detailedDemoHistory" class="legacy-list"></div></article>
+ <article class="panel"><div class="panel-heading"><h3>MYLIFTCOACH 2.0 sessions</h3><span class="micro-tag">SEPARATE LOCAL RECORDS</span></div><div id="detailedDemoHistory" class="legacy-list"></div></article>
 </section>
 <section id="tracking" class="page" hidden>
  <div class="page-heading"><div class="eyebrow">YOUR DAILY LOG</div><h1>Daily tracking</h1><p>Track hydration and body weight while retaining the original app's records safely.</p></div>
@@ -193,7 +200,7 @@
  <p id="mlcPhotoStatus" role="status"></p><div id="mlcPhotoList" class="mlc-photo-list"></div>
  </article>
 </section>
-<section id="coaching" class="page" hidden><p id="coachSimulationNotice" class="simulation-notice" hidden role="status">SIMULATED HISTORY ACTIVE — Coach suggestions and training trends use fictional test sessions. No test data is saved. Disable Simulation Mode in Progress before using Coach to save workouts.</p>
+<section id="coaching" class="page" hidden>
   <div class="page-heading"><div class="eyebrow">TRAIN SMARTER</div><h1>Coaching</h1><p>Your personalized training insights will be carried over from the original workout app. This development preview does not generate fabricated advice.</p></div>
   <p id="coachFreeNotice" class="empty-note" hidden>Free beta access includes workout tracking, history, readiness and your selected workout. Adaptive progression and substitutions are available in Pro beta mode.</p>
   <div class="coach-emblem">✦</div>
@@ -201,8 +208,6 @@
   <article class="panel"><div class="panel-heading"><h3>Readiness and weekly progress</h3><span class="micro-tag">LOCAL CHECK-IN</span></div><div id="coachReadiness"></div></article>
   <article class="panel"><div class="panel-heading"><h3>Training consistency</h3><span class="micro-tag">THIS WEEK / LAST WEEK</span></div><p>Based on your completed 2.0 sessions and your chosen weekly goal.</p><div id="coachTrends" aria-live="polite"></div></article>
   <article class="panel"><div class="panel-heading"><h3>Next selected workout</h3><span class="micro-tag">HOME WORKOUT MATCH</span></div><div id="coachNextWorkout"></div></article>
-  <article class="panel" data-pro-coach><div class="panel-heading"><h3>Suggested Training Program</h3><span class="micro-tag">PRO BETA · OPTIONAL SAVE</span></div><div id="coachProgramBuilder"></div></article>
-  <article class="panel" data-pro-coach><div class="panel-heading"><h3>Next Workout Plan</h3><span class="micro-tag">PRO BETA · READ-ONLY</span></div><div id="coachPlanPreview"></div></article>
   <article class="panel" data-pro-coach><div class="panel-heading"><h3>Evidence-based progression suggestions</h3><span class="micro-tag">2.0 LOCAL LOGS</span></div><p>Uses original-app working-set progression rules where sufficient training history exists. Does not change your weights or workouts automatically.</p><div id="coachSuggestions"></div></article>
   <article class="panel" data-pro-coach><div class="panel-heading"><h3>Exercise substitutions</h3><span class="micro-tag">ORIGINAL COACH RULES</span></div><p>Review alternatives matched by primary muscle and verified movement pattern. This never changes your saved workout.</p><div id="coachSubstitutions"></div></article>
   <article class="panel"><div class="panel-heading"><h3>Selected workout technique</h3><span class="micro-tag">CATALOG NOTES</span></div><p>Setup, form cues, and common mistakes for the workout chosen on Home, where verified catalog notes are present.</p><div id="coachTechnique"></div></article>
@@ -213,7 +218,26 @@
     <button type="button" data-coach-link="settings">♡ &nbsp; Recovery &amp; Readiness <span>›</span></button>
   </div>
  </section>
- <section id="nutrition" class="page" hidden><div class="page-heading"><div class="eyebrow">FUEL & RECOVER</div><h1>Nutrition &amp; Hydration</h1><p>The full nutrition, water, weight, and macro-tracking features from your original app will return here after data compatibility testing.</p></div><article class="panel"><h3>Coming from your original app</h3><p>Daily water, food logs, calorie goals, saved meals, and weight history. No entries are being written to your production data.</p></article></section>
+ <section id="nutrition" class="page" hidden>
+ <div class="page-heading"><div class="eyebrow">FUEL YOUR GOAL</div><h1>Your Calorie Goal</h1><p>An estimated daily target for your fitness goal. No food logging or macro counting required.</p></div>
+ <article class="panel nutrition-goal-panel">
+  <form id="calorieGoalForm" class="calorie-goal-form">
+   <label>Fitness goal<select name="goal" required><option value="strength">Build strength</option><option value="bulk">Bulk / gain muscle</option><option value="maintain">Maintain weight</option><option value="cut">Cut / lose weight</option></select></label>
+   <label>Program length<select name="programWeeks" required><option value="6">6-week program</option><option value="8" selected>8-week program</option><option value="12">12-week program</option></select></label>
+   <label>Workout program source<select name="programSource" id="goalProgramSource" required><option value="custom">My custom workouts</option><option value="generated">Coach-generated workouts</option><option value="mixed">Combination of both</option></select></label>
+   <label id="goalProgramCustomGroup">Custom routine<select name="programCustom" id="goalProgramCustom"><option value="">All my custom workouts (rotate)</option></select></label>
+   <label>Age<input name="age" type="number" inputmode="numeric" min="18" max="100" required placeholder="Years"></label>
+   <label>Weight (lb)<input name="weightLb" type="number" inputmode="decimal" min="66" max="880" step="0.1" required placeholder="Current weight"></label>
+   <label>Height (inches)<input name="heightIn" type="number" inputmode="decimal" min="47" max="91" step="0.1" required placeholder="Total height"></label>
+   <label>Sex used for estimate<select name="sex" required><option value="male">Male equation</option><option value="female">Female equation</option></select></label>
+   <label>Usual activity<select name="activity" required><option value="sedentary">Mostly seated</option><option value="light">Light activity</option><option value="moderate">Moderately active</option><option value="active">Very active</option></select></label>
+   <button class="button-primary" type="submit">Calculate my calorie goal</button>
+  </form>
+  <div id="calorieGoalResult" class="calorie-goal-result" role="status" aria-live="polite"></div><div id="goalProgramProgress" class="goal-program-progress" role="status" aria-live="polite"></div>
+  <button type="button" id="goalProgramRestart" class="button-outline" hidden>Start another program</button>
+  <p class="calorie-goal-note">This is an adult-only starting estimate, not a precise measurement or medical prescription. Activity includes ordinary exercise; no exercise-calorie double counting. Goal changes are never applied without your input. Review the target if you have specific medical or nutritional needs.</p>
+ </article>
+</section>
  <section id="settings" class="page" hidden><div class="account-brand"><img src="./assets/myliftcoach-mark.svg?v=6" alt=""><h2>My Account</h2><p>Manage your profile, training and settings</p></div><div class="account-menu" aria-label="Additional training tools"><button type="button" data-account-page="library"><span>▣</span> Exercise Library <b>›</b></button><button type="button" data-account-page="history"><span>▤</span> Workout History <b>›</b></button><button type="button" data-account-page="tracking"><span>◉</span> Daily Tracking <b>›</b></button><button type="button" data-account-page="coaching"><span>✦</span> Coaching &amp; Guidance <b>›</b></button></div><div class="page-heading"><div class="eyebrow">YOUR ACCOUNT</div><h1>Settings</h1><p>Sign in with your existing MYLIFTCOACH account. Training data import remains off until validated.</p></div><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen design ↗</button><article class="panel settings-panel" id="betaAccessCard" hidden>
 <div class="panel-heading"><h3>Beta Access Mode</h3><span class="micro-tag">PRIVATE BETA</span></div>
 <p>Everyone can switch between Free and Pro features during the private beta without purchasing a subscription. Signed-in choices save to your account; guest choices last for this browser session. This is a feature preview, not a paid subscription entitlement.</p>
@@ -233,7 +257,7 @@
 <button type="button" class="button-outline" id="restoreAccountWorkouts" disabled>Restore missing workouts</button>
 <p role="status" aria-live="polite" id="accountRecoveryStatus">Sign in to back up or recover this account's workouts.</p>
 </article>
-<p id="phoneBuildMarker" class="mlc-schedule-note" role="status">iPhone beta test build 11-21N · clean mobile top navigation</p>
+<p id="phoneBuildMarker" class="mlc-schedule-note" role="status">iPhone beta test build 11-21O · compact tabbed workouts</p>
 <article class="panel settings-panel" aria-label="Automatic isolated cloud sync">
 <div class="panel-heading"><h3>Automatic workout sync</h3><span class="micro-tag">ISOLATED 2.0</span></div>
 <p>Completed workouts are saved locally first, then synced to your verified account. Offline sessions retry on reconnect. Original MYLIFTCOACH records are not changed.</p>
@@ -291,7 +315,6 @@
 </div>
 <div id="toast" role="status" class="toast" hidden></div>
 <script defer src="./exercise-catalog-344.js?v=1"></script>
-<!-- Image-only bridge. Requires separate validated, locally hosted approved manifest and media. -->
 <script defer src="./approved-visuals-manifest.js?v=1"></script>
 <script defer src="./exercise-visuals-344.js?v=1"></script>
 <script defer src="./exercise-instruction-coverage.js?v=1"></script>
@@ -302,17 +325,18 @@
 <script defer src="./session-draft.js?v=1"></script>
 <script defer src="./workout-active-ux.js?v=2"></script>
 <script defer src="./progress-migration.js?v=1"></script>
-<script defer src="./progress-weekly-summary.js?v=1"></script>
-<script defer src="./workout-simulation.js?v=1"></script>
-<script defer src="./workout-simulation-audit.js?v=1"></script>
 <script defer src="./coach-attributes.js?v=1"></script>
 <script defer src="./coach-catalog-coverage.js?v=2"></script>
 <script defer src="./coach-migration.js?v=3"></script>
+<script defer src="./coach-program-builder.js?v=1"></script>
+<script defer src="./coach-preferences.js?v=1"></script>
+<script defer src="./calorie-goal-estimate.js?v=1"></script>
+<script defer src="./goal-program-calendar.js?v=1"></script>
+<script defer src="./goal-program-source.js?v=1"></script>
+<script defer src="./coach-periodization.js?v=1"></script>
 <script defer src="./coach-readiness.js?v=1"></script>
 <script defer src="./coach-trends.js?v=1"></script>
 <script defer src="./coach-post-workout.js?v=1"></script>
-<script defer src="./coach-plan-preview.js?v=1"></script>
-<script defer src="./coach-program-builder.js?v=1"></script>
 <script defer src="./body-progress.js?v=1"></script>
 <script defer src="./legacy-storage-model.js?v=1"></script>
 <script defer src="./legacy-reconcile.js?v=1"></script>
@@ -342,9 +366,7 @@
 <script defer src="./sync/auxiliary-cloud.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=15"></script>
-<script defer src="./workouts-tabs-n.js?v=1"></script>
+<script defer src="./app.js?v=29"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
-<script defer src="./progress-compact.js?v=1"></script>
 </body>
 </html>
