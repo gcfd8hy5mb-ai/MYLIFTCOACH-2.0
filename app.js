@@ -502,8 +502,13 @@ function renderWorkouts(){
  const all=[...custom,...plans];
  const top=$('workoutTodayName'),meta=$('workoutTodayMeta'),source=$('workoutTodaySource');
  if(top)top.textContent=selected?.title||'Choose a workout';
- if(meta)meta.textContent=selected?selected.ids.length+' exercises · '+(selected.kind==='Custom'?'Custom routine':'Preset routine'):'';
- if(source)source.textContent=selected?(selected.scheduleSource==='manual'?'Selected by you':selected.scheduleSource==='weekly'?'From your weekly schedule':'Recommended next session'):'';
+ if(meta)meta.textContent=selected?selected.ids.length+' exercises · '+
+  (selected.scheduleSource==='program'?
+    (selected.programSource==='custom'?'Custom goal program':'Coach goal program'):
+   selected.kind==='Custom'?'Custom routine':selected.kind==='Coach'?'Coach session':'Preset routine'):'';
+ if(source)source.textContent=selected?(selected.scheduleSource==='manual'?'Selected by you':
+  selected.scheduleSource==='weekly'?'From your weekly schedule':
+  selected.scheduleSource==='program'?'Part of your active goal program':'Recommended next session'):'';
  const start=$('workoutTodayStart');if(start){start.dataset.workout=activeId;start.disabled=!activeId}
  const guestBox=$('guestWorkoutRecovery'),guestStatus=$('guestWorkoutRecoveryStatus');
  const recoverable=ownerReady?window.MLC2Custom?.guestRecovery():null;
@@ -594,18 +599,18 @@ function renderProgress(){
  window.MLC2Progress?.renderRecords($('demoRecords'),demoSessions,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
  window.MLC2Progress?.renderRecords($('legacyRecords'),originalSnapshot?.sessions||[],'original',(id,name)=>libraryExercises().find(e=>e.id===id)?.name||name);
  $('legacyRecordsNote').textContent=originalSnapshot?'Read-only snapshot from original device storage.':'Tap View original records in Workout History to load a local read-only snapshot. No cloud data is queried.';
- $('sessionHistory').innerHTML=demoSessions.length?demoSessions.map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">No demo sessions recorded yet. Open Workouts to start your first practice session.</div>';
+ $('sessionHistory').innerHTML=demoSessions.length?demoSessions.map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">No completed workouts yet. Open Workouts to start your first session.</div>';
 }
 function renderProgressChart(){
  const root=$('progressChart');if(!root)return;
  const rows=demoSessions.slice(0,8).reverse();
- if(!rows.length){root.innerHTML='<div class="chart-empty">Your volume chart will appear here after you finish a practice workout.<span>No invented progress numbers.</span></div>';return;}
+ if(!rows.length){root.innerHTML='<div class="chart-empty">Your volume chart will appear after your first completed workout.<span>No invented progress numbers.</span></div>';return;}
  const values=rows.map(x=>x.sets.reduce((sum,set)=>sum+Number(set.weight||0)*Number(set.reps||0),0));
  const peak=Math.max(1,...values),count=values.length;
  const xy=values.map((n,i)=>({x:22+(i*(276/Math.max(1,count-1))),y:175-(n/peak)*142}));
  const points=xy.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
  const fill='22,184 '+points+' '+xy[xy.length-1].x.toFixed(1)+',184';
- root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' locally saved practice sessions"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb-reps last session</p>';
+ root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' locally saved completed workouts"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb-reps last session</p>';
 }
 function renderCoach(){
  const selected=nextPlan(),catalog=libraryExercises(),history=coachEvidence();
@@ -842,7 +847,7 @@ function openWorkout(id){
    // Local write succeeded. Queue using the existing isolated Supabase journal.
    queueWorkoutForSync(entry);
    try{window.MLC2SessionDraft?.clear(activeDraftStore,plan.id)}catch{}
-   closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');if(betaView().mode==='pro')openModal(liveCoachRecap(proposed));
+   closeModal();renderHome();setPage('progress');notice('Workout saved on this device. Account backup will sync when connected.');if(betaView().mode==='pro')openModal(liveCoachRecap(proposed));
   }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
 }
