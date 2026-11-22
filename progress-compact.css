@@ -25,3 +25,6 @@
 #progress .progress-compact-body h3{font-size:18px;color:#ebcd95;margin:0 0 9px}
 #progress .progress-compact-body p{font-size:13px;line-height:1.55;color:#d1dfda}
 @media(max-width:390px){#progress .progress-compact-tabs button{font-size:11px}#progress.progress-compact .metrics .metric{padding:12px 4px}}
+
+/* Surface just the five newest saved sessions; full archive remains one tap away. */
+#progress .progress-compact-panel #sessionHistory .recent-item:nth-child(n+6){display:none}
