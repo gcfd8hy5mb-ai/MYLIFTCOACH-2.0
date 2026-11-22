@@ -163,3 +163,39 @@ test('historic record carrying a different ownerId is never claimed for this acc
  const response=await setup(db,cloud).engine.restore({confirmRestore:async()=>true});
  assert.equal(response.status,'conflict');assert.equal(Store.read(db,owner).length,0);
 });
+
+test('cloud workout arriving after restore confirmation needs a new explicit approval',async()=>{
+ const db=storage(),cloud=remote();
+ const first=session('cloud-first'),added=session('cloud-added');
+ cloud.rows.set(owner+'/cloud-first',{owner,type:'session',id:first.id,revision:1,deleted:false,payload:first});
+ const engine=setup(db,cloud).engine;
+ let confirmed=0;
+ const outcome=await engine.restore({confirmRestore:async count=>{
+  confirmed++;
+  assert.equal(count,1);
+  cloud.rows.set(owner+'/cloud-added',{owner,type:'session',id:added.id,revision:1,deleted:false,payload:added});
+  return true;
+ }});
+ assert.equal(confirmed,1);
+ assert.equal(outcome.status,'changed-reconfirm');
+ assert.equal(outcome.restored,0);
+ assert.deepEqual(Store.read(db,owner),[],'new cloud records never enter the device without approval');
+ assert.equal(cloud.commits,0);
+ const next=await engine.restore({confirmRestore:async count=>count===2});
+ assert.equal(next.restored,2);
+ assert.equal(Store.read(db,owner).length,2);
+});
+test('rejected updated recovery list preserves existing user workouts',async()=>{
+ const db=storage(),cloud=remote(),personal=session('my-own');
+ Store.save(db,owner,[personal]);
+ const first=session('cloud-first'),added=session('cloud-added');
+ cloud.rows.set(owner+'/cloud-first',{owner,type:'session',id:first.id,revision:1,deleted:false,payload:first});
+ const initial=db.getItem(Store.key(owner));
+ const engine=setup(db,cloud).engine;
+ const outcome=await engine.restore({confirmRestore:async()=> {
+  cloud.rows.set(owner+'/cloud-added',{owner,type:'session',id:added.id,revision:1,deleted:false,payload:added});
+  return true;
+ }});
+ assert.equal(outcome.status,'changed-reconfirm');
+ assert.equal(db.getItem(Store.key(owner)),initial,'local records stay byte-for-byte unchanged');
+});
