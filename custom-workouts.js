@@ -29,6 +29,13 @@ function guestRecovery(){
 }
 function recoverGuest(){
  if(owner===null)throw Error('Sign in to recover guest routines');
+ // A corrupted account copy is never replaced by an empty parsed fallback.
+ const accountRaw=localStorage.getItem(scoped(KEY));
+ if(accountRaw!==null&&!Array.isArray(JSON.parse(accountRaw)))
+  throw Error('Account workout data needs review; recovery did not write');
+ const guestRaw=localStorage.getItem(KEY);
+ if(guestRaw!==null&&!Array.isArray(JSON.parse(guestRaw)))
+  throw Error('Guest workout data needs review; recovery did not write');
  const existing=read(),seen=new Set(existing.map(p=>p.id)),before=owner;
  let guest=[],previousChoice='';
  try{
