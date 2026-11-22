@@ -31,6 +31,21 @@ test('approved images and IMAGE COMING placeholder have correct behavior',()=>{
  assert.ok(js.includes('How to Perform'));
  assert.ok(js.includes('Common Mistakes'));
  assert.ok(css.includes('mlc-guide-thumb-frame'));
- assert.ok(css.includes('height:200%'));
+ assert.ok(css.includes('#modal .active-log-card .mlc-guide-thumb-frame'));
+ assert.ok(css.includes('object-fit:contain'));
+ assert.ok(js.includes("media.append(thumbFrame,caption);wrap.append(media)"));
+ assert.ok(js.includes("context.insertAdjacentElement('afterend',wrap)"));
+ assert.ok(js.includes("thumbnail.src=imgFor(e)"));
  assert.ok(css.includes('mlc-guide-overlay'));
+});
+
+test('exercise picture is visible without expanding guide or changing workout logging',()=>{
+ const js=read('active-exercise-guide.js'),css=read('active-exercise-guide.css');
+ assert.ok(js.indexOf('wrap.append(media)')<js.indexOf('const content=el('));
+ assert.ok(js.indexOf('wrap.append(media)')<js.indexOf("toggle.addEventListener('click'"));
+ assert.ok(css.includes('.mlc-guide-media{display:flex'));
+ assert.ok(css.includes('min-height:185px'));
+ assert.ok(js.includes('Approved exercise demonstration · visible during workout'));
+ assert.ok(js.includes("caption.textContent='Demonstration image temporarily unavailable'"));
+ assert.doesNotMatch(js,/\b(localStorage|sessionStorage|indexedDB|fetch|XMLHttpRequest|supabase)\b/);
 });
