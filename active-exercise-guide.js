@@ -1,8 +1,9 @@
 /* MYLIFTCOACH 2.0 — Image-only exercise guide for active workout cards.
    DOM enhancement only. No writes to auth, Coach, cloud, or workout state. */
 (()=>{'use strict';
-const root=document.getElementById('workoutLog');
-if(!root)return;
+const modalContent=document.getElementById('modalContent');
+if(!modalContent)return;
+let root=null;
 const catalog=window.MLC2_EXERCISE_CATALOG;
 if(!Array.isArray(catalog))return;
 const byId=new Map(catalog.map(e=>[e.id,e]));
@@ -58,6 +59,8 @@ function openFull(id,trigger){
 overlay.addEventListener('click',event=>{if(event.target===overlay)closeFull()});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!overlay.hidden)closeFull()});
 function enhance(){
+ root=document.getElementById('workoutLog');
+ if(!root)return;
  for(const card of root.querySelectorAll('[data-exercise-card]')){
   if(card.querySelector('.mlc-guide-wrap'))continue;
   const e=byId.get(card.getAttribute('data-exercise-card'));if(!e)continue;
@@ -88,6 +91,6 @@ function enhance(){
  if(opened&&![...root.querySelectorAll('[data-exercise-card]')].some(card=>card.getAttribute('data-exercise-card')===opened))opened=null;
 }
 const observer=new MutationObserver(enhance);
-observer.observe(root,{childList:true,subtree:false});
+observer.observe(modalContent,{childList:true,subtree:true});
 enhance();
 })();
