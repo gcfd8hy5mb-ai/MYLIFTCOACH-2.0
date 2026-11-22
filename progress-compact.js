@@ -40,7 +40,15 @@ function init(){
  });
  // Existing data-driven panels retain their elements, IDs and event handlers.
  groups.overview.append(recap,chart);
- groups.strength.append(records,original);
+ groups.strength.append(records);
+ const auditCard=document.createElement('article');
+ auditCard.className='panel volume-audit-card';
+ const auditHeading=document.createElement('div');auditHeading.className='panel-heading';
+ const auditTitle=document.createElement('h3');auditTitle.textContent='Verify pounds lifted';
+ auditHeading.append(auditTitle);
+ const auditBody=document.createElement('div');auditBody.id='progressVolumeAudit';
+ auditCard.append(auditHeading,auditBody);
+ groups.strength.append(auditCard,original);
  groups.history.append(history);
  const openHistory=document.createElement('button');
  openHistory.type='button';openHistory.className='progress-compact-link';
