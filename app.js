@@ -4,7 +4,7 @@
 const BACKEND='https://kirlpjflaoriiusfamsk.supabase.co';
 const PUBLIC_KEY='sb_publishable_yYMnCM3k14zaEtpHo4-xkQ_Cd1Aty90';
 const DEMO_KEY='mlc2-demo-workouts-v1'; // independent namespace, never original workout keys
-const AUTH_KEY='mlc2-auth-session-v1'; // separate from original production auth storage
+const authStore=window.MLC2AuthStore; // isolated 2.0 persistence, revalidated before use
 const exercises=[
  {id:'chest-press',name:'Machine Chest Press',group:'Chest',sets:3,reps:'8–12',cue:'Set the handles near mid-chest. Press smoothly and control the return.'},
  {id:'pec-deck',name:'Pec Deck',group:'Chest',sets:3,reps:'10–15',cue:'Keep the chest tall and bring the arms together without swinging.'},
@@ -42,7 +42,7 @@ const sessionRefresh=window.MLC2FreshAuth.create({
  fetchUser:token=>authRequest('user',null,token,'GET'),
  commit:session=>{
   const serialized=JSON.stringify(session);
-  sessionStorage.setItem(AUTH_KEY,serialized);
+  authStore.save(sessionStorage,localStorage,session);
   auth=session;account=session.user;renderSettings();
  }
 });
@@ -551,13 +551,13 @@ async function authRequest(path,body,token,method='POST'){
 }
 function saveAuth(data){originalSnapshot=null;
  const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
- sessionStorage.setItem(AUTH_KEY,JSON.stringify(session));auth=session;account=data.user;renderSettings();
+ authStore.save(sessionStorage,localStorage,session);auth=session;account=data.user;renderSettings();
 }
-function clearAuth(){authEpoch++;switchWorkoutOwner(null);cloudHistoryRequestId++;sessionStorage.removeItem(AUTH_KEY);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
+function clearAuth(){authEpoch++;switchWorkoutOwner(null);cloudHistoryRequestId++;authStore.clear(sessionStorage,localStorage);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
 async function validateStoredAuth(){
  const thisEpoch=++authEpoch;
  try{
-  const saved=JSON.parse(sessionStorage.getItem(AUTH_KEY)||'null');
+  const saved=authStore.read(sessionStorage,localStorage);
   if(!saved?.access_token||!saved?.user?.id)return;
   let token=saved.access_token;
   if(saved.expires_at<Date.now()/1000+45&&saved.refresh_token){
@@ -569,7 +569,7 @@ async function validateStoredAuth(){
   const user=await authRequest('user',null,token,'GET');
   if(thisEpoch!==authEpoch)return;
   if(!user?.id||user.id!==account?.id)clearAuth();
-  else{account=user;auth.user=user;sessionStorage.setItem(AUTH_KEY,JSON.stringify(auth));switchWorkoutOwner(user.id)}
+  else{account=user;auth.user=user;authStore.save(sessionStorage,localStorage,auth);switchWorkoutOwner(user.id)}
  }catch{if(thisEpoch===authEpoch)clearAuth()}
  if(thisEpoch===authEpoch)renderSettings();
 }
@@ -586,7 +586,11 @@ function openSignIn(){
    const verified=await authRequest('user',null,response.access_token,'GET');
    if(!verified?.id||verified.id!==response.user.id)throw Error('Account identity could not be verified.');
    authEpoch++;saveAuth({...response,user:verified});switchWorkoutOwner(verified.id);
-   closeModal();notice('Account verified. Your local workouts are separated by account; cloud uploads remain off.');setPage('home');
+   if(verifiedOwnerId!==verified.id||account?.id!==verified.id||
+      authStore.read(sessionStorage,localStorage)?.user?.id!==verified.id)
+    throw Error('Account session was not retained; sign-in was not completed.');
+   closeModal();setPage('home');renderSettings();
+   notice('Signed in to your verified MYLIFTCOACH 2.0 account.');
   }catch(err){$('loginMessage').className='auth-error';$('loginMessage').textContent=err.name==='AbortError'?'The account service timed out.':/invalid/i.test(err.message)?'Email or password was not accepted.':'Could not sign in: '+String(err.message).slice(0,120)}
   finally{submit.disabled=false;submit.textContent='Sign in securely'}
  });
@@ -969,7 +973,7 @@ function bind(){
    if(epoch!==authEpoch||verifiedOwnerId!==selectedOwner)return;
    const current=await authRequest('user',null,auth.access_token,'GET');
    if(epoch!==authEpoch||current?.id!==selectedOwner)return;
-   account=current;auth.user=current;sessionStorage.setItem(AUTH_KEY,JSON.stringify(auth));
+   account=current;auth.user=current;authStore.save(sessionStorage,localStorage,auth);
    output.textContent=updated.mode.toUpperCase()+' beta access saved. No purchase required.';
    renderCoach();
   }catch(err){
