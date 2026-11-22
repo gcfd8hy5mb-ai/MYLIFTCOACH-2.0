@@ -335,6 +335,7 @@ function openCoachSchedule(plan){
  $('coachScheduleName').textContent='Assign '+plan.title+' to a weekday. Your existing workouts and Today selection will not be replaced.';
  $('coachScheduleStatus').textContent='';
  panel.hidden=false;
+ if(typeof window.MLC2WorkoutsSelectTab==='function')window.MLC2WorkoutsSelectTab('schedule');
  panel.scrollIntoView({block:'nearest',behavior:'smooth'});
  $('coachScheduleDay').focus();
 }
