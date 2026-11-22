@@ -19,3 +19,12 @@
 #coachGoalNote{color:#d4bb8a;font-size:.85rem}
 
 #coachTrends p{margin:0 0 10px;line-height:1.5;color:#e7d9be}#coachTrends .coach-trend-footnote{font-size:.85rem;color:#c1b9aa}
+
+/* Read-only Pro Coach next-workout preview; approved charcoal/teal and gold. */
+#coaching .coach-plan-intro{font-size:13px;color:#e7d8bc;line-height:1.55;margin:0 0 11px}
+#coaching .coach-plan-readiness{font-size:12px;color:#edd5a4;padding:10px 12px;border:1px solid rgba(210,174,107,.45);border-radius:10px;background:#04252d;margin:0 0 12px}
+#coaching .coach-plan-rows{display:grid;gap:8px}
+#coaching .coach-plan-row{background:#04252d;border:1px solid rgba(210,174,107,.48);padding:12px;border-radius:11px}
+#coaching .coach-plan-row strong{font-size:13px;color:#f1d19a}
+#coaching .coach-plan-row p{font-size:12px;line-height:1.5;color:#d5e3df;margin:6px 0 0}
+#coaching .coach-plan-foot{font-size:11px;color:#c6d3cd;line-height:1.6;margin:12px 0 0}
