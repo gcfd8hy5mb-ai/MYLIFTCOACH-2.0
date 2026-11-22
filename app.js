@@ -301,9 +301,12 @@ function programCustomOptions(){
  return window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
 }
 function programCompletedCount(program,source){
- const all=coachEvidence(),custom=programCustomOptions(),eligibleIds=new Set(custom.map(p=>p.id));
+ const all=coachEvidence(),custom=programCustomOptions();
+ const allowedCustom=new Set(custom.filter(p=>!source?.customId||p.id===source.customId).map(p=>p.id));
+ const mode=source?.mode||'generated';
  return all.filter(row=>row&&typeof row.planId==='string'&&
-  (row.planId.startsWith('coach-auto-day-')||eligibleIds.has(row.planId))&&
+  ((mode!=='custom'&&row.planId.startsWith('coach-auto-day-'))||
+   (mode!=='generated'&&allowedCustom.has(row.planId)))&&
   Date.parse(row.created||'')>=Date.parse(program.startDate+'T00:00:00Z')).length;
 }
 
