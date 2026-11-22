@@ -303,18 +303,62 @@ function renderHome(){
  $('todayExercises').innerHTML=plan.ids.map(id=>{const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
+let workoutTab='today';
+function setWorkoutTab(tab){
+ if(!['today','routines','schedule'].includes(tab))return;
+ workoutTab=tab;
+ for(const name of ['today','routines','schedule']){
+  const cap=name[0].toUpperCase()+name.slice(1);
+  const panel=$('workoutPanel'+(name==='routines'?'Routines':cap));
+  const button=$('workoutTab'+(name==='routines'?'Routines':cap));
+  const active=name===tab;
+  if(panel)panel.hidden=!active;
+  if(button){
+   button.setAttribute('aria-selected',String(active));
+   button.tabIndex=active?0:-1;
+  }
+ }
+}
 function renderWorkouts(){
+ const selected=nextPlan();
+ const activeId=selected?.id||'';
+ const ownerReady=!!verifiedOwnerId&&account?.id===verifiedOwnerId;
+ const custom=(window.MLC2Custom?.allPlans(plans)||plans).filter(p=>p.id.startsWith('custom-'));
+ const all=[...custom,...plans];
+ const top=$('workoutTodayName'),meta=$('workoutTodayMeta'),source=$('workoutTodaySource');
+ if(top)top.textContent=selected?.title||'Choose a workout';
+ if(meta)meta.textContent=selected?selected.ids.length+' exercises · '+(selected.kind==='Custom'?'Custom routine':'Preset routine'):'';
+ if(source)source.textContent=selected?(selected.scheduleSource==='manual'?'Selected by you':selected.scheduleSource==='weekly'?'From your weekly schedule':'Recommended next session'):'';
+ const start=$('workoutTodayStart');if(start){start.dataset.workout=activeId;start.disabled=!activeId}
  const guestBox=$('guestWorkoutRecovery'),guestStatus=$('guestWorkoutRecoveryStatus');
- const guestStatusData=verifiedOwnerId&&account?.id===verifiedOwnerId?
-  window.MLC2Custom?.guestRecovery():null;
- if(guestBox)guestBox.hidden=!(guestStatusData?.available>0);
- if(guestStatus&&guestStatusData?.available>0)
-  guestStatus.textContent=guestStatusData.available+' guest workout(s) available to copy to this verified account. Nothing will be overwritten.';
+ const recoverable=ownerReady?window.MLC2Custom?.guestRecovery():null;
+ if(guestBox)guestBox.hidden=!(recoverable?.available>0);
+ if(guestStatus&&recoverable?.available>0)
+  guestStatus.textContent=recoverable.available+' guest workout(s) available to copy to this verified account. Existing workouts will not be replaced.';
  window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
-  presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
+  presets:plans,custom,
   storage:planStorage(),onChanged:()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}
  });
- $('workoutGrid').innerHTML=(window.MLC2Custom?.allPlans(plans)||plans).map((p,i)=>'<div class="workout-item"><button type="button" class="workout-card" data-workout="'+p.id+'"><span class="number">SESSION 0'+(i+1)+' · '+escapeHTML(p.kind.toUpperCase())+'</span><h3>'+escapeHTML(p.title)+'</h3><p>'+escapeHTML(p.description)+'</p><div class="workout-meta"><span>'+p.ids.length+' movements · '+p.ids.length*3+' recommended sets</span><b>Open session ↗</b></div></button>'+window.MLC2Custom.controls(p,nextPlan().id)+'</div>').join('');
+ const section=(items,label)=>{
+  const cards=items.map(p=>{
+   const current=p.id===activeId;
+   const isCustom=p.id.startsWith('custom-');
+   return '<article class="workout-compact-card'+(current?' is-selected':'')+'">'+
+    '<div class="workout-compact-heading"><div><h3>'+escapeHTML(p.title)+'</h3>'+
+    '<p>'+p.ids.length+' exercises · '+(isCustom?'Custom':'Preset')+'</p></div>'+
+    (current?'<span class="workout-selected-tag">Today ✓</span>':'')+'</div>'+
+    '<div class="workout-compact-actions">'+
+    '<button type="button" class="workout-compact-start" data-workout="'+escapeHTML(p.id)+'">Start workout</button>'+
+    '<button type="button" class="workout-compact-select" data-custom-select="'+escapeHTML(p.id)+'"'+(current?' disabled':'')+'>'+(current?'Selected':'Use for today')+'</button>'+
+    (isCustom?'<button type="button" class="workout-compact-icon" data-custom-edit="'+escapeHTML(p.id)+'" aria-label="Edit '+escapeHTML(p.title)+'">Edit</button>'+
+    '<button type="button" class="workout-compact-icon workout-compact-delete" data-custom-delete="'+escapeHTML(p.id)+'" aria-label="Delete '+escapeHTML(p.title)+'">Delete</button>':'')+
+    '</div></article>';
+  }).join('');
+  return '<div class="workout-compact-section"><h3 class="workout-compact-label">'+label+'</h3>'+
+   (cards||'<p class="workout-compact-empty">No custom routines yet. Create one to get started.</p>')+ '</div>';
+ };
+ $('workoutGrid').innerHTML=section(custom,'Your custom workouts')+section(plans,'Ready-made presets');
+ setWorkoutTab(workoutTab);
 }
 // An external catalog is optional. Never treat a readable file as visually approved.
 // The 344-item private release manifest can populate window.MLC2_EXERCISE_CATALOG
@@ -634,6 +678,24 @@ function bind(){
  $('todayStart').addEventListener('click',()=>openWorkout($('todayStart').dataset.homeWorkout));
  $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
  $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
+ $('workoutTodayStart').addEventListener('click',()=>{
+  const id=$('workoutTodayStart').dataset.workout;
+  if(id)openWorkout(id);
+ });
+ $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
+ document.querySelectorAll('[data-workout-tab]').forEach(button=>{
+  button.addEventListener('click',()=>setWorkoutTab(button.dataset.workoutTab));
+  button.addEventListener('keydown',event=>{
+   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+   event.preventDefault();
+   const order=['today','routines','schedule'];
+   const current=order.indexOf(button.dataset.workoutTab);
+   const target=event.key==='Home'?0:event.key==='End'?2:(current+(event.key==='ArrowLeft'?-1:1)+3)%3;
+   setWorkoutTab(order[target]);
+   document.querySelector('[data-workout-tab="'+order[target]+'"]')?.focus();
+  });
+ });
+
  $('recoverGuestWorkouts').addEventListener('click',()=>{
   if(!verifiedOwnerId||verifiedOwnerId!==account?.id){notice('Sign in to recover guest workouts.');return}
   const recovery=window.MLC2Custom?.guestRecovery();
