@@ -57,6 +57,13 @@ jobs:
           ref: 77b00b05c079f66450395984574ab9bd748f4867
           path: phone-coach
           persist-credentials: false
+      - name: Checkout verified custom/Home priority build for isolated iPhone preview
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 0cd53db474c864339c821579c48ce871ad02bab2
+          path: phone-custom
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
@@ -112,6 +119,18 @@ jobs:
           test -s dist/phone-test-e/coach-catalog-coverage.js
           test -s dist/phone-test-e/coach-migration.js
           test -s dist/phone-test-e/sync/automatic-workouts.js
+          # Keep earlier test areas immutable; add custom-workout acceptance separately.
+          mkdir -p dist/phone-test-f
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
+            --exclude='*.md' phone-custom/ dist/phone-test-f/
+          cp original-approved/assets/approved-vertical-marble-sharp.webp dist/phone-test-f/assets/approved-vertical-marble-sharp.webp
+          cp original-approved/assets/hero-dumbbells-photo.jpg dist/phone-test-f/assets/hero-dumbbells-photo.jpg
+          grep -q 'iPhone beta test build 11-21F' dist/phone-test-f/index.html
+          grep -q 'app.js?v=10' dist/phone-test-f/index.html
+          grep -q 'dataset.homeWorkout=plan.id' dist/phone-test-f/app.js
+          test -s dist/phone-test-f/custom-workouts.js
+          test -s dist/phone-test-f/weekly-workout-schedule.js
+          test -s dist/phone-test-f/sync/automatic-workouts.js
           cp -a source/persistence dist/persistence
           cp source/liftova-anatomy.css dist/liftova-anatomy.css
           python3 - <<'PY'
@@ -159,6 +178,15 @@ jobs:
               if not (coach.parent/uri).is_file():missing_coach.append(uri)
           if missing_coach:raise SystemExit('Missing Coach beta assets: '+repr(missing_coach))
           print('Verified',len(coach_urls.urls),'Coach beta HTML links')
+          custom=Path('dist/phone-test-f/index.html')
+          custom_urls=URLs();custom_urls.feed(custom.read_text())
+          missing_custom=[]
+          for raw in custom_urls.urls:
+              uri=raw.split('?',1)[0]
+              if uri.startswith(('https:', 'http:', 'data:', '#', '/')):continue
+              if not (custom.parent/uri).is_file():missing_custom.append(uri)
+          if missing_custom:raise SystemExit('Missing custom workout beta assets: '+repr(missing_custom))
+          print('Verified',len(custom_urls.urls),'custom workout beta HTML links')
           PY
           cat > dist/index.html <<'HTML'
           <!doctype html>
