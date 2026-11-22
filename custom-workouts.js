@@ -52,6 +52,28 @@ function recoverGuest(){
  }
  return {added:additions.length,preserved:existing.length,skipped:guest.length-additions.length};
 }
+function saveCoachDay(day){
+ // Only explicit user-confirmed creation. Existing workouts and today's choice
+ // must remain unchanged; account storage stays in its verified owner scope.
+ if(!day||!Array.isArray(day.exercises))throw Error('Invalid Coach workout');
+ const ids=[...new Set(day.exercises.map(e=>e?.id).filter(id=>typeof id==='string'&&byId(id)))];
+ if(!ids.length||ids.length>40||ids.length!==day.exercises.length)
+  throw Error('Coach workout contains unsupported or repeated exercises');
+ const original=localStorage.getItem(scoped(KEY));
+ if(original!==null){
+  let parsed;try{parsed=JSON.parse(original)}catch{throw Error('Saved workouts are unreadable. Nothing was changed.')}
+  if(!Array.isArray(parsed))throw Error('Saved workouts are unreadable. Nothing was changed.');
+ }
+ const existing=read();
+ if(existing.length>=60)throw Error('Custom workout limit reached');
+ let id=newPlanId();
+ while(existing.some(p=>p.id===id))id=newPlanId();
+ const number=Number(day.day);
+ const title='Coach Day '+(Number.isInteger(number)&&number>=1&&number<=7?number:1);
+ const plan={id,title,kind:'Custom',description:'Coach-generated starting point. Review and edit your exercises as needed.',ids};
+ persistPlans([plan,...existing]);
+ return plan;
+}
 function allPlans(presets){return [...read(),...presets]}
 function currentPlan(presets,completed){const a=allPlans(presets);let id='';try{id=localStorage.getItem(scoped(TODAY))||''}catch{};return a.find(p=>p.id===id)||read()[0]||presets[completed%presets.length]}
 function controls(p,currentId){
@@ -113,5 +135,5 @@ function handleClick(e,onChanged){
  }
  return false;
 }
-window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest};
+window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay};
 })();
