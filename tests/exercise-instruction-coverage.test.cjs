@@ -42,3 +42,21 @@ test('all exercise detail guides use the same instruction, muscles, equipment, t
  assert.ok(guide.includes('const sentences=source.match('));
  assert.ok(guide.includes('Never invent missing steps'));
 });
+
+test('duplicate-name exercises share the richer existing instructions while retaining their IDs',()=>{
+ const catalog=source();
+ const groups=new Map();
+ for(const e of catalog){const key=e.name.trim().toLowerCase();if(!groups.has(key))groups.set(key,[]);groups.get(key).push(e)}
+ let normalizedGroups=0;
+ for(const items of groups.values()){
+  if(items.length<2)continue;
+  normalizedGroups++;
+  for(const e of items.slice(1)){
+   assert.equal(e.how,items[0].how);
+   assert.equal(e.equipment,items[0].equipment);
+   assert.deepEqual(Array.from(e.tips),Array.from(items[0].tips));
+   assert.deepEqual(Array.from(e.mistakes),Array.from(items[0].mistakes));
+  }
+ }
+ assert.equal(normalizedGroups,19);
+});
