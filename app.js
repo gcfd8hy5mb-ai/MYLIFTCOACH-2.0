@@ -979,6 +979,7 @@ function bind(){
    const previousSource=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
    const renewed=window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:program.goal,weeks:program.weeks});
    if(previousSource)window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,renewed,previousSource);
+   try{window.MLC2ScheduleAuxSync?.()}catch{}
    renderCalorieGoal();renderWorkouts();notice('New '+program.weeks+'-week program started. Your prior workouts are retained.');
   }catch(e){notice('Could not restart program: '+String(e.message||e).slice(0,100))}
  });
@@ -1004,6 +1005,7 @@ function bind(){
     window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:profile.goal,weeks}):old;
    window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,next,{mode,customId:mode==='generated'?'':customId});
    window.MLC2CalorieGoal.save(localStorage,verifiedOwnerId,profile);
+   try{window.MLC2ScheduleAuxSync?.()}catch{}
    renderCalorieGoal();renderWorkouts();
    if(estimate.needsReview)notice('Calorie estimate requires review before use.');
    else notice('Estimated calorie target saved on this iPhone.');
@@ -1039,6 +1041,7 @@ function bind(){
   try{
    const options={goal:$('coachAutoGoal').value,days:Number($('coachAutoDays').value),equipment:$('coachAutoEquipment').value};
    window.MLC2CoachPreferences.save(localStorage,verifiedOwnerId,options);
+   try{window.MLC2ScheduleAuxSync?.()}catch{}
    renderAutonomousCoach();notice('Coach training preferences saved on this device.');
   }catch(err){notice('Coach preference update failed: '+String(err.message||err).slice(0,100));renderAutonomousCoach()}
  });
