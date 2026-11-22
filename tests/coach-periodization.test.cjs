@@ -72,5 +72,5 @@ test('Live Coach displays phase advice without overwriting logged weights or cus
  assert.match(app,/!phase.allowLoadIncrease/);
  assert.match(app,/reason:'Program recovery guidance: hold the last completed working weight.'/);
  assert.match(html,/coach-periodization\.js\?v=1/);
- assert.match(html,/app\.js\?v=35/);
+ assert.match(html,/app\.js\?v=36/);
 });
