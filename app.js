@@ -451,6 +451,39 @@ function renderSettings(){
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
 function closeModal(){closeRest();$('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
+
+function liveCoachSuggestion(id){
+ const catalog=libraryExercises(),e=catalog.find(x=>x.id===id)||exercises.find(x=>x.id===id);
+ if(betaView().mode!=='pro')return {e,message:'Free beta mode: follow your planned targets. Pro enables progression advice.'};
+ if(e?.group==='Cardio')return {e,message:'Follow your planned cardio targets and adjust effort as needed.'};
+ const v=window.MLC2Coach?.suggestion(id,demoSessions,catalog);
+ return {e,advice:v,message:v?.status==='ready'?v.action.toUpperCase()+' · '+v.weight+' lb suggested. '+v.reason:'More completed sessions with qualifying working sets are needed before suggesting a weight change.'};
+}
+function liveCoachPreview(plan){
+ const readiness=window.MLC2CoachReadiness?.current(plan.id)||'Normal';
+ const status=readiness==='Tired'?'You marked today as Tired. Consider a lighter effort or rest.':readiness==='Great'?'You marked today as Great. Follow your plan with controlled progression.':'Normal readiness. Follow your plan and adjust to how you feel.';
+ return '<section class="live-coach-box" aria-label="Coach before workout"><div class="live-coach-title"><strong>✦ Coach · Before you start</strong><small>'+escapeHTML(betaView().mode.toUpperCase())+'</small></div><p>'+escapeHTML(status)+'</p><div class="live-coach-list">'+plan.ids.map(id=>{
+ const {e,message}=liveCoachSuggestion(id);if(!e)return '';
+ return '<div><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' sets × '+escapeHTML(String(e.reps||'8–12'))+' reps</small><p>'+escapeHTML(message)+'</p></div>';
+ }).join('')+'</div><small>Coach suggestions are optional. Your chosen custom or scheduled workout and logged values are never overwritten.</small></section>';
+}
+function liveCoachFeedback(id){
+ const {e,message}=liveCoachSuggestion(id);
+ const sets=session?.sets?.filter(x=>x.exerciseId===id)||[];
+ if(!sets.length)return message;
+ const latest=sets[sets.length-1],range=String(e?.reps||'').match(/(\d+)\s*[–-]\s*(\d+)/);
+ const lo=range?Number(range[1]):null,hi=range?Number(range[2]):null;
+ const feedback=lo!==null&&latest.reps<lo?'Last set below target reps; consider reducing load or resting if needed.':hi!==null&&latest.reps>hi?'Last set above target reps; future increases require completed-session history.':'Last set within the planned rep range. Keep form controlled.';
+ return message+' '+feedback+(window.MLC2CoachReadiness?.current(activePlan?.id)==='Tired'?' Readiness is Tired: do not force a progression.':'');
+}
+function liveCoachRecap(history){
+ const v=window.MLC2PostWorkout?.summarize(history);
+ if(!v?.hasHistory)return '';
+ return '<section class="live-coach-box" role="status"><div class="live-coach-title"><strong>✦ Coach · Workout recap</strong></div><p>'+v.current.sets+' weighted working sets across '+v.current.movements+' exercises saved.</p>'+
+ (v.previous?'<p>'+escapeHTML(String(Math.round(v.deltaVolume)))+' lb volume difference from your previous saved session of the same workout. '+v.improvedExercises+' exercises improved their top logged weight.</p>':'<p>No previous completed session of this exact workout is available for comparison.</p>')+
+ '<p>Future recommendations will reflect completed history. No workout plan was changed automatically.</p></section>';
+}
+
 function openWorkout(id){
  $('modal').classList.remove('auth-fullscreen');
  const workoutStartedOwner=verifiedOwnerId;
@@ -465,7 +498,7 @@ function openWorkout(id){
  session={sets:draftAPI?.resume(draftStore,plan)||[]};
  try{draftAPI?.save(draftStore,plan,session.sets)}
  catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
- openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div><div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
+ openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div>'+liveCoachPreview(plan)+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
  renderWorkoutLog();
  for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
@@ -482,7 +515,7 @@ function openWorkout(id){
    // Local write succeeded. Queue using the existing isolated Supabase journal.
    queueWorkoutForSync(entry);
    try{window.MLC2SessionDraft?.clear(activeDraftStore,plan.id)}catch{}
-   closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');
+   closeModal();renderHome();setPage('progress');notice('Practice session saved in this browser.');if(betaView().mode==='pro')openModal(liveCoachRecap(proposed));
   }catch{notice('Could not save the session; it stays open for retry. Check browser storage.');}
  });
 }
@@ -502,7 +535,7 @@ function renderWorkoutLog(){
   const coachHint=coach?.status==='ready'?
    '<p class="active-coach-hint"><strong>✦ Coach</strong> '+escapeHTML(coach.action.toUpperCase()+': '+coach.weight+' lb suggested')+' · '+escapeHTML(coach.reason)+' <small>Optional · no weights changed</small></p>':'';
   const count=logged.length;
-  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+defaults.weight+'"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
+  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+defaults.weight+'"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="live-coach-set" data-live-coach="'+escapeHTML(id)+'" aria-live="polite">'+escapeHTML(liveCoachFeedback(id))+'</div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
  }).join('');
  updateWorkoutProgress();
  for(const id of activePlan.ids)updateExerciseFeedback(id);
@@ -523,6 +556,7 @@ function updateExerciseFeedback(id){
  if(count)count.textContent=sets.length+' logged';
  if(feedback)feedback.textContent=sets.length?'✓ Set saved to your workout draft':'';
  if(undo)undo.hidden=sets.length===0;
+ const coachText=card.querySelector('[data-live-coach]');if(coachText)coachText.textContent=liveCoachFeedback(id);
  if(rows){
   rows.innerHTML=sets.map((set,i)=>'<div class="active-logged-row"><span>'+(i+1)+'</span><span>—</span><strong>'+escapeHTML(String(set.weight))+' lb</strong><strong>'+escapeHTML(String(set.reps))+'</strong><span class="active-done-check" aria-label="Set completed">✓</span></div>').join('');
  }
