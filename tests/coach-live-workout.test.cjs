@@ -28,7 +28,9 @@ function harness(mode='pro',ready='Normal',suggestion={status:'ready',action:'ho
 test('Coach shows actual established progression without rewriting custom routine',()=>{
  const env=harness();const before=JSON.stringify(plan);
  const markup=vm.runInContext('liveCoachPreview(activePlan)',env);
- assert.match(markup,/Coach · Before you start/);\n assert.match(markup,/<details class="live-coach-box live-coach-dropdown"/);\n assert.doesNotMatch(markup,/<details[^>]+open/);
+ assert.match(markup,/Coach · Before you start/);
+ assert.match(markup,/<details class="live-coach-box live-coach-dropdown"/);
+ assert.doesNotMatch(markup,/<details[^>]+open/);
  assert.match(markup,/65 lb suggested/);
  assert.match(markup,/My Custom Workout|Machine Chest Press/);
  assert.equal(JSON.stringify(plan),before);
