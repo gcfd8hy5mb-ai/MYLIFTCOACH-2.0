@@ -76,3 +76,13 @@ details.live-coach-dropdown{display:block;padding:0;overflow:hidden;margin:10px 
 .coach-auto-preferences select{display:block;width:100%;min-height:42px;margin-top:6px;padding:8px 6px;background:#082e35;border:1px solid #b29967;border-radius:9px;color:#f7f0df;font-size:12px}
 .coach-auto-preferences select:focus-visible{outline:2px solid #f2d398;outline-offset:2px}
 @media(max-width:540px){.coach-auto-preferences{grid-template-columns:repeat(2,minmax(0,1fr))}.coach-auto-preferences label:last-child{grid-column:1/-1}}
+
+/* Goal-based calorie estimate; intentionally no macro dashboard or meal diary. */
+.nutrition-goal-panel{max-width:760px;padding:18px;border-radius:16px;border:1px solid rgba(226,189,131,.38);background:#06373b}
+.calorie-goal-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.calorie-goal-form label{display:block;color:#e8d0a0;font-size:12px;font-weight:650}
+.calorie-goal-form input,.calorie-goal-form select{display:block;width:100%;margin-top:6px;min-height:44px;padding:10px;border-radius:9px;color:#f3efdc;background:#092e34;border:1px solid #b6a07a;font-size:15px}
+.calorie-goal-form button{grid-column:1/-1;min-height:44px}
+.calorie-goal-result{font-size:17px;font-weight:750;color:#f5dfa8;margin-top:16px;line-height:1.5}
+.calorie-goal-note{color:#bfd2ce;font-size:11px;line-height:1.6;margin-top:14px}
+@media(max-width:540px){.calorie-goal-form{grid-template-columns:1fr}}
