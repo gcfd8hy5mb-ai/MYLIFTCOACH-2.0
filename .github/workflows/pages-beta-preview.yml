@@ -76,15 +76,21 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp -a source/myliftcoach2 dist/myliftcoach2
-          # Approved 11/16 marble texture and hero photography from the original
-          # visual preview. Never pull workout logic or user data from that repo.
+          # The existing saved redesign Home Screen app opens /myliftcoach2/.
+          # Advance that stable preview address to the fully regression-tested G
+          # candidate. The original workout-tracker production URL is untouched.
+          mkdir -p dist/myliftcoach2
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
+            --exclude='*.md' phone-ux/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21G' dist/myliftcoach2/index.html
+          test -s dist/myliftcoach2/workout-active-ux.js
+          test -s dist/myliftcoach2/sync/automatic-workouts.js
+          # Approved 11/16 marble texture and hero photography remain unchanged.
           cp original-approved/assets/approved-vertical-marble-sharp.webp dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
           cp original-approved/assets/hero-dumbbells-photo.jpg dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
           test -s dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
           test -s dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
-          # Build a distinct iPhone acceptance area without modifying the
-          # original /myliftcoach2/ or root landing content.
+          # Preserve separate prior iPhone acceptance areas for regression checks.
           mkdir -p dist/phone-test
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
             --exclude='*.md' phone-candidate/ dist/phone-test/
