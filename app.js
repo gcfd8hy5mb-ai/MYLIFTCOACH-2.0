@@ -332,6 +332,14 @@ function approvedThumbnail(e){
  return /^(?:\.\/)?(?:assets|media|images)\/[A-Za-z0-9_./-]+\.(?:webp|png|jpg|jpeg)$/i.test(d.thumbnail)?d.thumbnail:'';
 }
 function renderLibrary(){
+ const catalog=libraryExercises();
+ const status=$('approvedMediaStatus');
+ if(status){
+  const ready=window.MLC2_VISUALS_344_READY===true&&catalog.length===344;
+  const approved=ready?catalog.filter(e=>e.demonstration?.status==='approved').length:0;
+  const pending=ready?catalog.filter(e=>e.demonstration?.status==='withheld').length:catalog.length;
+  status.textContent=ready?approved+' approved exercise demonstrations · '+pending+' awaiting approved artwork':'Demonstration inventory not verified in this build; exercise instructions remain available.';
+ }
  const query=$('exerciseSearch').value.trim().toLowerCase();
  const matches=libraryExercises().filter(e=>(!muscleFilter||e.group===muscleFilter)&&(e.name+' '+e.group).toLowerCase().includes(query));
  document.querySelectorAll('[data-muscle]').forEach(b=>b.classList.toggle('selected',b.dataset.muscle===muscleFilter));
