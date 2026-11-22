@@ -15,6 +15,10 @@ test('Login opens the auth-specific fullscreen modal without changing workout mo
  assert.match(css,/max-height:100dvh!important/);
  assert.match(css,/safe-area-inset-top/);
  assert.match(css,/font-size:16px!important/);
+ assert.match(css,/#modal\.auth-fullscreen\s*\{[\s\S]*?approved-vertical-marble-sharp\.webp/);
+ assert.match(css,/background-size:cover!important/);
+ assert.match(css,/rgba\(4,45,51,\.30\)/);
+ assert.doesNotMatch(css,/background:linear-gradient\(155deg,#0c484c/);
 });
 test('workout cards, selection actions and weekly schedule share dark teal styling',()=>{
  for(const selector of ['#workouts .workout-card','#workouts .custom-plan-actions button','#workouts .mlc-weekly-schedule-grid select']){
