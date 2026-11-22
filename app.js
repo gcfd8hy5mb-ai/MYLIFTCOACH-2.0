@@ -614,9 +614,30 @@ function renderCoach(){
  document.querySelectorAll('[data-pro-coach]').forEach(el=>{el.hidden=!pro});
  const note=$('coachFreeNotice');if(note)note.hidden=pro;
  if(pro){
-  window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
+  const history=coachEvidence();
+  window.MLC2Coach?.render($('coachSuggestions'),history,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
- }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren()}
+  window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,history,{
+   mode:'pro',initial:window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId),
+   onSaveDay:day=>{
+    if(betaView().mode!=='pro')throw Error('Pro beta access is required.');
+    const saved=window.MLC2Custom?.saveCoachDay(day);
+    if(!saved)throw Error('Could not save Coach workout');
+    renderHome();renderWorkouts();return saved;
+   }
+  });
+  window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,history,{
+   mode:'pro',readiness:window.MLC2CoachReadiness?.current(selected.id)||'Normal',
+   coach:window.MLC2Coach,
+   onOpenWorkout:id=>{
+    if(betaView().mode!=='pro')return;
+    if(nextPlan()?.id!==id){notice('Your workout selection changed. Review Today first.');renderCoach();return}
+    openWorkout(id);
+   }
+  });
+ }else{
+  for(const id of ['coachSuggestions','coachSubstitutions','coachProgramBuilder','coachPlanPreview'])$(id)?.replaceChildren();
+ }
  window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
  window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
  window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected);
