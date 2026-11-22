@@ -556,21 +556,34 @@ function saveAuth(data){originalSnapshot=null;
 function clearAuth(){authEpoch++;switchWorkoutOwner(null);cloudHistoryRequestId++;authStore.clear(sessionStorage,localStorage);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
 async function validateStoredAuth(){
  const thisEpoch=++authEpoch;
+ const saved=authStore.read(sessionStorage,localStorage);
+ if(!saved)return;
  try{
-  const saved=authStore.read(sessionStorage,localStorage);
-  if(!saved?.access_token||!saved?.user?.id)return;
-  let token=saved.access_token;
-  if(saved.expires_at<Date.now()/1000+45&&saved.refresh_token){
-    const refreshed=await authRequest('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
-    if(thisEpoch!==authEpoch)return; // Sign-out or account switch during refresh.
-    if(!refreshed?.user?.id||refreshed.user.id!==saved.user.id)throw Error('Refreshed account mismatch');
-    saveAuth(refreshed);token=refreshed.access_token;
-  }else{auth=saved;account=saved.user}
-  const user=await authRequest('user',null,token,'GET');
+  let candidate=saved;
+  if(saved.expires_at<Date.now()/1000+45){
+   const refreshed=await authRequest('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
+   if(thisEpoch!==authEpoch)return;
+   if(!refreshed?.access_token||!refreshed?.user?.id||refreshed.user.id!==saved.user.id){
+    clearAuth();return;
+   }
+   candidate={access_token:refreshed.access_token,refresh_token:refreshed.refresh_token,
+    user:refreshed.user,expires_at:Math.floor(Date.now()/1000)+(refreshed.expires_in||3600)};
+  }
+  // Stored auth is untrusted: never activate or sync an account before /user verifies.
+  const user=await authRequest('user',null,candidate.access_token,'GET');
   if(thisEpoch!==authEpoch)return;
-  if(!user?.id||user.id!==account?.id)clearAuth();
-  else{account=user;auth.user=user;authStore.save(sessionStorage,localStorage,auth);switchWorkoutOwner(user.id)}
- }catch{if(thisEpoch===authEpoch)clearAuth()}
+  if(!user?.id||user.id!==saved.user.id){clearAuth();return}
+  candidate.user=user;
+  authStore.save(sessionStorage,localStorage,candidate);
+  auth=candidate;account=user;switchWorkoutOwner(user.id);
+ }catch(err){
+  if(thisEpoch!==authEpoch)return;
+  if([400,401,403].includes(err?.status)){clearAuth();return}
+  // Transient network/offline/storage errors are not sign-outs.
+  // Do not discard the refresh token or falsely show authenticated access.
+  auth=null;account=null;
+  if(verifiedOwnerId!==null)switchWorkoutOwner(null);
+ }
  if(thisEpoch===authEpoch)renderSettings();
 }
 function openSignIn(){
