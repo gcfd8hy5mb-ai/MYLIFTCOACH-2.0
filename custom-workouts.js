@@ -116,10 +116,14 @@ function openEditor(id,unused,onChanged){
   const form=e.currentTarget,name=form.elements.title.value.trim(),description=form.elements.description.value.trim();
   if(!name||!selected.length){alert('Enter a workout name and select at least one exercise.');return}
   const plans=read();if(!existing&&plans.length>=60){alert('Maximum 60 custom workouts.');return}
-  const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',description:description.slice(0,160),ids:[...selected]};
+  const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',coachSaved:existing?.coachSaved===true,description:description.slice(0,160),ids:[...selected]};
   const next=existing?plans.map(p=>p.id===existing.id?updated:p):[updated,...plans];
   try{persistPlans(next)}catch{alert('Browser storage is unavailable; workout was not saved.');return}
-  try{localStorage.setItem(scoped(TODAY),updated.id)}catch{alert('Workout saved, but selecting it for today failed. You can select it from Workouts.')}
+  // Editing a Coach suggestion must not silently override the Home workout.
+  // An explicit "Use for today" action is still available in Workouts.
+  if(!updated.coachSaved){
+   try{localStorage.setItem(scoped(TODAY),updated.id)}catch{alert('Workout saved, but selecting it for today failed. You can select it from Workouts.')}
+  }
   close();onChanged?.();
  });
  selectedView();options();$('customName').focus();
