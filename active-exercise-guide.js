@@ -22,6 +22,19 @@ function addParagraph(parent,label,value){
  section.append(el('h3','',label),el('p','',value||'No additional information provided.'));
  parent.append(section);
 }
+function addHowTo(parent,e){
+ const section=el('section','mlc-guide-section');
+ section.append(el('h3','','How to Perform'));
+ const source=String(e.how||e.cue||'').trim();
+ // Preserve each exercise's actual instructions; never invent missing steps.
+ const sentences=source.match(/[^.!?]+[.!?]*/g)?.map(s=>s.trim()).filter(Boolean)||[];
+ if(sentences.length>1){
+  const steps=el('ol','mlc-guide-steps');
+  for(const sentence of sentences)steps.append(el('li','',sentence));
+  section.append(steps);
+ }else section.append(el('p','',source||'Instructions are not available yet.'));
+ parent.append(section);
+}
 function addList(parent,label,items){
  const section=el('section','mlc-guide-section');section.append(el('h3','',label));
  const list=el('ul');for(const s of Array.isArray(items)&&items.length?items:['No additional notes provided.'])list.append(el('li','',s));
@@ -49,7 +62,7 @@ function openFull(id,trigger){
  image.src=imgFor(e,true);image.addEventListener('error',()=>{if(!image.src.endsWith('image-coming-approved.webp'))image.src=placeholder},{once:true});
  const caption=el('p','mlc-guide-caption',approved(e)?'Starting and finishing positions':'IMAGE COMING — exercise instructions available below');
  panel.replaceChildren(top,title,metadata,image,caption);
- addParagraph(panel,'How to Perform',e.how||e.cue);
+ addHowTo(panel,e);
  addParagraph(panel,'Muscles Worked',e.muscle||e.group);
  addParagraph(panel,'Equipment',e.equipment||'Not specified');
  addList(panel,'Technique Tips',e.tips);addList(panel,'Common Mistakes',e.mistakes);
