@@ -441,7 +441,7 @@ function renderProgress(){
  const auditRoot=$('simulationAudit');
  auditRoot.hidden=!sim?.active;
  if(sim?.active){
-  const result=window.MLC2SimulationAudit?.audit(progressData,libraryExercises(),window.MLC2Progress,window.MLC2ProgressWeekly);
+  const result=window.MLC2SimulationAudit?.audit(progressData,libraryExercises(),window.MLC2Progress,window.MLC2ProgressWeekly,window.MLC2Coach);
   window.MLC2SimulationAudit?.render(auditRoot,result);
  }else auditRoot.replaceChildren();
  document.getElementById('progress').classList.toggle('simulation-active',Boolean(sim?.active));
