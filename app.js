@@ -77,7 +77,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){if(pendingCoachScheduleId)cancelCoachSchedule();if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
+function switchWorkoutOwner(owner){window.MLC2Simulation?.clear();if(pendingCoachScheduleId)cancelCoachSchedule();if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
@@ -294,6 +294,7 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
 // Narrow navigation hook for the compact Progress tabs. No state or storage changes.
 window.MLC2ProgressNavigate=next=>{if(next==='history'||next==='tracking')setPage(next)};
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
+const viewedHistory=()=>window.MLC2Simulation?.view(demoSessions)||demoSessions;
 function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:planStorage()})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
 function wireWorkoutPreviewImages(root){
  if(!root)return;
@@ -429,20 +430,25 @@ function renderLibrary(){
  },{once:true}));
 }
 function renderProgress(){
- window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),demoSessions);
- window.MLC2PostWorkout?.render($('postWorkoutRecap'),demoSessions);
- const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
- $('progressSessions').textContent=demoSessions.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
- renderProgressChart();
- window.MLC2Progress?.renderRecords($('demoRecords'),demoSessions,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
- window.MLC2Progress?.renderVolumeAudit(document.getElementById('progressVolumeAudit'),demoSessions,(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
+ const progressData=viewedHistory();
+ const sim=window.MLC2Simulation?.status();
+ $('simulationStatus').textContent=sim?.active?'SIMULATION ACTIVE · '+sim.sessions+' fictional workouts over '+sim.days+' days. Charts, records and Coach show TEST DATA only. Real history is unchanged.':'Simulation is off. Your saved 2.0 history is shown normally.';
+ $('simulationClear').disabled=!sim?.active;
+ document.getElementById('progress').classList.toggle('simulation-active',Boolean(sim?.active));
+ window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),progressData);
+ window.MLC2PostWorkout?.render($('postWorkoutRecap'),progressData);
+ const movements=new Set(progressData.flatMap(x=>x.sets.map(y=>y.exerciseId)));
+ $('progressSessions').textContent=progressData.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
+ renderProgressChart(progressData);
+ window.MLC2Progress?.renderRecords($('demoRecords'),progressData,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
+ window.MLC2Progress?.renderVolumeAudit(document.getElementById('progressVolumeAudit'),progressData,(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
  window.MLC2Progress?.renderRecords($('legacyRecords'),originalSnapshot?.sessions||[],'original',(id,name)=>libraryExercises().find(e=>e.id===id)?.name||name);
  $('legacyRecordsNote').textContent=originalSnapshot?'Read-only snapshot from original device storage.':'Tap View original records in Workout History to load a local read-only snapshot. No cloud data is queried.';
- $('sessionHistory').innerHTML=demoSessions.length?demoSessions.map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">No demo sessions recorded yet. Open Workouts to start your first practice session.</div>';
+ $('sessionHistory').innerHTML=progressData.length?progressData.map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">No demo sessions recorded yet. Open Workouts to start your first practice session.</div>';
 }
-function renderProgressChart(){
+function renderProgressChart(progressData=viewedHistory()){
  const root=$('progressChart');if(!root)return;
- const rows=demoSessions.filter(x=>Array.isArray(x?.sets)&&x.sets.some(set=>window.MLC2Progress?.validSet(set))).slice(0,8).reverse();
+ const rows=progressData.filter(x=>Array.isArray(x?.sets)&&x.sets.some(set=>window.MLC2Progress?.validSet(set))).slice(0,8).reverse();
  if(!rows.length){root.innerHTML='<div class="chart-empty">Your volume chart will appear here after you finish a practice workout.<span>No invented progress numbers.</span></div>';return;}
  const values=rows.map(x=>window.MLC2Progress?.volumeTotal(x.sets)||0);
  const peak=Math.max(1,...values),count=values.length;
@@ -452,6 +458,9 @@ function renderProgressChart(){
  root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' completed practice sessions with actual weighted sets"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb training volume last session</p>';
 }
 function renderCoach(){
+ const coachData=viewedHistory();
+ const simulated=window.MLC2Simulation?.active()===true;
+ const simNotice=$('coachSimulationNotice');if(simNotice)simNotice.hidden=!simulated;
  const selected=nextPlan(),catalog=libraryExercises();
  const mode=betaView();
  const pro=mode.mode==='pro';
@@ -459,10 +468,11 @@ function renderCoach(){
  const note=$('coachFreeNotice');if(note)note.hidden=pro;
  const updateCoachPlan=()=>{
   if(betaView().mode!=='pro')return;
-  window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,demoSessions,{
+  window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,coachData,{
    mode:'pro',readiness:window.MLC2CoachReadiness?.current(selected.id)||'Normal',
    coach:window.MLC2Coach,
    onOpenWorkout:id=>{
+    if(simulated){notice('Disable simulated history in Progress before opening a real workout from Coach.');return}
     if(betaView().mode!=='pro')return;
     if(nextPlan().id!==id){notice('Selected workout changed. Review your current workout first.');renderCoach();return}
     openWorkout(id);
@@ -471,11 +481,12 @@ function renderCoach(){
  };
 
  if(pro){
-  window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
+  window.MLC2Coach?.render($('coachSuggestions'),coachData,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
-  window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,demoSessions,{
+  window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,coachData,{
    mode:'pro',
    onSaveDay:day=>{
+    if(simulated)throw Error('Disable test history before saving a Coach workout');
     if(betaView().mode!=='pro')throw Error('Pro beta mode is required');
     const saved=window.MLC2Custom.saveCoachDay(day);
     renderWorkouts();
@@ -485,10 +496,10 @@ function renderCoach(){
   });
   updateCoachPlan();
  }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren();$('coachProgramBuilder').replaceChildren()}
- window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
+ window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,coachData,catalog);
  window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
- window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected,updateCoachPlan);
- window.MLC2CoachTrends?.render($('coachTrends'),demoSessions,window.MLC2CoachReadiness?.weeklyGoal()||4);
+ window.MLC2CoachReadiness?.render($('coachReadiness'),coachData,selected,updateCoachPlan);
+ window.MLC2CoachTrends?.render($('coachTrends'),coachData,window.MLC2CoachReadiness?.weeklyGoal()||4);
 }
 function renderSettings(){
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (production workout data is not loaded)':'Not signed in. You can still explore the demo.';
@@ -780,6 +791,20 @@ function bind(){
  $('restPause').addEventListener('click',()=>{restPaused=!restPaused;updateRestClock()});
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
+ // Simulation is memory-only: never call workout save, sync journal or draft APIs.
+ for(const days of [30,90]){
+  $('simulation'+days).addEventListener('click',()=>{
+   try{
+    const result=window.MLC2Simulation.start(libraryExercises(),nextPlan(),days);
+    renderProgress();if(page==='coaching')renderCoach();
+    notice(result.sessions+' simulated workouts loaded for testing. Saved workouts remain unchanged.');
+   }catch(error){$('simulationStatus').textContent='Could not build simulated history: '+String(error.message||error).slice(0,130)}
+  });
+ }
+ $('simulationClear').addEventListener('click',()=>{
+  window.MLC2Simulation?.clear();renderProgress();if(page==='coaching')renderCoach();
+  notice('Simulation cleared. Actual saved workout history is back.');
+ });
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only the local 2.0 workout history for the current '+(verifiedOwnerId?'account':'guest')+'?'))return;try{window.MLC2AccountWorkouts.clear(localStorage,verifiedOwnerId);demoSessions=[];renderProgress();renderHome();notice('Current local workout history cleared. Production data untouched.')}catch{notice('Unable to clear this device history.')}});
  let pendingRecovery=null;
  $('recoveryImportFile').addEventListener('change',async e=>{
