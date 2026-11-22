@@ -15,7 +15,8 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [x] Coach weight recommendations from qualifying completed sessions, opt-in next-set fill, live feedback and post-workout recap.
 - [x] Readiness tracking, selected-plan priority, simulated test isolation and automated regression checks.
 - [x] User-configurable goals, 3–5 weekly training days, and available equipment in the active automatic proposal; saved locally in owner-scoped preferences. Cloud synchronization of these NEW preferences is still pending.
-- [ ] Recovery-aware adaptation, bounded fatigue/volume deload logic and rest-day recommendations with safety limits.
+- [x] Initial recovery-aware, phase-specific set-volume advice: optional +1 set only in Build phase after two qualifying sessions and Great readiness; recommend lighter volume on Tired or Consolidate; block load increases under recovery holds. Advice never edits saved routines or logged sets.
+- [ ] Extend recovery adaptation with more individualized progression, missed-session scheduling and physical iPhone acceptance; the current guidance is conservative, not fully autonomous.
 - [ ] Auto-rotating Coach sessions that respect manual schedule, custom plans and missed days on the primary iPhone; cross-device Coach synchronization is not a release requirement.
 - [ ] Exercise substitutions when equipment is unavailable, with equivalent movement safeguards and visible reasoning.
 - [ ] Real iPhone acceptance: first session, progression after two qualifying sessions, edited targets, interrupted workout and no-history fallback.
@@ -50,7 +51,8 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [x] Full offline regression suite passed on commit 91ed8bf6a3f53c3cc41c96f5eae706633bf3ccd9.
 - [ ] Test the new source selector, saved custom workout editing, mixed rotation, and restart in iPhone Safari.
 - [ ] Verify program source preferences are included in iPhone backup/recovery before retiring the original app.
-- [ ] Add phase-aware training adjustments and recovery logic to custom workouts without silently editing user plans.
+- [x] Add phase-specific custom-workout suggestions for sets, rep focus, load-increase gating and rest considerations without editing saved plans. CI passed on commit d8aab253d94da45b5c6c209c1e3bd9ff17aa7867.
+- [ ] Verify the new guidance on iPhone; implement any further individualized progression and calendar scheduling only after acceptance.
 
 ## Requirements before the original application can be retired
 - [ ] Integrate and audit approved demonstration assets and precise exercise-ID mappings. No auto-approval of missing images.
