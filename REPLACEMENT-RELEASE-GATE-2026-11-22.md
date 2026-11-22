@@ -1,5 +1,12 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## iPhone acceptance start — November 22
+- [x] Prepared actionable iPhone acceptance matrix: `IPHONE-REPLACEMENT-ACCEPTANCE-2026-11-22.md` with isolated guest Safari tests for workout drafts, completed history, routines, goals and images.
+- [x] Explicitly separated **local preview** tests from future signed-in cloud checks. Preview CSP blocks authentication and backup; do not claim a live cloud pass.
+- [ ] Obtain physical iPhone Stage A PASS results before declaring preview accepted.
+- [ ] Obtain authorized Stage B signed-in cloud acceptance before any production replacement. Do not enable a cloud-connected public preview or point disposable data at production.
+- [ ] Confirm complete rollback and explicit cutover approval. Original Home Screen app remains untouched.
+
 ## Workout durability and resume safety — 2026-11-22
 - [x] Fixed concurrent upload handling: do not write to a potentially stale in-flight workout journal; save completed sessions first and rescan account history in the next upload pass.
 - [x] A workout finished while auxiliary data backup runs is queued and resumed after that backup; verified owner/record binding is required.
