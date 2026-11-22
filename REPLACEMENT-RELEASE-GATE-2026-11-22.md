@@ -1,5 +1,15 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## Workout durability and resume safety — 2026-11-22
+- [x] Fixed concurrent upload handling: do not write to a potentially stale in-flight workout journal; save completed sessions first and rescan account history in the next upload pass.
+- [x] A workout finished while auxiliary data backup runs is queued and resumed after that backup; verified owner/record binding is required.
+- [x] Full regression tests passed for `9af0f83eef25cfa61669c48dac83a2881f8ad9be`, including new concurrency tests and account-draft resume tests.
+- [x] Home and Today's Workout now display Resume Workout for a stored, nonempty, matching draft belonging to the current account; edited exercise lists or another account cannot claim that draft.
+- [x] iPhone source asset version bumped to `app.js?v=36`; independent preview workflow tests both new behavior suites.
+- [ ] Verify actual in-Safari interruption, reopening, local draft resume, offline completion and subsequent cloud sync with signed-in iPhone, without relying on cloud-blocked visual preview.
+- [ ] Preview deployment's published state could not be confirmed from available deployment results; do not claim v36 is live.
+- [ ] Original saved Home Screen app and production branch remain unchanged; merge requires explicit approval.
+
 ## Next-program correctness — 2026-11-22
 - [x] Fixed mismatch between Coach next-session rotation and Goals adherence count: both now use the same verified, owner-scoped, deduplicated completed-session records.
 - [x] Duplicate, empty, malformed, future-dated, out-of-cycle and unrelated workout records cannot advance a custom, Coach-generated, or mixed program.
