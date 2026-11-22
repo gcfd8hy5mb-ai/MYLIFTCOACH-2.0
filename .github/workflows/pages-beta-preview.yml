@@ -352,3 +352,23 @@ jobs:
       - name: Deploy to separate beta repository GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify live stable and isolated preview URLs after deployment
+        shell: bash
+        env:
+          PAGES_ROOT: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          root="${PAGES_ROOT%/}"
+          for attempt in 1 2 3 4 5 6; do
+            stable="$(curl --fail --silent --show-error --max-time 15 "$root/myliftcoach2/" || true)"
+            preview="$(curl --fail --silent --show-error --max-time 15 "$root/workouts-n-review/" || true)"
+            if printf '%s' "$stable" | grep -q 'iPhone beta test build 11-21N' &&
+               printf '%s' "$preview" | grep -q 'SAFE UI Preview'; then
+              printf 'Stable 11-21N verified: %s/myliftcoach2/\n' "$root"
+              printf 'Read-only preview verified: %s/workouts-n-review/\n' "$root"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo 'Deployment incomplete: expected Stable and Preview content not both available.' >&2
+          exit 1
