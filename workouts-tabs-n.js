@@ -8,6 +8,7 @@
   const heading=page.querySelector('.page-heading');
   const toolbar=page.querySelector('.custom-workout-toolbar');
   const schedule=page.querySelector('#weeklySchedule')?.closest('article');
+  const coachSchedule=page.querySelector('#coachSchedulePanel');
   const recovery=page.querySelector('#guestWorkoutRecovery');
   const grid=page.querySelector('#workoutGrid');
   const legacy=page.querySelector('.original-plan-panel');
@@ -44,6 +45,7 @@
   const legacySummary=document.createElement('summary');legacySummary.textContent='Original app routines (read-only)';
   legacyDetails.append(legacySummary,legacy);panels.routines.append(legacyDetails);
   panels.schedule.append(schedule);
+  if(coachSchedule)panels.schedule.append(coachSchedule);
   heading.querySelector('h1').textContent='Workouts';
   const description=heading.querySelector('p');
   if(description)description.textContent='Start a workout, manage routines, or update your weekly schedule.';
@@ -62,6 +64,7 @@
    });
    syncToday();
   }
+  window.MLC2WorkoutsSelectTab=select;
   nav.addEventListener('click',event=>{const button=event.target.closest('[data-workout-n-tab]');if(button)select(button.dataset.workoutNTab)});
   nav.addEventListener('keydown',event=>{
    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
