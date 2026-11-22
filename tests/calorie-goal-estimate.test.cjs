@@ -76,5 +76,5 @@ test('Mobile nutrition screen shows distinct feet and inches controls and preser
  assert.match(app,/feetInchesFromCm\(p.heightCm\)/);
  assert.match(css,/\.calorie-height-pair\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(html,/calorie-goal-estimate\.js\?v=2/);
- assert.match(html,/live-coach-workout\.css\?v=11/);
+ assert.match(html,/live-coach-workout\.css\?v=12/);
 });
