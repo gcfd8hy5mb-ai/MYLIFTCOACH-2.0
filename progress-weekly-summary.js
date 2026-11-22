@@ -1,6 +1,6 @@
 /* MYLIFTCOACH 2.0 — read-only weekly Progress comparison.
    Derived from completed sessions in the current account only.
-   No storage, account, fetch, or workout writes. */
+   Read-only calculation with no network access or changes to records. */
 (function(root,factory){
  const api=factory();
  if(typeof module==='object'&&module.exports)module.exports=api;
