@@ -64,3 +64,23 @@ test('offline backup does not access cloud or create a journal',async()=>{
  assert.equal((await engine(s,t,()=>owner,()=>false).backup()).status,'offline');
  assert.equal(t.commits,0);assert.equal(Journal.load(s,owner).items.length,0);
 });
+
+test('new cloud fitness category after approval requires reconfirmation before any local recovery',async()=>{
+ const db=storage(),cloud=records();
+ cloud.m.set(owner+'/tracking/snapshot-v1',{owner,type:'tracking',id:'snapshot-v1',revision:1,deleted:false,payload:Aux.payload(tracking)});
+ const plan=[{id:'custom-new',title:'New',ids:['press']}];
+ const eng=engine(db,cloud);
+ const result=await eng.restore({confirmRestore:async labels=>{
+  assert.deepEqual(labels,['Water and weight tracking']);
+  cloud.m.set(owner+'/custom-plan/snapshot-v1',{owner,type:'custom-plan',id:'snapshot-v1',revision:1,deleted:false,payload:Aux.payload(plan)});
+  return true;
+ }});
+ assert.equal(result.status,'changed-reconfirm');
+ assert.deepEqual(result.restored,[]);
+ assert.equal(db.getItem('mlc2-local-daily-v1:user:'+owner),null);
+ assert.equal(db.getItem('mlc2-custom-plans-v1:user:'+owner),null);
+ const after=await eng.restore({confirmRestore:async labels=>labels.includes('Custom workouts')&&labels.includes('Water and weight tracking')});
+ assert.equal(after.status,'restored');
+ assert.ok(after.restored.includes('Custom workouts'));
+ assert.ok(after.restored.includes('Water and weight tracking'));
+});
