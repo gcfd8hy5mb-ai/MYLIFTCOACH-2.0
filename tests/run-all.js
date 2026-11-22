@@ -12,6 +12,7 @@ const tests=[
  'custom-home-priority.test.cjs',
  'active-workout-ux.test.cjs',
  'workout-auth-ux-fix.test.cjs',
+ 'mobile-header-cleanup.test.cjs',
  'cloud-archive.test.js',
  'cloud-migration-readiness.test.js',
  'cloud-checkpoint-review.test.js',
