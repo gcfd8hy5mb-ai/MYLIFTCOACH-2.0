@@ -327,13 +327,14 @@ function coachAutonomousPlan(){
  if(betaView().mode!=='pro'||!window.MLC2ProgramBuilder)return null;
  const sessions=coachEvidence(),catalog=libraryExercises();
  // Four days is a transparent starting default; training preferences are not inferred.
- const proposal=window.MLC2ProgramBuilder.build(catalog,sessions,{goal:'balanced',days:4,equipment:'Any'});
+ const options=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{goal:'balanced',days:4,equipment:'Any'};
+ const proposal=window.MLC2ProgramBuilder.build(catalog,sessions,options);
  if(proposal?.status!=='ready')return null;
- const completed=demoSessions.filter(row=>typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
+ const completed=sessions.filter(row=>typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
  const day=proposal.days[completed%proposal.days.length];
  if(!day?.exercises?.length)return null;
  return {id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
-  description:'Automatically generated balanced workout. Review exercises and loads before training.',
+  description:'Coach-generated '+options.goal+' session. Review exercises and loads before training.',
   kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day};
 }
 function renderAutonomousCoach(){
@@ -344,7 +345,10 @@ function renderAutonomousCoach(){
  if(!coachAutonomousDraft)return;
  title.textContent=coachAutonomousDraft.title;
  const names=coachAutonomousDraft.ids.map(id=>libraryExercises().find(e=>e.id===id)?.name).filter(Boolean);
- details.textContent=names.join(' · ')+' — proposed automatically from your catalog and completed sessions. Your chosen workout above is unchanged.';
+ details.textContent=names.join(' · ')+' — '+(window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.days||4)+' training days per cycle. Your chosen workout above is unchanged.';
+ for(const [key,id] of [['goal','coachAutoGoal'],['days','coachAutoDays'],['equipment','coachAutoEquipment']]){
+  const field=$(id);if(field)field.value=String(window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.[key]??({goal:'balanced',days:4,equipment:'Any'}[key]));
+ }
  start.disabled=false;
 }
 
@@ -830,6 +834,14 @@ function bind(){
  });
  $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
  $('coachAutoStart').addEventListener('click',()=>{const proposal=coachAutonomousPlan();if(!proposal)return;coachAutonomousDraft=proposal;openWorkout(proposal.id)});
+ $('coachAutoPreferences').addEventListener('change',()=>{
+  if(betaView().mode!=='pro')return;
+  try{
+   const options={goal:$('coachAutoGoal').value,days:Number($('coachAutoDays').value),equipment:$('coachAutoEquipment').value};
+   window.MLC2CoachPreferences.save(localStorage,verifiedOwnerId,options);
+   renderAutonomousCoach();notice('Coach training preferences saved on this device.');
+  }catch(err){notice('Coach preference update failed: '+String(err.message||err).slice(0,100));renderAutonomousCoach()}
+ });
  document.querySelectorAll('[data-workout-tab]').forEach(button=>{
   button.addEventListener('click',()=>setWorkoutTab(button.dataset.workoutTab));
   button.addEventListener('keydown',event=>{
