@@ -85,23 +85,32 @@ jobs:
           ref: d714dfde99c2bfc8cb9529d465beeedfe307301e
           path: phone-ui-i
           persist-credentials: false
+      - name: Checkout verified iPhone account persistence correction
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: dd0d230c8a6444a401ac7f799a1fed9cb4e489d1
+          path: phone-ui-j
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           # The existing saved redesign Home Screen app opens /myliftcoach2/.
-          # Advance stable redesign address to regression-tested marble login I.
-          # All earlier iPhone test paths and production workout-tracker remain intact.
+          # Update only the stable redesign preview address to tested J.
+          # Previous iPhone test paths and production workout-tracker remain intact.
           mkdir -p dist/myliftcoach2
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-ui-i/ dist/myliftcoach2/
-          grep -q 'iPhone beta test build 11-21I' dist/myliftcoach2/index.html
+            --exclude='*.md' phone-ui-j/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21J' dist/myliftcoach2/index.html
+          grep -q 'auth-session-store.js?v=1' dist/myliftcoach2/index.html
+          test -s dist/myliftcoach2/sync/auth-session-store.js
           grep -q 'workout-auth-ux-fix.css?v=2' dist/myliftcoach2/index.html
           grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/workout-auth-ux-fix.css
           # Verify H is not accidentally being republished to the saved app.
           ! grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
-          echo 'Existing saved redesign app: prepared marble build 11-21I'
+          echo 'Existing saved redesign app: prepared verified login build 11-21J'
           sha256sum dist/myliftcoach2/index.html dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
