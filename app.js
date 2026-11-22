@@ -283,9 +283,34 @@ function logDaily(event,type){
 
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notice(message){const t=$('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
+function renderGoalProgramSources(){
+ const form=$('calorieGoalForm');
+ if(!form)return;
+ const source=form.elements.namedItem('programSource'),selection=form.elements.namedItem('programCustom');
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const saved=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
+ const current=selection.value,custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
+ selection.replaceChildren(new Option('All my custom workouts (rotate)',''));
+ for(const plan of custom)selection.add(new Option(plan.title,plan.id));
+ source.value=saved?.mode||'generated';
+ selection.value=saved?.customId&&custom.some(p=>p.id===saved.customId)?saved.customId:
+  custom.some(p=>p.id===current)?current:'';
+ $('goalProgramCustomGroup').hidden=source.value==='generated';
+}
+function programCustomOptions(){
+ return window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
+}
+function programCompletedCount(program,source){
+ const all=coachEvidence(),custom=programCustomOptions(),eligibleIds=new Set(custom.map(p=>p.id));
+ return all.filter(row=>row&&typeof row.planId==='string'&&
+  (row.planId.startsWith('coach-auto-day-')||eligibleIds.has(row.planId))&&
+  Date.parse(row.created||'')>=Date.parse(program.startDate+'T00:00:00Z')).length;
+}
+
 function renderCalorieGoal(){
  const form=$('calorieGoalForm'),out=$('calorieGoalResult');
  if(!form||!out)return;
+ renderGoalProgramSources();
  const p=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
  const status=$('goalProgramProgress');
@@ -360,14 +385,16 @@ function coachAutonomousPlan(){
  const focus=program?({strength:'strength',bulk:'muscle',maintain:'balanced',cut:'balanced'}[program.goal]):preferences.goal;
  const options={...preferences,goal:focus};
  const proposal=window.MLC2ProgramBuilder.build(catalog,sessions,options);
- if(proposal?.status!=='ready')return null;
- const completed=sessions.filter(row=>typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')&&
-  (!program||Date.parse(row.created||'')>=Date.parse(program.startDate+'T00:00:00Z'))).length;
- const day=proposal.days[completed%proposal.days.length];
- if(!day?.exercises?.length)return null;
- return {id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
+ const source=program?window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program):null;
+ const completed=program?programCompletedCount(program,source):sessions.filter(row=>
+  typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
+ const day=proposal?.status==='ready'?proposal.days[completed%proposal.days.length]:null;
+ const generated=day?.exercises?.length?{id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
   description:'Coach-generated '+options.goal+' session'+(progress?' · Week '+progress.week+' of '+progress.totalWeeks:'')+'. Review exercises and loads before training.',
-  kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day,programWeek:progress?.week||null};
+  kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day,programWeek:progress?.week||null}:null;
+ const choice=window.MLC2ProgramSource?.choose({source:source||{mode:'generated',customId:''},
+  customPlans:programCustomOptions(),generated,completed})||null;
+ return choice;
 }
 function renderAutonomousCoach(){
  const panel=$('coachAutoPanel'),title=$('coachAutoTitle'),details=$('coachAutoDetails'),start=$('coachAutoStart');
@@ -395,6 +422,7 @@ function renderAutonomousCoach(){
  title.textContent=coachAutonomousDraft.title;
  const names=coachAutonomousDraft.ids.map(id=>libraryExercises().find(e=>e.id===id)?.name).filter(Boolean);
  details.textContent=(progress?'Week '+progress.week+' of '+progress.totalWeeks+' · '+progress.phase+' phase. ':'')+
+  (coachAutonomousDraft.programSource==='custom'?'Using your original custom routine. ':'Coach-generated routine. ')+
   names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.';
  start.disabled=false;
 }
@@ -857,6 +885,9 @@ function openSignIn(){
  });
 }
 function bind(){
+ $('goalProgramSource').addEventListener('change',()=>{
+  $('goalProgramCustomGroup').hidden=$('goalProgramSource').value==='generated';
+ });
  $('goalProgramRestart').addEventListener('click',()=>{
   const profile=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
   const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
@@ -878,8 +909,15 @@ function bind(){
    const old=window.MLC2GoalProgram.read(localStorage,verifiedOwnerId);
    if(old&&(old.goal!==profile.goal||old.weeks!==weeks)&&
       !confirm('Start a new '+weeks+'-week '+profile.goal+' program? The old program date will be replaced, but your workout history and custom routines will be preserved.'))return;
-   if(!old||old.goal!==profile.goal||old.weeks!==weeks)
-    window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:profile.goal,weeks});
+   const mode=field('programSource'),customId=field('programCustom');
+   if(!window.MLC2ProgramSource.MODES.includes(mode))throw Error('Select a workout source');
+   if(mode!=='generated'&&!programCustomOptions().length)
+    throw Error('Create a custom workout before choosing custom or combined programs');
+   if(customId&&!programCustomOptions().some(p=>p.id===customId))
+    throw Error('Selected custom routine is unavailable');
+   const next=(!old||old.goal!==profile.goal||old.weeks!==weeks)?
+    window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:profile.goal,weeks}):old;
+   window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,next,{mode,customId:mode==='generated'?'':customId});
    window.MLC2CalorieGoal.save(localStorage,verifiedOwnerId,profile);
    renderCalorieGoal();renderWorkouts();
    if(estimate.needsReview)notice('Calorie estimate requires review before use.');
