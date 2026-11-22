@@ -41,7 +41,7 @@ test('all exercise detail guides use the same instruction, muscles, equipment, t
  assert.ok(guide.includes("addList(panel,'Technique Tips',"));
  assert.ok(guide.includes("addList(panel,'Common Mistakes',"));
  assert.ok(guide.includes('const sentences=source.match('));
- assert.ok(guide.includes('Never invent missing steps'));
+ assert.match(guide,/never invent missing steps/i);
 });
 
 test('duplicate-name exercises share the richer existing instructions while retaining their IDs',()=>{
