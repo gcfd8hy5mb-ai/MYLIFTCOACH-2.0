@@ -1,5 +1,13 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## Next-program correctness — 2026-11-22
+- [x] Fixed mismatch between Coach next-session rotation and Goals adherence count: both now use the same verified, owner-scoped, deduplicated completed-session records.
+- [x] Duplicate, empty, malformed, future-dated, out-of-cycle and unrelated workout records cannot advance a custom, Coach-generated, or mixed program.
+- [x] Existing user-selected custom routines and scheduled sessions retain priority over program suggestions.
+- [x] Full offline regression CI passed on commit `ae8ba3eb9c43beb8ad495ec5ece8a83517fb6d61`; source-aware tests run in isolated replacement preview workflow.
+- [ ] Validate the corrected 6/8/12-week rotation with completed workouts on actual iPhone Safari / saved app, including account backup and resume.
+- [ ] No original Home Screen app cutover until explicit approval.
+
 ## Program continuity merge batch — 2026-11-22
 - [x] Integrated source-specific 6/8/12-week completed-session tracking (custom / generated / mixed), including weekly adherence and count of missed prior sessions.
 - [x] Count only real qualifying, uniquely identified completed workout logs inside the active program's time window. Duplicate imports, old history, wrong routines and empty sessions cannot advance program tracking.
