@@ -67,7 +67,7 @@ function enhance(){
   const thumbnail=el('img','mlc-guide-thumb');thumbnail.loading='lazy';thumbnail.src=imgFor(e);thumbnail.alt=approved(e)?'Starting position for '+e.name:'Image coming placeholder';if(!approved(e))thumbnail.classList.add('mlc-guide-placeholder');
   thumbnail.addEventListener('error',()=>{if(!thumbnail.src.endsWith('image-coming-approved.webp')){thumbnail.src=placeholder;thumbnail.classList.add('mlc-guide-placeholder')}},{once:true});
   const toggle=el('button','mlc-guide-toggle','View Exercise Guide ▾');toggle.type='button';toggle.setAttribute('aria-expanded','false');
-  bar.append(thumbnail,toggle);wrap.append(bar);
+  const thumbFrame=el('span','mlc-guide-thumb-frame');thumbFrame.append(thumbnail);bar.append(thumbFrame,toggle);wrap.append(bar);
   const content=el('div','mlc-guide-quick');content.hidden=true;
   const lead=el('p','mlc-guide-how',e.how||e.cue||'Detailed instructions not available');
   const muscle=el('p','mlc-guide-mini','Muscles: '+(e.muscle||e.group));
@@ -85,7 +85,7 @@ function enhance(){
   context.insertAdjacentElement('afterend',wrap);
   if(opened===e.id){content.hidden=false;toggle.setAttribute('aria-expanded','true');toggle.textContent='Hide Exercise Guide ▴'}
  }
- if(opened&&!root.querySelector('[data-exercise-card="'+CSS.escape(opened)+'"]'))opened=null;
+ if(opened&&![...root.querySelectorAll('[data-exercise-card]')].some(card=>card.getAttribute('data-exercise-card')===opened))opened=null;
 }
 const observer=new MutationObserver(enhance);
 observer.observe(root,{childList:true,subtree:false});
