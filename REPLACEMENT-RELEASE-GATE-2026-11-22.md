@@ -10,6 +10,13 @@ Date: 2026-11-22
 - [ ] Complete required iPhone acceptance, verify a production backup and rollback plan, and obtain explicit approval **before** merging to the published saved Home Screen app.
 - **Status: requested and added to release gate, not yet executed.** No autonomous future Codex run is implied by this checklist.
 
+## iPhone video acceptance — Free/Pro switch, 2026-11-22
+- [x] User-provided iPhone screen recording visibly shows guest beta switching Pro → Free.
+- [x] Home changes from Coach · Day 1 in Pro to the existing Lower Body B routine with Resume Workout in Free, without reloading the preview.
+- [x] Workout and set counts remain visible at 3 workouts / 24 sets during the switch.
+- [x] Approved teal marble, gold and dark card appearance remains intact in the recorded views.
+- [ ] This video does **not** establish authenticated beta-mode persistence, successful live cloud backup or cross-device recovery. Those checks remain pending.
+
 ## Free/Pro immediate-navigation integration — November 22
 - [x] Corrected beta mode switching so Home, Today's Workout and Coach refresh together immediately, for both browser guest and verified account modes.
 - [x] Verified account metadata is re-fetched using an up-to-date session token; account owner and confirmed mode must agree before changing UI state.
