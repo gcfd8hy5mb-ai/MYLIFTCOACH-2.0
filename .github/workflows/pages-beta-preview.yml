@@ -136,6 +136,13 @@ jobs:
           node --check app.js
           node --check workouts-tabs-n.js
           node --test tests/workouts-tab-regression.test.cjs tests/workouts-tabs-dom.test.cjs
+      - name: Checkout data-safe visual preview files (no account or cloud code)
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: f4896587d4cc455ffa02c816e83353d6dfc45a1b
+          path: visual-review
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
@@ -175,25 +182,23 @@ jobs:
           cp original-approved/assets/hero-dumbbells-photo.jpg dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
           test -s dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
           test -s dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
-          # Isolated Workouts preview: never replace the stable /myliftcoach2/ build N.
-          mkdir -p dist/workouts-n-review
-          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-workouts-review/ dist/workouts-n-review/
+          # Safe visual preview: NEVER ship app.js, auth, storage, or cloud modules.
+          mkdir -p dist/workouts-n-review/assets
+          cp visual-review/review/workouts-visual-preview.html dist/workouts-n-review/index.html
+          cp visual-review/review/workouts-visual-preview.css dist/workouts-n-review/workouts-visual-preview.css
+          cp visual-review/review/workouts-visual-preview.js dist/workouts-n-review/workouts-visual-preview.js
           cp original-approved/assets/approved-vertical-marble-sharp.webp dist/workouts-n-review/assets/approved-vertical-marble-sharp.webp
-          cp original-approved/assets/hero-dumbbells-photo.jpg dist/workouts-n-review/assets/hero-dumbbells-photo.jpg
           grep -q 'iPhone beta test build 11-21N' dist/myliftcoach2/index.html
-          grep -q 'iPhone beta test build 11-21N' dist/workouts-n-review/index.html
-          grep -q 'workouts-tabs-n.js?v=1' dist/workouts-n-review/index.html
-          test -s dist/workouts-n-review/workouts-tabs-n.js
-          test -s dist/workouts-n-review/workouts-tabs-n.css
+          grep -q 'SAFE UI Preview' dist/workouts-n-review/index.html
+          grep -q "connect-src 'none'" dist/workouts-n-review/index.html
+          test -s dist/workouts-n-review/workouts-visual-preview.js
+          test -s dist/workouts-n-review/workouts-visual-preview.css
+          ! find dist/workouts-n-review -type f | grep -E '/(app\\.js|auth|supabase|automatic-workouts|custom-workouts\\.js)' 
           ! grep -q 'workouts-tabs-n.js' dist/myliftcoach2/index.html
-          # Release guard: 11-21N's existing app files must be byte-for-byte unchanged.
+          # Protect the working N app byte-for-byte when staging visual changes.
           for stable_file in index.html app.js custom-workouts.js weekly-workout-schedule.js sync/automatic-workouts.js sync/auth-session-store.js; do
             cmp "phone-ui-n/$stable_file" "dist/myliftcoach2/$stable_file"
           done
-          # Separate preview must not replace the approved N app or reference old O scripts.
-          grep -q 'workouts-tabs-n.css?v=1' dist/workouts-n-review/index.html
-          grep -q 'app.js?v=15' dist/workouts-n-review/index.html
           ! grep -q 'compact-workouts.css' dist/myliftcoach2/index.html
           # Preserve separate prior iPhone acceptance areas for regression checks.
           mkdir -p dist/phone-test
