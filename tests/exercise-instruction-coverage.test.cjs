@@ -28,7 +28,8 @@ test('instructions load before app and guide and Start Workout retains dark teal
  assert.ok(load>html.indexOf('exercise-catalog-344.js'));
  assert.ok(load<html.indexOf('app.js?v=15'));
  const css=read('workouts-tabs-n.css');
- assert.match(css,/#workouts \.workouts-n-actions \.button-primary\{background:linear-gradient\(145deg,#124b4f,#063039 80%\)!important/);
+ assert.ok(css.includes('#workouts .workouts-n-today{')&&css.includes('background:#04252d;color:#f7e9d0;'));
+ assert.ok(css.includes('#workouts .workouts-n-actions .button-primary{background:#04252d!important;background-image:none!important;'));
  assert.doesNotMatch(css,/#workouts \.workouts-n-actions \.button-primary\{background:linear-gradient\(#ffebba,#d7ae70\)/);
 });
 
