@@ -1526,7 +1526,7 @@ function bind(){
    try{
     sessionStorage.setItem(GUEST_BETA_KEY,requested);
     output.textContent=requested.toUpperCase()+' preview enabled for this browser session. No payment required.';
-    renderCoach();
+    renderHome();renderWorkouts();renderCoach();
    }catch{select.value=before;output.textContent='Unable to save this guest preview mode.'}
    return;
   }
@@ -1540,11 +1540,15 @@ function bind(){
     stillCurrent:id=>id===verifiedOwnerId&&id===account?.id&&epoch===authEpoch
    });
    if(epoch!==authEpoch||verifiedOwnerId!==selectedOwner)return;
-   const current=await authRequest('user',null,auth.access_token,'GET');
+   const currentSession=await sessionRefresh.sessionFor(selectedOwner);
+   if(epoch!==authEpoch||verifiedOwnerId!==selectedOwner)return;
+   const current=await authRequest('user',null,currentSession.access_token,'GET');
    if(epoch!==authEpoch||current?.id!==selectedOwner)return;
+   if(current.user_metadata?.[window.MLC2BetaAccess.FIELD]!==requested)
+    throw Error('Updated beta mode was not confirmed by the account');
    account=current;auth.user=current;authStore.save(sessionStorage,localStorage,auth);
    output.textContent=updated.mode.toUpperCase()+' beta access saved. No purchase required.';
-   renderCoach();
+   renderHome();renderWorkouts();renderCoach();
   }catch(err){
    if(epoch===authEpoch){output.textContent='Beta mode unchanged: '+String(err.message||err).slice(0,125);select.value=before}
   }finally{betaModeSaving=false;renderSettings()}
