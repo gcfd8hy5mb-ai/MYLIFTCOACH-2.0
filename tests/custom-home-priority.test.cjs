@@ -98,3 +98,42 @@ test('Home Start buttons are pinned to the displayed ID rather than recalculatin
  assert.match(app,/openWorkout\(\$\('todayStart'\)\.dataset\.homeWorkout\)/);
  assert.doesNotMatch(app,/openWorkout\(nextPlan\(\)\.id\)/);
 });
+
+test('guest workout recovery copies missing routines without deleting guest source or signed-in plans',()=>{
+ const {win,db}=make();
+ const another={id:'custom-existing',title:'Account Plan',kind:'Custom',ids:['seated-row']};
+ db.setItem('mlc2-custom-plans-v1',JSON.stringify([custom]));
+ db.setItem('mlc2-selected-workout-v1',custom.id);
+ db.setItem('mlc2-custom-plans-v1:user:account-a',JSON.stringify([another]));
+ win.MLC2Custom.setOwner('account-a');
+ assert.equal(win.MLC2Custom.guestRecovery().available,1);
+ const result=win.MLC2Custom.recoverGuest();
+ assert.equal(result.added,1);
+ const account=JSON.parse(db.getItem('mlc2-custom-plans-v1:user:account-a'));
+ assert.deepEqual(account.map(p=>p.id).sort(),['custom-existing','custom-priority']);
+ assert.equal(db.getItem('mlc2-selected-workout-v1:user:account-a'),custom.id);
+ assert.equal(JSON.parse(db.getItem('mlc2-custom-plans-v1'))[0].id,custom.id);
+ assert.equal(win.MLC2Custom.recoverGuest().added,0);
+});
+test('guest recovery refuses to replace conflicting account ID or corrupt account data',()=>{
+ const {win,db}=make();
+ const changed={...custom,title:'Different account routine'};
+ db.setItem('mlc2-custom-plans-v1',JSON.stringify([custom]));
+ db.setItem('mlc2-custom-plans-v1:user:account-a',JSON.stringify([changed]));
+ win.MLC2Custom.setOwner('account-a');
+ assert.equal(win.MLC2Custom.guestRecovery().available,0);
+ assert.equal(win.MLC2Custom.recoverGuest().added,0);
+ assert.equal(win.MLC2Custom.allPlans([])[0].title,'Different account routine');
+ db.setItem('mlc2-custom-plans-v1:user:account-a','broken');
+ assert.throws(()=>win.MLC2Custom.recoverGuest());
+ assert.equal(db.getItem('mlc2-custom-plans-v1:user:account-a'),'broken');
+});
+test('guest routines stay account-isolated until recovery is explicitly requested',()=>{
+ const {win,db}=make();
+ db.setItem('mlc2-custom-plans-v1',JSON.stringify([custom]));
+ win.MLC2Custom.setOwner('account-b');
+ assert.equal(win.MLC2Custom.allPlans(plans).some(p=>p.id===custom.id),false);
+ assert.equal(win.MLC2Custom.guestRecovery().available,1);
+ win.MLC2Custom.setOwner(null);
+ assert.equal(win.MLC2Custom.allPlans(plans).some(p=>p.id===custom.id),true);
+});
