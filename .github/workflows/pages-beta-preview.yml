@@ -50,6 +50,13 @@ jobs:
           ref: 78458093c3277c8104a309a180e8e8e00cee1ff5
           path: phone-freepro
           persist-credentials: false
+      - name: Checkout verified expanded Coach candidate for separate iPhone preview
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 77b00b05c079f66450395984574ab9bd748f4867
+          path: phone-coach
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
@@ -93,6 +100,18 @@ jobs:
           test -s dist/phone-test-d/beta-access.js
           test -s dist/phone-test-d/app.js
           test -s dist/phone-test-d/sync/automatic-workouts.js
+          # Coach expansion preview is isolated from the proven cloud test.
+          mkdir -p dist/phone-test-e
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
+            --exclude='*.md' phone-coach/ dist/phone-test-e/
+          cp original-approved/assets/approved-vertical-marble-sharp.webp dist/phone-test-e/assets/approved-vertical-marble-sharp.webp
+          cp original-approved/assets/hero-dumbbells-photo.jpg dist/phone-test-e/assets/hero-dumbbells-photo.jpg
+          grep -q 'iPhone beta test build 11-21E' dist/phone-test-e/index.html
+          grep -q 'coach-catalog-coverage.js?v=2' dist/phone-test-e/index.html
+          grep -q 'coach-migration.js?v=3' dist/phone-test-e/index.html
+          test -s dist/phone-test-e/coach-catalog-coverage.js
+          test -s dist/phone-test-e/coach-migration.js
+          test -s dist/phone-test-e/sync/automatic-workouts.js
           cp -a source/persistence dist/persistence
           cp source/liftova-anatomy.css dist/liftova-anatomy.css
           python3 - <<'PY'
@@ -131,6 +150,15 @@ jobs:
               if not (freepro.parent/uri).is_file():missing_freepro.append(uri)
           if missing_freepro:raise SystemExit('Missing Free/Pro beta assets: '+repr(missing_freepro))
           print('Verified',len(freepro_urls.urls),'iPhone open-beta HTML links')
+          coach=Path('dist/phone-test-e/index.html')
+          coach_urls=URLs();coach_urls.feed(coach.read_text())
+          missing_coach=[]
+          for raw in coach_urls.urls:
+              uri=raw.split('?',1)[0]
+              if uri.startswith(('https:', 'http:', 'data:', '#', '/')):continue
+              if not (coach.parent/uri).is_file():missing_coach.append(uri)
+          if missing_coach:raise SystemExit('Missing Coach beta assets: '+repr(missing_coach))
+          print('Verified',len(coach_urls.urls),'Coach beta HTML links')
           PY
           cat > dist/index.html <<'HTML'
           <!doctype html>
