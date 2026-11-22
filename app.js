@@ -457,7 +457,23 @@ function closeModal(){previewCoachHistory=null;closeRest();$('modal').hidden=tru
    Never enters demoSessions, workout drafts, progress, or the cloud sync journal. */
 const isCoachTestPreview=()=>typeof location!=='undefined'&&/(?:^|\/)coach-live-test(?:\/|$)/.test(location.pathname||'');
 let previewCoachHistory=null;
-function coachEvidence(){return isCoachTestPreview()&&previewCoachHistory?previewCoachHistory:demoSessions}
+function coachEvidence(){
+ if(isCoachTestPreview()&&previewCoachHistory)return previewCoachHistory;
+ // Completed 2.0 sessions are loaded through account-scoped storage.
+ // Never admit a synthetic sample into personal progression calculations.
+ return demoSessions.filter(row=>row&&typeof row.id==='string'&&
+  !row.id.startsWith('SIMULATED-COACH-')&&
+  (verifiedOwnerId===null?!row.ownerId:row.ownerId===verifiedOwnerId)&&
+  Array.isArray(row.sets)&&row.sets.length>0);
+}
+function coachEvidenceLabel(){
+ if(isCoachTestPreview()&&previewCoachHistory)
+  return 'SIMULATED TEST DATA · '+previewCoachHistory.length+' example sessions; not your workout history';
+ const rows=coachEvidence();
+ return rows.length?
+  rows.length+' saved 2.0 workout'+(rows.length===1?'':'s')+' · personal history only':
+  'No saved 2.0 workout history · Coach will learn as you log sessions';
+}
 function generatePreviewCoachHistory(plan){
  if(!isCoachTestPreview()||!plan?.ids?.length)return [];
  const catalog=libraryExercises();
@@ -511,7 +527,7 @@ function liveCoachPreview(plan){
  const rows=review.map(({e,message})=>'<div><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' sets × '+escapeHTML(String(e.reps||'8–12'))+' reps</small><p>'+escapeHTML(message)+'</p></div>').join('');
  return '<details class="live-coach-box live-coach-dropdown" aria-label="Coach before workout">'+
  '<summary class="live-coach-dropdown-toggle"><span class="live-coach-dropdown-heading"><strong>✦ Coach · Before you start</strong><small>'+escapeHTML(summary)+'</small></span><span class="live-coach-dropdown-side"><span class="live-coach-mode">'+escapeHTML(betaView().mode.toUpperCase())+'</span><span class="live-coach-chevron" aria-hidden="true">⌄</span></span></summary>'+
- '<div class="live-coach-dropdown-content"><p class="live-coach-readiness">'+escapeHTML(status)+'</p><div class="live-coach-list">'+rows+'</div>'+
+ '<div class="live-coach-dropdown-content"><p class="live-coach-evidence-source">'+escapeHTML(coachEvidenceLabel())+'</p><p class="live-coach-readiness">'+escapeHTML(status)+'</p><div class="live-coach-list">'+rows+'</div>'+
  '<small>Your chosen workout and logged values never change automatically.</small></div></details>';
 }
 
