@@ -439,7 +439,7 @@ function renderProgress(){
  window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),progressData);
  window.MLC2PostWorkout?.render($('postWorkoutRecap'),progressData);
  const movements=new Set(progressData.flatMap(x=>x.sets.map(y=>y.exerciseId)));
- $('progressSessions').textContent=progressData.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
+ $('progressSessions').textContent=progressData.length;$('progressSets').textContent=progressData.reduce((n,x)=>n+x.sets.length,0);$('progressMovements').textContent=movements.size;
  renderProgressChart(progressData);
  window.MLC2Progress?.renderRecords($('demoRecords'),progressData,'demo',(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
  window.MLC2Progress?.renderVolumeAudit(document.getElementById('progressVolumeAudit'),progressData,(id)=>libraryExercises().find(e=>e.id===id)?.name||id);
