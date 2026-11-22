@@ -340,15 +340,22 @@ function coachAutonomousPlan(){
 function renderAutonomousCoach(){
  const panel=$('coachAutoPanel'),title=$('coachAutoTitle'),details=$('coachAutoDetails'),start=$('coachAutoStart');
  if(!panel||!title||!details||!start)return;
+ const enabled=betaView().mode==='pro';
+ panel.hidden=!enabled;
+ if(!enabled){coachAutonomousDraft=null;return}
+ const preferences=window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)||{goal:'balanced',days:4,equipment:'Any'};
+ for(const [key,id] of [['goal','coachAutoGoal'],['days','coachAutoDays'],['equipment','coachAutoEquipment']]){
+  const field=$(id);if(field)field.value=String(preferences[key]);
+ }
  coachAutonomousDraft=coachAutonomousPlan();
- panel.hidden=!coachAutonomousDraft;
- if(!coachAutonomousDraft)return;
+ if(!coachAutonomousDraft){
+  title.textContent='No matching workout available';
+  details.textContent='Try a different equipment category. No current workout or history was changed.';
+  start.disabled=true;return;
+ }
  title.textContent=coachAutonomousDraft.title;
  const names=coachAutonomousDraft.ids.map(id=>libraryExercises().find(e=>e.id===id)?.name).filter(Boolean);
- details.textContent=names.join(' · ')+' — '+(window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.days||4)+' training days per cycle. Your chosen workout above is unchanged.';
- for(const [key,id] of [['goal','coachAutoGoal'],['days','coachAutoDays'],['equipment','coachAutoEquipment']]){
-  const field=$(id);if(field)field.value=String(window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.[key]??({goal:'balanced',days:4,equipment:'Any'}[key]));
- }
+ details.textContent=names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.';
  start.disabled=false;
 }
 
