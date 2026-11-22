@@ -893,7 +893,10 @@ function bind(){
   const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
   if(!profile||!program)return;
   if(!confirm('Restart this '+program.weeks+'-week '+program.goal+' program from today? Workout history and custom routines will be kept.'))return;
-  try{window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:program.goal,weeks:program.weeks});
+  try{
+   const previousSource=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
+   const renewed=window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:program.goal,weeks:program.weeks});
+   if(previousSource)window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,renewed,previousSource);
    renderCalorieGoal();renderWorkouts();notice('New '+program.weeks+'-week program started. Your prior workouts are retained.');
   }catch(e){notice('Could not restart program: '+String(e.message||e).slice(0,100))}
  });
