@@ -450,13 +450,56 @@ function renderSettings(){
  }
 }
 function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
-function closeModal(){closeRest();$('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
+function closeModal(){previewCoachHistory=null;closeRest();$('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');document.body.style.overflow='';activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null}
+
+
+/* Strictly isolated, RAM-only Coach demo history for the independent iPhone preview.
+   Never enters demoSessions, workout drafts, progress, or the cloud sync journal. */
+const isCoachTestPreview=()=>typeof location!=='undefined'&&/(?:^|\/)coach-live-test(?:\/|$)/.test(location.pathname||'');
+let previewCoachHistory=null;
+function coachEvidence(){return isCoachTestPreview()&&previewCoachHistory?previewCoachHistory:demoSessions}
+function generatePreviewCoachHistory(plan){
+ if(!isCoachTestPreview()||!plan?.ids?.length)return [];
+ const catalog=libraryExercises();
+ return [0,1].map(n=>({
+  id:'SIMULATED-COACH-'+n,planId:plan.id,title:'SIMULATED Coach evidence',
+  created:n===0?'2026-11-12T12:00:00Z':'2026-11-19T12:00:00Z',
+  sets:plan.ids.flatMap(id=>{
+   const e=catalog.find(x=>x.id===id)||exercises.find(x=>x.id===id);
+   if(!e||e.group==='Cardio')return [];
+   // Two sets per session at the same load. The latest session reaches the
+   // Coach engine's default 8-10 rep range, enabling a sample increase.
+   return [0,1].map(()=>({exerciseId:id,weight:50,reps:n===0?8:10}));
+  })
+ }));
+}
+function coachTestControls(){
+ if(!isCoachTestPreview())return '';
+ return '<div class="coach-test-tools" role="group" aria-label="Simulated Coach history controls">'+
+ '<strong>SIMULATED COACH TEST DATA</strong><p>Use two fictional completed sessions to test weight recommendations. This is not your real workout history.</p>'+
+ '<button type="button" data-coach-test="load">Load sample Coach history</button>'+
+ '<button type="button" data-coach-test="clear">Clear sample Coach history</button>'+
+ '<small>Preview-only memory. Refreshing clears sample evidence; no workout history, draft, or cloud account is changed.</small></div>';
+}
+function toggleCoachTestHistory(action){
+ if(!isCoachTestPreview()||!activePlan||!session)return;
+ if(session.sets.length){notice('Finish or exit the current practice sets before changing test history.');return}
+ if(action==='load')previewCoachHistory=generatePreviewCoachHistory(activePlan);
+ else if(action==='clear')previewCoachHistory=null;
+ else return;
+ const old=document.querySelector('.live-coach-dropdown');
+ const opened=Boolean(old?.open);
+ const replacement=document.createElement('div');replacement.innerHTML=liveCoachPreview(activePlan);
+ if(old){const next=replacement.firstElementChild;next.open=opened;old.replaceWith(next)}
+ renderWorkoutLog();
+ notice(action==='load'?'SIMULATED Coach history loaded for this preview only.':'SIMULATED Coach history cleared.');
+}
 
 function liveCoachSuggestion(id){
  const catalog=libraryExercises(),e=catalog.find(x=>x.id===id)||exercises.find(x=>x.id===id);
  if(betaView().mode!=='pro')return {e,message:'Free beta mode: follow your planned targets. Pro enables progression advice.'};
  if(e?.group==='Cardio')return {e,message:'Follow your planned cardio targets and adjust effort as needed.'};
- const v=window.MLC2Coach?.suggestion(id,demoSessions,catalog);
+ const v=window.MLC2Coach?.suggestion(id,coachEvidence(),catalog);
  return {e,advice:v,message:v?.status==='ready'?v.action.toUpperCase()+' · '+v.weight+' lb suggested. '+v.reason :'Log more completed working sets to unlock weight progression.'};
 }
 function liveCoachPreview(plan){
@@ -520,7 +563,7 @@ function openWorkout(id){
  session={sets:draftAPI?.resume(draftStore,plan)||[]};
  try{draftAPI?.save(draftStore,plan,session.sets)}
  catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
- openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div>'+liveCoachPreview(plan)+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
+ openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div>'+liveCoachPreview(plan)+coachTestControls()+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
  renderWorkoutLog();
  for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
@@ -554,7 +597,7 @@ function renderWorkoutLog(){
   const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:40,reps:10,source:'default'};
   const hasKnownWeight=defaults.source!=='default';
   const previousText=last?'Last workout: '+last.weight+' lb × '+last.reps+' reps':'No previous session for this workout';
-  const coach=betaView().mode==='pro'&&e.group!=='Cardio'?window.MLC2Coach?.suggestion(id,demoSessions,catalog):null;
+  const coach=betaView().mode==='pro'&&e.group!=='Cardio'?window.MLC2Coach?.suggestion(id,coachEvidence(),catalog):null;
   const coachHint=coach?.status==='ready'?
    '<p class="active-coach-hint"><strong>✦ Coach</strong> '+escapeHTML(coach.action.toUpperCase()+': '+coach.weight+' lb suggested')+' · '+escapeHTML(coach.reason)+' <small>Optional · no weights changed</small><button type="button" class="coach-apply-weight" data-coach-apply="'+escapeHTML(id)+'">Use '+escapeHTML(String(coach.weight))+' lb for next set</button><span class="coach-applied-note" data-coach-applied="'+escapeHTML(id)+'" role="status"></span></p>':'';
   const count=logged.length;
@@ -777,7 +820,7 @@ function bind(){
  $('libraryChips').addEventListener('click',event=>{const el=event.target.closest('[data-muscle]');if(!el)return;muscleFilter=el.dataset.muscle;renderLibrary()});
  document.querySelectorAll('[data-account-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.accountPage)));
 
- $('modalContent').addEventListener('click',e=>{const suggest=e.target.closest('[data-coach-apply]');if(suggest){applyCoachWeight(suggest.dataset.coachApply);return}const add=e.target.closest('[data-addset]');if(add){addSet(add.dataset.addset);return}const undo=e.target.closest('[data-undo]');if(undo)undoSet(undo.dataset.undo)});
+ $('modalContent').addEventListener('click',e=>{const simulation=e.target.closest('[data-coach-test]');if(simulation){toggleCoachTestHistory(simulation.dataset.coachTest);return}const suggest=e.target.closest('[data-coach-apply]');if(suggest){applyCoachWeight(suggest.dataset.coachApply);return}const add=e.target.closest('[data-addset]');if(add){addSet(add.dataset.addset);return}const undo=e.target.closest('[data-undo]');if(undo)undoSet(undo.dataset.undo)});
  $('closeModal').addEventListener('click',closeModal);
  $('restClose').addEventListener('click',closeRest);
  $('restSkip').addEventListener('click',closeRest);
