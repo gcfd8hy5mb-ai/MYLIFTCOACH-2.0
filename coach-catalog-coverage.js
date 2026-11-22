@@ -34,7 +34,7 @@
   ['Legs', /(?:kickback)/, 'Hip Extension'],
   ['Legs', /(?:hip-thrust|glute-bridge|frog-pump)/, 'Hip Thrust'],
   ['Legs', /(?:leg-extension|reverse-nordic)/, 'Knee Extension'],
-  ['Legs', /(?:leg-curl|hamstring-curl|nordic|slider-leg-curl|stability-ball-leg-curl)/, 'Knee Flexion'],
+  ['Legs', /(?:leg-curl|hamstring-curl|nordic|slider-leg-curl|stability-ball-leg-curl|single-leg-(?:lying|seated)-curl)/, 'Knee Flexion'],
   ['Legs', /(?:romanian-deadlift|stiff-leg|(?:^|-)rdl(?:$|-)|good-morning|pull-through)/, 'Hip Hinge'],
   ['Legs', /(?:lunge|split-squat)/, 'Lunge Split Squat'],
   ['Legs', /(?:step-up)/, 'Step Up'],
