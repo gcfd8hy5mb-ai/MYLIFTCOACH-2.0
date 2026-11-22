@@ -7,6 +7,7 @@ on:
     branches:
       - feature/exercise-placeholder-migration-prep
       - integration/coach-cloud-beta-20261120
+      - integration/replacement-visual-coach-20261122
   workflow_dispatch:
 
 permissions:
