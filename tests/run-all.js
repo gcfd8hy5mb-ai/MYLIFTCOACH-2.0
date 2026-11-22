@@ -10,6 +10,7 @@ const tests=[
  'coach-regression.test.js',
  'coach-live-workout.test.cjs',
  'coach-autonomous-proposal.test.cjs',
+ 'coach-live-handoff.test.cjs',
  'coach-autonomous-preferences.test.cjs',
  'calorie-goal-estimate.test.cjs',
  'goal-program-calendar.test.cjs',
