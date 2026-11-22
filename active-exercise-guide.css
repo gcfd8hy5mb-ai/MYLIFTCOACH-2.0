@@ -1,0 +1,25 @@
+/* Exercise guide remains unobtrusive until expanded; workout set controls are unchanged. */
+.mlc-guide-wrap{margin:10px 0 12px;border:1px solid rgba(208,177,105,.48);border-radius:13px;background:linear-gradient(130deg,rgba(6,56,60,.89),rgba(8,40,45,.92));overflow:hidden;color:#f4eee0}
+.mlc-guide-bar{display:flex;align-items:center;gap:10px;padding:7px 9px}
+.mlc-guide-thumb{width:58px;height:58px;flex-shrink:0;border-radius:8px;border:1px solid rgba(235,199,119,.56);object-fit:cover;object-position:top;clip-path:inset(0 0 50% 0);transform:scale(1);/* intentionally cropped by container below */}
+.mlc-guide-bar{position:relative}.mlc-guide-thumb{clip-path:none;height:58px;object-fit:cover;object-position:center top}
+.mlc-guide-toggle{flex:1;min-width:0;border:1px solid #c9a66f;background:linear-gradient(160deg,#174d50,#093035);color:#f5d69a;border-radius:9px;padding:12px 8px;font-size:13px;font-weight:700;min-height:43px}
+.mlc-guide-quick{padding:2px 13px 14px;border-top:1px solid rgba(203,172,100,.28)}
+.mlc-guide-quick[hidden],.mlc-guide-overlay[hidden]{display:none!important}
+.mlc-guide-how{color:#f0eee5;font-size:13px;line-height:1.55;margin:11px 0}
+.mlc-guide-mini{font-size:12px;color:#c4dad2;line-height:1.5;margin:7px 0}
+.mlc-guide-full,.mlc-guide-done{display:block;width:100%;background:linear-gradient(160deg,#e7c783,#b9965e);color:#112f32;border:1px solid #f5d59b;border-radius:11px;padding:12px;font-size:13px;font-weight:800;margin-top:12px}
+.mlc-guide-overlay{position:fixed;inset:0;z-index:110;overflow-y:auto;background:rgba(0,17,21,.86);padding:12px 8px 28px}
+.mlc-guide-panel{max-width:680px;margin:auto;background:radial-gradient(circle at 80% 0,#16565a,#072d32 55%,#061f25);color:#f3eee0;border:1px solid #bd9d6d;border-radius:16px;padding:16px;box-shadow:0 20px 70px rgba(0,0,0,.48)}
+.mlc-guide-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.mlc-guide-eyebrow{color:#ebcc8e;font-weight:700;font-size:10px;letter-spacing:.1em}
+.mlc-guide-back{background:#124044;color:#f5e4bd;border:1px solid #b59d70;border-radius:10px;padding:11px;font-size:12px}
+.mlc-guide-panel h2{font-size:23px;line-height:1.2;margin:15px 0 5px;color:#fff}
+.mlc-guide-meta{font-size:12px;color:#bbd3cb}
+.mlc-guide-large{display:block;width:100%;height:auto;max-height:65vh;object-fit:contain;border:1px solid #c5a66d;border-radius:11px;background:#09292d}
+.mlc-guide-caption{font-size:11px;color:#e5c78b;margin:7px 0 14px}
+.mlc-guide-section{border:1px solid rgba(164,194,177,.48);background:rgba(6,55,58,.73);border-radius:12px;padding:13px 14px;margin:11px 0}
+.mlc-guide-section h3{color:#f0d092;font-size:16px;margin:0 0 9px}
+.mlc-guide-section p,.mlc-guide-section li{font-size:13px;line-height:1.6;color:#eef4ed}
+.mlc-guide-section p{margin:0}.mlc-guide-section ul{margin:0;padding-left:20px}.mlc-guide-section li{margin:5px 0}
+@media(max-width:390px){.mlc-guide-thumb{width:48px;height:48px}.mlc-guide-toggle{font-size:12px}}
