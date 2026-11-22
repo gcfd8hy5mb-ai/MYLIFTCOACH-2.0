@@ -120,6 +120,22 @@ jobs:
           ref: 9b70e2dc716223a6d0cafc553d9cebf23269b8a7
           path: phone-ui-n
           persist-credentials: false
+      - name: Checkout separate N-based Workouts preview snapshot
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: afb0f04989d8fde21f15db7c0e1c2852f4c5b804
+          path: phone-workouts-review
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate Workouts preview without touching published N
+        shell: bash
+        working-directory: phone-workouts-review
+        run: |
+          set -euo pipefail
+          node --check app.js
+          node --check workouts-tabs-n.js
+          node --test tests/workouts-tab-regression.test.cjs tests/workouts-tabs-dom.test.cjs
       - name: Package static beta preview only
         shell: bash
         run: |
@@ -159,6 +175,18 @@ jobs:
           cp original-approved/assets/hero-dumbbells-photo.jpg dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
           test -s dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
           test -s dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
+          # Isolated Workouts preview: never replace the stable /myliftcoach2/ build N.
+          mkdir -p dist/workouts-n-review
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \\
+            --exclude='*.md' phone-workouts-review/ dist/workouts-n-review/
+          cp original-approved/assets/approved-vertical-marble-sharp.webp dist/workouts-n-review/assets/approved-vertical-marble-sharp.webp
+          cp original-approved/assets/hero-dumbbells-photo.jpg dist/workouts-n-review/assets/hero-dumbbells-photo.jpg
+          grep -q 'iPhone beta test build 11-21N' dist/myliftcoach2/index.html
+          grep -q 'iPhone beta test build 11-21N' dist/workouts-n-review/index.html
+          grep -q 'workouts-tabs-n.js?v=1' dist/workouts-n-review/index.html
+          test -s dist/workouts-n-review/workouts-tabs-n.js
+          test -s dist/workouts-n-review/workouts-tabs-n.css
+          ! grep -q 'workouts-tabs-n.js' dist/myliftcoach2/index.html
           # Preserve separate prior iPhone acceptance areas for regression checks.
           mkdir -p dist/phone-test
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
