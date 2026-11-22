@@ -79,11 +79,21 @@ function enhance(){
   const e=byId.get(card.getAttribute('data-exercise-card'));if(!e)continue;
   const context=card.querySelector('.active-exercise-context');if(!context)continue;
   const wrap=el('div','mlc-guide-wrap');
+  // Show approved exercise art on the workout card immediately. Opening a
+  // separate guide is optional; it is never required to view the picture.
+  const media=el('figure','mlc-guide-media');
+  const thumbnail=el('img','mlc-guide-thumb');thumbnail.loading='lazy';thumbnail.decoding='async';
+  thumbnail.src=imgFor(e);thumbnail.alt=approved(e)?'Approved exercise demonstration showing positions for '+e.name:'Exercise image awaiting approval';
+  if(!approved(e))thumbnail.classList.add('mlc-guide-placeholder');
+  thumbnail.addEventListener('error',()=>{
+   if(!thumbnail.src.endsWith('image-coming-approved.webp')){thumbnail.src=placeholder;thumbnail.classList.add('mlc-guide-placeholder');caption.textContent='Demonstration image temporarily unavailable'}
+  },{once:true});
+  const caption=el('figcaption','mlc-guide-media-caption',approved(e)?'Approved exercise demonstration · visible during workout':'Approved demonstration coming soon');
+  const thumbFrame=el('span','mlc-guide-thumb-frame');thumbFrame.append(thumbnail);
+  media.append(thumbFrame,caption);wrap.append(media);
   const bar=el('div','mlc-guide-bar');
-  const thumbnail=el('img','mlc-guide-thumb');thumbnail.loading='lazy';thumbnail.src=imgFor(e);thumbnail.alt=approved(e)?'Starting position for '+e.name:'Image coming placeholder';if(!approved(e))thumbnail.classList.add('mlc-guide-placeholder');
-  thumbnail.addEventListener('error',()=>{if(!thumbnail.src.endsWith('image-coming-approved.webp')){thumbnail.src=placeholder;thumbnail.classList.add('mlc-guide-placeholder')}},{once:true});
   const toggle=el('button','mlc-guide-toggle','View Exercise Guide ▾');toggle.type='button';toggle.setAttribute('aria-expanded','false');
-  const thumbFrame=el('span','mlc-guide-thumb-frame');thumbFrame.append(thumbnail);bar.append(thumbFrame,toggle);wrap.append(bar);
+  bar.append(toggle);wrap.append(bar);
   const content=el('div','mlc-guide-quick');content.hidden=true;
   const lead=el('p','mlc-guide-how',e.how||e.cue||'Detailed instructions not available');
   const muscle=el('p','mlc-guide-mini','Muscles: '+(e.muscle||e.group));
