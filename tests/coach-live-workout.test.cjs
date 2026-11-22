@@ -18,6 +18,7 @@ function harness(mode='pro',ready='Normal',suggestion={status:'ready',action:'ho
  const env={
   betaView:()=>({mode}),libraryExercises:()=>[exercise],exercises:[exercise],
   demoSessions:[],session:{sets:[]},activePlan:plan,verifiedOwnerId:null,
+  coachProgramAdvice:()=>null,
   window:{MLC2Coach:{suggestion:()=>suggestion},MLC2CoachReadiness:{current:()=>ready},MLC2PostWorkout:{summarize:()=>({hasHistory:true,current:{sets:2,movements:1},previous:null})}},
   escapeHTML:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&quot;'}[c]))
  };
