@@ -54,6 +54,34 @@ test('Coach set feedback updates from actual reps with readiness consideration',
  const good=vm.runInContext("liveCoachFeedback('chest-press')",env);
  assert.match(good,/within the planned rep range/);
 });
+
+test('Using Coach weight is an explicit input-only action and refuses missing evidence',()=>{
+ const env=harness();
+ const weight={value:'45'},message={textContent:''};
+ const card={dataset:{exerciseCard:'chest-press'},querySelector:selector=>selector==='[data-weight]'?weight:selector==='[data-coach-applied]'?message:null};
+ env.document={querySelectorAll:selector=>selector==='[data-exercise-card]'?[card]:[]};
+ env.activeDraftOwner=null;env.verifiedOwnerId=null;env.notice=()=>{};
+ assert.equal(vm.runInContext("applyCoachWeight('chest-press')",env),true);
+ assert.equal(weight.value,'65');
+ assert.deepEqual(env.session.sets,[],'no set should be logged by applying suggestion');
+ assert.match(message.textContent,/Review it before logging/);
+ const noEvidence=harness('pro','Normal',{status:'insufficient'});
+ noEvidence.document=env.document;noEvidence.activeDraftOwner=null;noEvidence.verifiedOwnerId=null;noEvidence.notice=()=>{};
+ weight.value='45';
+ assert.equal(vm.runInContext("applyCoachWeight('chest-press')",noEvidence),false);
+ assert.equal(weight.value,'45','missing evidence must never edit weight');
+ const free=harness('free');free.document=env.document;free.activeDraftOwner=null;free.verifiedOwnerId=null;free.notice=()=>{};
+ assert.equal(vm.runInContext("applyCoachWeight('chest-press')",free),false);
+ assert.equal(weight.value,'45');
+});
+test('Coach weight button delegates through active modal and cannot auto-log a set',()=>{
+ assert.match(app,/data-coach-apply/);
+ assert.match(app,/applyCoachWeight\(suggest\.dataset\.coachApply\)/);
+ assert.match(app,/input\.value=String\(weight\)/);
+ assert.match(app,/session\.sets\.push\(\{exerciseId:id,weight,reps\}\)/);
+ assert.match(css,/\.coach-apply-weight/);
+});
+
 test('Active workout mounts Coach, uses existing draft and cloud paths, and avoids automatic plan changes',()=>{
  for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed)","queueWorkoutForSync(entry)","window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)"]){
   assert.ok(app.includes(marker),'missing '+marker);
