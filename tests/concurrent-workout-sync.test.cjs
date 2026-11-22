@@ -21,13 +21,14 @@ test('Fresh completed workout enqueues before scheduling cloud upload',()=>{
  assert.equal(h.queued.length,1);assert.equal(h.queued[0].entry.id,'session-1');
  assert.equal(h.scheduled.length,1);
 });
-test('Workout completed during ongoing cloud sync is still durably enqueued',()=>{
+test('Workout completed during ongoing upload is saved first and not written into a stale in-flight journal',()=>{
  const h=harness({busy:true});h.send(entry);
- assert.equal(h.queued.length,1,'new workout must not be skipped');
+ assert.equal(h.queued.length,0,'in-flight drain must never race a second journal writer');
  assert.equal(h.context.syncAgainAfterCurrent,true);
- assert.equal(h.scheduled.length,0,'running flush will schedule retry');
+ assert.equal(h.scheduled.length,0,'running flush will schedule fresh rescan from durable account history');
+ assert.match(h.statuses.at(-1),/saved locally/);
 });
-test('Workout completed during auxiliary cloud backup is queued and marked for follow-up',()=>{
+test('Workout completed during auxiliary cloud backup is journaled safely and marked for follow-up',()=>{
  const h=harness({auxBusy:true});h.send(entry);
  assert.equal(h.queued.length,1);
  assert.equal(h.context.syncAgainAfterCurrent,true);
@@ -44,6 +45,13 @@ test('Failed queue retains locally completed workout and schedules another attem
  assert.equal(h.queued.length,0);
  assert.equal(h.scheduled.length,1);
  assert.match(h.statuses.at(-1),/queue requires attention/);
+});
+test('Fresh workout flush discovers locally saved sessions that were not queued during in-flight sync',()=>{
+ const auto=require('../sync/automatic-workouts.js');
+ const source=fs.readFileSync('sync/automatic-workouts.js','utf8');
+ assert.match(source,/for\(const record of report\.newLocal\)/);
+ assert.match(source,/journal\.enqueue\('session',record\.id,record,0\)/);
+ assert.equal(typeof auto.create,'function');
 });
 test('Finishing auxiliary backup wakes queued workout sync without waiting for another session',()=>{
  const portion=app.slice(app.indexOf('async function runAutomaticAuxSync(){'),app.indexOf('function auxEngine(owner)'));
