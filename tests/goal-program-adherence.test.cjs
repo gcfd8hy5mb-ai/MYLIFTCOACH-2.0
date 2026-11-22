@@ -43,6 +43,11 @@ test('Duplicate and empty sessions never inflate actual workout counts',()=>{
              mk('invalid','custom-a','2026-11-18T12:00:00Z',[{exerciseId:'press',reps:0,weight:50}])];
  assert.equal(calc({mode:'custom',customId:'custom-a'},rows).completed,1);
 });
+test('Future dated records cannot count as completed even if they fall inside program',()=>{
+ const future=mk('future','custom-a','2026-11-25T12:00:00Z');
+ const normal=mk('normal','custom-a','2026-11-16T12:00:00Z');
+ assert.equal(calc({mode:'custom',customId:'custom-a'},[future,normal]).completed,1);
+});
 test('Missed days never advance session rotation or produce synthetic history',()=>{
  const rows=[mk('one','custom-a','2026-11-02T12:00:00Z')];
  const a=calc({mode:'custom',customId:'custom-a'},rows);
