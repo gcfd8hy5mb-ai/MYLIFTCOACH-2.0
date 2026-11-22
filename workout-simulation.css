@@ -1,0 +1,12 @@
+/* Opt-in preview-only test data. Styling follows approved dark teal and champagne gold. */
+#progress .simulation-panel{background:linear-gradient(160deg,#0c4146,#062930)!important;border:1px solid #cdaa72!important;border-radius:14px;padding:14px 15px;margin:0 0 14px;color:#e8e4d9}
+#progress .simulation-panel .panel-heading{margin-bottom:7px}
+#progress .simulation-panel .panel-heading h3{color:#f5d398;font-size:16px}
+#progress .simulation-panel p{font-size:12px;line-height:1.55;color:#cbdcd5;margin:7px 0 11px}
+#progress .simulation-actions{display:flex;flex-wrap:wrap;gap:8px}
+#progress .simulation-actions button{flex:1 1 120px;min-height:43px;font-size:12px;font-weight:750;background:#0b3439!important;color:#f6d69f!important;border:1px solid #c9a66e;border-radius:10px}
+#progress .simulation-actions button:disabled{opacity:.48;cursor:not-allowed}
+#progress.simulation-active .simulation-panel{border-color:#f1ca84!important}
+#progress.simulation-active #simulationStatus{color:#ffe0a0;font-weight:750}
+#coaching .simulation-notice{background:#09363e;color:#f5d599;border:1px solid #d5b175;border-radius:12px;padding:13px;font-size:12px;font-weight:700;line-height:1.5;margin:0 0 15px}
+#coaching .simulation-notice[hidden]{display:none!important}
