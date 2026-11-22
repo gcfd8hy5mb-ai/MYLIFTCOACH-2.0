@@ -80,3 +80,14 @@ test('library reports approved and withheld demonstration totals without claimin
  assert.ok(app.includes("e.demonstration?.status==='withheld'"));
  assert.ok(app.includes("Demonstration inventory not verified in this build"));
 });
+
+test('Library opens original full-size approved art on demand and protects against broken media',()=>{
+ const app=read('app.js'),css=read('exercise-placeholders.css');
+ assert.ok(app.includes('function approvedFullImage(e)'));
+ assert.ok(app.includes("d.status!=='approved'"));
+ assert.ok(app.includes('View approved exercise demonstration'));
+ assert.ok(app.includes('data-library-full'));
+ assert.ok(app.includes("img.addEventListener('error',()=>"));
+ assert.ok(app.includes('feedback.hidden=false'));
+ assert.ok(css.includes('#library .library-full-guide img'));
+});
