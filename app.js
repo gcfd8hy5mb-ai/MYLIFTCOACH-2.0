@@ -344,6 +344,18 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
 function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:planStorage()})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
+function wireWorkoutPreviewImages(root){
+ if(!root)return;
+ const placeholder='./assets/image-coming-approved.webp';
+ for(const image of root.querySelectorAll('img[data-workout-preview-image]')){
+  image.addEventListener('error',()=>{
+   if(!image.getAttribute('src')?.endsWith('image-coming-approved.webp')){
+    image.src=placeholder;
+    image.alt='Exercise artwork temporarily unavailable';
+   }
+  },{once:true});
+ }
+}
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
@@ -351,7 +363,15 @@ function renderHome(){
  $('heroStart').dataset.homeWorkout=plan.id;
  $('todayStart').dataset.homeWorkout=plan.id;
  $('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
- $('todayExercises').innerHTML=plan.ids.map(id=>{const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);return '<div class="preview-exercise"><strong>'+escapeHTML(e.name)+'</strong><small>'+e.sets+' × '+escapeHTML(e.reps)+'</small></div>'}).join('');
+ $('todayExercises').innerHTML=plan.ids.map(id=>{
+  const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
+  if(!e)return '';
+  const approved=approvedThumbnail(e);
+  const picture=approved||'./assets/image-coming-approved.webp';
+  const alt=approved?'Approved demonstration of '+e.name:'Exercise image awaiting approval';
+  return '<div class="preview-exercise"><span class="preview-exercise-picture"><img src="'+escapeHTML(picture)+'" alt="'+escapeHTML(alt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><span class="preview-exercise-copy"><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</small></span></div>';
+ }).join('');
+ wireWorkoutPreviewImages($('todayExercises'));
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
 let workoutTab='today';
@@ -475,10 +495,13 @@ function renderWorkouts(){
  });
  const section=(items,label)=>{
   const cards=items.map(p=>{
+   const imageExercise=(p.ids||[]).map(id=>libraryExercises().find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e));
+   const imagePath=imageExercise?approvedThumbnail(imageExercise):'./assets/image-coming-approved.webp';
+   const imageAlt=imageExercise?'Approved exercise illustration of '+imageExercise.name:'Exercise illustration awaiting approval';
    const current=p.id===activeId;
    const isCustom=p.id.startsWith('custom-');
    return '<article class="workout-compact-card'+(current?' is-selected':'')+'">'+
-    '<div class="workout-compact-heading"><div><h3>'+escapeHTML(p.title)+'</h3>'+
+    '<div class="workout-compact-heading"><span class="workout-compact-illustration"><img src="'+escapeHTML(imagePath)+'" alt="'+escapeHTML(imageAlt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><div><h3>'+escapeHTML(p.title)+'</h3>'+
     '<p>'+p.ids.length+' exercises · '+(isCustom?'Custom':'Preset')+'</p></div>'+
     (current?'<span class="workout-selected-tag">Today ✓</span>':'')+'</div>'+
     '<div class="workout-compact-actions">'+
@@ -492,6 +515,7 @@ function renderWorkouts(){
    (cards||'<p class="workout-compact-empty">No custom routines yet. Create one to get started.</p>')+ '</div>';
  };
  $('workoutGrid').innerHTML=section(custom,'Your custom workouts')+section(plans,'Ready-made presets');
+ wireWorkoutPreviewImages($('workoutGrid'));
  renderAutonomousCoach();
  setWorkoutTab(workoutTab);
 }
