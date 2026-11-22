@@ -31,3 +31,14 @@ test('instructions load before app and guide and Start Workout retains dark teal
  assert.match(css,/#workouts \.workouts-n-actions \.button-primary\{background:linear-gradient\(145deg,#124b4f,#063039 80%\)!important/);
  assert.doesNotMatch(css,/#workouts \.workouts-n-actions \.button-primary\{background:linear-gradient\(#ffebba,#d7ae70\)/);
 });
+
+test('all exercise detail guides use the same instruction, muscles, equipment, tips and mistakes sections',()=>{
+ const guide=read('active-exercise-guide.js');
+ assert.ok(guide.includes("addHowTo(panel,e)"));
+ assert.ok(guide.includes("addParagraph(panel,'Muscles Worked',"));
+ assert.ok(guide.includes("addParagraph(panel,'Equipment',"));
+ assert.ok(guide.includes("addList(panel,'Technique Tips',"));
+ assert.ok(guide.includes("addList(panel,'Common Mistakes',"));
+ assert.ok(guide.includes('const sentences=source.match('));
+ assert.ok(guide.includes('Never invent missing steps'));
+});
