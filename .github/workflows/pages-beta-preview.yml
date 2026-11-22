@@ -187,6 +187,14 @@ jobs:
           test -s dist/workouts-n-review/workouts-tabs-n.js
           test -s dist/workouts-n-review/workouts-tabs-n.css
           ! grep -q 'workouts-tabs-n.js' dist/myliftcoach2/index.html
+          # Release guard: 11-21N's existing app files must be byte-for-byte unchanged.
+          for stable_file in index.html app.js custom-workouts.js weekly-workout-schedule.js sync/automatic-workouts.js sync/auth-session-store.js; do
+            cmp "phone-ui-n/$stable_file" "dist/myliftcoach2/$stable_file"
+          done
+          # Separate preview must not replace the approved N app or reference old O scripts.
+          grep -q 'workouts-tabs-n.css?v=1' dist/workouts-n-review/index.html
+          grep -q 'app.js?v=15' dist/workouts-n-review/index.html
+          ! grep -q 'compact-workouts.css' dist/myliftcoach2/index.html
           # Preserve separate prior iPhone acceptance areas for regression checks.
           mkdir -p dist/phone-test
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
