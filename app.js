@@ -434,6 +434,7 @@ function renderProgress(){
  const sim=window.MLC2Simulation?.status();
  $('simulationStatus').textContent=sim?.active?'SIMULATION ACTIVE · '+sim.sessions+' fictional workouts over '+sim.days+' days. Charts, records and Coach show TEST DATA only. Real history is unchanged.':'Simulation is off. Your saved 2.0 history is shown normally.';
  $('simulationClear').disabled=!sim?.active;
+ $('progressWeeklySourceLabel').textContent=sim?.active?'SIMULATED TEST DATA':'ACTUAL 2.0 LOGS';
  document.getElementById('progress').classList.toggle('simulation-active',Boolean(sim?.active));
  window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),progressData);
  window.MLC2PostWorkout?.render($('postWorkoutRecap'),progressData);
@@ -448,6 +449,7 @@ function renderProgress(){
 }
 function renderProgressChart(progressData=viewedHistory()){
  const root=$('progressChart');if(!root)return;
+ const chartSource=window.MLC2Simulation?.active()?'simulated test sessions':'saved practice sessions';
  const rows=progressData.filter(x=>Array.isArray(x?.sets)&&x.sets.some(set=>window.MLC2Progress?.validSet(set))).slice(0,8).reverse();
  if(!rows.length){root.innerHTML='<div class="chart-empty">Your volume chart will appear here after you finish a practice workout.<span>No invented progress numbers.</span></div>';return;}
  const values=rows.map(x=>window.MLC2Progress?.volumeTotal(x.sets)||0);
@@ -455,7 +457,7 @@ function renderProgressChart(progressData=viewedHistory()){
  const xy=values.map((n,i)=>({x:22+(i*(276/Math.max(1,count-1))),y:175-(n/peak)*142}));
  const points=xy.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
  const fill='22,184 '+points+' '+xy[xy.length-1].x.toFixed(1)+',184';
- root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' completed practice sessions with actual weighted sets"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb training volume last session</p>';
+ root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' '+chartSource+' with weighted sets"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' '+chartSource+' · '+Math.round(values[values.length-1]).toLocaleString()+' lb training volume last session</p>';
 }
 function renderCoach(){
  const coachData=viewedHistory();
