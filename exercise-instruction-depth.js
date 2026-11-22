@@ -18,5 +18,22 @@ for(const [id,[setup,move,finish,tip,mistake]] of revisions){
  e.tips=Array.from(new Set([tip,...(e.tips||[]).filter(t=>!/Use controlled reps and a comfortable range of motion\./i.test(t))]));
  e.mistakes=Array.from(new Set([mistake,...(e.mistakes||[]).filter(t=>!/Avoid rushing the movement or sacrificing form\./i.test(t))]));
 }
+// Identically named exercise variants must show identical training guidance.
+const groups=new Map();
+for(const e of catalog){
+ const key=String(e.name||'').trim().toLowerCase();
+ if(!groups.has(key))groups.set(key,[]);
+ groups.get(key).push(e);
+}
+const score=e=>(e.how?.length||0)+(e.tips?.length||0)*30+(e.mistakes?.length||0)*30+(e.equipment?.trim()?10:0);
+for(const group of groups.values()){
+ if(group.length<2)continue;
+ const best=[...group].sort((a,b)=>score(b)-score(a))[0];
+ for(const e of group){
+  if(e===best)continue;
+  e.how=best.how;e.cue=best.cue||best.how;
+  e.tips=[...best.tips];e.mistakes=[...best.mistakes];e.equipment=best.equipment;
+ }
+}
 window.MLC2_EXERCISE_DEPTH_READY=true;
 })();
