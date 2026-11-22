@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07363b">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self' data:; script-src 'self'; connect-src 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'">
+<title>MYLIFTCOACH 2.0 | SAFE UI Preview</title>
+<link rel="stylesheet" href="./workouts-visual-preview.css?v=1">
+<script defer src="./workouts-visual-preview.js?v=1"></script>
+</head>
+<body>
+<div class="wallpaper"></div>
+<main class="app">
+<header><div class="wordmark"><span class="symbol">◆</span> MYLIFTCOACH <em>2.0</em></div><div class="preview-tag">DESIGN PREVIEW</div></header>
+<div class="notice"><strong>Preview only</strong><p>Sample workouts · no account sign-in · no cloud access · no changes to your saved data.</p></div>
+<section class="page">
+<p class="eyebrow">YOUR TRAINING</p>
+<h1>Workouts</h1>
+<p class="intro">Start a workout, manage routines, or update your weekly schedule.</p>
+<nav class="tabs" role="tablist" aria-label="Workouts preview sections">
+<button type="button" data-tab="today" id="tab-today" role="tab" aria-selected="true" aria-controls="panel-today">Today</button>
+<button type="button" data-tab="routines" id="tab-routines" role="tab" aria-selected="false" aria-controls="panel-routines" tabindex="-1">My Workouts</button>
+<button type="button" data-tab="schedule" id="tab-schedule" role="tab" aria-selected="false" aria-controls="panel-schedule" tabindex="-1">Schedule</button>
+</nav>
+<section class="panelview" id="panel-today" role="tabpanel" aria-labelledby="tab-today">
+<article class="card hero">
+<p class="eyebrow">TODAY'S WORKOUT</p>
+<h2>Upper Body Strength</h2>
+<p>6 exercises · 18 sets · ~45 min</p>
+<p class="gold-note">Custom routine selected</p>
+<div class="buttons"><button type="button" class="primary" data-action="sample-start">Start Workout</button><button type="button" class="secondary" data-go="routines">Change Workout</button></div>
+</article>
+<p class="subnote">Your selected custom workout takes priority over presets and Coach suggestions.</p>
+</section>
+<section class="panelview" id="panel-routines" role="tabpanel" aria-labelledby="tab-routines" hidden>
+<div class="split-title"><h2>My routines</h2><button type="button" class="primary small" data-action="sample-create">+ New Workout</button></div>
+<article class="card routine"><div><span class="eyebrow">CUSTOM WORKOUT</span><h3>Upper Body Strength</h3><p>6 exercises · 18 recommended sets</p></div><span class="selected">Selected</span><div class="buttons"><button class="primary" data-action="sample-start">Start</button><button class="secondary" data-action="sample-edit">Edit</button></div></article>
+<article class="card routine"><span class="eyebrow">CUSTOM WORKOUT</span><h3>Lower Body Day</h3><p>5 exercises · 15 recommended sets</p><div class="buttons"><button class="secondary" data-action="sample-select">Use for Today</button><button class="secondary" data-action="sample-edit">Edit</button></div></article>
+<details class="card legacy"><summary>Original routines (read-only)</summary><p>Original records are never loaded in this visual preview.</p></details>
+</section>
+<section class="panelview" id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule" hidden>
+<article class="card"><span class="eyebrow">YOUR PLAN</span><h2>Weekly schedule</h2><p>Example weekly training plan</p><div class="week"><div><span>MON</span>Upper Body Strength</div><div><span>TUE</span>Lower Body Day</div><div><span>WED</span>Rest / Recovery</div><div><span>THU</span>Upper Body Strength</div><div><span>FRI</span>Lower Body Day</div><div><span>SAT</span>Optional Activity</div><div><span>SUN</span>Rest / Recovery</div></div></article>
+</section>
+<p id="feedback" role="status" aria-live="polite"></p>
+</section>
+<footer>SAFE VISUAL REVIEW · NOT CONNECTED TO YOUR ACCOUNT</footer>
+</main>
+</body></html>
