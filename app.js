@@ -289,6 +289,7 @@ function renderCalorieGoal(){
  const p=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
  const status=$('goalProgramProgress');
+ const restart=$('goalProgramRestart');if(restart)restart.hidden=!program;
  if(status)status.textContent=program?
   (()=>{const x=window.MLC2GoalProgram.progress(program);
    return (x.status==='completed'?'Program completed':'Program active')+
@@ -856,6 +857,15 @@ function openSignIn(){
  });
 }
 function bind(){
+ $('goalProgramRestart').addEventListener('click',()=>{
+  const profile=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
+  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+  if(!profile||!program)return;
+  if(!confirm('Restart this '+program.weeks+'-week '+program.goal+' program from today? Workout history and custom routines will be kept.'))return;
+  try{window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:program.goal,weeks:program.weeks});
+   renderCalorieGoal();renderWorkouts();notice('New '+program.weeks+'-week program started. Your prior workouts are retained.');
+  }catch(e){notice('Could not restart program: '+String(e.message||e).slice(0,100))}
+ });
  $('calorieGoalForm').addEventListener('submit',event=>{
   event.preventDefault();
   const form=event.currentTarget,field=name=>form.elements.namedItem(name).value;
