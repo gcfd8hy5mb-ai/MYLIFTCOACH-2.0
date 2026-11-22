@@ -222,6 +222,7 @@
  <article class="panel nutrition-goal-panel">
   <form id="calorieGoalForm" class="calorie-goal-form">
    <label>Fitness goal<select name="goal" required><option value="strength">Build strength</option><option value="bulk">Bulk / gain muscle</option><option value="maintain">Maintain weight</option><option value="cut">Cut / lose weight</option></select></label>
+   <label>Program length<select name="programWeeks" required><option value="6">6-week program</option><option value="8" selected>8-week program</option><option value="12">12-week program</option></select></label>
    <label>Age<input name="age" type="number" inputmode="numeric" min="18" max="100" required placeholder="Years"></label>
    <label>Weight (lb)<input name="weightLb" type="number" inputmode="decimal" min="66" max="880" step="0.1" required placeholder="Current weight"></label>
    <label>Height (inches)<input name="heightIn" type="number" inputmode="decimal" min="47" max="91" step="0.1" required placeholder="Total height"></label>
@@ -229,7 +230,7 @@
    <label>Usual activity<select name="activity" required><option value="sedentary">Mostly seated</option><option value="light">Light activity</option><option value="moderate">Moderately active</option><option value="active">Very active</option></select></label>
    <button class="button-primary" type="submit">Calculate my calorie goal</button>
   </form>
-  <div id="calorieGoalResult" class="calorie-goal-result" role="status" aria-live="polite"></div>
+  <div id="calorieGoalResult" class="calorie-goal-result" role="status" aria-live="polite"></div><div id="goalProgramProgress" class="goal-program-progress" role="status" aria-live="polite"></div>
   <p class="calorie-goal-note">This is an adult-only starting estimate, not a precise measurement or medical prescription. Activity includes ordinary exercise; no exercise-calorie double counting. Goal changes are never applied without your input. Review the target if you have specific medical or nutritional needs.</p>
  </article>
 </section>
@@ -322,6 +323,7 @@
 <script defer src="./coach-program-builder.js?v=1"></script>
 <script defer src="./coach-preferences.js?v=1"></script>
 <script defer src="./calorie-goal-estimate.js?v=1"></script>
+<script defer src="./goal-program-calendar.js?v=1"></script>
 <script defer src="./coach-readiness.js?v=1"></script>
 <script defer src="./coach-trends.js?v=1"></script>
 <script defer src="./coach-post-workout.js?v=1"></script>
@@ -354,6 +356,6 @@
 <script defer src="./sync/auxiliary-cloud.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=25"></script>
+<script defer src="./app.js?v=26"></script>
 </body>
 </html>
