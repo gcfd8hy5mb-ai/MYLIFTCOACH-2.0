@@ -1574,6 +1574,8 @@ function bind(){
       (result.conflicts?result.conflicts+' same-ID differences remain untouched.':'Existing history preserved.'));
    }else if(result.status==='conflict'){
     setWorkoutSyncState(result.conflicts+' same-ID workout differences need review. No workouts were overwritten or deleted.');
+   }else if(result.status==='changed-reconfirm'){
+    setWorkoutSyncState('Cloud history changed during confirmation. Nothing imported. Tap Recover again to review the updated count.');
    }else setWorkoutSyncState(result.status==='cancelled'?'Recovery canceled; no records changed.':'All cloud workouts already present.');
   }catch(err){
    if(owner===verifiedOwnerId&&epoch===authEpoch)
