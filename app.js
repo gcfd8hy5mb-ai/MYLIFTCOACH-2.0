@@ -464,13 +464,12 @@ function liveCoachPreview(plan){
  const status=readiness==='Tired'?'Tired · Lower the effort or rest if needed.':readiness==='Great'?'Great · Progress carefully with good form.':'Normal · Follow your plan and adjust to comfort.';
  const review=plan.ids.map(id=>({id,...liveCoachSuggestion(id)})).filter(row=>row.e);
  const ready=review.filter(row=>row.advice?.status==='ready').length;
- const summary=ready?ready+' exercise'+(ready===1?'':'s')+' with weight recommendations':'No weight changes suggested yet';
+ const summary=ready?ready+' weight recommendation'+(ready===1?'':'s')+' available':'Workout guidance';
  const rows=review.map(({e,message})=>'<div><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' sets × '+escapeHTML(String(e.reps||'8–12'))+' reps</small><p>'+escapeHTML(message)+'</p></div>').join('');
- return '<section class="live-coach-box live-coach-compact" aria-label="Coach before workout">'+
- '<div class="live-coach-title"><strong>✦ Coach · Before you start</strong><small>'+escapeHTML(betaView().mode.toUpperCase())+'</small></div>'+
- '<p class="live-coach-readiness">'+escapeHTML(status)+'</p>'+
- '<details class="live-coach-details"><summary>'+escapeHTML(summary)+' · View exercise guidance</summary><div class="live-coach-list">'+rows+'</div></details>'+
- '<small>Your chosen workout and logged values never change automatically.</small></section>';
+ return '<details class="live-coach-box live-coach-dropdown" aria-label="Coach before workout">'+
+ '<summary class="live-coach-dropdown-toggle"><span class="live-coach-dropdown-heading"><strong>✦ Coach · Before you start</strong><small>'+escapeHTML(summary)+'</small></span><span class="live-coach-dropdown-side"><span class="live-coach-mode">'+escapeHTML(betaView().mode.toUpperCase())+'</span><span class="live-coach-chevron" aria-hidden="true">⌄</span></span></summary>'+
+ '<div class="live-coach-dropdown-content"><p class="live-coach-readiness">'+escapeHTML(status)+'</p><div class="live-coach-list">'+rows+'</div>'+
+ '<small>Your chosen workout and logged values never change automatically.</small></div></details>';
 }
 
 function liveCoachFeedback(id){
