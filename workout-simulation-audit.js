@@ -6,7 +6,7 @@
  else root.MLC2SimulationAudit=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- function audit(sessions,catalog,progress,weekly){
+ function audit(sessions,catalog,progress,weekly,coach){
   if(!Array.isArray(sessions)||!sessions.length||!sessions.every(s=>s?.simulated===true))
    return {status:'inactive',checks:[]};
   const checks=[];
@@ -30,6 +30,13 @@
   const weeksOk=latest&&latest.thisWeek.volume>=0&&latest.lastWeek.volume>=0&&
     latest.thisWeek.weightedSets>=0&&latest.lastWeek.weightedSets>=0;
   check('Weekly comparison is available',weeksOk,latest?'This week: '+Math.round(latest.thisWeek.volume)+' lb · last week: '+Math.round(latest.lastWeek.volume)+' lb':'Weekly comparison unavailable');
+  const sample=valid[0]?.exerciseId;
+  if(sample&&typeof coach?.suggestion==='function'){
+   try{
+    const result=coach.suggestion(sample,sessions,catalog);
+    check('Coach recommendation input is readable',Boolean(result&&['ready','insufficient','unsupported'].includes(result.status)),'Sampled '+String(sample)+' · '+String(result?.status||'no status'));
+   }catch(error){check('Coach recommendation input is readable',false,String(error.message||error).slice(0,110))}
+  }
   return {status:checks.every(c=>c.pass)?'pass':'attention',checks,summary:{sessions:sessions.length,sets:allSets.length,weightedSets:valid.length,volume:sum,records:records.length}};
  }
  function render(root,result){
