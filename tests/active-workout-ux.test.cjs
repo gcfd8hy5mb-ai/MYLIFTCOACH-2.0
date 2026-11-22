@@ -46,10 +46,22 @@ test('active workout uses inline checkmark logging and preserves existing draft/
   assert.ok(app.includes(token),'missing workflow element: '+token);
  }
  assert.ok(html.includes('workout-active-ux.js?v=2'));
- assert.ok(html.includes('active-workout-ux.css?v=2'));
+ assert.ok(html.includes('active-workout-ux.css?v=3'));
  assert.ok(app.includes("if($('autoRestToggle')?.checked)openRest()"));
  assert.ok(app.includes("betaView().mode==='pro'&&e.group!=='Cardio'"));
  assert.ok(app.includes("coach?.status==='ready'"));
  assert.ok(app.includes("Optional · no weights changed"));
  assert.ok(app.includes("const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)"));
+});
+
+test('approved marble workout styling keeps wallpaper fixed behind readable cards',()=>{
+ const css=fs.readFileSync(path.join(__dirname,'..','active-workout-ux.css'),'utf8');
+ assert.match(css,/url\('\.\/assets\/approved-vertical-marble-sharp\.webp\?v=11'\)/);
+ assert.match(css,/background-image:linear-gradient\(rgba\(1,24,29,\.24\),rgba\(1,23,29,\.36\)\)/);
+ assert.match(css,/#modal \.active-log-card\{\s*background:#063238!important/);
+ assert.match(css,/background:#052d34!important/);
+ assert.match(css,/height:100dvh!important/);
+ assert.match(css,/overflow-y:auto!important/);
+ assert.match(css,/env\(safe-area-inset-bottom\)/);
+ assert.ok(!app.includes('demoSessions=[]; // styling change'),'workout data must remain intact');
 });
