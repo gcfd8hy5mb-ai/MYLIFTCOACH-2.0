@@ -18,6 +18,10 @@ function prepare(plan,catalog,sessions,{mode='free',readiness='Normal',coach=nul
   if(!e)return {id,name:id,status:'unavailable',message:'This exercise needs a catalog match.'};
   if(e.group==='Cardio')return {id,name:e.name,status:'manual',message:'Track time or distance; no weight recommendation.'};
   const result=coach&&typeof coach.suggestion==='function'?coach.suggestion(id,sessions,catalog):null;
+  // A tired check-in never produces a recommendation to INCREASE a load.
+  if(readiness==='Tired'&&result?.status==='ready'&&result.action==='increase'){
+   return {id,name:e.name,status:'manual',message:'An increase would normally be suggested from prior sets, but you marked yourself tired. Review your effort and choose a comfortable load.'};
+  }
   if(result?.status==='ready'&&Number.isFinite(result.weight)&&result.weight>0&&result.weight<=1500){
    return {id,name:e.name,status:'suggested',weight:result.weight,action:result.action||'review',message:result.reason||'Based on saved working sets.'};
   }
@@ -50,6 +54,13 @@ function render(node,plan,catalog,sessions,options={}){
   row.append(name,detail);list.append(row);
  }
  node.append(list);
+ if(typeof options.onOpenWorkout==='function'){
+  const open=document.createElement('button');open.type='button';
+  open.className='button-outline coach-plan-open';
+  open.textContent='Open selected workout';
+  open.addEventListener('click',()=>options.onOpenWorkout(view.planId));
+  node.append(open);
+ }
  const footer=document.createElement('p');footer.className='coach-plan-foot';
  footer.textContent='This is a review of the workout you selected, not an automatically created replacement. Confirm every weight yourself when logging a set.';
  node.append(footer);
