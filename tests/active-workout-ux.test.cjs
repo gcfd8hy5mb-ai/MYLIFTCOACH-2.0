@@ -45,8 +45,8 @@ test('active workout uses inline checkmark logging and preserves existing draft/
  for(const token of ['id="workoutLog"','id="autoRestToggle"','id="activeWorkoutProgress"','data-addset','data-set-rows','data-undo','function updateExerciseFeedback(id)','window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)','window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed)','queueWorkoutForSync(entry)']){
   assert.ok(app.includes(token),'missing workflow element: '+token);
  }
- assert.ok(html.includes('workout-active-ux.js?v=1'));
- assert.ok(html.includes('active-workout-ux.css?v=1'));
+ assert.ok(html.includes('workout-active-ux.js?v=2'));
+ assert.ok(html.includes('active-workout-ux.css?v=2'));
  assert.ok(app.includes("if($('autoRestToggle')?.checked)openRest()"));
  assert.ok(app.includes("betaView().mode==='pro'&&e.group!=='Cardio'"));
  assert.ok(app.includes("coach?.status==='ready'"));
