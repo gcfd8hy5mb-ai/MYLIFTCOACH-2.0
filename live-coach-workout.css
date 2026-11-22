@@ -86,3 +86,8 @@ details.live-coach-dropdown{display:block;padding:0;overflow:hidden;margin:10px 
 .calorie-goal-result{font-size:17px;font-weight:750;color:#f5dfa8;margin-top:16px;line-height:1.5}
 .calorie-goal-note{color:#bfd2ce;font-size:11px;line-height:1.6;margin-top:14px}
 @media(max-width:540px){.calorie-goal-form{grid-template-columns:1fr}}
+
+/* Fixed-length fitness goals, not food or macro tracking. */
+.goal-program-progress{margin-top:13px;padding:12px 14px;border:1px solid rgba(226,189,131,.55);border-radius:11px;background:#082d34;color:#f7dca7;font-size:13px;line-height:1.6;font-weight:650}
+#goalProgramRestart{min-height:44px;margin:10px 0 0;border-color:#c8a96d;color:#f5d8a2}
+#goalProgramRestart[hidden]{display:none!important}
