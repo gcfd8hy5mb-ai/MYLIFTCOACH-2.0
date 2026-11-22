@@ -78,18 +78,27 @@ jobs:
           ref: 5f255e49f02c962f7bdc572cb112efa3eb8012c8
           path: phone-ui-h
           persist-credentials: false
+      - name: Checkout marble login correction for existing redesign
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: d714dfde99c2bfc8cb9529d465beeedfe307301e
+          path: phone-ui-i
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           # The existing saved redesign Home Screen app opens /myliftcoach2/.
-          # Advance that stable preview address to regression-tested H.
-          # Keep G in its prior test path. Production workout-tracker stays untouched.
+          # Advance stable redesign address to regression-tested marble login I.
+          # All earlier iPhone test paths and production workout-tracker remain intact.
           mkdir -p dist/myliftcoach2
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-ui-h/ dist/myliftcoach2/
-          grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
+            --exclude='*.md' phone-ui-i/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21I' dist/myliftcoach2/index.html
+          grep -q 'workout-auth-ux-fix.css?v=2' dist/myliftcoach2/index.html
+          grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
           test -s dist/myliftcoach2/sync/automatic-workouts.js
