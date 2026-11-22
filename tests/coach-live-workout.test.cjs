@@ -41,7 +41,7 @@ test('Free beta never reveals a Pro-generated load recommendation',()=>{
 test('Insufficient history does not fabricate specific weight',()=>{
  const env=harness('pro','Normal',{status:'insufficient'});
  const markup=vm.runInContext('liveCoachPreview(activePlan)',env);
- assert.match(markup,/More completed sessions/);
+ assert.match(markup,/Log more completed working sets/);
  assert.doesNotMatch(markup,/65 lb suggested/);
 });
 test('Coach set feedback updates from actual reps with readiness consideration',()=>{
@@ -57,6 +57,6 @@ test('Active workout mounts Coach, uses existing draft and cloud paths, and avoi
   assert.ok(app.includes(marker),'missing '+marker);
  }
  assert.match(css,/\.live-coach-box/);
- assert.match(html,/live-coach-workout\.css\?v=1/);
+ assert.match(html,/live-coach-workout\.css\?v=2/);
  assert.match(html,/app\.js\?v=18/);
 });
