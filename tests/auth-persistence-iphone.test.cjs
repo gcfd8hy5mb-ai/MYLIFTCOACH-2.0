@@ -49,3 +49,10 @@ test('old production auth key never used or overwritten',()=>{
  assert.ok(!app.includes('sb-')||app.includes('sb_publishable_'));
  assert.match(app,/authStore.clear\(sessionStorage,localStorage\)/);
 });
+
+test('full-screen login attaches submit handler without querying CSS via ID-only helper',()=>{
+ assert.doesNotMatch(app,/\$\('loginForm input\[name=/);
+ const body=app.slice(app.indexOf('function openSignIn(){'),app.indexOf('function bind(){'));
+ assert.match(body,/\$\('loginForm'\)\.addEventListener\('submit',async event=>/);
+ assert.match(body,/event\.preventDefault\(\)/);
+});
