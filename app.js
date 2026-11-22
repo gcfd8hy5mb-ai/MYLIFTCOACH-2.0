@@ -77,7 +77,7 @@ let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
 function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
-function switchWorkoutOwner(owner){if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
+function switchWorkoutOwner(owner){coachAutonomousDraft=null;if(workoutSyncTimer!==null){clearTimeout(workoutSyncTimer);workoutSyncTimer=null}if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;verifiedOwnerId=owner;window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);trackingEntries=loadLocalTracking();pendingAccountRecovery=null;const file=$('accountRecoveryFile');if(file)file.value='';loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();if(page==='coaching')renderCoach();if(owner){scheduleWorkoutSync();scheduleAuxSync(2500)}}
 function setWorkoutSyncState(message){
  workoutSyncText=message;
  const el=$('autoWorkoutSyncStatus');if(el)el.textContent=message;
@@ -871,7 +871,13 @@ function applyCoachWeight(id){
 function openWorkout(id){
  $('modal').classList.remove('auth-fullscreen');
  const workoutStartedOwner=verifiedOwnerId;
- const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id)||(coachAutonomousDraft?.id===id?coachAutonomousDraft:null);if(!plan)return;
+ // A Coach recommendation is ephemeral: never trust a cached plan after
+ // account, beta entitlement, training preferences, or history changes.
+ const selected=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);
+ const freshCoach=!selected&&betaView().mode==='pro'?coachAutonomousPlan():null;
+ const plan=selected||(freshCoach?.id===id?freshCoach:null);
+ if(!plan){notice('That workout is no longer available. Review your current selection and try again.');return}
+ if(freshCoach&&plan===freshCoach)coachAutonomousDraft=freshCoach;
  const draftAPI=window.MLC2SessionDraft;
  const draftStore=window.MLC2AccountDraft.scope(localStorage,workoutStartedOwner);
  const other=draftAPI?.read(draftStore);
