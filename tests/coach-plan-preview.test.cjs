@@ -32,3 +32,24 @@ test('No invented recommendations, auto edits, cloud calls or storage mutations'
  assert.ok(app.includes("mode:mode.mode"));
  assert.ok(app.includes("else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren()}"));
 });
+
+test('Tired readiness suppresses an increase recommendation without inventing a replacement load',()=>{
+ const v=CoachPlan.prepare(custom,catalog,[],{mode:'pro',readiness:'Tired',coach:{suggestion:()=>({status:'ready',action:'increase',weight:60,reason:'Historical progression'})}});
+ assert.equal(v.items[0].status,'manual');
+ assert.equal(v.items[0].weight,undefined);
+ assert.match(v.items[0].message,/tired/i);
+ const normal=CoachPlan.prepare(custom,catalog,[],{mode:'pro',readiness:'Normal',coach:{suggestion:()=>({status:'ready',action:'increase',weight:60,reason:'Historical progression'})}});
+ assert.equal(normal.items[0].weight,60);
+});
+test('Coach open action targets selected plan; changed plan and Free mode are guarded',()=>{
+ const app=fs.readFileSync('app.js','utf8');
+ const readiness=fs.readFileSync('coach-readiness.js','utf8');
+ const plan=fs.readFileSync('coach-plan-preview.js','utf8');
+ assert.ok(plan.includes("open.textContent='Open selected workout'"));
+ assert.ok(plan.includes('options.onOpenWorkout(view.planId)'));
+ assert.ok(app.includes("if(nextPlan().id!==id)"));
+ assert.ok(app.includes("if(betaView().mode!=='pro')return"));
+ assert.ok(app.includes("openWorkout(id);"));
+ assert.ok(readiness.includes("if(typeof onChange==='function')onChange()"));
+ assert.ok(app.includes("selected,updateCoachPlan"));
+});
