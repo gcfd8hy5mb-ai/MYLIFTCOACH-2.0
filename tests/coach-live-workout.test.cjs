@@ -9,7 +9,7 @@ const root=path.resolve(__dirname,'..');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const css=fs.readFileSync(path.join(root,'live-coach-workout.css'),'utf8');
-const start=app.indexOf('function liveCoachSuggestion(id){'),end=app.indexOf('\nfunction openWorkout(id){',start);
+const start=app.indexOf('/* Strictly isolated, RAM-only Coach demo history'),end=app.indexOf('\nfunction openWorkout(id){',start);
 assert.ok(start>=0&&end>start,'Coach functions must be loaded before active workout');
 const source=app.slice(start,end);
 const plan={id:'custom-123',title:'My Custom Workout',ids:['chest-press']};
@@ -80,6 +80,48 @@ test('Coach weight button delegates through active modal and cannot auto-log a s
  assert.match(app,/input\.value=String\(weight\)/);
  assert.match(app,/session\.sets\.push\(\{exerciseId:id,weight,reps\}\)/);
  assert.match(css,/\.coach-apply-weight/);
+});
+
+
+test('Simulated Coach evidence exists only at isolated preview URL and never enters real history',()=>{
+ const env=harness();env.location={pathname:'/MYLIFTCOACH-2.0-PREVIEW/coach-live-test/'};
+ const before=JSON.stringify(env.demoSessions);
+ const rows=vm.runInContext('generatePreviewCoachHistory(activePlan)',env);
+ assert.equal(rows.length,2);
+ assert.equal(rows[0].sets.length,2);
+ assert.equal(rows[1].sets.length,2);
+ assert.equal(rows[0].sets[0].reps,8);
+ assert.equal(rows[1].sets[0].reps,10);
+ assert.equal(JSON.stringify(env.demoSessions),before,'sample history must not alter real sessions');
+ const off=harness();off.location={pathname:'/MYLIFTCOACH-2.0/'};
+ assert.equal(vm.runInContext('generatePreviewCoachHistory(activePlan).length',off),0);
+ assert.equal(vm.runInContext('coachTestControls()',off),'');
+});
+test('Simulation and real records are separate, and clearing removes sample evidence',()=>{
+ const env=harness();env.location={pathname:'/MYLIFTCOACH-2.0-PREVIEW/coach-live-test/'};
+ assert.match(vm.runInContext('coachTestControls()',env),/SIMULATED COACH TEST DATA/);
+ vm.runInContext('previewCoachHistory=generatePreviewCoachHistory(activePlan)',env);
+ assert.equal(vm.runInContext('coachEvidence().length',env),2);
+ vm.runInContext('previewCoachHistory=null',env);
+ assert.equal(vm.runInContext('coachEvidence().length',env),0);
+ assert.equal(env.demoSessions.length,0);
+ assert.match(app,/function toggleCoachTestHistory\(action\)/);
+ assert.match(app,/const simulation=e\.target\.closest\('\[data-coach-test\]'\)/);
+ assert.ok(!app.includes('demoSessions=generatePreviewCoachHistory'));
+});
+test('The established Coach engine can recommend from two clearly synthetic sessions',()=>{
+ const e=harness();e.location={pathname:'/MYLIFTCOACH-2.0-PREVIEW/coach-live-test/'};
+ const sample=vm.runInContext('generatePreviewCoachHistory(activePlan)',e);
+ const engine={window:{MLC2Progress:{normalizedSessions:(rows)=>rows.map(s=>({
+   date:s.created,exercises:[{id:'chest-press',sets:s.sets.map(t=>({weight:t.weight,reps:t.reps}))}]
+ }))}}};
+ vm.createContext(engine);
+ const coach=fs.readFileSync(path.join(root,'coach-migration.js'),'utf8');
+ vm.runInContext(coach,engine);
+ const result=engine.window.MLC2Coach.suggestion('chest-press',sample,[exercise]);
+ assert.equal(result.status,'ready');
+ assert.equal(result.action,'increase');
+ assert.equal(result.weight,55);
 });
 
 test('Active workout mounts Coach, uses existing draft and cloud paths, and avoids automatic plan changes',()=>{
