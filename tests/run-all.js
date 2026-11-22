@@ -47,6 +47,7 @@ const tests=[
  'account-recovery.test.cjs',
  'account-draft-store.test.cjs',
  'automatic-workouts.test.cjs',
+ 'concurrent-workout-sync.test.cjs',
  'auxiliary-cloud.test.cjs',
  'auxiliary-revision.test.cjs',
  'auxiliary-preferences.test.cjs',
