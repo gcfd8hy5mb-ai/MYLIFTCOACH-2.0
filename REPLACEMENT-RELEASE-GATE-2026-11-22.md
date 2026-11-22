@@ -20,6 +20,15 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [ ] Exercise substitutions when equipment is unavailable, with equivalent movement safeguards and visible reasoning.
 - [ ] Real iPhone acceptance: first session, progression after two qualifying sessions, edited targets, interrupted workout and no-history fallback.
 
+## Goal calorie estimator — scoped implementation
+- [x] Adult profile inputs: age, weight, height, sex-based BMR equation, and activity; choose strength, bulk, maintain, or cut.
+- [x] Estimate calories using Mifflin-St Jeor with a modest default surplus/deficit; no food entries or macros required.
+- [x] Store validated, owner-scoped profile on the iPhone with no user data migration.
+- [x] Tests for formulas, invalid inputs, and owner isolation passed in latest branch CI.
+- [ ] Confirm the updated estimator screen in actual iPhone Safari/PWA and compare boundary cases.
+- [ ] Determine whether optional weight-trend-based recalculation should be added without relying on food logs; no automatic adjustment without user review.
+- [ ] Confirm on-device profile backup/recovery before original-app cutover.
+
 ## Requirements before the original application can be retired
 - [ ] Integrate and audit approved demonstration assets and precise exercise-ID mappings. No auto-approval of missing images.
 - [ ] Merge latest Coach, approved visual, and workout redesign changes in one isolated release candidate without overwriting protected features.
