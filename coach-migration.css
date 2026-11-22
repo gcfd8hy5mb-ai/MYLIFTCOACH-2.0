@@ -28,3 +28,17 @@
 #coaching .coach-plan-row strong{font-size:13px;color:#f1d19a}
 #coaching .coach-plan-row p{font-size:12px;line-height:1.5;color:#d5e3df;margin:6px 0 0}
 #coaching .coach-plan-foot{font-size:11px;color:#c6d3cd;line-height:1.6;margin:12px 0 0}
+
+/* Optional Coach program-builder preview — iPhone-first teal/gold controls. */
+#coaching .coach-program-disclaimer{font-size:12px;line-height:1.55;color:#ccdbd5;margin:0 0 12px}
+#coaching .coach-program-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:12px}
+#coaching .coach-program-label{font-size:11px;color:#f0d39b;font-weight:700;display:grid;gap:6px;min-width:0}
+#coaching .coach-program-label:last-child{grid-column:1/-1}
+#coaching .coach-program-select{min-width:0;width:100%;background:#04252d;color:#f1e9d7;border:1px solid #bf9f69;padding:12px 9px;border-radius:10px;font:600 13px system-ui;min-height:44px}
+#coaching .coach-program-status{color:#d8e4de;font-size:12px;line-height:1.5;margin:10px 0}
+#coaching .coach-program-days{display:grid;gap:8px;margin:8px 0 12px}
+#coaching .coach-program-day{background:#04252d;border:1px solid rgba(201,166,107,.72);border-radius:11px;overflow:hidden}
+#coaching .coach-program-day summary{padding:13px;color:#f3d19b;font-size:13px;font-weight:750;cursor:pointer}
+#coaching .coach-program-exercises{margin:0;padding:8px 15px 13px 32px;border-top:1px solid rgba(201,166,107,.35)}
+#coaching .coach-program-exercises li{font-size:12px;color:#e3ebe6;padding:5px 0;line-height:1.5}
+@media(max-width:350px){#coaching .coach-program-options{grid-template-columns:1fr}#coaching .coach-program-label:last-child{grid-column:auto}}
