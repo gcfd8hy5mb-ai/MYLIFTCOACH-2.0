@@ -14,7 +14,7 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [x] Catalog-driven automatic 4-day balanced program proposal without requiring history (initial version).
 - [x] Coach weight recommendations from qualifying completed sessions, opt-in next-set fill, live feedback and post-workout recap.
 - [x] Readiness tracking, selected-plan priority, simulated test isolation and automated regression checks.
-- [ ] User-configurable goals, weekly training days and available equipment in the active automatic flow; persisted per account.
+- [x] User-configurable goals, 3–5 weekly training days, and available equipment in the active automatic proposal; saved locally in owner-scoped preferences. Cloud synchronization of these NEW preferences is still pending.
 - [ ] Recovery-aware adaptation, bounded fatigue/volume deload logic and rest-day recommendations with safety limits.
 - [ ] Auto-rotating Coach sessions that respect manual schedule, custom plans, missed days and account sync across devices.
 - [ ] Exercise substitutions when equipment is unavailable, with equivalent movement safeguards and visible reasoning.
@@ -37,6 +37,8 @@ Status: CANDIDATE ONLY — no production cutover authorization
 
 ## Current code evidence
 - Autonomous proposal engine: coach-program-builder.js
+- Owner-scoped training preferences: coach-preferences.js
+- Autonomous preference tests: tests/coach-autonomous-preferences.test.cjs
 - Today tab integration: app.js / index.html
 - Automated suite includes tests/coach-autonomous-proposal.test.cjs and tests/coach-live-workout.test.cjs
 - Draft branch: feature/coach-live-workout-integration-20261122
