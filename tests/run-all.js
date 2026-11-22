@@ -15,6 +15,7 @@ const tests=[
  'goal-program-calendar.test.cjs',
  'goal-program-source.test.cjs',
  'program-rotation-scope.test.cjs',
+ 'home-program-priority.test.cjs',
  'coach-periodization.test.cjs',
  'replacement-media-merge.test.cjs',
  'coach-program-cloud-backup.test.cjs',
