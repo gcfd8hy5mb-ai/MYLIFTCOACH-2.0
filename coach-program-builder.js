@@ -101,7 +101,21 @@ function render(root,catalog,sessions,options={}){
    const ul=create('ol','coach-program-exercises');
    for(const e of d.exercises){ul.append(create('li','',e.name+' · '+e.sets+' sets × '+e.reps+' reps · '+e.equipment))}
    if(!d.exercises.length)ul.append(create('li','', 'No matching exercises in this category.'));
-   details.append(ul);daysRoot.append(details);
+   details.append(ul);
+   if(d.exercises.length&&typeof options.onSaveDay==='function'){
+    const button=create('button','button-outline coach-program-save','Save Day '+d.day+' as custom workout');
+    button.type='button';
+    button.addEventListener('click',()=>{
+     if(options.mode!=='pro')return;
+     if(!window.confirm('Save Coach Day '+d.day+' as a NEW custom workout? Your current Home workout and schedule will not change.'))return;
+     try{
+      const saved=options.onSaveDay({day:d.day,exercises:d.exercises.map(e=>({...e}))});
+      status.textContent='Saved '+(saved?.title||'Coach workout')+' in Workouts. Your selected Home workout remains unchanged.';
+     }catch(error){status.textContent='Could not save Coach day: '+String(error.message||error).slice(0,145)}
+    });
+    details.append(button);
+   }
+   daysRoot.append(details);
   }
  }
  for(const sel of Object.values(inputMap))sel.addEventListener('change',redraw);
