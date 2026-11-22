@@ -33,7 +33,7 @@
  function defaults(id,sets,sessions,planId){
   const last=latest(id,sets);if(last)return {...last,source:'current'};
   const prior=previous(id,sessions,planId);const candidate=prior?.sets[prior.sets.length-1];
-  return candidate?{...candidate,source:'previous'}:{weight:40,reps:10,source:'default'};
+  return candidate?{...candidate,source:'previous'}:{weight:'',reps:'',source:'empty'};
  }
  return Object.freeze({validSet,previous,latest,progress,defaults});
 });
