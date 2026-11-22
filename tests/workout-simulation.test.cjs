@@ -51,3 +51,14 @@ test('Only Progress and Coach consume fictional history; workouts, drafts and ac
  for(const id of ['simulation30','simulation90','simulationClear','simulationStatus','coachSimulationNotice'])assert.ok(html.includes('id="'+id+'"'),id);
  assert.ok(html.indexOf('workout-simulation.js')<html.indexOf('app.js?v=15'));
 });
+
+test('simulation source is clearly labeled in Progress and Coach without affecting real Home totals',()=>{
+ const app=fs.readFileSync('app.js','utf8'),html=fs.readFileSync('index.html','utf8');
+ assert.ok(app.includes("'SIMULATED TEST DATA':'ACTUAL 2.0 LOGS'"));
+ assert.ok(app.includes("simulated test sessions"));
+ assert.ok(html.includes('id="progressWeeklySourceLabel"'));
+ assert.ok(html.includes('id="coachSimulationNotice"'));
+ const home=app.slice(app.indexOf('function renderHome(){'),app.indexOf('function openCoachSchedule('));
+ assert.ok(home.includes('demoSessions.length'));
+ assert.ok(!home.includes('viewedHistory()'));
+});
