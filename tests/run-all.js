@@ -13,6 +13,7 @@ const tests=[
  'coach-autonomous-preferences.test.cjs',
  'calorie-goal-estimate.test.cjs',
  'goal-program-calendar.test.cjs',
+ 'goal-program-source.test.cjs',
  'coach-catalog-coverage.test.cjs',
  'custom-home-priority.test.cjs',
  'active-workout-ux.test.cjs',
