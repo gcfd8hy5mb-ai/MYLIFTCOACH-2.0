@@ -355,14 +355,14 @@ function renderProgress(){
 }
 function renderProgressChart(){
  const root=$('progressChart');if(!root)return;
- const rows=demoSessions.slice(0,8).reverse();
+ const rows=demoSessions.filter(x=>Array.isArray(x?.sets)&&x.sets.some(set=>window.MLC2Progress?.validSet(set))).slice(0,8).reverse();
  if(!rows.length){root.innerHTML='<div class="chart-empty">Your volume chart will appear here after you finish a practice workout.<span>No invented progress numbers.</span></div>';return;}
- const values=rows.map(x=>x.sets.reduce((sum,set)=>sum+Number(set.weight||0)*Number(set.reps||0),0));
+ const values=rows.map(x=>window.MLC2Progress?.volumeTotal(x.sets)||0);
  const peak=Math.max(1,...values),count=values.length;
  const xy=values.map((n,i)=>({x:22+(i*(276/Math.max(1,count-1))),y:175-(n/peak)*142}));
  const points=xy.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
  const fill='22,184 '+points+' '+xy[xy.length-1].x.toFixed(1)+',184';
- root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' locally saved practice sessions"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb-reps last session</p>';
+ root.innerHTML='<svg viewBox="0 0 320 220" role="img" aria-label="Training volume trend based on '+count+' completed practice sessions with actual weighted sets"><defs><linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f6d88c" stop-opacity=".48"/><stop offset="1" stop-color="#f6d88c" stop-opacity=".02"/></linearGradient></defs><path d="M22 28 V184 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".35"/><path d="M22 80 H304 M22 132 H304" fill="none" stroke="#bbdfd2" stroke-opacity=".2"/><polygon points="'+fill+'" fill="url(#volumeFill)"/><polyline points="'+points+'" fill="none" stroke="#ffe1a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+xy.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="#ffeba8"/>').join('')+'<text x="25" y="207" fill="#c9e5da" font-size="11">Earliest</text><text x="293" y="207" text-anchor="end" fill="#c9e5da" font-size="11">Latest</text></svg><p>'+count+' practice sessions · '+Math.round(values[values.length-1]).toLocaleString()+' lb training volume last session</p>';
 }
 function renderCoach(){
  const selected=nextPlan(),catalog=libraryExercises();
@@ -454,7 +454,7 @@ function renderWorkoutLog(){
   const logged=session.sets.filter(x=>x.exerciseId===id);
   const prior=ux?.previous(id,demoSessions,activePlan.id);
   const last=prior?.sets?.[prior.sets.length-1];
-  const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:40,reps:10};
+  const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:'',reps:''};
   const previousText=last?'Last workout: '+last.weight+' lb × '+last.reps+' reps':'No previous session for this workout';
   const coach=betaView().mode==='pro'&&e.group!=='Cardio'?window.MLC2Coach?.suggestion(id,demoSessions,catalog):null;
   const coachHint=coach?.status==='ready'?
