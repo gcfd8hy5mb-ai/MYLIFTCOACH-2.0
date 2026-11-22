@@ -44,7 +44,7 @@ function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date
  const currentDay=date.getDay();
  const scheduled=plans.find(p=>p.id===read(storage)[String(currentDay)]);
  if(scheduled)return {...scheduled,scheduleSource:'weekly'};
- const fallback=custom[0]||presets[sessionsCompleted%presets.length]||plans[0];
+ const fallback=custom.find(p=>!p.coachSaved)||presets[sessionsCompleted%presets.length]||plans[0];
  return {...fallback,scheduleSource:'default'};
 }
 function clearOverride(storage){
