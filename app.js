@@ -879,10 +879,11 @@ function openWorkout(id){
   if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. The workout or exercise list differs. Start again and discard that older draft?'))return;
  }
  activePlan=plan;activeDraftStore=draftStore;activeDraftOwner=workoutStartedOwner;
- session={sets:draftAPI?.resume(draftStore,plan)||[]};
+ const restoredSets=draftAPI?.resume(draftStore,plan)||[];
+ session={sets:restoredSets};
  try{draftAPI?.save(draftStore,plan,session.sets)}
  catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
- openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div>'+liveCoachPreview(plan)+coachTestControls()+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
+ openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div>'+ (restoredSets.length?'<p class="active-resume-confirmation" role="status">Resumed workout · '+restoredSets.length+' saved set'+(restoredSets.length===1?'':'s')+' restored. Finish workout when you are done.</p>':'')+'</div>'+liveCoachPreview(plan)+coachTestControls()+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
  renderWorkoutLog();
  for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
