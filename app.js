@@ -242,7 +242,10 @@ function persistLocalTracking(){const data=JSON.stringify(trackingEntries),key=c
 function formatDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString():String(value||'Unknown date')}
 function renderHistory(){
  const original=originalSnapshot?.sessions||[];
- const demo=demoSessions||[];
+ const demo=viewedHistory();
+ const simulated=window.MLC2Simulation?.active()===true;
+ $('history2SourceLabel').textContent=simulated?'SIMULATED · TEST DATA':'SAVED 2.0 RECORDS';
+ $('history2SimulationNotice').hidden=!simulated;
  $('legacyHistoryStatus').textContent=originalSnapshot?original.length+' original sessions available on this browser (read-only).':'Not loaded. Tap View original records to check this browser. For signed-in original records, sign in to the same account first.';
  const setCount=original.reduce((n,x)=>n+x.exercises.reduce((m,e)=>m+e.sets.length,0),0);
  $('originalHistorySummary').textContent=originalSnapshot?original.length+' workouts · '+setCount+' sets':'';
@@ -798,13 +801,14 @@ function bind(){
   $('simulation'+days).addEventListener('click',()=>{
    try{
     const result=window.MLC2Simulation.start(libraryExercises(),nextPlan(),days);
+    renderHistory();
     renderProgress();if(page==='coaching')renderCoach();
     notice(result.sessions+' simulated workouts loaded for testing. Saved workouts remain unchanged.');
    }catch(error){$('simulationStatus').textContent='Could not build simulated history: '+String(error.message||error).slice(0,130)}
   });
  }
  $('simulationClear').addEventListener('click',()=>{
-  window.MLC2Simulation?.clear();renderProgress();if(page==='coaching')renderCoach();
+  window.MLC2Simulation?.clear();renderProgress();renderHistory();if(page==='coaching')renderCoach();
   notice('Simulation cleared. Actual saved workout history is back.');
  });
  $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only the local 2.0 workout history for the current '+(verifiedOwnerId?'account':'guest')+'?'))return;try{window.MLC2AccountWorkouts.clear(localStorage,verifiedOwnerId);demoSessions=[];renderProgress();renderHome();notice('Current local workout history cleared. Production data untouched.')}catch{notice('Unable to clear this device history.')}});
