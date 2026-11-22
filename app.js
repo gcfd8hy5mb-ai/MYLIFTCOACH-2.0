@@ -374,7 +374,10 @@ function renderCoach(){
  if(pro){
   window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
- }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren()}
+  window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,demoSessions,{
+   mode:mode.mode,readiness:window.MLC2CoachReadiness?.current(selected.id)||'Normal',coach:window.MLC2Coach
+  });
+ }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren()}
  window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
  window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
  window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected);
