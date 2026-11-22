@@ -134,6 +134,10 @@ async function runAutomaticAuxSync(){
   scheduleAuxSync(Math.min(300000,5000*Math.pow(2,auxSyncAttempts-1)));
  }finally{
   auxOperationBusy=false;
+  if(syncAgainAfterCurrent&&!workoutSyncBusy){
+   syncAgainAfterCurrent=false;
+   scheduleWorkoutSync(800);
+  }
   renderSettings();
  }
 }
@@ -160,9 +164,16 @@ function syncEngine(owner){
  });
 }
 function queueWorkoutForSync(entry){
- if(!verifiedOwnerId||entry?.ownerId!==verifiedOwnerId)return;
- if(workoutSyncBusy){syncAgainAfterCurrent=true;setWorkoutSyncState('Workout saved locally — syncing after current upload.');return}
- try{syncEngine(verifiedOwnerId).queue(entry);
+ if(!verifiedOwnerId||account?.id!==verifiedOwnerId||entry?.ownerId!==verifiedOwnerId)return;
+ // Always durably enqueue FIRST, including when a previous upload is still active.
+ // Setting a retry flag without queuing this entry would silently miss the new workout.
+ try{
+  syncEngine(verifiedOwnerId).queue(entry);
+  if(workoutSyncBusy||auxOperationBusy){
+   syncAgainAfterCurrent=true;
+   setWorkoutSyncState('Workout queued locally — syncing after current upload.');
+   return;
+  }
   setWorkoutSyncState(navigator.onLine?'Workout saved — queued for cloud sync.':'Saved offline — queued for cloud sync.');
  }catch{setWorkoutSyncState('Workout saved locally — cloud queue requires attention.')}
  scheduleWorkoutSync();
