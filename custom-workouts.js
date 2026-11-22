@@ -20,6 +20,31 @@ function read(){
  })).filter(p=>p.ids.length):[];
  }catch{return []}
 }
+function guestRecovery(){
+ if(owner===null)return {available:0,conflicts:0};
+ const here=read(),ids=new Set(here.map(p=>p.id)),before=owner;
+ let guest=[];
+ try{owner=null;guest=read()}finally{owner=before}
+ return {available:guest.filter(p=>!ids.has(p.id)).length,conflicts:guest.filter(p=>ids.has(p.id)).length};
+}
+function recoverGuest(){
+ if(owner===null)throw Error('Sign in to recover guest routines');
+ const existing=read(),seen=new Set(existing.map(p=>p.id)),before=owner;
+ let guest=[],previousChoice='';
+ try{
+  owner=null;guest=read();
+  previousChoice=localStorage.getItem(TODAY)||'';
+ }finally{owner=before}
+ const additions=guest.filter(p=>!seen.has(p.id)).slice(0,Math.max(0,60-existing.length));
+ if(!additions.length)return {added:0,preserved:existing.length,skipped:guest.length};
+ // Never modify the guest key; never replace an account ID collision.
+ persistPlans([...existing,...additions]);
+ const chosen=localStorage.getItem(scoped(TODAY))||'';
+ if(!chosen&&previousChoice&&additions.some(p=>p.id===previousChoice)){
+  try{localStorage.setItem(scoped(TODAY),previousChoice)}catch{}
+ }
+ return {added:additions.length,preserved:existing.length,skipped:guest.length-additions.length};
+}
 function allPlans(presets){return [...read(),...presets]}
 function currentPlan(presets,completed){const a=allPlans(presets);let id='';try{id=localStorage.getItem(scoped(TODAY))||''}catch{};return a.find(p=>p.id===id)||read()[0]||presets[completed%presets.length]}
 function controls(p,currentId){
@@ -81,5 +106,5 @@ function handleClick(e,onChanged){
  }
  return false;
 }
-window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner};
+window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest};
 })();
