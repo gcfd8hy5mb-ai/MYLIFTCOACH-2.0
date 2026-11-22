@@ -120,7 +120,7 @@ function render(root,catalog,sessions,options={}){
  }
  for(const sel of Object.values(inputMap))sel.addEventListener('change',redraw);
  root.append(intro,settingsArea,status,daysRoot);
- const note=create('p','coach-program-disclaimer','Preview only. Confirm exercises, recovery, equipment and training loads yourself. Your custom workouts remain the selected priority on Home.');
+ const note=create('p','coach-program-disclaimer','The program remains a preview until you explicitly save a day. Review exercise suitability, recovery and loads yourself. Saving a day never changes your selected Home workout.');
  root.append(note);redraw();
 }
 return Object.freeze({GOALS,EQUIPMENT,DAYS,normalizeOptions,historyCounts,build,render});
