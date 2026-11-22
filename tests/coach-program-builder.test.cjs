@@ -51,7 +51,20 @@ test('Program builder never changes existing workout selections or persistent da
  const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8');
  assert.doesNotMatch(js,/\b(localStorage|sessionStorage|indexedDB|fetch|supabase|setItem|removeItem)\b/i);
  assert.ok(html.includes('coachProgramBuilder')&&html.includes('coach-program-builder.js'));
- assert.ok(app.includes("window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,demoSessions,{mode:'pro'})"));
+ assert.ok(app.includes("window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,demoSessions,{")); 
+ assert.ok(app.includes("onSaveDay:day=>"));
  assert.ok(app.includes("$('coachProgramBuilder').replaceChildren()"));
  assert.ok(app.includes('function nextPlan()'));
+});
+
+test('Coach program Save Day requires confirmation and stays in the existing custom manager',()=>{
+ const builder=fs.readFileSync('coach-program-builder.js','utf8');
+ const custom=fs.readFileSync('custom-workouts.js','utf8');
+ const app=fs.readFileSync('app.js','utf8');
+ assert.ok(builder.includes("window.confirm('Save Coach Day '"));
+ assert.ok(builder.includes("options.onSaveDay({day:d.day,exercises:d.exercises.map(e=>({...e}))})"));
+ assert.ok(custom.includes('function saveCoachDay(day)'));
+ assert.ok(custom.includes('persistPlans([plan,...existing])'));
+ assert.ok(!custom.slice(custom.indexOf('function saveCoachDay(day)'),custom.indexOf('function allPlans(')).includes('scoped(TODAY)'));
+ assert.ok(app.includes("if(betaView().mode!=='pro')throw Error"));
 });
