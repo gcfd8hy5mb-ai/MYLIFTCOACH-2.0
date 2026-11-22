@@ -17,7 +17,7 @@ const exercise={id:'chest-press',name:'Machine Chest Press',group:'Chest',sets:3
 function harness(mode='pro',ready='Normal',suggestion={status:'ready',action:'hold',weight:65,reason:'Continue toward target reps.'}){
  const env={
   betaView:()=>({mode}),libraryExercises:()=>[exercise],exercises:[exercise],
-  demoSessions:[],session:{sets:[]},activePlan:plan,
+  demoSessions:[],session:{sets:[]},activePlan:plan,verifiedOwnerId:null,
   window:{MLC2Coach:{suggestion:()=>suggestion},MLC2CoachReadiness:{current:()=>ready},MLC2PostWorkout:{summarize:()=>({hasHistory:true,current:{sets:2,movements:1},previous:null})}},
   escapeHTML:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&quot;'}[c]))
  };
@@ -129,6 +129,6 @@ test('Active workout mounts Coach, uses existing draft and cloud paths, and avoi
   assert.ok(app.includes(marker),'missing '+marker);
  }
  assert.match(css,/\.live-coach-box/);
- assert.match(html,/live-coach-workout\.css\?v=5/);
- assert.match(html,/app\.js\?v=21/);
+ assert.match(html,/live-coach-workout\.css\?v=6/);
+ assert.match(html,/app\.js\?v=22/);
 });
