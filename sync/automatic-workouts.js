@@ -130,6 +130,11 @@
    if(!isActive())throw Error('Account changed while confirming recovery');
    // Re-fetch remotely and locally after confirmation, never trust a stale snapshot.
    const fresh=await inspected();
+   // A confirmation approves only the original missing workout IDs.
+   // Cloud additions between approval and re-read need a NEW approval.
+   const approvedIds=new Set(report.missing.map(row=>row.id));
+   if(fresh.missing.some(row=>!approvedIds.has(row.id)))
+    return {status:'changed-reconfirm',restored:0,conflicts:fresh.conflicts.length};
    // Never overwrite an existing ID. A conflict in an unrelated existing
    // record must not prevent restoring distinct, missing IDs.
    if(!isActive())throw Error('Account changed during restore');
