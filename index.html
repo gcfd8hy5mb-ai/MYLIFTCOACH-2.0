@@ -232,7 +232,7 @@
    <label id="goalProgramCustomGroup">Custom routine<select name="programCustom" id="goalProgramCustom"><option value="">All my custom workouts (rotate)</option></select></label>
    <label>Age<input name="age" type="number" inputmode="numeric" min="18" max="100" required placeholder="Years"></label>
    <label>Weight (lb)<input name="weightLb" type="number" inputmode="decimal" min="66" max="880" step="0.1" required placeholder="Current weight"></label>
-   <label>Height (inches)<input name="heightIn" type="number" inputmode="decimal" min="47" max="91" step="0.1" required placeholder="Total height"></label>
+   <fieldset class="calorie-height-field"><legend>Height</legend><div class="calorie-height-pair"><label>Feet<input name="heightFt" type="number" inputmode="numeric" min="3" max="7" step="1" required placeholder="Feet"></label><label>Inches<input name="heightIn" type="number" inputmode="numeric" min="0" max="11" step="1" required placeholder="Inches (0–11)"></label></div></fieldset>
    <label>Sex used for estimate<select name="sex" required><option value="male">Male equation</option><option value="female">Female equation</option></select></label>
    <label>Usual activity<select name="activity" required><option value="sedentary">Mostly seated</option><option value="light">Light activity</option><option value="moderate">Moderately active</option><option value="active">Very active</option></select></label>
    <button class="button-primary" type="submit">Calculate my calorie goal</button>
@@ -336,7 +336,7 @@
 <script defer src="./coach-program-builder.js?v=1"></script>
 <script defer src="./coach-plan-preview.js?v=1"></script>
 <script defer src="./coach-preferences.js?v=1"></script>
-<script defer src="./calorie-goal-estimate.js?v=1"></script>
+<script defer src="./calorie-goal-estimate.js?v=2"></script>
 <script defer src="./goal-program-calendar.js?v=1"></script>
 <script defer src="./goal-program-adherence.js?v=1"></script>
 <script defer src="./goal-program-source.js?v=1"></script>
@@ -373,7 +373,7 @@
 <script defer src="./sync/auxiliary-cloud.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=34"></script>
+<script defer src="./app.js?v=35"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>
 </body>
