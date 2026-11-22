@@ -387,7 +387,16 @@ function renderCoach(){
  if(pro){
   window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
-  window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,demoSessions,{mode:'pro'});
+  window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,demoSessions,{
+   mode:'pro',
+   onSaveDay:day=>{
+    if(betaView().mode!=='pro')throw Error('Pro beta mode is required');
+    const saved=window.MLC2Custom.saveCoachDay(day);
+    renderWorkouts();
+    renderHome();
+    return saved;
+   }
+  });
   updateCoachPlan();
  }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren();$('coachProgramBuilder').replaceChildren()}
  window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
