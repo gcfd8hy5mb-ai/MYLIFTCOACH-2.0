@@ -122,6 +122,11 @@
   <p class="workout-today-note">Your own selected routine always takes priority over presets and Coach suggestions.</p>
   <article class="panel coach-auto-panel" id="coachAutoPanel" hidden>
    <div class="panel-heading"><h3>✦ Coach-generated next session</h3><span class="micro-tag">PRO · AUTOMATIC</span></div>
+   <div class="coach-auto-preferences" id="coachAutoPreferences">
+    <label>Goal<select id="coachAutoGoal"><option value="balanced">Balanced</option><option value="strength">Strength</option><option value="muscle">Muscle building</option></select></label>
+    <label>Training days<select id="coachAutoDays"><option value="3">3 per week</option><option value="4">4 per week</option><option value="5">5 per week</option></select></label>
+    <label>Equipment<select id="coachAutoEquipment"><option value="Any">Any</option><option value="Machine">Machine</option><option value="Dumbbell">Dumbbell</option><option value="Bodyweight">Bodyweight</option><option value="Cable">Cable</option><option value="Barbell">Barbell</option></select></label>
+   </div>
    <h4 id="coachAutoTitle">Coach proposal</h4>
    <p id="coachAutoDetails"></p>
    <p class="coach-auto-caution">Starts a proposed session only when you choose it. Your custom workout and schedule remain untouched. Review the suggested exercises and loads before training.</p>
@@ -300,6 +305,7 @@
 <script defer src="./coach-catalog-coverage.js?v=2"></script>
 <script defer src="./coach-migration.js?v=3"></script>
 <script defer src="./coach-program-builder.js?v=1"></script>
+<script defer src="./coach-preferences.js?v=1"></script>
 <script defer src="./coach-readiness.js?v=1"></script>
 <script defer src="./coach-trends.js?v=1"></script>
 <script defer src="./coach-post-workout.js?v=1"></script>
@@ -332,6 +338,6 @@
 <script defer src="./sync/auxiliary-cloud.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=23"></script>
+<script defer src="./app.js?v=24"></script>
 </body>
 </html>
