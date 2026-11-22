@@ -36,7 +36,8 @@
   const candidates=Array.isArray(customPlans)?customPlans.filter(p=>CUSTOM.test(p?.id||'')&&Array.isArray(p.ids)&&p.ids.length):[];
   const count=Number.isSafeInteger(completed)&&completed>=0?completed:0;
   const selected=candidates.find(p=>p.id===source?.customId);
-  const custom=selected||candidates[count%candidates.length]||null;
+  // A pinned routine must never silently resolve to a different custom routine.
+  const custom=source?.customId?(selected||null):(candidates[count%candidates.length]||null);
   const generatedValid=generated&&Array.isArray(generated.ids)&&generated.ids.length?generated:null;
   if(source?.mode==='custom')return custom?{...custom,programSource:'custom'}:null;
   if(source?.mode==='mixed'){
