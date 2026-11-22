@@ -109,7 +109,7 @@ function renderTools(root,catalog,plan){
  root.innerHTML='<label class="coach-sub-label">Exercise to replace <select id="coachSubChoice">'+
  (plan?.ids?.length?choices.filter(e=>plan.ids.includes(e.id)):choices).map(e=>'<option value="'+esc(e.id)+'" '+(e.id===current.id?'selected':'')+'>'+esc(e.name)+'</option>').join('')+
  '</select></label><div id="coachSubList"></div>'+
- '<p class="coach-sub-note">Suggestions are informational. They are limited to movements with matching technique metadata from the original app. Confirm available equipment and exercise suitability before changing your routine. No workout is edited automatically.</p>';
+ '<p class="coach-sub-note">Suggestions are informational. They use a matching movement family and primary muscle; catalog-derived matches remain provisional until reviewed. Confirm available equipment and exercise suitability before changing your routine. No workout is edited automatically.</p>';
  const select=root.querySelector('#coachSubChoice'),list=root.querySelector('#coachSubList');
  if(!choices.length){root.textContent='No verified movement substitutions are currently available.';return}
  function update(){
