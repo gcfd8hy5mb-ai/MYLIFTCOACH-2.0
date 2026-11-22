@@ -106,21 +106,33 @@ jobs:
           ref: 1d7f6b8d0a59f5935250fc758c332398cb61c147
           path: phone-ui-l
           persist-credentials: false
+      - name: Checkout verified guest workout recovery and current UI candidate
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 412dae962d0fbfbd81674011ed5ecbd165e4193d
+          path: phone-ui-m
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           # The existing saved redesign Home Screen app opens /myliftcoach2/.
-          # Update only the stable redesign preview address to regression-tested L.
+          # Update only the stable redesign preview address to regression-tested M.
           # Previous iPhone test paths and production workout-tracker remain intact.
           mkdir -p dist/myliftcoach2
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-ui-l/ dist/myliftcoach2/
-          grep -q 'iPhone beta test build 11-21L' dist/myliftcoach2/index.html
+            --exclude='*.md' phone-ui-m/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21M' dist/myliftcoach2/index.html
+          grep -q 'custom-workouts.js?v=2' dist/myliftcoach2/index.html
+          grep -q 'guestWorkoutRecovery' dist/myliftcoach2/index.html
+          grep -q 'active-workout-header' dist/myliftcoach2/app.js
+          grep -q 'auth-fullscreen' dist/myliftcoach2/app.js
+          grep -q 'guestRecovery' dist/myliftcoach2/custom-workouts.js
           grep -q 'active-workout-ux.css?v=3' dist/myliftcoach2/index.html
           grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/active-workout-ux.css
-          grep -q 'app.js?v=14' dist/myliftcoach2/index.html
+          grep -q 'app.js?v=15' dist/myliftcoach2/index.html
           ! grep -Fq "\$('loginForm input[name=" dist/myliftcoach2/app.js
           grep -q 'auth-session-store.js?v=1' dist/myliftcoach2/index.html
           test -s dist/myliftcoach2/sync/auth-session-store.js
@@ -128,7 +140,7 @@ jobs:
           grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/workout-auth-ux-fix.css
           # Verify H is not accidentally being republished to the saved app.
           ! grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
-          echo 'Existing saved redesign app: prepared approved marble workout build 11-21L'
+          echo 'Existing saved redesign app: prepared guest recovery and current interface build 11-21M'
           sha256sum dist/myliftcoach2/index.html dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
