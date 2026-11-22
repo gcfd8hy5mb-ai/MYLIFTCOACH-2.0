@@ -60,6 +60,48 @@ function weeklyVolume(sessions){
  }
  return [...map.values()].sort((a,b)=>a.week.localeCompare(b.week));
 }
+function renderVolumeAudit(element,rawSessions,resolveName){
+ if(!element)return;
+ // View-only breakdown. No writes to historical workouts or cloud records.
+ const sessions=Array.isArray(rawSessions)?rawSessions.filter(s=>s&&Array.isArray(s.sets)).slice(0,10):[];
+ const root=document.createElement('section');root.className='volume-audit';
+ const intro=document.createElement('p');intro.className='volume-audit-note';
+ intro.textContent='These totals come from the weights and repetitions saved in each completed set. Older entries may include previously prefilled values; review them against your workout notes.';
+ root.append(intro);
+ if(!sessions.length){
+  const empty=document.createElement('p');empty.className='empty-note';empty.textContent='No completed sessions to verify yet.';
+  root.append(empty);element.replaceChildren(root);return;
+ }
+ for(const session of sessions){
+  const details=document.createElement('details');details.className='volume-audit-session';
+  const valid=Array.isArray(session.sets)?session.sets.filter(validSet):[];
+  const sum=volumeTotal(valid);
+  const summary=document.createElement('summary');
+  const name=String(session.title||'Workout');
+  const date=String(session.created||session.date||'').slice(0,10);
+  summary.textContent=name+' · '+(date||'Date unavailable')+' · '+Math.round(sum).toLocaleString()+' lb volume';
+  details.append(summary);
+  const list=document.createElement('ol');list.className='volume-audit-sets';
+  for(const set of valid){
+   const li=document.createElement('li');
+   const name=typeof resolveName==='function'?String(resolveName(String(set.exerciseId||''))||set.exerciseId||'Exercise'):String(set.exerciseId||'Exercise');
+   const weight=Number(set.weight),reps=Number(set.reps);
+   li.textContent=name+' · '+weight+' lb × '+reps+' reps = '+(weight*reps).toLocaleString()+' lb';
+   list.append(li);
+  }
+  if(valid.length)details.append(list);
+  else {
+   const note=document.createElement('p');note.textContent='No completed weighted sets in this session.';details.append(note);
+  }
+  const subtotal=document.createElement('p');subtotal.className='volume-audit-subtotal';
+  subtotal.textContent='Verified from saved fields: '+valid.length+' weighted sets · '+Math.round(sum).toLocaleString()+' lb volume';
+  details.append(subtotal);
+  root.append(details);
+ }
+ const foot=document.createElement('p');foot.className='volume-audit-note';
+ foot.textContent='Showing up to 10 recent sessions. More workout records are available under History.';
+ root.append(foot);element.replaceChildren(root);
+}
 function renderRecords(element,rawSessions,source,resolveName){
  if(!element)return;
  const sessions=normalizedSessions(rawSessions,source),records=personalRecords(sessions),weeks=weeklyVolume(sessions);
@@ -77,5 +119,5 @@ function renderRecords(element,rawSessions,source,resolveName){
  }).join(''):'<p class="empty-note">Personal records appear after weighted sets are logged.</p>');
  element.append(recordsEl);
 }
-window.MLC2Progress={validSet,volumeTotal,normalizedSessions,personalRecords,weeklyVolume,renderRecords};
+window.MLC2Progress={validSet,volumeTotal,normalizedSessions,personalRecords,weeklyVolume,renderRecords,renderVolumeAudit};
 })();
