@@ -56,13 +56,13 @@
    ['strength','bulk','maintain','cut'].includes(payload.goal);
   if(config.kind==='goal-program')return obj&&
    ['strength','bulk','maintain','cut'].includes(payload.goal)&&[6,8,12].includes(payload.weeks)&&
-   typeof payload.startDate==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(payload.startDate)&&
+   typeof payload.startDate==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(payload.startDate)&&
    Number.isFinite(Date.parse(payload.startDate+'T00:00:00Z'))&&
    new Date(payload.startDate+'T00:00:00Z').toISOString().slice(0,10)===payload.startDate;
   if(config.kind==='goal-program-source')return obj&&
    ['custom','generated','mixed'].includes(payload.mode)&&
    typeof payload.customId==='string'&&(payload.customId===''||/^custom-[A-Za-z0-9_-]{1,100}$/.test(payload.customId))&&
-   typeof payload.signature==='string'&&/^\\d{4}-\\d{2}-\\d{2}:(strength|bulk|maintain|cut):(6|8|12)$/.test(payload.signature);
+   typeof payload.signature==='string'&&/^\d{4}-\d{2}-\d{2}:(strength|bulk|maintain|cut):(6|8|12)$/.test(payload.signature);
   if(config.type==='goal')return payload&&typeof payload==='object'&&!Array.isArray(payload)&&
    Number.isFinite(payload.calories)&&payload.calories>0&&payload.calories<=15000&&
    Number.isFinite(payload.protein)&&payload.protein>=0&&payload.protein<=1500;
