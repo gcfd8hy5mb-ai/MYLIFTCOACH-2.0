@@ -177,7 +177,7 @@ jobs:
           test -s dist/myliftcoach2/assets/hero-dumbbells-photo.jpg
           # Isolated Workouts preview: never replace the stable /myliftcoach2/ build N.
           mkdir -p dist/workouts-n-review
-          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \\
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
             --exclude='*.md' phone-workouts-review/ dist/workouts-n-review/
           cp original-approved/assets/approved-vertical-marble-sharp.webp dist/workouts-n-review/assets/approved-vertical-marble-sharp.webp
           cp original-approved/assets/hero-dumbbells-photo.jpg dist/workouts-n-review/assets/hero-dumbbells-photo.jpg
