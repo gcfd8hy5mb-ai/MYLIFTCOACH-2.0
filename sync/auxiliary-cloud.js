@@ -149,6 +149,18 @@
     if(!still())throw Error('Account changed during confirmation');
     const records=await inspect();
     if(!still())throw Error('Account changed');
+    // Never restore a newly appeared cloud category that was not named
+    // in the user's explicit confirmation. Reconfirm the updated selection.
+    const approved=new Set(first.missing);
+    for(let i=0;i<aux.CONFIG.length;i++){
+     const config=aux.CONFIG[i],row=records[i];
+     if(!row||row.deleted)continue;
+     const entries=aux.validateRemote(config,row);
+     const local=aux.loadLocal(storage,owner,config);
+     if((!local.exists||aux.empty(config,local.value))&&
+        !aux.empty(config,entries)&&!approved.has(config.label))
+      return {status:'changed-reconfirm',restored:[]};
+    }
     const restored=aux.restoreMissing(storage,owner,records.filter(Boolean));
     return {status:'restored',restored};
    }finally{busy=false}
