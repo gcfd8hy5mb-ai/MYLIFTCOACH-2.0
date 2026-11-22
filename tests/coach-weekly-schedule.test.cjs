@@ -43,3 +43,11 @@ test('Panel is connected, accessible and contained inside Workouts styling',()=>
  assert.ok(css.includes('#workouts .coach-schedule-panel'));
  assert.ok(css.includes('#workouts .coach-schedule-panel[hidden]'));
 });
+
+test('Coach scheduling panel is moved into the Schedule tab and is opened there',()=>{
+ const tabs=fs.readFileSync('workouts-tabs-n.js','utf8');
+ assert.ok(tabs.includes("const coachSchedule=page.querySelector('#coachSchedulePanel')"));
+ assert.ok(tabs.includes('panels.schedule.append(coachSchedule)'));
+ assert.ok(tabs.includes('window.MLC2WorkoutsSelectTab=select'));
+ assert.ok(app.includes("window.MLC2WorkoutsSelectTab('schedule')"));
+});
