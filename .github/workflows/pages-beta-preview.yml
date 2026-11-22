@@ -140,7 +140,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: ea5df102a8030a691379a2a3a262aa99a2313d83
+          ref: 90624408c3df166f7a6c01943d15af19e83718fb
           path: visual-review
           persist-credentials: false
       - name: Package static beta preview only
