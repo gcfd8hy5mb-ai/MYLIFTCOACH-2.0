@@ -24,7 +24,7 @@ test('previous set uses newest valid session of exactly the same workout',()=>{
 test('new workout defaults use previous same-plan set, but never another plan',()=>{
  const history=[session('2026-11-01T10:00:00Z','plan-one','press',65,7)];
  assert.deepEqual(UX.defaults('press',[],history,'plan-one'),{weight:65,reps:7,source:'previous'});
- assert.deepEqual(UX.defaults('press',[],history,'plan-two'),{weight:40,reps:10,source:'default'});
+ assert.deepEqual(UX.defaults('press',[],history,'plan-two'),{weight:'',reps:'',source:'empty'});
 });
 test('during a workout current sets override historical suggestions',()=>{
  const history=[session('2026-11-01T10:00:00Z','plan-one','press',65,7)];
@@ -39,7 +39,7 @@ test('workout progress reflects only actual logged sets and exercises',()=>{
 test('invalid previous values are never shown or used as defaults',()=>{
  const hist=[{created:'2026-11-04T00:00:00Z',planId:'a',sets:[{exerciseId:'press',weight:Infinity,reps:8},{exerciseId:'press',weight:5,reps:101}]}];
  assert.equal(UX.previous('press',hist,'a'),null);
- assert.deepEqual(UX.defaults('press',[],hist,'a'),{weight:40,reps:10,source:'default'});
+ assert.deepEqual(UX.defaults('press',[],hist,'a'),{weight:'',reps:'',source:'empty'});
 });
 test('active workout uses inline checkmark logging and preserves existing draft/save pipeline',()=>{
  for(const token of ['id="workoutLog"','id="autoRestToggle"','id="activeWorkoutProgress"','data-addset','data-set-rows','data-undo','function updateExerciseFeedback(id)','window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)','window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,proposed)','queueWorkoutForSync(entry)']){
