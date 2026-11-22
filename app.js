@@ -387,8 +387,9 @@ function renderCoach(){
  if(pro){
   window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
+  window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,demoSessions,{mode:'pro'});
   updateCoachPlan();
- }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren()}
+ }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren();$('coachProgramBuilder').replaceChildren()}
  window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
  window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
  window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected,updateCoachPlan);
