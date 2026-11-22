@@ -24,3 +24,9 @@
 .mlc-guide-section p,.mlc-guide-section li{font-size:13px;line-height:1.6;color:#eef4ed}
 .mlc-guide-section p{margin:0}.mlc-guide-section ul{margin:0;padding-left:20px}.mlc-guide-section li{margin:5px 0}
 @media(max-width:390px){.mlc-guide-thumb-frame{width:48px;height:48px;flex-basis:48px}.mlc-guide-toggle{font-size:12px}}
+
+/* Consistent instructional layout on every exercise, with numbered source steps
+   when the underlying instructions contain multiple sentences. */
+.mlc-guide-steps{margin:0;padding-left:24px;counter-reset:mlcsteps;list-style:decimal}
+.mlc-guide-steps li{font-size:13px;line-height:1.65;color:#eef4ed;margin:7px 0;padding-left:3px}
+.mlc-guide-steps li::marker{color:#ebcb8c;font-weight:800}
