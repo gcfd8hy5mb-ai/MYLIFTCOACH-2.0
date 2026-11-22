@@ -1,0 +1,65 @@
+name: Validate 11-21N Workouts-only preview (no deployment)
+
+on:
+  push:
+    branches: [ci/isolated-workouts-n-review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-workouts-n:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pinned Workouts-only 11-21N development snapshot
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: ff18ec5cea5d6cb45dcbc4ec9fc0a62c6aa38bd5
+          fetch-depth: 0
+      - name: Configure Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify N protected modules, HTML, and scoped CSS
+        run: node --test tests/workouts-tab-regression.test.cjs
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check workouts-tabs-n.js
+          node --check custom-workouts.js
+          node --check weekly-workout-schedule.js
+      - name: Verify browser asset paths exist
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class AssetLinks(HTMLParser):
+              def __init__(self): super().__init__(); self.urls=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag in ('script','img') and a.get('src'):self.urls.append(a['src'])
+                  if tag=='link' and a.get('href'):self.urls.append(a['href'])
+          parser=AssetLinks();parser.feed(Path('index.html').read_text())
+          missing=[]
+          for raw in parser.urls:
+              url=raw.split('?',1)[0]
+              if not url or url.startswith(('https:','http:','data:','#','/')):continue
+              if not Path(url).is_file():missing.append(url)
+          if missing:raise SystemExit('Missing Workouts-preview assets: '+repr(missing))
+          print('Static assets verified:',len(parser.urls))
+          PY
+      - name: Package offline review build (not GitHub Pages)
+        run: |
+          mkdir -p review-build
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' --exclude='*.md' ./ review-build/
+          test -f review-build/index.html
+          test -f review-build/workouts-tabs-n.js
+          test -f review-build/workouts-tabs-n.css
+      - name: Upload review files without changing live site
+        uses: actions/upload-artifact@v4
+        with:
+          name: myliftcoach-workouts-from-11-21n
+          path: review-build
+          retention-days: 14
