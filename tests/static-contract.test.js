@@ -42,7 +42,7 @@ assert.match(app,/window\.MLC2WeeklySchedule\?\.resolve/);
 assert.match(app,/if\(standard\?\.scheduleSource==='manual'\|\|standard\?\.scheduleSource==='weekly'\)return standard/);
 assert.match(app,/\$\('todayStart'\)\.dataset\.homeWorkout=plan\.id/);
 assert.match(app,/\$\('todayStart'\)\.addEventListener\('click',\(\)=>openWorkout\(\$\('todayStart'\)\.dataset\.homeWorkout\)\)/);
-assert.match(app,/renderNextWorkout\(\$\('coachNextWorkout'\),selected,demoSessions,catalog\)/);
+assert.match(app,/renderNextWorkout\(\$\('coachNextWorkout'\),selected,history,catalog\)/);
 assert.match(app,/renderTechnique\(\$\('coachTechnique'\),selected,catalog\)/);
 const cloud=file('cloud-sync-preview.js');
 const archive=file('cloud-account-archive.js');
