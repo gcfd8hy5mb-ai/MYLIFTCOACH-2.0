@@ -1,0 +1,33 @@
+'use strict';
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const read=f=>fs.readFileSync(f,'utf8');
+function source(){const window={};const ctx=vm.createContext({window,console});for(const file of ['exercise-catalog-344.js','exercise-instruction-coverage.js'])vm.runInContext(read(file),ctx,{filename:file});return window.MLC2_EXERCISE_CATALOG}
+test('all 344 exercises provide how-to instructions, equipment, tips and mistakes',()=>{
+ const catalog=source();
+ assert.equal(catalog.length,344);
+ for(const e of catalog){assert.ok(e.how?.trim(),e.id+' how');assert.ok(e.equipment?.trim(),e.id+' equipment');assert.ok(e.tips?.length,e.id+' tips');assert.ok(e.mistakes?.length,e.id+' mistakes')}
+});
+test('legacy exercise instructions use full canonical text without changing IDs or imagery',()=>{
+ const catalog=source();
+ const byId=new Map(catalog.map(e=>[e.id,e]));
+ for(const [legacyId,canonicalId] of Object.entries({'chest-press':'machine-chest-press','triceps-push':'triceps-pushdown','leg-curl':'seated-leg-curl'})){
+  const legacy=byId.get(legacyId),master=byId.get(canonicalId);
+  assert.equal(legacy.how,master.how);
+  assert.equal(legacy.equipment,master.equipment);
+  assert.deepEqual(Array.from(legacy.tips),Array.from(master.tips));
+  assert.deepEqual(Array.from(legacy.mistakes),Array.from(master.mistakes));
+  assert.equal(legacy.id,legacyId);
+ }
+});
+test('instructions load before app and guide and Start Workout retains dark teal style',()=>{
+ const html=read('index.html');
+ const load=html.indexOf('exercise-instruction-coverage.js');
+ assert.ok(load>html.indexOf('exercise-catalog-344.js'));
+ assert.ok(load<html.indexOf('app.js?v=15'));
+ const css=read('workouts-tabs-n.css');
+ assert.match(css,/#workouts \.workouts-n-actions \.button-primary\{background:linear-gradient\(145deg,#124b4f,#063039 80%\)!important/);
+ assert.doesNotMatch(css,/#workouts \.workouts-n-actions \.button-primary\{background:linear-gradient\(#ffebba,#d7ae70\)/);
+});
