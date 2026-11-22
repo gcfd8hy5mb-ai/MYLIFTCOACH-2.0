@@ -9,6 +9,7 @@ const tests=[
  'migration-regression.test.js',
  'coach-regression.test.js',
  'coach-live-workout.test.cjs',
+ 'coach-autonomous-proposal.test.cjs',
  'coach-catalog-coverage.test.cjs',
  'custom-home-priority.test.cjs',
  'active-workout-ux.test.cjs',
