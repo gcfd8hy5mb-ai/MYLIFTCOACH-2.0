@@ -43,3 +43,8 @@ details.live-coach-dropdown{display:block;padding:0;overflow:hidden;margin:10px 
 .live-coach-dropdown-content .live-coach-list{max-height:230px}
 .live-coach-dropdown-toggle:focus-visible{outline:2px solid #f7dfa4;outline-offset:-3px}
 @media(max-width:380px){.live-coach-dropdown-toggle{padding:11px}.live-coach-dropdown-heading strong{font-size:13px}}
+
+/* Opt-in progression applies to next-set input only, never the saved session. */
+.coach-apply-weight{display:block;min-height:38px;margin:9px 0 3px;padding:8px 12px;border:1px solid #e2bd83;border-radius:9px;background:#0b4b50;color:#ffebc0;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation}
+.coach-apply-weight:focus-visible{outline:2px solid #f4dfb3;outline-offset:2px}
+.coach-applied-note{display:block;font-size:11px;color:#c6e8df;line-height:1.4}
