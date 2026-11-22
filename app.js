@@ -414,7 +414,7 @@ function openWorkout(id){
  session={sets:draftAPI?.resume(draftStore,plan)||[]};
  try{draftAPI?.save(draftStore,plan,session.sets)}
  catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
- openModal('<div class="modal-eyebrow">PRACTICE SESSION · LOCAL ONLY</div><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+' All entries stay in the isolated demo workspace and will not be uploaded to Supabase.</p><div id="workoutLog" class="workout-log"></div><div class="modal-footer"><button type="button" class="button-outline" id="cancelWorkout">Cancel</button><button type="button" class="button-outline" id="startRest">Rest 1:30</button><button type="button" class="button-primary" id="finishWorkout">Finish session</button></div>');
+ openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div></div><div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
  renderWorkoutLog();
  for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
@@ -437,20 +437,43 @@ function openWorkout(id){
 }
 function renderWorkoutLog(){
  if(!activePlan)return;
- $('workoutLog').innerHTML=activePlan.ids.map(id=>{
-  const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
-  const count=session.sets.filter(x=>x.exerciseId===id).length;
-  return '<article class="log-card" data-exercise-card="'+id+'"><div class="log-title"><h4>'+escapeHTML(e.name)+'</h4><span class="logged-count" data-count="'+id+'">'+count+' logged</span></div><small>Target: '+e.sets+' sets × '+escapeHTML(e.reps)+' reps</small><div class="inputs"><label>Weight (lb)<input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+id+'" value="40"></label><label>Reps<input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+id+'" value="10"></label><button class="button-outline" data-addset="'+id+'" type="button">Log set</button></div><div class="set-feedback" data-feedback="'+id+'" role="status" aria-live="polite"></div><button class="undo-set" data-undo="'+id+'" type="button" hidden>Undo last set</button></article>'
+ const ux=window.MLC2WorkoutUX;
+ const catalog=libraryExercises();
+ $('workoutLog').innerHTML=activePlan.ids.map((id,i)=>{
+  const e=catalog.find(x=>x.id===id)||exercises.find(x=>x.id===id);
+  if(!e)return '';
+  const logged=session.sets.filter(x=>x.exerciseId===id);
+  const prior=ux?.previous(id,demoSessions,activePlan.id);
+  const last=prior?.sets?.[prior.sets.length-1];
+  const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:40,reps:10};
+  const previousText=last?'Last workout: '+last.weight+' lb × '+last.reps+' reps':'No previous session for this workout';
+  const count=logged.length;
+  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div><div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+defaults.weight+'"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
  }).join('');
+ updateWorkoutProgress();
+ for(const id of activePlan.ids)updateExerciseFeedback(id);
+}
+function updateWorkoutProgress(){
+ if(!activePlan||!session)return;
+ const v=window.MLC2WorkoutUX?.progress(activePlan.ids,session.sets);
+ const el=$('activeWorkoutProgress');if(!el||!v)return;
+ el.textContent=v.logged+' sets completed · '+v.completedExercises+' of '+v.totalExercises+' exercises started';
 }
 function updateExerciseFeedback(id){
+ if(!session)return;
  const sets=session.sets.filter(x=>x.exerciseId===id);
- const count=document.querySelector('[data-count="'+id+'"]');
- const feedback=document.querySelector('[data-feedback="'+id+'"]');
- const undo=document.querySelector('[data-undo="'+id+'"]');
+ const card=document.querySelector('[data-exercise-card="'+id+'"]');
+ if(!card)return;
+ const count=card.querySelector('[data-count]'),feedback=card.querySelector('[data-feedback]');
+ const undo=card.querySelector('[data-undo]'),rows=card.querySelector('[data-set-rows]');
  if(count)count.textContent=sets.length+' logged';
- if(feedback)feedback.textContent=sets.length?('Last set: '+sets[sets.length-1].weight+' lb × '+sets[sets.length-1].reps+' reps'):'';
+ if(feedback)feedback.textContent=sets.length?'✓ Set saved to your workout draft':'';
  if(undo)undo.hidden=sets.length===0;
+ if(rows){
+  rows.innerHTML=sets.map((set,i)=>'<div class="active-logged-row"><span>'+(i+1)+'</span><span>—</span><strong>'+escapeHTML(String(set.weight))+' lb</strong><strong>'+escapeHTML(String(set.reps))+'</strong><span class="active-done-check" aria-label="Set completed">✓</span></div>').join('');
+ }
+ const next=card.querySelector('[data-next-set]');if(next)next.textContent=sets.length+1;
+ updateWorkoutProgress();
 }
 function addSet(id){
  if(!session||!activePlan?.ids.includes(id))return;
@@ -467,6 +490,7 @@ function addSet(id){
  catch{notice('Set logged in memory, but browser draft saving failed.')}
  // Update only this exercise: never erase inputs, keyboard focus, or scroll position.
  updateExerciseFeedback(id);
+ if($('autoRestToggle')?.checked)openRest();
 }
 function undoSet(id){
  if(!session||!activePlan?.ids.includes(id))return;
