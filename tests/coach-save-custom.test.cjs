@@ -64,3 +64,17 @@ test('Saving Coach does not change unscheduled Home fallback; explicit selection
  store.setItem('mlc2-selected-workout-v1',saved.id);
  assert.equal(weekly.resolve({presets:[preset],custom,storage:store,date:new Date('2026-11-23T12:00:00')}).id,saved.id);
 });
+
+test('Edited Coach routines retain their non-default status and do not silently select Today',()=>{
+ const source=fs.readFileSync('custom-workouts.js','utf8');
+ assert.match(source,/coachSaved:existing\?\.coachSaved===true/);
+ assert.match(source,/if\(!updated\.coachSaved\)\s*\{\s*try\{localStorage\.setItem\(scoped\(TODAY\),updated\.id\)/);
+ const {store,window}=setup();
+ const newCoach=window.MLC2Custom.saveCoachDay({day:1,exercises:[{id:'row'}]});
+ assert.equal(window.MLC2Custom.allPlans([]).find(p=>p.id===newCoach.id).coachSaved,true);
+ const old=JSON.parse(store.getItem('mlc2-custom-plans-v1'));
+ old[0]={...old[0],title:'Coach Day 1 Edited',coachSaved:true};
+ store.setItem('mlc2-custom-plans-v1',JSON.stringify(old));
+ assert.equal(window.MLC2Custom.allPlans([])[0].coachSaved,true);
+ assert.equal(window.MLC2Custom.currentPlan([{id:'preset',title:'Preset',ids:['press']}],0).id,'preset');
+});
