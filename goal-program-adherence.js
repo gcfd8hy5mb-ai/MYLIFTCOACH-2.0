@@ -21,6 +21,8 @@
   const start=Date.parse(program.startDate+'T00:00:00Z');
   const finish=start+program.weeks*7*DAY;
   if(!Number.isFinite(start)||!Number.isFinite(finish))return null;
+  const nowTimestamp=new Date(now).getTime();
+  if(!Number.isFinite(nowTimestamp))return null;
   const earliest=Math.max(start,start+(progress.week-1)*7*DAY);
   const latest=Math.min(finish,start+progress.week*7*DAY);
   const selected=(Array.isArray(sessions)?sessions:[]).filter(s=>{
@@ -28,7 +30,7 @@
    if(!s.sets.some(set=>set&&typeof set.exerciseId==='string'&&
     set.reps!==''&&set.reps!=null&&Number.isFinite(Number(set.reps))&&Number(set.reps)>0))return false;
    const timestamp=Date.parse(s.created||'');
-   if(!Number.isFinite(timestamp)||timestamp<start||timestamp>=finish)return false;
+   if(!Number.isFinite(timestamp)||timestamp<start||timestamp>=finish||timestamp>nowTimestamp)return false;
    const coach=mode!=='custom'&&/^coach-auto-day-[1-5]$/.test(s.planId);
    const custom=mode!=='generated'&&enrolled.has(s.planId);
    return coach||custom;
@@ -39,7 +41,6 @@
    seen.add(s.id);return true;
   });
   const current=verified.filter(s=>{const t=Date.parse(s.created);return t>=earliest&&t<latest});
-  const nowTimestamp=new Date(now).getTime();
   const dayIndex=Math.max(0,Math.min(program.weeks*7,
    Math.floor((nowTimestamp-start)/DAY)));
   const elapsedWeeks=Math.min(program.weeks,Math.floor(dayIndex/7));
