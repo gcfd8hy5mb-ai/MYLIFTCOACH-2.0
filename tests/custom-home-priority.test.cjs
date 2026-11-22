@@ -21,6 +21,9 @@ function make(){
  const ctx=vm.createContext({window:win,localStorage:db,console,Date,Math,confirm:()=>true,alert:()=>{}});
  vm.runInContext(read('custom-workouts.js'),ctx);
  vm.runInContext(read('weekly-workout-schedule.js'),ctx);
+ // The weekly schedule UMD exports on globalThis in Node VM, while the
+ // real browser uses the same object for globalThis and window.
+ win.MLC2WeeklySchedule=ctx.MLC2WeeklySchedule;
  return {win,db};
 }
 function accountStore(db,owner){
