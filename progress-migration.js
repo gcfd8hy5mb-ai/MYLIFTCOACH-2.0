@@ -3,8 +3,16 @@
 'use strict';
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function validSet(set){
- const weight=Number(set?.weight),reps=Number(set?.reps);
- return Number.isFinite(weight)&&weight>0&&Number.isFinite(reps)&&Number.isInteger(reps)&&reps>0&&reps<=100;
+ // An empty field is not a completed weighted set. Do not turn '' into zero.
+ if(set==null||set.weight==null||set.reps==null||
+    String(set.weight).trim()===''||String(set.reps).trim()==='')return false;
+ const weight=Number(set.weight),reps=Number(set.reps);
+ return Number.isFinite(weight)&&weight>0&&weight<=1500&&
+  Number.isInteger(reps)&&reps>0&&reps<=100;
+}
+function volumeTotal(sets){
+ if(!Array.isArray(sets))return 0;
+ return sets.reduce((sum,set)=>sum+(validSet(set)?Number(set.weight)*Number(set.reps):0),0);
 }
 function normalizedSessions(sessions,source){
  if(!Array.isArray(sessions))return [];
@@ -57,7 +65,7 @@ function renderRecords(element,rawSessions,source,resolveName){
  const sessions=normalizedSessions(rawSessions,source),records=personalRecords(sessions),weeks=weeklyVolume(sessions);
  const totalSets=weeks.reduce((sum,w)=>sum+w.sets,0),volume=weeks.reduce((sum,w)=>sum+w.volume,0);
  const summary=document.createElement('div');summary.className='records-summary';
- summary.innerHTML='<strong>'+sessions.length+'</strong> sessions · <strong>'+totalSets+'</strong> weighted sets · <strong>'+Math.round(volume).toLocaleString()+'</strong> lb total volume';
+ summary.innerHTML='<strong>'+sessions.length+'</strong> sessions · <strong>'+totalSets+'</strong> logged weighted sets · <strong>'+Math.round(volume).toLocaleString()+'</strong> lb training volume <small>(sum of weight × reps from your completed sets)</small>';
  element.replaceChildren(summary);
  const weekly=document.createElement('div');weekly.className='records-weekly';
  weekly.innerHTML='<h4>Recent weekly volume</h4>'+(weeks.length?weeks.slice(-8).reverse().map(w=>'<div class="records-week"><span>Week of '+escape(w.week)+'</span><strong>'+Math.round(w.volume).toLocaleString()+' lb</strong><small>'+w.sets+' sets</small></div>').join(''):'<p class="empty-note">No weighted sessions yet.</p>');
@@ -69,5 +77,5 @@ function renderRecords(element,rawSessions,source,resolveName){
  }).join(''):'<p class="empty-note">Personal records appear after weighted sets are logged.</p>');
  element.append(recordsEl);
 }
-window.MLC2Progress={normalizedSessions,personalRecords,weeklyVolume,renderRecords};
+window.MLC2Progress={validSet,volumeTotal,normalizedSessions,personalRecords,weeklyVolume,renderRecords};
 })();
