@@ -283,13 +283,29 @@ function logDaily(event,type){
 
 function escapeHTML(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notice(message){const t=$('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
+function renderCalorieGoal(){
+ const form=$('calorieGoalForm'),out=$('calorieGoalResult');
+ if(!form||!out)return;
+ const p=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
+ if(!p){out.textContent='Enter your profile to see an estimated daily calorie target. No food tracking needed.';return}
+ form.elements.namedItem('goal').value=p.goal;
+ form.elements.namedItem('age').value=p.age;
+ form.elements.namedItem('weightLb').value=(p.weightKg/0.45359237).toFixed(1);
+ form.elements.namedItem('heightIn').value=(p.heightCm/2.54).toFixed(1);
+ form.elements.namedItem('sex').value=p.sex;
+ form.elements.namedItem('activity').value=p.activity;
+ const result=window.MLC2CalorieGoal.estimate(p);
+ out.textContent=result.needsReview?
+  'Estimated target: '+result.target+' calories/day. This estimate is unusually low; consult a qualified clinician or dietitian before using it.':
+  'Estimated goal: '+result.target+' calories/day · maintenance estimate: '+result.maintenance+' calories/day. No meals to log.';
+}
 function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking'].includes(next))return;page=next;
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
  $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
  $('sidebar').classList.remove('open');document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
- if(next==='coaching')renderCoach();if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
+ if(next==='coaching')renderCoach();if(next==='nutrition')renderCalorieGoal();if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
 }
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
 function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:planStorage()})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
@@ -817,6 +833,20 @@ function openSignIn(){
  });
 }
 function bind(){
+ $('calorieGoalForm').addEventListener('submit',event=>{
+  event.preventDefault();
+  const form=event.currentTarget,field=name=>form.elements.namedItem(name).value;
+  try{
+   const profile={goal:field('goal'),age:Number(field('age')),weightKg:Number(field('weightLb'))*0.45359237,
+    heightCm:Number(field('heightIn'))*2.54,sex:field('sex'),activity:field('activity')};
+   const estimate=window.MLC2CalorieGoal.estimate(profile);
+   window.MLC2CalorieGoal.save(localStorage,verifiedOwnerId,profile);
+   renderCalorieGoal();
+   if(estimate.needsReview)notice('Calorie estimate requires review before use.');
+   else notice('Estimated calorie target saved on this iPhone.');
+  }catch(e){$('calorieGoalResult').textContent='Could not calculate: '+String(e.message||e).slice(0,120)}
+ });
+
  document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.page)));
  $('avatarBtn').addEventListener('click',()=>setPage('settings'));
  $('previewWelcome').addEventListener('click',()=>setPage('welcome'));
