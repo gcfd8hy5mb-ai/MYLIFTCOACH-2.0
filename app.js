@@ -438,6 +438,12 @@ function renderProgress(){
  $('simulationStatus').textContent=sim?.active?'SIMULATION ACTIVE · '+sim.sessions+' fictional workouts over '+sim.days+' days. Charts, records and Coach show TEST DATA only. Real history is unchanged.':'Simulation is off. Your saved 2.0 history is shown normally.';
  $('simulationClear').disabled=!sim?.active;
  $('progressWeeklySourceLabel').textContent=sim?.active?'SIMULATED TEST DATA':'ACTUAL 2.0 LOGS';
+ const auditRoot=$('simulationAudit');
+ auditRoot.hidden=!sim?.active;
+ if(sim?.active){
+  const result=window.MLC2SimulationAudit?.audit(progressData,libraryExercises(),window.MLC2Progress,window.MLC2ProgressWeekly);
+  window.MLC2SimulationAudit?.render(auditRoot,result);
+ }else auditRoot.replaceChildren();
  document.getElementById('progress').classList.toggle('simulation-active',Boolean(sim?.active));
  window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),progressData);
  window.MLC2PostWorkout?.render($('postWorkoutRecap'),progressData);
