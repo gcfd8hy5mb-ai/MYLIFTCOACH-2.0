@@ -411,12 +411,25 @@ function wireWorkoutPreviewImages(root){
   },{once:true});
  }
 }
+function unfinishedDraftFor(plan){
+ if(!plan?.id||!Array.isArray(plan.ids)||!plan.ids.length)return null;
+ try{
+  const scoped=window.MLC2AccountDraft.scope(localStorage,verifiedOwnerId);
+  const draft=window.MLC2SessionDraft?.read(scoped);
+  if(!draft?.sets?.length||draft.planId!==plan.id||
+     JSON.stringify(draft.ids)!==JSON.stringify(plan.ids))return null;
+  return draft;
+ }catch{return null}
+}
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
  const plan=nextPlan();
  $('heroStart').dataset.homeWorkout=plan.id;
  $('todayStart').dataset.homeWorkout=plan.id;
+ const unfinished=unfinishedDraftFor(plan);
+ $('heroStart').innerHTML=unfinished?'Resume Workout <span aria-hidden="true">▶</span>':'Start Workout <span aria-hidden="true">▶</span>';
+ $('todayStart').innerHTML=unfinished?'Resume this session <span aria-hidden="true">↗</span>':'Begin this session <span aria-hidden="true">↗</span>';
  $('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
  $('todayExercises').innerHTML=plan.ids.map(id=>{
   const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
@@ -543,7 +556,12 @@ function renderWorkouts(){
  if(source)source.textContent=selected?(selected.scheduleSource==='manual'?'Selected by you':
   selected.scheduleSource==='weekly'?'From your weekly schedule':
   selected.scheduleSource==='program'?'Part of your active goal program':'Recommended next session'):'';
- const start=$('workoutTodayStart');if(start){start.dataset.workout=activeId;start.disabled=!activeId}
+ const savedDraft=unfinishedDraftFor(selected);
+ if(savedDraft&&source)source.textContent+=' · '+savedDraft.sets.length+' saved set(s) ready to resume';
+ const start=$('workoutTodayStart');if(start){
+  start.dataset.workout=activeId;start.disabled=!activeId;
+  start.textContent=savedDraft?'Resume workout':'Start workout';
+ }
  const guestBox=$('guestWorkoutRecovery'),guestStatus=$('guestWorkoutRecoveryStatus');
  const recoverable=ownerReady?window.MLC2Custom?.guestRecovery():null;
  if(guestBox)guestBox.hidden=!(recoverable?.available>0);
