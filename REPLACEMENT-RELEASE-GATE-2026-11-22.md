@@ -1,5 +1,18 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## Combined redesign candidate — November 22 release handoff
+- **Development candidate:** `integration/replacement-visual-coach-20261122`, based on the approved visual branch, not on production.
+- **Review PR:** https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/pull/7 (DRAFT; no merging or publication authorized).
+- **Isolated iPhone preview target:** https://gcfd8hy5mb-ai.github.io/MYLIFTCOACH-2.0-PREVIEW/replacement-candidate/ (GitHub Pages workflow triggered, actual URL needs a user/browser check; network/cloud blocked by preview CSP).
+- **Automated code verification:** GitHub Actions `MYLIFTCOACH 2.0 regression` passed for combined candidate commit `b03f0e467fd3b789118bebca96962d501780d83f`; image mapping/files, active workout, auth, custom priority, Coach program sources, program calendar, readiness, and backup validations are covered.
+- **Images:** all 263 approved catalog mappings have full-size images and thumbnails present in the combined candidate; the remaining 81 exercises intentionally retain the approved coming-soon placeholder. No new artwork was falsely approved.
+- **Restored design:** inline images on Home, compact Workouts cards, full workout exercise guide, expanded library, compact Progress with weekly comparison, original optional Coach program builder and read-only next-workout panel, plus the dark teal/marble/gold theme.
+- **Autonomous Coach:** selected 6/8/12-week program automatically appears on Home when there is no manual choice or weekday assignment. Custom > scheduled/manual precedence remains protected; unrelated custom sessions cannot advance pinned programs.
+- **Fitness goals:** strength/bulk/maintain/cut with estimated calorie targets only, no food/macro diary.
+- **Account recovery code:** new calendar, source, estimated calorie profile and Coach training preferences have owner-specific auxiliary cloud categories with fill-only recovery checks, and trigger existing automatic backup after edits.
+- **Still required before merge/publishing:** physical iPhone Safari and saved Home Screen visual acceptance; review of whether 81 placeholder images are acceptable; genuine account workout/Coach/goal restore on the iPhone (the isolated preview intentionally blocks cloud); verify Free/Pro beta switching in candidate; capture exact published-app backup and rollback; explicit cutover approval.
+- **No production cutover has occurred.** Do not assume automated mock tests prove device persistence or production cloud behavior.
+
 Status: CANDIDATE ONLY — no production cutover authorization
 
 ## Product contract
