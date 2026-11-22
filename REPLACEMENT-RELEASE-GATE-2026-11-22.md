@@ -40,6 +40,18 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [ ] Add genuinely phase-specific training volume/recovery adaptations; current phase names are labels, not yet complete periodization.
 - [ ] Verify safe backup/recovery of goal cycle and calorie profile before production replacement.
 
+## Custom-workout goal programs
+- [x] Choose Custom / Coach-generated / Mixed as the workout source for each 6-, 8-, or 12-week goal.
+- [x] Optionally pin a named saved custom routine or rotate existing custom routines.
+- [x] Reference current saved custom plans by stable ID; edits to exercises are reflected without copying or overwriting their original record.
+- [x] Respect manually selected custom workouts and the weekly schedule; Coach suggestions remain an optional Start action.
+- [x] Pinned custom workouts fail closed when missing or deleted, rather than silently using another routine.
+- [x] Owner-scoped source settings are bound to the current goal/program start date, so new programs cannot claim old settings.
+- [x] Full offline regression suite passed on commit 91ed8bf6a3f53c3cc41c96f5eae706633bf3ccd9.
+- [ ] Test the new source selector, saved custom workout editing, mixed rotation, and restart in iPhone Safari.
+- [ ] Verify program source preferences are included in iPhone backup/recovery before retiring the original app.
+- [ ] Add phase-aware training adjustments and recovery logic to custom workouts without silently editing user plans.
+
 ## Requirements before the original application can be retired
 - [ ] Integrate and audit approved demonstration assets and precise exercise-ID mappings. No auto-approval of missing images.
 - [ ] Merge latest Coach, approved visual, and workout redesign changes in one isolated release candidate without overwriting protected features.
