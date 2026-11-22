@@ -22,7 +22,7 @@ test('only approved files differ from base N',()=>{
  const modified=execFileSync('git',['diff','--name-only',BASE+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
  const untracked=execFileSync('git',['ls-files','--others','--exclude-standard'],{encoding:'utf8'}).trim();
  assert.equal(untracked,'');
- const allowed=new Set(['index.html','workouts-tabs-n.js','workouts-tabs-n.css','tests/workouts-tab-regression.test.cjs','.github/workflows/workouts-tabs-ci.yml']);
+ const allowed=new Set(['index.html','workouts-tabs-n.js','workouts-tabs-n.css','tests/workouts-tab-regression.test.cjs','tests/workouts-tabs-dom.test.cjs','.github/workflows/workouts-tabs-ci.yml']);
  for(const path of modified)assert.ok(allowed.has(path),'Protected N file changed: '+path);
 });
 test('index keeps base N intact other than scoped asset references',()=>{
