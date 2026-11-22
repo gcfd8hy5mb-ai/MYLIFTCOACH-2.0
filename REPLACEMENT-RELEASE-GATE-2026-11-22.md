@@ -1,5 +1,14 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## Program continuity merge batch — 2026-11-22
+- [x] Integrated source-specific 6/8/12-week completed-session tracking (custom / generated / mixed), including weekly adherence and count of missed prior sessions.
+- [x] Count only real qualifying, uniquely identified completed workout logs inside the active program's time window. Duplicate imports, old history, wrong routines and empty sessions cannot advance program tracking.
+- [x] Show completed sessions, current week's session goal and missed prior sessions in the Goals screen, without forcing food logging or changing workout schedule.
+- [x] No automatic recording or pretending that missed sessions were completed. Manual custom workout and weekday-schedule precedence remains unchanged.
+- [x] Full offline regression passed for commit `bed57d696d1e1fbc6abd2924de4406896aa6aed1`.
+- [ ] Physically verify program adherence, cloud save and resumed sessions on iPhone; the isolated preview blocks network calls.
+- [ ] Do not merge the draft PR into production without explicit approval and rollback verification.
+
 ## Continued merge batch — verified on November 22
 - [x] Unified qualified account-scoped completed workout evidence across Coach's next-session, readiness, trends, suggested-program and read-only training-plan panels.
 - [x] Coach readiness and weekly-goal changes refresh the same verified training trends; Free beta retains its readiness/trends without unlocking Pro-only features.
