@@ -44,3 +44,17 @@ test('volume graph and personal records use same validated set calculation',()=>
  assert.ok(migration.includes('sum of weight × reps from your completed sets'));
  assert.ok(html.indexOf('progress-migration.js')<html.indexOf('app.js?v=15'));
 });
+
+test('Strength tab exposes a transparent read-only breakdown of logged sets',()=>{
+ const migration=read('progress-migration.js');
+ const compact=read('progress-compact.js');
+ const app=read('app.js');
+ const css=read('progress-compact.css');
+ assert.ok(migration.includes('function renderVolumeAudit('));
+ assert.ok(migration.includes("weight+' lb × '+reps+' reps = '"));
+ assert.ok(migration.includes('Older entries may include previously prefilled values'));
+ assert.ok(compact.includes("auditBody.id='progressVolumeAudit'"));
+ assert.ok(app.includes("renderVolumeAudit(document.getElementById('progressVolumeAudit'),demoSessions"));
+ assert.ok(css.includes('.volume-audit-session'));
+ assert.ok(!/\b(localStorage|sessionStorage|indexedDB|fetch|supabase|setItem|removeItem)\b/.test(migration));
+});
