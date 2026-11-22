@@ -37,7 +37,7 @@ test('App calorie goal is optional and not a macro or meal counter',()=>{
  const html=fs.readFileSync('index.html','utf8');
  const app=fs.readFileSync('app.js','utf8');
  assert.match(html,/id="calorieGoalForm"/);
- assert.match(html,/calorie-goal-estimate\.js\?v=1/);
+ assert.match(html,/calorie-goal-estimate\.js\?v=2/);
  assert.match(app,/MLC2CalorieGoal\.estimate\(profile\)/);
  assert.match(app,/MLC2CalorieGoal\.save\(localStorage,verifiedOwnerId,profile\)/);
  assert.doesNotMatch(html.slice(html.indexOf('<section id="nutrition"'),html.indexOf('<section id="settings"')),/foodLog|scanBarcode|macroInput/i);
