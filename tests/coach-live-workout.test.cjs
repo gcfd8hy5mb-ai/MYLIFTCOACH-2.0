@@ -58,5 +58,5 @@ test('Active workout mounts Coach, uses existing draft and cloud paths, and avoi
  }
  assert.match(css,/\.live-coach-box/);
  assert.match(html,/live-coach-workout\.css\?v=1/);
- assert.match(html,/app\.js\?v=17/);
+ assert.match(html,/app\.js\?v=18/);
 });
