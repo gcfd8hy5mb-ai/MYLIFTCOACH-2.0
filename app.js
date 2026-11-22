@@ -429,6 +429,7 @@ function renderLibrary(){
  },{once:true}));
 }
 function renderProgress(){
+ window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),demoSessions);
  window.MLC2PostWorkout?.render($('postWorkoutRecap'),demoSessions);
  const movements=new Set(demoSessions.flatMap(x=>x.sets.map(y=>y.exerciseId)));
  $('progressSessions').textContent=demoSessions.length;$('progressSets').textContent=totalSets();$('progressMovements').textContent=movements.size;
