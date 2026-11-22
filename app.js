@@ -348,7 +348,23 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
 // Compact Progress tabs navigate through the normal page router only; no data mutations.
 window.MLC2ProgressNavigate=next=>{if(next==='history'||next==='tracking')setPage(next)};
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
-function nextPlan(){return window.MLC2WeeklySchedule?.resolve({presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],sessionsCompleted:demoSessions.length,storage:planStorage()})||window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length]}
+function nextPlan(){
+ const standard=window.MLC2WeeklySchedule?.resolve({presets:plans,
+  custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
+  sessionsCompleted:demoSessions.length,storage:planStorage()})||
+  window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length];
+ // Explicit manual choices and weekday schedule ALWAYS win, even during an active program.
+ if(standard?.scheduleSource==='manual'||standard?.scheduleSource==='weekly')return standard;
+ if(betaView().mode!=='pro')return standard;
+ const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
+ const active=program&&window.MLC2GoalProgram.progress(program)?.status==='active';
+ const source=active?window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program):null;
+ if(!source)return standard;
+ const proposal=coachAutonomousPlan();
+ if(!proposal)return standard;
+ coachAutonomousDraft=proposal; // Let the Home start action resolve a generated session.
+ return {...proposal,scheduleSource:'program'};
+}
 function wireWorkoutPreviewImages(root){
  if(!root)return;
  const placeholder='./assets/image-coming-approved.webp';
@@ -983,7 +999,7 @@ function bind(){
    const renewed=window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:program.goal,weeks:program.weeks});
    if(previousSource)window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,renewed,previousSource);
    try{window.MLC2ScheduleAuxSync?.()}catch{}
-   renderCalorieGoal();renderWorkouts();notice('New '+program.weeks+'-week program started. Your prior workouts are retained.');
+   renderCalorieGoal();renderHome();renderWorkouts();notice('New '+program.weeks+'-week program started. Your prior workouts are retained.');
   }catch(e){notice('Could not restart program: '+String(e.message||e).slice(0,100))}
  });
  $('calorieGoalForm').addEventListener('submit',event=>{
@@ -1009,7 +1025,7 @@ function bind(){
    window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,next,{mode,customId:mode==='generated'?'':customId});
    window.MLC2CalorieGoal.save(localStorage,verifiedOwnerId,profile);
    try{window.MLC2ScheduleAuxSync?.()}catch{}
-   renderCalorieGoal();renderWorkouts();
+   renderCalorieGoal();renderHome();renderWorkouts();
    if(estimate.needsReview)notice('Calorie estimate requires review before use.');
    else notice('Estimated calorie target saved on this iPhone.');
   }catch(e){$('calorieGoalResult').textContent='Could not calculate: '+String(e.message||e).slice(0,120)}
