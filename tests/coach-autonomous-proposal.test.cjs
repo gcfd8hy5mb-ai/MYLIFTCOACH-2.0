@@ -28,7 +28,8 @@ test('Real completed workouts influence exercise choice while invalid or absent 
 test('Autonomous proposal cannot replace a selected workout or persist generated plans',()=>{
  assert.match(app,/function coachAutonomousPlan\(\)/);
  assert.match(app,/function renderAutonomousCoach\(\)/);
- assert.match(app,/coachAutonomousDraft\?\.id===id\?coachAutonomousDraft:null/);
+ assert.match(app,/const freshCoach=!selected&&betaView\(\)\.mode==='pro'\?coachAutonomousPlan\(\):null/);
+ assert.match(app,/const plan=selected\|\|\(freshCoach\?\.id===id\?freshCoach:null\)/);
  assert.match(app,/openWorkout\(proposal\.id\)/);
  assert.match(app,/window\.MLC2WeeklySchedule\?\.resolve/);
  assert.doesNotMatch(builder.build.toString(),/localStorage|fetch|setItem|\.save\(/);
