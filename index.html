@@ -120,6 +120,13 @@
   <article class="workout-today-card"><div class="workout-today-kicker">TODAY'S WORKOUT</div><h2 id="workoutTodayName">Your next workout</h2><p id="workoutTodayMeta"></p><p id="workoutTodaySource" class="workout-today-source"></p>
   <div class="workout-today-actions"><button type="button" id="workoutTodayStart" class="button-primary">Start workout</button><button type="button" id="workoutTodayChange" class="button-outline">Change workout</button></div></article>
   <p class="workout-today-note">Your own selected routine always takes priority over presets and Coach suggestions.</p>
+  <article class="panel coach-auto-panel" id="coachAutoPanel" hidden>
+   <div class="panel-heading"><h3>✦ Coach-generated next session</h3><span class="micro-tag">PRO · AUTOMATIC</span></div>
+   <h4 id="coachAutoTitle">Coach proposal</h4>
+   <p id="coachAutoDetails"></p>
+   <p class="coach-auto-caution">Starts a proposed session only when you choose it. Your custom workout and schedule remain untouched. Review the suggested exercises and loads before training.</p>
+   <button type="button" id="coachAutoStart" class="button-outline">Start Coach session</button>
+  </article>
  </section>
  <section id="workoutPanelRoutines" class="workout-tab-panel" role="tabpanel" aria-labelledby="workoutTabRoutines" hidden>
   <div class="workouts-list-top"><h2>My routines</h2><button type="button" id="createWorkout" class="button-primary">+ New workout</button></div>
@@ -292,6 +299,7 @@
 <script defer src="./coach-attributes.js?v=1"></script>
 <script defer src="./coach-catalog-coverage.js?v=2"></script>
 <script defer src="./coach-migration.js?v=3"></script>
+<script defer src="./coach-program-builder.js?v=1"></script>
 <script defer src="./coach-readiness.js?v=1"></script>
 <script defer src="./coach-trends.js?v=1"></script>
 <script defer src="./coach-post-workout.js?v=1"></script>
@@ -324,6 +332,6 @@
 <script defer src="./sync/auxiliary-cloud.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=22"></script>
+<script defer src="./app.js?v=23"></script>
 </body>
 </html>
