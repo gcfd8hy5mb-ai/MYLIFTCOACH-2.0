@@ -319,6 +319,35 @@ function setWorkoutTab(tab){
   }
  }
 }
+
+/* Automatic Coach proposal: generated from the catalog and completed sessions.
+   A user's selected custom/scheduled workout is never changed by this proposal. */
+let coachAutonomousDraft=null;
+function coachAutonomousPlan(){
+ if(betaView().mode!=='pro'||!window.MLC2ProgramBuilder)return null;
+ const sessions=coachEvidence(),catalog=libraryExercises();
+ // Four days is a transparent starting default; training preferences are not inferred.
+ const proposal=window.MLC2ProgramBuilder.build(catalog,sessions,{goal:'balanced',days:4,equipment:'Any'});
+ if(proposal?.status!=='ready')return null;
+ const completed=demoSessions.filter(row=>typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
+ const day=proposal.days[completed%proposal.days.length];
+ if(!day?.exercises?.length)return null;
+ return {id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
+  description:'Automatically generated balanced workout. Review exercises and loads before training.',
+  kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day};
+}
+function renderAutonomousCoach(){
+ const panel=$('coachAutoPanel'),title=$('coachAutoTitle'),details=$('coachAutoDetails'),start=$('coachAutoStart');
+ if(!panel||!title||!details||!start)return;
+ coachAutonomousDraft=coachAutonomousPlan();
+ panel.hidden=!coachAutonomousDraft;
+ if(!coachAutonomousDraft)return;
+ title.textContent=coachAutonomousDraft.title;
+ const names=coachAutonomousDraft.ids.map(id=>libraryExercises().find(e=>e.id===id)?.name).filter(Boolean);
+ details.textContent=names.join(' · ')+' — proposed automatically from your catalog and completed sessions. Your chosen workout above is unchanged.';
+ start.disabled=false;
+}
+
 function renderWorkouts(){
  const selected=nextPlan();
  const activeId=selected?.id||'';
@@ -358,6 +387,7 @@ function renderWorkouts(){
    (cards||'<p class="workout-compact-empty">No custom routines yet. Create one to get started.</p>')+ '</div>';
  };
  $('workoutGrid').innerHTML=section(custom,'Your custom workouts')+section(plans,'Ready-made presets');
+ renderAutonomousCoach();
  setWorkoutTab(workoutTab);
 }
 // An external catalog is optional. Never treat a readable file as visually approved.
@@ -568,7 +598,7 @@ function applyCoachWeight(id){
 function openWorkout(id){
  $('modal').classList.remove('auth-fullscreen');
  const workoutStartedOwner=verifiedOwnerId;
- const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);if(!plan)return;
+ const plan=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id)||(coachAutonomousDraft?.id===id?coachAutonomousDraft:null);if(!plan)return;
  const draftAPI=window.MLC2SessionDraft;
  const draftStore=window.MLC2AccountDraft.scope(localStorage,workoutStartedOwner);
  const other=draftAPI?.read(draftStore);
@@ -799,6 +829,7 @@ function bind(){
   if(id)openWorkout(id);
  });
  $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
+ $('coachAutoStart').addEventListener('click',()=>{const proposal=coachAutonomousPlan();if(!proposal)return;coachAutonomousDraft=proposal;openWorkout(proposal.id)});
  document.querySelectorAll('[data-workout-tab]').forEach(button=>{
   button.addEventListener('click',()=>setWorkoutTab(button.dataset.workoutTab));
   button.addEventListener('keydown',event=>{
