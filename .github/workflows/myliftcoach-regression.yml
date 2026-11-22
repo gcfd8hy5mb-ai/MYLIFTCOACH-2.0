@@ -2,7 +2,7 @@ name: MYLIFTCOACH 2.0 regression
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, integration/coach-cloud-beta-20261120]
   push:
     branches:
       - feature/exercise-placeholder-migration-prep
