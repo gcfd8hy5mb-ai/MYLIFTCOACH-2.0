@@ -304,6 +304,12 @@ function renderHome(){
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';
 }
 function renderWorkouts(){
+ const guestBox=$('guestWorkoutRecovery'),guestStatus=$('guestWorkoutRecoveryStatus');
+ const guestStatusData=verifiedOwnerId&&account?.id===verifiedOwnerId?
+  window.MLC2Custom?.guestRecovery():null;
+ if(guestBox)guestBox.hidden=!(guestStatusData?.available>0);
+ if(guestStatus&&guestStatusData?.available>0)
+  guestStatus.textContent=guestStatusData.available+' guest workout(s) available to copy to this verified account. Nothing will be overwritten.';
  window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
   presets:plans,custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
   storage:planStorage(),onChanged:()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}
@@ -628,6 +634,17 @@ function bind(){
  $('todayStart').addEventListener('click',()=>openWorkout($('todayStart').dataset.homeWorkout));
  $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
  $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
+ $('recoverGuestWorkouts').addEventListener('click',()=>{
+  if(!verifiedOwnerId||verifiedOwnerId!==account?.id){notice('Sign in to recover guest workouts.');return}
+  const recovery=window.MLC2Custom?.guestRecovery();
+  if(!recovery?.available)return;
+  if(!confirm('Copy '+recovery.available+' guest workout(s) into this account? The guest copies and existing account routines will remain untouched.'))return;
+  try{
+   const result=window.MLC2Custom.recoverGuest();
+   renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+   notice(result.added+' guest workout(s) copied. Original copies preserved.');
+  }catch(err){notice('Recovery not completed: '+String(err?.message||err).slice(0,95))}
+ });
  ['loadOriginalHistory','loadOriginalTracking','loadOriginalPlans'].forEach(id=>$(id).addEventListener('click',viewOriginal));
  $('waterForm').addEventListener('submit',e=>logDaily(e,'water'));
  $('weightForm').addEventListener('submit',e=>logDaily(e,'weight'));
