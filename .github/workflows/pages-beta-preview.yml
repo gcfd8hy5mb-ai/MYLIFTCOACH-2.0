@@ -99,6 +99,10 @@ jobs:
           grep -q 'iPhone beta test build 11-21I' dist/myliftcoach2/index.html
           grep -q 'workout-auth-ux-fix.css?v=2' dist/myliftcoach2/index.html
           grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/workout-auth-ux-fix.css
+          # Verify H is not accidentally being republished to the saved app.
+          ! grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
+          echo 'Existing saved redesign app: prepared marble build 11-21I'
+          sha256sum dist/myliftcoach2/index.html dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
           test -s dist/myliftcoach2/sync/automatic-workouts.js
