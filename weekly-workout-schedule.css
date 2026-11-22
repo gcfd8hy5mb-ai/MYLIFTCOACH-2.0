@@ -1,0 +1,8 @@
+/* Explicit local weekly workout schedule: dark charcoal / gold palette. */
+.mlc-weekly-schedule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:14px 0 17px}
+.mlc-weekly-schedule-grid label{display:flex;flex-direction:column;gap:7px;font-size:.87rem;color:#e3d3b5;font-weight:600}
+.mlc-weekly-schedule-grid select{display:block;width:100%;max-width:100%;min-width:0;padding:11px 12px;font:inherit;font-size:.9rem;border-radius:10px;background:#132128;color:#f0e1c7;border:1px solid rgba(215,176,103,.47)}
+.mlc-weekly-schedule-grid select:focus-visible{outline:2px solid #e3bf7f;outline-offset:2px}
+.mlc-schedule-note{font-size:.84rem;color:#c5bcb0;margin:8px 0 0}
+#weeklySchedule>.button-outline{margin-bottom:8px}
+@media(max-width:600px){.mlc-weekly-schedule-grid{grid-template-columns:1fr;gap:10px}}

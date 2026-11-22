@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "catalogTotal": 344,
+  "approvedAssetCountVerifiedIn2dot0": 0,
+  "verifiedLegacyCandidateCount": 14,
+  "note": "These are existing original-app source files confirmed in the user's GitHub repo. A file existing does not certify exercise accuracy, license, or approval among the 268 separately approved demonstrations. Do not automatically swap thumbnails.",
+  "assets": [
+    {
+      "exerciseId": "machine-chest-press",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/machine-chest-press.png",
+      "sourceBlobSha": "b88c4d26dec5f3b3c070e90e98c3f8b3f238793a",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "pec-deck",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/pec-deck.png",
+      "sourceBlobSha": "201500e4a6019c544ea0c795c164b7cfd92d4d60",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "triceps-pushdown",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/triceps-pushdown.png",
+      "sourceBlobSha": "5bb006ecaf9cd34c3a922900da5ecdabcd7b60d1",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "lat-pulldown",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/lat-pulldown.png",
+      "sourceBlobSha": "6c64684076c9a092704fd015d74f5131158a6f22",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "seated-row",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/seated-row.png",
+      "sourceBlobSha": "67ca6f74cbc6825a19017c64baa347c5d2df0f5f",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "preacher-curl",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/preacher-curl.png",
+      "sourceBlobSha": "9519c7935589aa81233be63ad3561c5824aad87e",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "leg-press",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/leg-press.png",
+      "sourceBlobSha": "2cb0248de84e8b7b524163204af38cbe4c275223",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "leg-extension",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/leg-extension.png",
+      "sourceBlobSha": "304865c91d5073ebead02e1cdd77c3409b210f52",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "seated-leg-curl",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/seated-leg-curl.png",
+      "sourceBlobSha": "b237362d3ba96f16cadfc4e5d0f722a74260c8b3",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "calf-raise",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/calf-raise.png",
+      "sourceBlobSha": "394528618bd8a84ab34ea9960621fd04419b1a36",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "shoulder-press",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/shoulder-press.png",
+      "sourceBlobSha": "6bdb0214a6ec7c961c88b3f8eab6582711461e59",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "lateral-raise",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/lateral-raise.png",
+      "sourceBlobSha": "32ddf96112cba2a47519055793409247ac48fe93",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "biceps-curl",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/biceps-curl.png",
+      "sourceBlobSha": "695dc66df05d8974abf913a211a55b4275272682",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    },
+    {
+      "exerciseId": "triceps-extension",
+      "sourceRepository": "gcfd8hy5mb-ai/workout-tracker",
+      "sourcePath": "images/triceps-extension.png",
+      "sourceBlobSha": "208f8b7ec4fa2368c14361a610d3f37e37fa2d05",
+      "reviewStatus": "provenance-and-approval-pending",
+      "reused": false
+    }
+  ]
+}

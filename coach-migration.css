@@ -1,0 +1,21 @@
+.coach-suggestion{padding:12px 0;border-bottom:1px solid rgba(215,183,110,.19)}.coach-suggestion h4{margin:0 0 7px;color:#eee0c8}.coach-suggestion p{margin:0 0 5px;color:#e4bc72}.coach-suggestion small{color:#c3bdad;line-height:1.6}
+.coach-sub-label{display:block;font-size:.9rem;color:#e7d6ae;margin:12px 0}
+.coach-sub-label select{display:block;width:100%;max-width:440px;margin-top:8px;background:#132128;border:1px solid rgba(217,184,111,.5);border-radius:9px;padding:11px;color:#f3e5c4;font:inherit}
+.coach-sub-item{border-bottom:1px solid rgba(209,168,93,.19);padding:12px 0;display:flex;flex-direction:column;gap:5px}
+.coach-sub-item strong{color:#eed6a0}.coach-sub-item small,.coach-sub-note{color:#c6c1b3;line-height:1.6}
+.coach-sub-note{margin-top:14px;font-size:.84rem}
+
+.coach-next-rows{display:grid;gap:10px;margin:14px 0}
+.coach-next-row{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid rgba(211,177,103,.18)}
+.coach-next-row strong{color:#ead5a9}.coach-next-row small{color:#c6c2b8;line-height:1.5}
+.coach-technique-item{border-bottom:1px solid rgba(211,177,103,.22);padding:12px 0}
+.coach-technique-item summary{cursor:pointer;color:#ebd9b0;font-weight:650}
+.coach-technique-item p,.coach-technique-item li{color:#cfccc4;line-height:1.55}
+.coach-technique-item strong{color:#ead5a9;font-size:.9rem}
+.coach-technique-item ul{margin:6px 0 12px;padding-left:22px}
+
+.coach-goal-label{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;color:#e7d6ae;font-size:.9rem}
+.coach-goal-label select{background:#132128;color:#f3e5c4;border:1px solid rgba(217,184,111,.5);border-radius:9px;padding:9px 12px;font:inherit}
+#coachGoalNote{color:#d4bb8a;font-size:.85rem}
+
+#coachTrends p{margin:0 0 10px;line-height:1.5;color:#e7d9be}#coachTrends .coach-trend-footnote{font-size:.85rem;color:#c1b9aa}

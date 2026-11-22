@@ -1,0 +1,13 @@
+/* Isolated records preview — matches dark gold 2.0 design. */
+.records-summary {padding:12px 0 18px;line-height:1.7;color:#d6ccb9}
+.records-summary strong {color:#e6be76}
+.records-weekly h4,.records-list h4 {margin:18px 0 10px;color:#ead7b0}
+.records-week {display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;border-bottom:1px solid rgba(211,175,104,.17);padding:9px 0;color:#ddd4c4}
+.records-week strong {color:#e9c47f}
+.records-week small {color:#aaabac}
+.records-item {padding:12px 0;border-bottom:1px solid rgba(211,175,104,.17)}
+.records-item summary {display:flex;justify-content:space-between;gap:12px;color:#eee4d1;cursor:pointer}
+.records-item summary span {color:#e6bf78;white-space:nowrap}
+.records-item p {margin:10px 0 5px;color:#e6e0d4}
+.records-item small {color:#aaabac}
+@media(max-width:520px){.records-week{grid-template-columns:1fr auto}.records-week small{grid-column:1/-1}.records-item summary{flex-wrap:wrap}}
