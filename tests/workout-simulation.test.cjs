@@ -41,6 +41,7 @@ test('Only Progress and Coach consume fictional history; workouts, drafts and ac
  const html=fs.readFileSync('index.html','utf8');
  const progress=app.slice(app.indexOf('function renderProgress(){'),app.indexOf('function renderSettings(){'));
  assert.ok(progress.includes('const progressData=viewedHistory()'));
+ assert.ok(progress.includes("$('progressSets').textContent=progressData.reduce((n,x)=>n+x.sets.length,0)"));
  assert.ok(progress.includes('const coachData=viewedHistory()'));
  assert.ok(progress.includes('function renderProgressChart(progressData=viewedHistory())'));
  const active=app.slice(app.indexOf('function openWorkout(id){'),app.indexOf('function renderWorkoutLog(){'));
