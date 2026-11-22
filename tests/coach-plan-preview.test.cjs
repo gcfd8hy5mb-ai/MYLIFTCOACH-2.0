@@ -29,7 +29,7 @@ test('No invented recommendations, auto edits, cloud calls or storage mutations'
  assert.ok(html.includes('id="coachPlanPreview"')&&html.includes('coach-plan-preview.js'));
  assert.ok(app.includes('window.MLC2CoachPlan?.render('));
  assert.ok(app.includes('selected=nextPlan()'));
- assert.ok(app.includes("mode:mode.mode"));
+ assert.ok(app.includes("mode:'pro',readiness:window.MLC2CoachReadiness?.current(selected.id)"));
  assert.ok(app.includes("else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren()}"));
 });
 
