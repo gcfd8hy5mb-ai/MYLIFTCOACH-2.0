@@ -46,7 +46,7 @@ function init(){
  openHistory.type='button';openHistory.className='progress-compact-link';
  openHistory.textContent='Open full workout history →';
  openHistory.addEventListener('click',()=>{
-  document.querySelector('[data-page="history"]')?.click();
+  window.MLC2ProgressNavigate?.('history');
  });
  groups.history.append(openHistory);
  const count=document.createElement('p');
@@ -60,7 +60,7 @@ function init(){
  const openTracking=document.createElement('button');
  openTracking.type='button';openTracking.className='progress-compact-link';
  openTracking.textContent='Open body tracking →';
- openTracking.addEventListener('click',()=>document.querySelector('[data-page="tracking"]')?.click());
+ openTracking.addEventListener('click',()=>window.MLC2ProgressNavigate?.('tracking'));
  bodyCard.append(bodyTitle,bodyDescription,openTracking);
  groups.body.append(bodyCard);
  const summary=document.createElement('p');
