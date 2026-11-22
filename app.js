@@ -371,16 +371,27 @@ function renderCoach(){
  const pro=mode.mode==='pro';
  document.querySelectorAll('[data-pro-coach]').forEach(el=>{el.hidden=!pro});
  const note=$('coachFreeNotice');if(note)note.hidden=pro;
+ const updateCoachPlan=()=>{
+  if(betaView().mode!=='pro')return;
+  window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,demoSessions,{
+   mode:'pro',readiness:window.MLC2CoachReadiness?.current(selected.id)||'Normal',
+   coach:window.MLC2Coach,
+   onOpenWorkout:id=>{
+    if(betaView().mode!=='pro')return;
+    if(nextPlan().id!==id){notice('Selected workout changed. Review your current workout first.');renderCoach();return}
+    openWorkout(id);
+   }
+  });
+ };
+
  if(pro){
   window.MLC2Coach?.render($('coachSuggestions'),demoSessions,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
-  window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,demoSessions,{
-   mode:mode.mode,readiness:window.MLC2CoachReadiness?.current(selected.id)||'Normal',coach:window.MLC2Coach
-  });
+  updateCoachPlan();
  }else{$('coachSuggestions').replaceChildren();$('coachSubstitutions').replaceChildren();$('coachPlanPreview').replaceChildren()}
  window.MLC2Coach?.renderNextWorkout($('coachNextWorkout'),selected,demoSessions,catalog);
  window.MLC2Coach?.renderTechnique($('coachTechnique'),selected,catalog);
- window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected);
+ window.MLC2CoachReadiness?.render($('coachReadiness'),demoSessions,selected,updateCoachPlan);
  window.MLC2CoachTrends?.render($('coachTrends'),demoSessions,window.MLC2CoachReadiness?.weeklyGoal()||4);
 }
 function renderSettings(){
