@@ -46,3 +46,13 @@ test('weekly panel is present in compact Overview and recalculates during Progre
  assert.ok(compact.includes('groups.overview.append(weekly,recap,chart)'));
  assert.ok(app.includes("window.MLC2ProgressWeekly?.render($('progressWeeklyComparison'),demoSessions)"));
 });
+
+test('2.0 detailed workout History displays names from the full imported catalog',()=>{
+ const app=fs.readFileSync('app.js','utf8');
+ const start=app.indexOf('function renderHistory(){');
+ const end=app.indexOf('function renderOriginalPlans(){',start);
+ assert.ok(start>=0&&end>start);
+ const history=app.slice(start,end);
+ assert.ok(history.includes("libraryExercises().find(e=>e.id===y.exerciseId)?.name"));
+ assert.ok(!history.includes("exercises.find(e=>e.id===y.exerciseId)?.name"));
+});
