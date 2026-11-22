@@ -1,5 +1,15 @@
 # MYLIFTCOACH 2.0 — original-app replacement gate
 Date: 2026-11-22
+## Continued merge batch — verified on November 22
+- [x] Unified qualified account-scoped completed workout evidence across Coach's next-session, readiness, trends, suggested-program and read-only training-plan panels.
+- [x] Coach readiness and weekly-goal changes refresh the same verified training trends; Free beta retains its readiness/trends without unlocking Pro-only features.
+- [x] Corrected Today to label Custom goal program vs Coach goal program vs preset; selected custom/manual and weekday schedule priority remain protected.
+- [x] Removed obsolete demo/practice wording from genuine completed-workout, Progress, and coaching screens. Preview-only simulation remains separated.
+- [x] Added dedicated regression suites for Coach evidence consistency and program labeling; full GitHub offline CI passed on commit `d98f34743619f513b7e65cf08ed43ee4087e66a6`.
+- [x] The approved dark `#04252d` teal Today card matches shared redesign card tokens, with original gold border and buttons retained.
+- [ ] Independently verify the new preview deployment and run actual iPhone acceptance; cloud-blocked preview cannot prove saving/recovery.
+- [ ] No production change or automatic merge authorized. Draft PR #7 stays open for human review.
+
 ## Combined redesign candidate — November 22 release handoff
 - **Development candidate:** `integration/replacement-visual-coach-20261122`, based on the approved visual branch, not on production.
 - **Review PR:** https://github.com/gcfd8hy5mb-ai/MYLIFTCOACH-2.0/pull/7 (DRAFT; no merging or publication authorized).
@@ -27,7 +37,7 @@ Status: CANDIDATE ONLY — no production cutover authorization
 - [x] Catalog-driven automatic 4-day balanced program proposal without requiring history (initial version).
 - [x] Coach weight recommendations from qualifying completed sessions, opt-in next-set fill, live feedback and post-workout recap.
 - [x] Readiness tracking, selected-plan priority, simulated test isolation and automated regression checks.
-- [x] User-configurable goals, 3–5 weekly training days, and available equipment in the active automatic proposal; saved locally in owner-scoped preferences. Cloud synchronization of these NEW preferences is still pending.
+- [x] User-configurable goals, 3–5 weekly training days, and available equipment in the active automatic proposal; owner-scoped local preferences with auxiliary cloud backup hooks and guarded recovery unit tests. Actual iPhone cloud recovery remains unverified.
 - [x] Initial recovery-aware, phase-specific set-volume advice: optional +1 set only in Build phase after two qualifying sessions and Great readiness; recommend lighter volume on Tired or Consolidate; block load increases under recovery holds. Advice never edits saved routines or logged sets.
 - [ ] Extend recovery adaptation with more individualized progression, missed-session scheduling and physical iPhone acceptance; the current guidance is conservative, not fully autonomous.
 - [ ] Auto-rotating Coach sessions that respect manual schedule, custom plans and missed days on the primary iPhone; cross-device Coach synchronization is not a release requirement.
