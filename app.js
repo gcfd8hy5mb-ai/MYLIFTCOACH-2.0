@@ -165,13 +165,20 @@ function syncEngine(owner){
 }
 function queueWorkoutForSync(entry){
  if(!verifiedOwnerId||account?.id!==verifiedOwnerId||entry?.ownerId!==verifiedOwnerId)return;
- // Always durably enqueue FIRST, including when a previous upload is still active.
- // Setting a retry flag without queuing this entry would silently miss the new workout.
+ // When a workout upload is running, it owns an in-memory journal snapshot.
+ // Never write to that journal concurrently: the in-flight flush could overwrite it.
+ // The completed workout is ALREADY durably saved. A second flush rescans the
+ // device and safely queues any new local workouts missing from cloud history.
+ if(workoutSyncBusy){
+  syncAgainAfterCurrent=true;
+  setWorkoutSyncState('Workout saved locally — syncing immediately after current upload.');
+  return;
+ }
  try{
   syncEngine(verifiedOwnerId).queue(entry);
-  if(workoutSyncBusy||auxOperationBusy){
+  if(auxOperationBusy){
    syncAgainAfterCurrent=true;
-   setWorkoutSyncState('Workout queued locally — syncing after current upload.');
+   setWorkoutSyncState('Workout queued locally — syncing after fitness backup.');
    return;
   }
   setWorkoutSyncState(navigator.onLine?'Workout saved — queued for cloud sync.':'Saved offline — queued for cloud sync.');
