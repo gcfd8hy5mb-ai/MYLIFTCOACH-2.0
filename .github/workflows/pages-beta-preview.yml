@@ -99,18 +99,27 @@ jobs:
           ref: 099c684bde0a29488f1a42775028fdec092e8e9d
           path: phone-ui-k
           persist-credentials: false
+      - name: Checkout approved fixed-marble workout UI build
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 1d7f6b8d0a59f5935250fc758c332398cb61c147
+          path: phone-ui-l
+          persist-credentials: false
       - name: Package static beta preview only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           # The existing saved redesign Home Screen app opens /myliftcoach2/.
-          # Update only the stable redesign preview address to regression-tested K.
+          # Update only the stable redesign preview address to regression-tested L.
           # Previous iPhone test paths and production workout-tracker remain intact.
           mkdir -p dist/myliftcoach2
           rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='*.md' phone-ui-k/ dist/myliftcoach2/
-          grep -q 'iPhone beta test build 11-21K' dist/myliftcoach2/index.html
+            --exclude='*.md' phone-ui-l/ dist/myliftcoach2/
+          grep -q 'iPhone beta test build 11-21L' dist/myliftcoach2/index.html
+          grep -q 'active-workout-ux.css?v=3' dist/myliftcoach2/index.html
+          grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/active-workout-ux.css
           grep -q 'app.js?v=14' dist/myliftcoach2/index.html
           ! grep -Fq "\$('loginForm input[name=" dist/myliftcoach2/app.js
           grep -q 'auth-session-store.js?v=1' dist/myliftcoach2/index.html
@@ -119,7 +128,7 @@ jobs:
           grep -q 'approved-vertical-marble-sharp.webp' dist/myliftcoach2/workout-auth-ux-fix.css
           # Verify H is not accidentally being republished to the saved app.
           ! grep -q 'iPhone beta test build 11-21H' dist/myliftcoach2/index.html
-          echo 'Existing saved redesign app: prepared repaired login build 11-21K'
+          echo 'Existing saved redesign app: prepared approved marble workout build 11-21L'
           sha256sum dist/myliftcoach2/index.html dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-auth-ux-fix.css
           test -s dist/myliftcoach2/workout-active-ux.js
