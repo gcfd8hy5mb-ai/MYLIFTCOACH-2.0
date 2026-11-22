@@ -416,7 +416,10 @@ function renderAutonomousCoach(){
  coachAutonomousDraft=coachAutonomousPlan();
  if(!coachAutonomousDraft){
   title.textContent=progress?.status==='completed'?'Your program is complete':'No matching workout available';
-  details.textContent=progress?.status==='completed'?'Your '+program.weeks+'-week program has ended. Review your progress or choose a new program under Your Calorie Goal.':'Try a different equipment category. No current workout or history was changed.';
+  const source=program?window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program):null;
+  details.textContent=progress?.status==='completed'?'Your '+program.weeks+'-week program has ended. Review your progress or choose a new program under Your Calorie Goal.':
+   source?.mode==='custom'?'The selected custom routine is missing or was deleted. Choose another routine under Your Calorie Goal.':
+   'No matching routine is available. Check your equipment and workout source under Your Calorie Goal. Your current workout is unchanged.';
   start.disabled=true;return;
  }
  title.textContent=coachAutonomousDraft.title;
