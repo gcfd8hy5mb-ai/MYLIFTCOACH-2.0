@@ -10,6 +10,16 @@ Date: 2026-11-22
 - [ ] Complete required iPhone acceptance, verify a production backup and rollback plan, and obtain explicit approval **before** merging to the published saved Home Screen app.
 - **Status: requested and added to release gate, not yet executed.** No autonomous future Codex run is implied by this checklist.
 
+## Free/Pro immediate-navigation integration — November 22
+- [x] Corrected beta mode switching so Home, Today's Workout and Coach refresh together immediately, for both browser guest and verified account modes.
+- [x] Verified account metadata is re-fetched using an up-to-date session token; account owner and confirmed mode must agree before changing UI state.
+- [x] Existing workouts, custom plans and unfinished draft data are not mutated by this switch.
+- [x] Added dedicated Free/Pro live-refresh regression, included in full suite; full offline CI passed for `29b72785dbca1cadd6cc545dbbb4c9ee300acbc0`.
+- [x] Updated isolated preview candidate asset to `app.js?v=38` and added release workflow check for Free/Pro refresh.
+- [ ] User must confirm immediate Free↔Pro behavior in iPhone preview. Guest preview cannot prove account mode survives sign-in or cloud sync.
+- [ ] Signed-in cloud backup and recovery still require explicitly authorized cloud-enabled acceptance.
+- [ ] Mandatory Codex review and user-authorized production cutover remain blocked.
+
 ## User-confirmed same-iPhone preview acceptance
 - [x] Resume Workout display issue fixed and visually confirmed by user in the iPhone preview.
 - [x] A completed workout persists after refreshing and reopening the iPhone preview, explicitly confirmed by user.
