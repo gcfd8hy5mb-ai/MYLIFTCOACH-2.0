@@ -1,0 +1,16 @@
+/* Contextual Coach — matches existing deep-teal and warm-gold workout UI */
+.live-coach-box{margin:14px 0 18px;padding:16px;border:1px solid rgba(227,191,112,.52);border-radius:16px;background:linear-gradient(145deg,#064c51,#07373b);color:#f5f0e2;box-shadow:0 8px 22px rgba(0,0,0,.12)}
+.live-coach-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.live-coach-title strong{font-size:15px;color:#f7dfa4;letter-spacing:.01em}
+.live-coach-title small{font-size:10px;letter-spacing:.09em;border:1px solid rgba(237,209,146,.55);border-radius:20px;padding:4px 8px;color:#f7dfa4}
+.live-coach-box p{font-size:13px;line-height:1.45;margin:6px 0 10px;color:#dcebe6}
+.live-coach-box>small{display:block;color:#c2d8d0;line-height:1.4;font-size:11px;margin-top:12px}
+.live-coach-list{display:grid;gap:8px;max-height:230px;overflow:auto;-webkit-overflow-scrolling:touch}
+.live-coach-list>div{padding:11px 12px;border:1px solid rgba(224,239,230,.15);border-radius:10px;background:rgba(255,255,255,.05)}
+.live-coach-list strong,.live-coach-list small{display:block}
+.live-coach-list strong{font-size:13px;color:#ffebc0}
+.live-coach-list small{font-size:11px;color:#cbdfd8;margin-top:2px}
+.live-coach-list p{font-size:12px;margin:6px 0 0}
+.live-coach-set{margin-top:10px;padding:10px 12px;border-left:3px solid #d4ad61;border-radius:6px;background:rgba(4,77,78,.13);font-size:12px;line-height:1.5;color:inherit}
+.live-coach-set::before{content:'✦ Coach  ';font-weight:700;color:#c39a4e}
+@media(max-width:600px){.live-coach-box{padding:13px;margin:12px 0 15px}.live-coach-list{max-height:210px}}
