@@ -10,6 +10,16 @@ Date: 2026-11-22
 - [ ] Complete required iPhone acceptance, verify a production backup and rollback plan, and obtain explicit approval **before** merging to the published saved Home Screen app.
 - **Status: requested and added to release gate, not yet executed.** No autonomous future Codex run is implied by this checklist.
 
+## Cloud recovery approval consistency — 2026-11-22
+- [x] Completed workout recovery now rechecks the approved missing-record IDs after confirmation; if a new cloud workout appears during confirmation, returns `changed-reconfirm` without importing anything.
+- [x] Auxiliary cloud recovery also checks for newly available data categories after user confirmation; recovery stops and requests fresh approval rather than silently adding more categories.
+- [x] Both Settings recovery controls explicitly explain that cloud data changed and instruct the user to tap Recover again.
+- [x] Added regression tests confirming changed cloud records do not overwrite or mutate existing device data, and fresh approval succeeds.
+- [x] Full GitHub source regression suite passed for `cae68202df556732fb48e1b51f6cd61227d931d0`.
+- [x] Updated independent cloud-blocked visual preview workflow for `app.js?v=39`; workflow deployment result not independently confirmed.
+- [ ] Live authenticated iPhone recovery remains unverified; isolated public preview intentionally blocks live cloud requests.
+- [ ] Final comprehensive Codex review and production cutover remain blocked pending acceptance and explicit authorization.
+
 ## iPhone video acceptance — Free/Pro switch, 2026-11-22
 - [x] User-provided iPhone screen recording visibly shows guest beta switching Pro → Free.
 - [x] Home changes from Coach · Day 1 in Pro to the existing Lower Body B routine with Resume Workout in Free, without reloading the preview.
