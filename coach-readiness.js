@@ -60,7 +60,7 @@ function weekSummary(sessions,now=new Date(),target=4){
  }
  return {start,end:ending,sessions:rows.length,sets,volume,exercises:records.size,target:validTarget};
 }
-function render(root,sessions,plan){
+function render(root,sessions,plan,onChange){
  if(!root||!plan)return;
  const readiness=current(plan.id),summary=weekSummary(sessions,new Date(),weeklyGoal()),target=Math.min(100,Math.round(summary.sessions/summary.target*100));
  root.innerHTML='<div class="coach-readiness-block"><h4>Today’s readiness · '+escapeText(plan.title)+'</h4><div id="coachReadinessChoices" class="coach-readiness-choices">'+
@@ -78,12 +78,14 @@ function render(root,sessions,plan){
    root.querySelector('#coachGoalNote').textContent='Could not save weekly goal in this browser.';
    e.target.value=String(weeklyGoal());return;
   }
-  render(root,sessions,plan);
+  render(root,sessions,plan,onChange);
+  if(typeof onChange==='function')onChange();
  });
  root.querySelector('#coachReadinessChoices').addEventListener('click',e=>{
   const b=e.target.closest('[data-readiness]');if(!b)return;
   if(!save(plan.id,b.dataset.readiness)){root.querySelector('#coachReadinessNote').textContent='Could not save readiness in this browser.';return}
-  render(root,sessions,plan);
+  render(root,sessions,plan,onChange);
+  if(typeof onChange==='function')onChange();
  });
 }
 function escapeText(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
