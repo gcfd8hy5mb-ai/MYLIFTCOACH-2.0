@@ -68,7 +68,7 @@ test('Today workout follows approved rich dark-teal card material, not the old l
 
 test('following the weekly schedule shows Today and visible confirmation',()=>{
  const schedule=read('weekly-workout-schedule.js');
- assert.ok(html.includes('weekly-workout-schedule.js?v=2'));
+ assert.ok(html.includes('weekly-workout-schedule.js?v=4'));
  assert.match(schedule,/onChanged\?\.\('follow',selected\)/);
  assert.match(schedule,/Following weekly schedule · Today:/);
  assert.match(schedule,/Manual selection active:/);
