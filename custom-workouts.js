@@ -87,7 +87,7 @@ function openEditor(id,unused,onChanged){
  const existing=read().find(p=>p.id===id);
  let selected=existing?[...existing.ids]:[];
  const root=document.createElement('div');root.className='custom-editor-backdrop';root.setAttribute('role','presentation');
- root.innerHTML='<div class="custom-editor-dialog" role="dialog" aria-modal="true" aria-label="Custom workout editor"><div class="custom-editor-heading"><h2>'+esc(existing?'Edit custom workout':'New custom workout')+'</h2><button type="button" data-editor-close aria-label="Close">✕</button></div><form id="mlc-custom-form"><label>Workout name<input id="customName" name="title" maxlength="75" required value="'+esc(existing?.title||'')+'" placeholder="My workout"></label><label>Description<input name="description" maxlength="160" value="'+esc(existing?.description||'')+'" placeholder="Optional notes"></label><h3>Selected exercises <span id="customCount"></span></h3><div id="customSelected"></div><label>Find exercises<input id="customSearch" type="search" placeholder="Search 344 exercises"></label><div id="customOptions"></div><div class="custom-editor-footer"><button type="button" data-editor-close>Cancel</button><button type="submit">Save workout</button></div></form></div>';
+ root.innerHTML='<div class="custom-editor-dialog" role="dialog" aria-modal="true" aria-label="Custom workout editor"><div class="custom-editor-heading"><div><span class="custom-editor-kicker">MYLIFTCOACH 2.0 · YOUR ROUTINE</span><h2>'+esc(existing?'Edit custom workout':'Create your workout')+'</h2></div><button type="button" data-editor-close aria-label="Close workout editor">✕</button></div><form id="mlc-custom-form"><div class="custom-editor-fields"><label>Workout name<input id="customName" name="title" maxlength="75" required value="'+esc(existing?.title||'')+'" placeholder="e.g. Upper Body — Custom"></label><label class="custom-editor-optional">Notes (optional)<input name="description" maxlength="160" value="'+esc(existing?.description||'')+'" placeholder="What is this workout focused on?"></label></div><section class="custom-editor-selection" aria-label="Exercises in your workout"><div class="custom-editor-section-title"><h3>Your exercises</h3><span id="customCount" aria-live="polite"></span></div><div id="customSelected"></div></section><section class="custom-editor-picker" aria-label="Add exercises"><div class="custom-editor-section-title"><h3>Add exercises</h3><span>Search the library</span></div><label class="custom-editor-search-label">Search by name or muscle<input id="customSearch" type="search" placeholder="Search 344 exercises" autocomplete="off"></label><div class="custom-editor-filters" id="customMuscleFilters" role="group" aria-label="Filter by muscle group"></div><div id="customOptions" aria-label="Exercise search results"></div></section><div class="custom-editor-footer"><button type="button" data-editor-close>Cancel</button><button type="submit">Save workout</button></div></form></div>';
  document.body.appendChild(root);
  const $=id=>root.querySelector('#'+id);
  const close=()=>{
@@ -98,25 +98,54 @@ function openEditor(id,unused,onChanged){
  const escapeKey=e=>{if(e.key==='Escape')close()};
  document.addEventListener('keydown',escapeKey);
  root.addEventListener('click',e=>{if(e.target===root||e.target.closest('[data-editor-close]'))close()});
+ let activeMuscle='';
+ const imageFor=e=>{
+  const thumbnail=e?.demonstration?.status==='approved'?e.demonstration.thumbnail:'';
+  return typeof thumbnail==='string'&&/^assets\\/exercise-demonstrations\\/[a-zA-Z0-9._-]+\\.webp$/.test(thumbnail)
+   ?'<img src="./'+esc(thumbnail)+'" alt="" loading="lazy">':'<span class="custom-exercise-glyph" aria-hidden="true">✦</span>';
+ };
+ const groups=['All',...new Set(catalog().map(e=>e.group).filter(Boolean))];
+ $('customMuscleFilters').innerHTML=groups.map(g=>'<button type="button" data-custom-filter="'+esc(g)+'" aria-pressed="'+(g==='All'?'true':'false')+'">'+esc(g)+'</button>').join('');
  function selectedView(){
   $('customCount').textContent=selected.length+' of 40';
-  $('customSelected').innerHTML=selected.map(id=>'<button type="button" data-custom-remove="'+esc(id)+'">'+esc(byId(id)?.name||id)+' ×</button>').join('')||'<p>No exercises selected yet.</p>';
+  $('customSelected').innerHTML=selected.map((id,index)=>{
+   const e=byId(id);
+   return '<div class="custom-selected-row"><span class="custom-exercise-order">'+(index+1)+'</span><div class="custom-exercise-copy"><strong>'+esc(e?.name||id)+'</strong><small>'+esc(e?.group||'Exercise')+'</small></div><div class="custom-selected-actions"><button type="button" data-custom-up="'+esc(id)+'" aria-label="Move '+esc(e?.name||id)+' up" '+(index===0?'disabled':'')+'>↑</button><button type="button" data-custom-down="'+esc(id)+'" aria-label="Move '+esc(e?.name||id)+' down" '+(index===selected.length-1?'disabled':'')+'>↓</button><button type="button" data-custom-remove="'+esc(id)+'" aria-label="Remove '+esc(e?.name||id)+'">✕</button></div></div>';
+  }).join('')||'<p class="custom-editor-empty">No exercises yet. Search below and tap Add to build your workout.</p>';
  }
  function options(){
   const q=$('customSearch').value.toLowerCase().trim();
-  $('customOptions').innerHTML=catalog().filter(e=>(e.name+' '+e.group).toLowerCase().includes(q)).map(e=>'<label><input type="checkbox" data-custom-exercise="'+esc(e.id)+'" '+(selected.includes(e.id)?'checked':'')+'><span>'+esc(e.name)+' <small>'+esc(e.group)+'</small></span></label>').join('')||'<p>No matching exercises.</p>';
+  const matched=catalog().filter(e=>(activeMuscle==='All'||!activeMuscle||e.group===activeMuscle)&&(e.name+' '+e.group+' '+(e.equipment||'')).toLowerCase().includes(q));
+  $('customOptions').innerHTML=matched.map(e=>{
+   const added=selected.includes(e.id);
+   return '<div class="custom-option-row">'+imageFor(e)+'<div class="custom-exercise-copy"><strong>'+esc(e.name)+'</strong><small>'+esc(e.group)+(e.equipment?' · '+esc(e.equipment):'')+'</small></div><button type="button" data-custom-exercise="'+esc(e.id)+'" aria-pressed="'+added+'" '+(added?'disabled':'')+'>'+(added?'Added ✓':'Add +')+'</button></div>';
+  }).join('')||'<p class="custom-editor-empty">No matching exercises. Try another muscle group or search.</p>';
  }
  $('customSearch').addEventListener('input',options);
- $('customOptions').addEventListener('change',e=>{
-  const field=e.target.closest('[data-custom-exercise]');if(!field)return;
-  const key=field.dataset.customExercise;
-  if(field.checked&&!selected.includes(key)){if(selected.length>=40){field.checked=false;alert('Maximum 40 exercises.');return}selected.push(key)}
-  else if(!field.checked)selected=selected.filter(x=>x!==key);
-  selectedView();
+ $('customMuscleFilters').addEventListener('click',e=>{
+  const button=e.target.closest('[data-custom-filter]');if(!button)return;
+  activeMuscle=button.dataset.customFilter;
+  $('customMuscleFilters').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+  options();
+ });
+ $('customOptions').addEventListener('click',e=>{
+  const button=e.target.closest('[data-custom-exercise]');if(!button)return;
+  const key=button.dataset.customExercise;
+  if(!byId(key)||selected.includes(key))return;
+  if(selected.length>=40){alert('Maximum 40 exercises.');return}
+  selected.push(key);
+  selectedView();options();
  });
  $('customSelected').addEventListener('click',e=>{
-  const button=e.target.closest('[data-custom-remove]');if(!button)return;
-  selected=selected.filter(x=>x!==button.dataset.customRemove);selectedView();options();
+  const remove=e.target.closest('[data-custom-remove]');
+  if(remove){selected=selected.filter(x=>x!==remove.dataset.customRemove);selectedView();options();return}
+  const up=e.target.closest('[data-custom-up]'),down=e.target.closest('[data-custom-down]'),button=up||down;
+  if(!button)return;
+  const index=selected.indexOf(up?up.dataset.customUp:down.dataset.customDown);
+  const next=index+(up?-1:1);
+  if(index<0||next<0||next>=selected.length)return;
+  [selected[index],selected[next]]=[selected[next],selected[index]];
+  selectedView();
  });
  $('mlc-custom-form').addEventListener('submit',e=>{
   e.preventDefault();
