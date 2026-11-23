@@ -107,3 +107,32 @@
   padding:14px 13px calc(16px + env(safe-area-inset-bottom))!important;
  }
 }
+
+
+/* iPhone standalone PWA: the workout logger fills the viewport, but the
+   dialog's original absolutely-positioned X sat under the Dynamic Island.
+   Keep the close control fixed in the accessible safe-area header region. */
+@media (max-width:760px){
+ #modal:has(.active-workout-header) .modal-close{
+  position:fixed!important;
+  top:max(72px, calc(env(safe-area-inset-top, 0px) + 14px))!important;
+  right:calc(env(safe-area-inset-right, 0px) + 16px)!important;
+  width:48px!important;
+  height:48px!important;
+  min-width:48px!important;
+  min-height:48px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  z-index:10!important;
+  border:1px solid rgba(238,199,128,.9)!important;
+  background:#082c33!important;
+  color:#f6e7c9!important;
+  border-radius:50%!important;
+  touch-action:manipulation;
+ }
+ #modal:has(.active-workout-header) .modal-close:focus-visible{
+  outline:3px solid #f3d69e!important;
+  outline-offset:3px;
+ }
+}
