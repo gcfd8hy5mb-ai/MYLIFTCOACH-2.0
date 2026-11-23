@@ -501,8 +501,15 @@ function renderHomeTrainingPlan(){
  const days=Object.values(schedule).filter(id=>id!=='rest-day'&&all.some(p=>p.id===id)).length;
  const custom=Object.values(schedule).some(id=>id.startsWith('custom-')&&all.some(p=>p.id===id));
  const restWeek=Object.values(schedule).length===7&&Object.values(schedule).every(id=>id==='rest-day');
- $('metricTrainingPlanDays').textContent=restWeek?'Rest week':days?days+'-day':'4-day';
- $('metricTrainingPlanType').textContent=restWeek?'Weekly schedule':days?(custom?'Custom weekly program':'Weekly schedule'):'Strength split';
+ // A generated Coach goal program uses its saved training-day preference until
+ // the user explicitly assigns a weekly schedule. Manual and rest days still win.
+ const upcoming=nextPlan();
+ const activeCoach=upcoming?.scheduleSource==='program'&&
+  window.MLC2GoalProgram?.progress(window.MLC2GoalProgram.read(localStorage,verifiedOwnerId))?.status==='active';
+ const coachDays=activeCoach?window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.days:null;
+ const chosenCoachDays=Number.isInteger(coachDays)&&coachDays>=1&&coachDays<=7?coachDays:null;
+ $('metricTrainingPlanDays').textContent=restWeek?'Rest week':days?days+'-day':chosenCoachDays?chosenCoachDays+'-day':'4-day';
+ $('metricTrainingPlanType').textContent=restWeek?'Weekly schedule':days?(custom?'Custom weekly program':'Weekly schedule'):chosenCoachDays?'Coach goal program':'Strength split';
 }
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
@@ -1527,7 +1534,7 @@ function bind(){
    });
    if(epoch!==authEpoch)return;
    try{window.MLC2ScheduleAuxSync?.()}catch{}
-   renderAutonomousCoach();notice('Coach training preferences saved on this device.');
+   renderAutonomousCoach();renderHome();notice('Coach training preferences saved on this device.');
   }catch(err){notice('Coach preference update failed: '+String(err.message||err).slice(0,100));renderAutonomousCoach()}
  });
  document.querySelectorAll('[data-workout-tab]').forEach(button=>{
