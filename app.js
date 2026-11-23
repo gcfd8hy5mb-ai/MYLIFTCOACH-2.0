@@ -2111,6 +2111,32 @@ function bind(){
    if(epoch===authEpoch){output.textContent='Beta mode unchanged: '+String(err.message||err).slice(0,125);select.value=before}
   }finally{betaModeSaving=false;renderSettings()}
  });
+ $('exportAccountPrograms').addEventListener('click',()=>{
+  const status=$('exportAccountProgramsStatus'),owner=verifiedOwnerId;
+  if(!owner||account?.id!==owner){status.textContent='Sign in to your verified account before exporting programs.';return}
+  if(!confirm('Download a PRIVATE copy of this installation’s custom routines, saved schedules and Coach settings? Keep it in Files and do not share it. This does not change cloud data.'))return;
+  try{
+   const record=window.MLC2ProgramTransfer.capture(localStorage,owner,window.MLC2AuxData);
+   if(verifiedOwnerId!==owner||account?.id!==owner)throw Error('Account changed before download');
+   const result=window.MLC2ProgramTransfer.download(record);
+   status.textContent='Exported '+result.categories+' account program categories. Save the private file securely. Existing workouts and Supabase data unchanged.';
+  }catch(err){status.textContent='Export unavailable: '+String(err.message||err).slice(0,160)}
+ });
+ $('inspectAccountProgramsFile').addEventListener('change',async event=>{
+  const status=$('inspectAccountProgramsStatus'),file=event.target.files?.[0],owner=verifiedOwnerId,epoch=authEpoch;
+  if(!file){status.textContent='No private transfer file selected.';return}
+  if(!owner||account?.id!==owner){status.textContent='Sign in to the same verified account first.';return}
+  if(file.size>500000){status.textContent='File exceeds private transfer size limit.';return}
+  try{
+   const record=window.MLC2ProgramTransfer.parse(await file.text(),owner,window.MLC2AuxData);
+   if(epoch!==authEpoch||verifiedOwnerId!==owner||account?.id!==owner)throw Error('Account changed during comparison');
+   const plan=window.MLC2ProgramTransfer.compare(record,localStorage,owner,window.MLC2AuxData);
+   status.textContent='Read-only comparison: '+plan.missing.length+' missing categories, '+plan.matching.length+' matching, '+plan.different.length+' differing. '+
+    (plan.different.length?'Differing categories: '+plan.different.join(', ')+'. ':'')+
+    'Nothing restored or uploaded. Keep both installations and the private backup until a safe merge is approved.';
+  }catch(err){status.textContent='Comparison rejected: '+String(err.message||err).slice(0,160)}
+  finally{event.target.value=''}
+ });
  $('autoWorkoutSyncNow').addEventListener('click',()=>{scheduleWorkoutSync(0)});
  $('autoWorkoutRecover').addEventListener('click',async()=>{
   const button=$('autoWorkoutRecover'),output=$('autoWorkoutSyncStatus');
