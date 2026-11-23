@@ -22,6 +22,8 @@ jobs:
       - name: Signup and iPhone authentication tests
         run: |
           node --test tests/account-signup.test.cjs tests/workout-auth-ux-fix.test.cjs tests/auth-persistence-iphone.test.cjs tests/offline-shell.test.cjs
+      - name: List legacy app cache-version assertions
+        run: grep -Rnl 'v=47' tests || true
       - name: Complete existing application regression suite
         run: node tests/run-all.js
 # Intentionally no Pages, SQL, Auth admin changes, secrets, or deploy permissions.
