@@ -334,6 +334,46 @@ function openEditor(id,unused,onChanged){
  });
  selectedView();options();$('customName').focus();
 }
+// Deleting a custom day also clears dangling schedule references safely.
+ // Affected weekdays become rest days; other weekday assignments and history stay intact.
+function deleteCustomPlan(id){
+ const current=read({forWrite:true}),item=current.find(p=>p.id===id);
+ if(!item)throw Error('Workout no longer exists');
+ const pkey=scoped(KEY),wkey=scoped(WEEK),tkey=scoped(TODAY);
+ const keys=[pkey,wkey,tkey],before=keys.map(k=>localStorage.getItem(k));
+ let currentSchedule={};
+ if(before[1]!==null){
+  try{currentSchedule=JSON.parse(before[1])}catch{throw Error('Weekly schedule needs review. Nothing deleted.')}
+  if(!window.MLC2WeeklySchedule?.valid(currentSchedule))throw Error('Weekly schedule needs review. Nothing deleted.');
+ }
+ const nextSchedule={...currentSchedule},assigned=[];
+ for(const [day,planId] of Object.entries(nextSchedule)){
+  if(planId===id){nextSchedule[day]='rest-day';assigned.push(Number(day))}
+ }
+ try{
+  const payload=JSON.stringify(current.filter(p=>p.id!==id));
+  localStorage.setItem(pkey,payload);
+  if(localStorage.getItem(pkey)!==payload)throw Error('Workout delete did not persist');
+  if(assigned.length){
+   const schedulePayload=JSON.stringify(nextSchedule);
+   localStorage.setItem(wkey,schedulePayload);
+   if(localStorage.getItem(wkey)!==schedulePayload)throw Error('Schedule cleanup did not persist');
+  }
+  if(before[2]===id){
+   if(owner===null)localStorage.removeItem(tkey);
+   else localStorage.setItem(tkey,'');
+   if((localStorage.getItem(tkey)||'')!==''||(!owner&&localStorage.getItem(tkey)!==null))
+    throw Error('Could not clear active selection');
+  }
+ }catch(error){
+  for(let i=keys.length-1;i>=0;i--){
+   try{if(before[i]===null)localStorage.removeItem(keys[i]);else localStorage.setItem(keys[i],before[i])}catch{}
+  }
+  throw error;
+ }
+ try{window.MLC2ScheduleAuxSync?.()}catch{}
+ return {deleted:id,restDays:assigned,historyPreserved:true};
+}
 function handleClick(e,onChanged,onSchedule){
  const schedule=e.target.closest('[data-custom-schedule]');
  if(schedule){const item=read().find(p=>p.id===schedule.dataset.customSchedule);if(item)onSchedule?.(item);return true}
@@ -342,10 +382,10 @@ function handleClick(e,onChanged,onSchedule){
  const del=e.target.closest('[data-custom-delete]');if(del){
   const id=del.dataset.customDelete,items=read(),item=items.find(x=>x.id===id);if(!item)return true;
   if(!confirm('Delete '+item.title+'? Workout history will remain.'))return true;
-  try{persistPlans(items.filter(x=>x.id!==id));if(localStorage.getItem(scoped(TODAY))===id){if(owner)localStorage.setItem(scoped(TODAY),'');else localStorage.removeItem(scoped(TODAY))}}catch{alert('Could not delete workout.');return true}
+  try{deleteCustomPlan(id)}catch(error){alert('Could not delete workout: '+String(error.message||error).slice(0,110));return true}
   onChanged?.();return true;
  }
  return false;
 }
-window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek,getOwner:()=>owner};
+window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek,deleteCustomPlan,getOwner:()=>owner};
 })();
