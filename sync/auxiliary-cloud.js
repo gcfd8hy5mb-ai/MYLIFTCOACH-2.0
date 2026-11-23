@@ -195,7 +195,31 @@
     });
    }finally{busy=false}
   }
-  return Object.freeze({backup,previewRecovery,restore});
+  /* Read-only cloud/local revision diagnostic: no baseline mutation, queue or restore. */
+  async function diagnose(){
+   if(busy)throw Error('Another cloud operation is running');
+   const records=await inspect();
+   return withLocalAccess(()=>{
+    if(!still())throw Error('Account changed');
+    const categories=aux.CONFIG.map((config,i)=>{
+     const local=aux.loadLocal(storage,owner,config),row=records[i],base=baseline(config);
+     let state;
+     if(row?.deleted)state='cloud-deleted';
+     else if(!row)state=local.exists?'device-only':'absent';
+     else{
+      const remote=aux.validateRemote(config,row);
+      if(!local.exists)state='cloud-only';
+      else if(aux.equal(local.value,remote))state='matching';
+      else if(base?.revision===row.revision&&aux.equal(base.entries,remote))
+       state='device-changed-since-confirmed-cloud';
+      else state='diverged-needs-review';
+     }
+     return {label:config.label,state,revision:row?.revision||0};
+    });
+    return {categories,readOnly:true};
+   });
+  }
+  return Object.freeze({backup,previewRecovery,restore,diagnose});
  }
  return Object.freeze({create,BASELINE_PREFIX});
 });
