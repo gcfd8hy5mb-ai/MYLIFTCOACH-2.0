@@ -40,7 +40,7 @@ test('Blank, invalid or expired drafts never appear as unfinished workouts',()=>
 });
 test('Resume labels appear on both Home and Today without resetting saved data',()=>{
  assert.match(app,/\$\('heroStart'\)\.innerHTML=unfinished\?'Resume Workout/);
- assert.match(app,/\$\('todayStart'\)\.innerHTML=unfinished\?'Resume this session/);
+ assert.match(app,/\$\('todayStart'\)\.innerHTML=upcomingDraft\?'Resume this session/);
  assert.match(app,/start\.textContent=savedDraft\?'Resume workout':'Start workout'/);
  assert.match(app,/savedDraft\.sets\.length\+' saved set\(s\) ready to resume'/);
  const source=app.slice(begin,end);
