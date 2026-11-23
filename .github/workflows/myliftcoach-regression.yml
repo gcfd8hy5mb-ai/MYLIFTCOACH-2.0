@@ -14,6 +14,7 @@ on:
       - fix/iphone-workout-close-overlay-20261122
       - fix/weekly-follow-and-approved-workout-cards-20261122
       - fix/scheduled-routines-vs-unused-presets-20261122
+      - fix/visible-library-thumbnails-20261122
   workflow_dispatch:
 
 permissions:
