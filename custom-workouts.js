@@ -10,6 +10,26 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const catalog=()=>Array.isArray(window.MLC2_EXERCISE_CATALOG)?window.MLC2_EXERCISE_CATALOG:[];
 const byId=id=>catalog().find(e=>e.id===id);
 const newPlanId=()=> 'custom-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
+// Targets are optional: no synthesized defaults are written for unfilled fields.
+// Unknown or out-of-range values are ignored on reads, not propagated to logs.
+const TARGET_LIMITS={sets:[1,20],reps:[1,100],weight:[0,1500],restSeconds:[0,1800]};
+function normalizeTargets(raw,ids){
+ const out={};if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
+ for(const id of ids){
+  const value=raw[id];if(!value||typeof value!=='object'||Array.isArray(value))continue;
+  const row={};
+  for(const [field,[min,max]] of Object.entries(TARGET_LIMITS)){
+   const n=value[field];
+   if(n===undefined||n===null||n==='')continue;
+   if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max)continue;
+   if(field!=='weight'&&!Number.isInteger(n))continue;
+   row[field]=n;
+  }
+  if(Object.keys(row).length)out[id]=row;
+ }
+ return out;
+}
+
 function persistPlans(next){const payload=JSON.stringify(next);localStorage.setItem(scoped(KEY),payload);if(localStorage.getItem(scoped(KEY))!==payload)throw Error('Workout changes were not retained.');try{window.MLC2ScheduleAuxSync?.()}catch{}}
 function read({forWrite=false}={}){
  try{
@@ -17,7 +37,8 @@ function read({forWrite=false}={}){
  if(forWrite&&!Array.isArray(a))throw Error('Saved workouts are unreadable');
  return Array.isArray(a)?a.slice(0,60).filter(p=>p&&typeof p.id==='string'&&p.id.startsWith('custom-')&&Array.isArray(p.ids)).map(p=>({
   id:p.id,title:String(p.title||'My workout').slice(0,75),kind:'Custom',description:String(p.description||'Custom routine').slice(0,160),
-  ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40),coachSaved:p.coachSaved===true
+  ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40),coachSaved:p.coachSaved===true,
+  targets:normalizeTargets(p.targets,p.ids)
  })).filter(p=>p.ids.length):[];
  }catch(error){if(forWrite)throw error;return []}
 }
@@ -86,6 +107,7 @@ function openEditor(id,unused,onChanged){
  const editorOwner=owner;
  const existing=read().find(p=>p.id===id);
  let selected=existing?[...existing.ids]:[];
+ let draftTargets=normalizeTargets(existing?.targets,selected);
  const root=document.createElement('div');root.className='custom-editor-backdrop';root.setAttribute('role','presentation');
  root.innerHTML='<div class="custom-editor-dialog" role="dialog" aria-modal="true" aria-label="Custom workout editor"><div class="custom-editor-heading"><div><span class="custom-editor-kicker">MYLIFTCOACH 2.0 · YOUR ROUTINE</span><h2>'+esc(existing?'Edit custom workout':'Create your workout')+'</h2></div><button type="button" data-editor-close aria-label="Close workout editor">✕</button></div><form id="mlc-custom-form"><div class="custom-editor-fields"><label>Workout name<input id="customName" name="title" maxlength="75" required value="'+esc(existing?.title||'')+'" placeholder="e.g. Upper Body — Custom"></label><label class="custom-editor-optional">Notes (optional)<input name="description" maxlength="160" value="'+esc(existing?.description||'')+'" placeholder="What is this workout focused on?"></label></div><section class="custom-editor-selection" aria-label="Exercises in your workout"><div class="custom-editor-section-title"><h3>Your exercises</h3><span id="customCount" aria-live="polite"></span></div><div id="customSelected"></div></section><section class="custom-editor-picker" aria-label="Add exercises"><div class="custom-editor-section-title"><h3>Add exercises</h3><span>Search the library</span></div><label class="custom-editor-search-label">Search by name or muscle<input id="customSearch" type="search" placeholder="Search 344 exercises" autocomplete="off"></label><div class="custom-editor-filters" id="customMuscleFilters" role="group" aria-label="Filter by muscle group"></div><div id="customOptions" aria-label="Exercise search results"></div></section><div class="custom-editor-footer"><button type="button" data-editor-close>Cancel</button><button type="submit">Save workout</button></div></form></div>';
  document.body.appendChild(root);
@@ -110,7 +132,9 @@ function openEditor(id,unused,onChanged){
   $('customCount').textContent=selected.length+' of 40';
   $('customSelected').innerHTML=selected.map((id,index)=>{
    const e=byId(id);
-   return '<div class="custom-selected-row"><span class="custom-exercise-order">'+(index+1)+'</span><div class="custom-exercise-copy"><strong>'+esc(e?.name||id)+'</strong><small>'+esc(e?.group||'Exercise')+'</small></div><div class="custom-selected-actions"><button type="button" data-custom-up="'+esc(id)+'" aria-label="Move '+esc(e?.name||id)+' up" '+(index===0?'disabled':'')+'>↑</button><button type="button" data-custom-down="'+esc(id)+'" aria-label="Move '+esc(e?.name||id)+' down" '+(index===selected.length-1?'disabled':'')+'>↓</button><button type="button" data-custom-remove="'+esc(id)+'" aria-label="Remove '+esc(e?.name||id)+'">✕</button></div></div>';
+   const t=draftTargets[id]||{};
+   const entry=(field,label,min,max,step,placeholder)=>'<label>'+label+'<input type="number" data-custom-target="'+esc(id)+'" data-target-field="'+field+'" inputmode="'+(field==='weight'?'decimal':'numeric')+'" min="'+min+'" max="'+max+'" step="'+step+'" placeholder="'+placeholder+'" value="'+(t[field]??'')+'"></label>';
+   return '<div class="custom-selected-row"><div class="custom-selected-main"><span class="custom-exercise-order">'+(index+1)+'</span><div class="custom-exercise-copy"><strong>'+esc(e?.name||id)+'</strong><small>'+esc(e?.group||'Exercise')+'</small></div><div class="custom-selected-actions"><button type="button" data-custom-up="'+esc(id)+'" aria-label="Move '+esc(e?.name||id)+' up" '+(index===0?'disabled':'')+'>↑</button><button type="button" data-custom-down="'+esc(id)+'" aria-label="Move '+esc(e?.name||id)+' down" '+(index===selected.length-1?'disabled':'')+'>↓</button><button type="button" data-custom-remove="'+esc(id)+'" aria-label="Remove '+esc(e?.name||id)+'">✕</button></div></div><details class="custom-target-details" '+(Object.keys(t).length?'open':'')+'><summary>Optional sets, reps, weight & rest</summary><div class="custom-target-fields">'+entry('sets','Sets',1,20,1,'—')+entry('reps','Reps',1,100,1,'—')+entry('weight','Target weight (lb)',0,1500,0.5,'—')+entry('restSeconds','Rest (seconds)',0,1800,1,'—')+'</div><p>Leave any field blank to use your usual workout logging.</p></details></div>';
   }).join('')||'<p class="custom-editor-empty">No exercises yet. Search below and tap Add to build your workout.</p>';
  }
  function options(){
@@ -138,7 +162,7 @@ function openEditor(id,unused,onChanged){
  });
  $('customSelected').addEventListener('click',e=>{
   const remove=e.target.closest('[data-custom-remove]');
-  if(remove){selected=selected.filter(x=>x!==remove.dataset.customRemove);selectedView();options();return}
+  if(remove){selected=selected.filter(x=>x!==remove.dataset.customRemove);delete draftTargets[remove.dataset.customRemove];selectedView();options();return}
   const up=e.target.closest('[data-custom-up]'),down=e.target.closest('[data-custom-down]'),button=up||down;
   if(!button)return;
   const index=selected.indexOf(up?up.dataset.customUp:down.dataset.customDown);
@@ -146,6 +170,16 @@ function openEditor(id,unused,onChanged){
   if(index<0||next<0||next>=selected.length)return;
   [selected[index],selected[next]]=[selected[next],selected[index]];
   selectedView();
+ });
+ $('customSelected').addEventListener('input',e=>{
+  const input=e.target.closest('[data-custom-target]');if(!input)return;
+  const id=input.dataset.customTarget,field=input.dataset.targetField;
+  if(!selected.includes(id)||!Object.hasOwn(TARGET_LIMITS,field))return;
+  const raw=input.value.trim();
+  if(raw===''){if(draftTargets[id]){delete draftTargets[id][field];if(!Object.keys(draftTargets[id]).length)delete draftTargets[id]}return}
+  const n=Number(raw),[min,max]=TARGET_LIMITS[field];
+  if(!Number.isFinite(n)||n<min||n>max||(field!=='weight'&&!Number.isInteger(n)))return;
+  draftTargets[id]??={};draftTargets[id][field]=n;
  });
  $('mlc-custom-form').addEventListener('submit',e=>{
   e.preventDefault();
@@ -156,7 +190,7 @@ function openEditor(id,unused,onChanged){
   try{plans=read({forWrite:true})}catch{alert('Saved workouts are unreadable. Nothing was changed.');return}
   if(existing&&!plans.some(plan=>plan.id===existing.id)){alert('This workout was deleted.');close();return}
   if(!existing&&plans.length>=60){alert('Maximum 60 custom workouts.');return}
-  const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',coachSaved:existing?.coachSaved===true,description:description.slice(0,160),ids:[...selected]};
+  const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',coachSaved:existing?.coachSaved===true,description:description.slice(0,160),ids:[...selected],targets:normalizeTargets(draftTargets,selected)};
   const next=existing?plans.map(p=>p.id===existing.id?updated:p):[updated,...plans];
   try{persistPlans(next)}catch{alert('Browser storage is unavailable; workout was not saved.');return}
   // Editing a Coach suggestion must not silently override the Home workout.
