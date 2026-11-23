@@ -98,3 +98,18 @@ test('a replacement cloud snapshot for the same category needs reconfirmation',a
  assert.equal(s.getItem('mlc2-local-daily-v1:user:'+owner),null);
  assert.deepEqual((await eng.restore({confirmRestore:()=>true})).restored,['Water and weight tracking']);
 });
+
+test('read-only cloud diagnosis names divergent categories without changing cloud or local data',async()=>{
+ const db=storage(),cloud=records();
+ db.setItem('mlc2-local-daily-v1:user:'+owner,JSON.stringify(tracking));
+ cloud.m.set(owner+'/tracking/snapshot-v1',{owner,type:'tracking',id:'snapshot-v1',revision:3,deleted:false,
+  payload:Aux.payload([{id:'different',type:'water',day:'2026-11-22',value:200}])});
+ const previous=JSON.stringify([...db.m]),commits=cloud.commits;
+ const report=await engine(db,cloud).diagnose();
+ assert.equal(report.readOnly,true);
+ assert.equal(report.categories.find(x=>x.label==='Water and weight tracking').state,'diverged-needs-review');
+ assert.equal(report.categories.find(x=>x.label==='Water and weight tracking').revision,3);
+ assert.equal(db.getItem('mlc2-local-daily-v1:user:'+owner),JSON.stringify(tracking));
+ assert.equal(JSON.stringify([...db.m]),previous);
+ assert.equal(cloud.commits,commits);
+});
