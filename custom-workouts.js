@@ -1,14 +1,14 @@
 /* MYLIFTCOACH 2.0 custom workout manager. Browser-only preview; never writes original or Supabase records. */
 (function(){
 'use strict';
-const KEY='mlc2-custom-plans-v1', TODAY='mlc2-selected-workout-v1', WEEK='mlc2-weekly-schedule-v1';
+const KEY='mlc2-custom-plans-v1', TODAY='mlc2-selected-workout-v1', WEEK='mlc2-weekly-schedule-v1', LIB='mlc2-schedule-library-v1';
 let owner=null,ownerGeneration=0,closeEditor=null;
 const validOwner=o=>typeof o==='string'&&/^[a-zA-Z0-9_-]{1,128}$/.test(o);
 function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw Error('Verified owner required');if(nextOwner!==owner){ownerGeneration++;closeEditor?.();window.MLC2FullWeekBuilder?.forceClose?.()}owner=nextOwner}
 const scoped=key=>owner===null?key:key+':user:'+owner;
 const JOURNAL='mlc2-plan-write-v1';
 const PROGRAM_KEYS=['mlc2-goal-program-v1','mlc2-goal-program-source-v1','mlc2-estimated-calorie-goal-v1'];
-const planKeys=()=>[KEY,WEEK,TODAY,...PROGRAM_KEYS].map(scoped);
+const planKeys=()=>[KEY,WEEK,TODAY,LIB,...PROGRAM_KEYS].map(scoped);
 function writeVerified(key,value){
  if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);
  if(localStorage.getItem(key)!==value)throw Error('Workout changes were not retained.');
@@ -65,6 +65,25 @@ function commitPlanWrite(keys,before,after){
   }
   throw error;
  }
+}
+function stagedScheduleStore(keys,before){
+ const values=new Map(keys.map((key,i)=>[key,before[i]]));
+ const allowed=new Set([WEEK,TODAY,LIB]);
+ const locate=key=>{if(!allowed.has(key))throw Error('Unsupported schedule library data');return scoped(key)};
+ return {
+  getItem:key=>values.get(locate(key))??null,
+  setItem:(key,value)=>values.set(locate(key),String(value)),
+  removeItem:key=>values.set(locate(key),null)
+ };
+}
+function transactScheduleLibrary(work){
+ requireStablePlans();
+ const names=[WEEK,TODAY,LIB],keys=names.map(scoped),before=keys.map(key=>localStorage.getItem(key));
+ const staged=stagedScheduleStore(keys,before);
+ const value=work(staged);
+ commitPlanWrite(keys,before,names.map(name=>staged.getItem(name)));
+ try{window.MLC2ScheduleAuxSync?.()}catch{}
+ return value;
 }
 function commitRecoveredPlans(changes){
  const allowed=planKeys();
@@ -149,7 +168,7 @@ function saveWithWeekdays({next,updated,existing=null,chosenDays=[]}){
   // Save the routine and weekday assignments as one local transaction.
   // Preserve all other weekdays and any unrelated workout history.
   const scheduleKey=scoped(WEEK),plansKey=scoped(KEY),selectedKey=scoped(TODAY);
-  const keys=[plansKey,scheduleKey,selectedKey],before=keys.map(key=>localStorage.getItem(key));
+  const keys=[plansKey,scheduleKey,selectedKey,scoped(LIB)],before=keys.map(key=>localStorage.getItem(key));
   const hasDays=selectedDays.size>0;
   const shouldUpdateSchedule=hasDays||Boolean(existing&&Object.values(initialSchedule).includes(existing.id));
   let nextSchedule;
@@ -174,8 +193,13 @@ function saveWithWeekdays({next,updated,existing=null,chosenDays=[]}){
    }
   const selected=hasDays?(owner===null?null:''):
    (!existing&&!updated.coachSaved?updated.id:before[2]);
-  commitPlanWrite(keys,before,[JSON.stringify(next),
-   shouldUpdateSchedule?JSON.stringify(nextSchedule):before[1],selected]);
+  const after=[JSON.stringify(next),shouldUpdateSchedule?JSON.stringify(nextSchedule):before[1],selected,before[3]];
+  if(shouldUpdateSchedule){
+   const staged=stagedScheduleStore(keys,before);
+   window.MLC2ScheduleLibrary.edited(staged,nextSchedule);
+   after[1]=staged.getItem(WEEK);after[2]=staged.getItem(TODAY);after[3]=staged.getItem(LIB);
+  }
+  commitPlanWrite(keys,before,after);
  try{window.MLC2ScheduleAuxSync?.()}catch{}
  return {days:[...selectedDays].sort(),scheduled:selectedDays.size>0};
 }
@@ -212,15 +236,19 @@ function saveFullWeek({title,days,expectedOwner=owner}){
  if(existing.length+added.length>60)throw Error('Custom workout limit reached. Your existing routines were not changed.');
  if(!scheduleAPI.valid(nextSchedule))throw Error('Weekly program schedule is invalid');
  const plansKey=scoped(KEY),scheduleKey=scoped(WEEK),selectedKey=scoped(TODAY);
- const keys=[plansKey,scheduleKey,selectedKey],prior=keys.map(k=>localStorage.getItem(k));
+ const keys=[plansKey,scheduleKey,selectedKey,scoped(LIB)],prior=keys.map(k=>localStorage.getItem(k));
  // Never accept unreadable stored schedules; do not silently erase them.
  const oldRaw=prior[1];
  if(oldRaw!==null){
   let old;try{old=JSON.parse(oldRaw)}catch{throw Error('Existing schedule is unreadable. Nothing changed.')}
   if(!scheduleAPI.valid(old))throw Error('Existing schedule needs review. Nothing changed.');
  }
+ const staged=stagedScheduleStore(keys,prior);
+ const library=window.MLC2ScheduleLibrary;
+ if(!library)throw Error('Saved weekly programs unavailable. Nothing changed.');
+ const updatedLibrary=library.newFullWeek(staged,title.trim(),nextSchedule);
  commitPlanWrite(keys,prior,[JSON.stringify([...added,...existing]),
-  JSON.stringify(nextSchedule),owner===null?null:'']);
+  JSON.stringify(nextSchedule),owner===null?null:'',JSON.stringify(updatedLibrary)]);
  try{window.MLC2ScheduleAuxSync?.()}catch{}
  return {created:added.length,restDays:7-added.length,plans:added};
 }
@@ -426,6 +454,9 @@ function deleteCustomPlan(id){
   try{currentSchedule=JSON.parse(before[1])}catch{throw Error('Weekly schedule needs review. Nothing deleted.')}
   if(!window.MLC2WeeklySchedule?.valid(currentSchedule))throw Error('Weekly schedule needs review. Nothing deleted.');
  }
+ const savedLibrary=window.MLC2ScheduleLibrary?.read({getItem:key=>localStorage.getItem(scoped(key))});
+ if(savedLibrary?.profiles.some(p=>Object.values(p.days).includes(id)))
+  throw Error('This routine belongs to a saved weekly program. Edit that program before deleting it.');
  const nextSchedule={...currentSchedule},assigned=[];
  for(const [day,planId] of Object.entries(nextSchedule)){
   if(planId===id){nextSchedule[day]='rest-day';assigned.push(Number(day))}
@@ -469,5 +500,5 @@ function handleClick(e,onChanged,onSchedule){
  }
  return false;
 }
-window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek,deleteCustomPlan,runPlanWrite,recoverPlanWrite,requireStablePlans,commitRecoveredPlans,transactProgram,scheduleVersion:()=>localStorage.getItem(scoped(WEEK)),getOwner:()=>owner};
+window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek,deleteCustomPlan,runPlanWrite,recoverPlanWrite,requireStablePlans,commitRecoveredPlans,transactProgram,transactScheduleLibrary,scheduleVersion:()=>localStorage.getItem(scoped(WEEK)),getOwner:()=>owner};
 })();
