@@ -154,7 +154,18 @@ async function runAutomaticAuxSync(){
   if(result.status==='offline'){setAuxSyncMessage('Offline — account data safe on device.');return}
   auxSyncAttempts=0;
   if(result.pending>0){setAuxSyncMessage(result.pending+' queued fitness backups — retrying.');scheduleAuxSync(4000)}
-  else setAuxSyncMessage('Up to date · '+(result.uploaded||0)+' fitness categories uploaded.');
+  else{
+   // Backup never silently restores categories from another device.
+   // Distinguish confirmed cloud backup from a missing local routine/schedule.
+   const recovery=await auxEngine(owner).previewRecovery();
+   if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
+   const wanted=recovery.missing.filter(label=>[
+    'Custom workouts','Weekly workout schedule','Selected workout'
+   ].includes(label));
+   if(wanted.length)
+    setAuxSyncMessage('Cloud data available for this device: '+wanted.join(', ')+'. Open Data & Backup → Recover missing data. Existing data will not be overwritten.');
+   else setAuxSyncMessage('Up to date · '+(result.uploaded||0)+' fitness categories uploaded.');
+  }
  }catch{
   if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
   auxSyncAttempts=Math.min(6,auxSyncAttempts+1);
