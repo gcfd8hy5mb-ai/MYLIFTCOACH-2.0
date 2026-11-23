@@ -50,6 +50,7 @@ const tests=[
  'sync-journal.test.cjs',
  'supabase-transport.test.cjs',
  'aux-data.test.cjs',
+ 'account-program-transfer.test.cjs',
  'completed-workout-bridge.test.cjs',
  'account-workout-store.test.cjs',
  'verified-auth.test.cjs',
