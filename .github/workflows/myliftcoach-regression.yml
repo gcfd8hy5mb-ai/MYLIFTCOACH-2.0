@@ -19,6 +19,7 @@ on:
       - fix/library-image-css-escape-and-structure-20261122
       - fix/library-start-position-thumbnails-20261122
       - fix/global-marble-text-readability-20261122
+      - fix/easier-custom-workout-builder-teal-20261122
   workflow_dispatch:
 
 permissions:
