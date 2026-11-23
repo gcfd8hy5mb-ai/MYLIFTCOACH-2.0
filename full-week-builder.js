@@ -111,7 +111,7 @@ function open(onSaved){
   if(invalid>=0){active=invalid;render();alert('Correct the optional targets for '+DAYS[invalid]+' before saving.');return}
   if(!rows.some(r=>!r.rest)){alert('Choose at least one training day.');return}
   const editorOwner=window.MLC2Custom,schedule=editorOwner.scheduleVersion();
-  if(!confirm('Save this weekly program and replace the current weekday assignments? Existing workouts and history will remain saved.'))return;
+  if(!confirm('Save this program as a new saved weekly schedule and activate it? Previous schedules, workouts and history will remain saved.'))return;
   try{
    saving=true;
    const days=rows.map(row=>({...row,ids:[...row.ids],targets:JSON.parse(JSON.stringify(row.targets))}));
