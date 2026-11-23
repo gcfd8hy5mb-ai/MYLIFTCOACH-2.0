@@ -468,18 +468,40 @@ function unfinishedDraftFor(plan){
   return draft;
  }catch{return null}
 }
+/* Home separates today's selection (which may be a rest day) from the next
+   scheduled workout that can actually be started. Never rewrites the schedule. */
+function nextHomeSession(){
+ const today=nextPlan();
+ if(today?.scheduleSource!=='rest')return today;
+ const custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
+ return window.MLC2WeeklySchedule?.nextTraining({storage:planStorage(),presets:plans,custom})||null;
+}
+function renderHomeTrainingPlan(){
+ const schedule=window.MLC2WeeklySchedule?.read(planStorage())||{};
+ const all=window.MLC2Custom?.allPlans(plans)||plans;
+ const days=Object.values(schedule).filter(id=>id!=='rest-day'&&all.some(p=>p.id===id)).length;
+ const custom=Object.values(schedule).some(id=>id.startsWith('custom-')&&all.some(p=>p.id===id));
+ $('metricTrainingPlanDays').textContent=days?days+'-day':'4-day';
+ $('metricTrainingPlanType').textContent=days?(custom?'Custom weekly program':'Weekly schedule'):'Strength split';
+}
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
- const plan=nextPlan();
- $('heroStart').dataset.workoutPreview=$('todayStart').dataset.workoutPreview=workoutPreviewKey(plan);
- const unfinished=unfinishedDraftFor(plan);
+ renderHomeTrainingPlan();
+ const plan=nextPlan(),upcoming=nextHomeSession();
+ $('heroStart').dataset.workoutPreview=workoutPreviewKey(plan);
+ $('todayStart').dataset.workoutPreview=$('homeNextSession').dataset.workoutPreview=workoutPreviewKey(upcoming);
+ const unfinished=unfinishedDraftFor(plan),upcomingDraft=unfinishedDraftFor(upcoming);
  const restDay=plan?.scheduleSource==='rest';
- $('heroStart').disabled=restDay;$('todayStart').disabled=restDay;
+ $('heroStart').disabled=restDay;
+ $('todayStart').disabled=$('homeNextSession').disabled=!upcoming;
  $('heroStart').innerHTML=unfinished?'Resume Workout <span aria-hidden="true">▶</span>':'Start Workout <span aria-hidden="true">▶</span>';
- $('todayStart').innerHTML=unfinished?'Resume this session <span aria-hidden="true">↗</span>':'Begin this session <span aria-hidden="true">↗</span>';
- $('todayTitle').textContent=plan.title;$('todayDescription').textContent=restDay?'Recovery day · No workout scheduled.':' '+plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
- $('todayExercises').innerHTML=plan.ids.map(id=>{
+ $('todayStart').innerHTML=upcomingDraft?'Resume this session <span aria-hidden="true">↗</span>':restDay&&upcoming?'Start next workout <span aria-hidden="true">↗</span>':upcoming?'Begin this session <span aria-hidden="true">↗</span>':'No workout scheduled';
+ $('homeNextSession').textContent=upcoming?'NEXT SESSION ↗':'NO SESSION';
+ $('todayTitle').textContent=plan.title;$('todayDescription').textContent=restDay?'Recovery day · No workout scheduled.':plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
+ const nextTitle=$('homeNextSessionTitle');
+ if(nextTitle)nextTitle.textContent=restDay&&upcoming?'Next workout · '+window.MLC2WeeklySchedule.DAYS[upcoming.scheduledWeekday]:upcoming?'Session outline':'No upcoming workout';
+ $('todayExercises').innerHTML=(upcoming?.ids||[]).map(id=>{
   const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
   if(!e)return '';
   const approved=approvedThumbnail(e);
@@ -1328,7 +1350,8 @@ function bind(){
 
  $('heroStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
- $('todayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
+ $('todayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextHomeSession));
+ $('homeNextSession').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextHomeSession));
  $('coachScheduleApply').addEventListener('click',assignCoachSchedule);
  $('coachScheduleCancel').addEventListener('click',closeCoachSchedule);
  $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openCoachSchedule))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
