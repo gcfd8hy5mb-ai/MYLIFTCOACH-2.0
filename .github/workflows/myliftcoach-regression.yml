@@ -54,6 +54,9 @@ jobs:
           node --check sync/automatic-workouts.js
           node --check sync/auxiliary-cloud.js
           node --check custom-workouts.js
+          node --check full-week-builder.js
+          node --check coach-program-builder.js
+          node --check coach-periodization.js
           node --check body-progress.js
           node --check coach-readiness.js
           node --check weekly-workout-schedule.js
