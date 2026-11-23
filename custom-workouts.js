@@ -205,7 +205,7 @@ function openEditor(id,unused,onChanged){
 }
 function handleClick(e,onChanged,onSchedule){
  const schedule=e.target.closest('[data-custom-schedule]');
- if(schedule){const item=read().find(p=>p.id===schedule.dataset.customSchedule&&p.coachSaved);if(item)onSchedule?.(item);return true}
+ if(schedule){const item=read().find(p=>p.id===schedule.dataset.customSchedule);if(item)onSchedule?.(item);return true}
  const selection=e.target.closest('[data-custom-select]');if(selection){try{localStorage.setItem(scoped(TODAY),selection.dataset.customSelect);if(localStorage.getItem(scoped(TODAY))!==selection.dataset.customSelect)throw Error('Selection not retained')}catch{alert('Could not save selection.');return true}try{window.MLC2ScheduleAuxSync?.()}catch{}onChanged?.();return true}
  const edit=e.target.closest('[data-custom-edit]');if(edit){openEditor(edit.dataset.customEdit,null,onChanged);return true}
  const del=e.target.closest('[data-custom-delete]');if(del){
