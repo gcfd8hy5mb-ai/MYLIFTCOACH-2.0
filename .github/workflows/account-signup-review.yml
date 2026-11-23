@@ -1,0 +1,27 @@
+name: MYLIFTCOACH 2.0 signup review (no deployment)
+on:
+  push:
+    branches: [feature/account-signup-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  signup-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax and security boundary checks
+        run: |
+          node --check app.js
+          node --check sync/account-signup.js
+          node --check offline-worker.js
+      - name: Signup and iPhone authentication tests
+        run: |
+          node --test tests/account-signup.test.cjs tests/workout-auth-ux-fix.test.cjs tests/auth-persistence-iphone.test.cjs tests/offline-shell.test.cjs
+      - name: Complete existing application regression suite
+        run: node tests/run-all.js
+# Intentionally no Pages, SQL, Auth admin changes, secrets, or deploy permissions.
