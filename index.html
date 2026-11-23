@@ -82,6 +82,7 @@
     </div>
     <div class="welcome-actions">
      <button type="button" class="button-primary" id="welcomeSignIn">Sign In</button>
+     <button type="button" class="button-outline" id="welcomeSignUp">Create Account</button>
      <button type="button" class="button-outline" id="welcomeExplore">Explore Demo</button>
     </div>
     <small>Existing MYLIFTCOACH accounts use the same Supabase backend.<br>Preview workout records remain separate.</small>
@@ -266,6 +267,7 @@
  <div class="more-section-content"><div class="panel settings-panel">
  <div class="setting-line"><div><strong>Account</strong><p id="accountIdentity">Signed out</p></div><span class="micro-tag" id="backendStatus">NOT CONNECTED</span></div>
  <button id="authAction" type="button" class="button-primary">Sign in</button>
+ <button id="authCreateAction" type="button" class="button-outline">Create a new account</button>
  </div><button type="button" class="button-outline" data-account-page="nutrition">Fitness goals & calorie profile</button></div>
 </details><details class="more-section">
  <summary><svg class="app-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span><strong>App Settings</strong><small>Measurement units and daily tracking</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
@@ -419,7 +421,8 @@
 <script defer src="./sync/auxiliary-cloud.js?v=5"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=47"></script>
+<script defer src="./sync/account-signup.js?v=1"></script>
+<script defer src="./app.js?v=48"></script>
 <script defer src="./offline-shell.js?v=4"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>
