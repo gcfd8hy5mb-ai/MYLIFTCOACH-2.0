@@ -45,7 +45,7 @@ test('Approved teal/gold styling stays scoped to Workouts; active logger, login 
  assert.match(css,/#workouts \.workout-compact-card/);
  assert.match(css,/background:#082e35!important/);
  assert.match(css,/border:1px solid rgba\(213,176,109,\.65\)/);
- assert.ok(html.includes('active-workout-ux.css?v=3'));
+ assert.ok(html.includes('active-workout-ux.css?v=4'));
  assert.ok(html.includes('workout-auth-ux-fix.css?v=2'));
  assert.match(app,/queueWorkoutForSync\(entry\)/);
  assert.match(app,/window\.MLC2SessionDraft\?\.save\(activeDraftStore,activePlan,session.sets\)/);
