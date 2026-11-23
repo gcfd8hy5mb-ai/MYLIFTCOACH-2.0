@@ -79,6 +79,18 @@
   store.setItem(SELECTED,'');
   return state;
  }
+ function saveCopy(store,name){
+  const map=current(store);
+  if(!Object.keys(map).length)throw Error('Assign workout days before saving a copy.');
+  let state=captureCurrent(read(store),map);
+  if(state.profiles.length>=16)throw Error('Maximum 16 saved weekly programs.');
+  const id=unique(state);
+  state={...state,mode:'weekly',activeId:id,
+   profiles:[...state.profiles,{id,name:normalizedName(name),days:{...map}}]};
+  store.setItem(KEY,JSON.stringify(state));
+  store.setItem(SELECTED,'');
+  return state;
+ }
  function activate(store,id,plans){
   const state=captureCurrent(read(store),current(store));
   const profile=state.profiles.find(p=>p.id===id);
@@ -114,5 +126,5 @@
   store.setItem(KEY,JSON.stringify({...state,profiles:rest,activeId:state.activeId===id?'':state.activeId}));
   // Never delete the active weekly map or workout routines on profile deletion.
  }
- return Object.freeze({KEY,WEEK,SELECTED,validMap,valid,read,current,captureCurrent,newFullWeek,saveCurrent,activate,useCoach,edited,remove});
+ return Object.freeze({KEY,WEEK,SELECTED,validMap,valid,read,current,captureCurrent,newFullWeek,saveCurrent,saveCopy,activate,useCoach,edited,remove});
 });
