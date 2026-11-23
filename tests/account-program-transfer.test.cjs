@@ -68,7 +68,7 @@ test('signed-in UI uses isolated backup path, never guest exporter or automatic 
   assert.ok(html.includes('id="'+id+'"'));
  assert.ok(html.includes('./sync/program-transfer.js?v=1'));
  assert.match(app,/MLC2ProgramTransfer\.capture\(localStorage,owner/);
- assert.match(app,/MLC2ProgramTransfer\.compare\(record,localStorage,owner/);
+ assert.match(app,/MLC2ProgramTransfer\.planMerge\(record,localStorage,owner/);
  assert.doesNotMatch(app,/MLC2ProgramTransfer\.restore/);
 });
 
