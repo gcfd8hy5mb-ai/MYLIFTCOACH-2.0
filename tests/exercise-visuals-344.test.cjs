@@ -114,7 +114,7 @@ test('iPhone library approved thumbnails stay left of the exercise title and det
 
 test('library card stylesheet contains real line breaks and constrained thumbnails',()=>{
  const css=read('exercise-placeholders.css');
- assert.equal(css.includes('\\\\n'),false,'literal escaped newlines break stylesheet parsing');
+ assert.equal(css.includes(String.fromCharCode(92,110)),false,'literal escaped newlines break stylesheet parsing');
  assert.match(css,/#library \.library-card\.reference-exercise \{[\s\S]*?grid-template-columns:80px minmax\(0,1fr\) 12px!important/);
  assert.match(css,/#library \.library-card\.reference-exercise > \.library-media \{[\s\S]*?max-width:80px!important/);
  assert.match(css,/#library \.library-card\.reference-exercise > \.library-media > img\.library-thumb \{[\s\S]*?object-fit:contain!important/);
