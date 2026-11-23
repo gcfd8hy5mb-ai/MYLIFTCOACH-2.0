@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="./home-rebuild.css?v=20">
 <link rel="stylesheet" href="./exercise-placeholders.css?v=5">
 <link rel="stylesheet" href="./legacy-media-review.css?v=1">
-<link rel="stylesheet" href="./custom-workouts.css?v=4">
+<link rel="stylesheet" href="./custom-workouts.css?v=5">
 <link rel="stylesheet" href="./weekly-workout-schedule.css?v=1">
 <link rel="stylesheet" href="./progress-migration.css?v=1">
 <link rel="stylesheet" href="./coach-migration.css?v=1">
@@ -142,7 +142,7 @@
   </article>
  </section>
  <section id="workoutPanelRoutines" class="workout-tab-panel" role="tabpanel" aria-labelledby="workoutTabRoutines" hidden>
-  <div class="workouts-list-top"><h2>My routines</h2><button type="button" id="createWorkout" class="button-primary">+ New workout</button></div>
+  <div class="workouts-list-top"><h2>My routines</h2><div class="workouts-create-actions"><button type="button" id="createWorkout" class="button-outline">+ Single workout</button><button type="button" id="createWeeklyProgram" class="button-primary">+ Weekly program</button></div></div>
   <div id="guestWorkoutRecovery" class="workout-recovery-panel" hidden><h3>Recover workouts created before sign-in</h3><p id="guestWorkoutRecoveryStatus" role="status">Guest routines found on this device.</p>
    <button id="recoverGuestWorkouts" type="button" class="button-outline">Copy missing guest workouts to my account</button><small>Guest copies and existing account routines will be kept.</small></div>
   <div class="workout-grid workout-routines-list" id="workoutGrid"></div>
@@ -366,6 +366,7 @@
 <script defer src="./exercise-instruction-depth.js?v=1"></script>
 <script defer src="./legacy-media-review.js?v=1"></script>
 <script defer src="./custom-workouts.js?v=2"></script>
+<script defer src="./full-week-builder.js?v=1"></script>
 <script defer src="./weekly-workout-schedule.js?v=2"></script>
 <script defer src="./session-draft.js?v=2"></script>
 <script defer src="./workout-active-ux.js?v=3"></script>
