@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: acf85b4f30fd1f6edb0fdd579758c5f976800d8e
+          ref: b567184c72a765fea8de7dcd8c16ee99c871983c
           path: previous
           persist-credentials: false
       - name: Verify non-deploying replacement and old-2.0 rollback packages
@@ -47,6 +47,11 @@ jobs:
           test -f "$MLC2_REPLACEMENT_PACKAGE/replacement/sync/program-transfer.js"
           test -f "$MLC2_REPLACEMENT_PACKAGE/update-rollback/app.js"
           cmp "$MLC2_REPLACEMENT_PACKAGE/replacement/sync/program-transfer.js" sync/program-transfer.js
+          for file in index.html manifest.json sw.js; do
+            curl --fail --silent --show-error --location "https://gcfd8hy5mb-ai.github.io/workout-tracker/$file" -o "$MLC2_REPLACEMENT_PACKAGE/live-$file"
+            cmp "$MLC2_REPLACEMENT_PACKAGE/update-rollback/$file" "$MLC2_REPLACEMENT_PACKAGE/live-$file"
+          done
+          echo 'Live production matches exactly the approved rollback package; no deployment performed.'
           node --check "$MLC2_REPLACEMENT_PACKAGE/replacement/app.js"
           node --check "$MLC2_REPLACEMENT_PACKAGE/replacement/sw.js"
           (cd "$MLC2_REPLACEMENT_PACKAGE/replacement" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum)
