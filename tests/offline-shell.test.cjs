@@ -19,8 +19,8 @@ test('public app assets can boot offline and account traffic bypasses the worker
  };
  let online=true;
  vm.runInNewContext(source,{
-  URL,Request,Response,caches:{open:async()=>cache},
-  self:{registration:{scope},addEventListener:(event,fn)=>{listeners[event]=fn}},
+  URL,Request,Response,caches:{open:async()=>cache,keys:async()=>['unrelated-cache','myliftcoach2-shell:'+scope+':46','myliftcoach2-shell:'+scope+':47'],delete:async()=>true},
+  self:{registration:{scope},skipWaiting:async()=>{},clients:{claim:async()=>{}},addEventListener:(event,fn)=>{listeners[event]=fn}},
   fetch:async()=>{if(!online)throw Error('offline');return new Response(html)}
  });
  let task;
@@ -38,4 +38,56 @@ test('public app assets can boot offline and account traffic bypasses the worker
  assert.equal(fetchThrough(scope+'private','cors','','POST'),undefined);
  assert.equal(fetchThrough('https://cloud.example/rest','cors',''),undefined);
  assert.equal(fetchThrough(scope+'review/workout-history-check.html','navigate','document'),undefined);
+});
+
+
+test('installed iPhone updates activate only after the full shell is cached, and leave private data alone',async()=>{
+ const listeners={},sequence=[],scope='https://test.example/MYLIFTCOACH-2.0/';
+ const cache={addAll:async()=>sequence.push('assets'),put:async()=>sequence.push('shell'),match:async()=>null};
+ const keys=['unrelated-cache','myliftcoach2-shell:'+scope+':46','myliftcoach2-shell:'+scope+':47'];
+ const context={
+  URL,Request,Response,
+  caches:{open:async()=>cache,keys:async()=>keys,delete:async key=>{sequence.push('delete:'+key);return true}},
+  self:{registration:{scope},addEventListener:(name,cb)=>listeners[name]=cb,
+   skipWaiting:async()=>sequence.push('skipWaiting'),clients:{claim:async()=>sequence.push('claim')}},
+  fetch:async()=>new Response(html)
+ };
+ vm.runInNewContext(source,context);
+ let work;listeners.install({waitUntil:p=>work=p});await work;
+ assert.deepEqual(sequence.slice(0,3),['assets','shell','skipWaiting']);
+ listeners.activate({waitUntil:p=>work=p});await work;
+ assert.ok(sequence.includes('claim'));
+ assert.ok(sequence.includes('delete:myliftcoach2-shell:'+scope+':46'));
+ assert.ok(!sequence.includes('delete:unrelated-cache'));
+ const privateRequest={method:'POST',url:scope+'rest/v1/workouts',destination:'',mode:'cors'};
+ let intercepted=false;
+ listeners.fetch({request:privateRequest,respondWith:()=>intercepted=true});
+ assert.equal(intercepted,false);
+});
+
+test('installed update coordinator checks on resume and never reloads an open workout',async()=>{
+ const coordinator=fs.readFileSync('offline-shell.js','utf8');
+ assert.match(html,/offline-shell\.js\?v=2/);
+ const events={},serviceEvents={};
+ let pending,updates=0,reloads=0;
+ const registration={update:async()=>{updates++}};
+ const modal={hidden:false};
+ const navigator={serviceWorker:{
+  controller:{},addEventListener:(name,cb)=>serviceEvents[name]=cb,
+  register:async()=>registration
+ }};
+ const document={hidden:false,
+  getElementById:id=>id==='modal'?modal:null,
+  addEventListener:(name,cb)=>events['document:'+name]=cb
+ };
+ const window={addEventListener:(name,cb)=>events['window:'+name]=cb};
+ vm.runInNewContext(coordinator,{navigator,document,window,Date,queueMicrotask,
+  location:{reload:()=>reloads++}});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(updates,1);
+ serviceEvents.controllerchange();
+ assert.equal(reloads,0);
+ modal.hidden=true;
+ events['window:pageshow']();
+ assert.equal(reloads,1);
 });
