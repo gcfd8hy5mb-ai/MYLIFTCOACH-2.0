@@ -1,0 +1,32 @@
+{
+  "productionRepository": "gcfd8hy5mb-ai/workout-tracker",
+  "productionUrl": "https://gcfd8hy5mb-ai.github.io/workout-tracker/",
+  "replacementRepository": "gcfd8hy5mb-ai/MYLIFTCOACH-2.0",
+  "replacementCommit": "acf85b4f30fd1f6edb0fdd579758c5f976800d8e",
+  "originalCommit": "24b3e3a40076f8d6aeb6fe6c603068652b268351",
+  "originalArchive": "workout-tracker-24b3e3a40076-exact.zip",
+  "originalArchiveSha256": "ad5202d0443e3b76f1df5ec1df529a6b0f31636594149c614387ee2015ca1513",
+  "installedLaunch": "./?app=myliftcoach",
+  "workerPath": "./sw.js",
+  "supabaseProject": "kirlpjflaoriiusfamsk",
+  "reportedInstalledCommitFunctionSha256": "1418f676d179c4bff8894f5b8911cd5f65861e851b90456cb1badc02aae26cb8",
+  "originalLiveFiles": {
+    "index.html": "1880a94d444c0c578f8732c88090c76d6a5ca79838b0581b9e30e3546f338df5",
+    "manifest.json": "2598d706ea2c98a5c5e3b79e0204dc68e7db6bb0a9b6ad7f8731e615f6acf1ac",
+    "sw.js": "f7f41d0fea1448a4628654651cc624adf993ee41bf02e2de89d83dd68acdaf74"
+  },
+  "replacement": {
+    "files": 623,
+    "treeSha256": "621ec54f47726e8e7488ba07955ba5b8faf62e22a3cb6918f0bbbfc23c356819",
+    "index.html": "8057813cf1dab9ba088596a4b16f7a2c449dea6d3b2215f380433a378e9c9b64",
+    "manifest.json": "be57c194b0c47c67019bfcf7120692e0adf1f4cfb68056fc835b9a80416dee48",
+    "sw.js": "441c5ee88520b9ab63310c498bdf64c16d466f3fa63908b67e78916efa788d5a"
+  },
+  "rollback": {
+    "files": 495,
+    "treeSha256": "8f6d5f706749e90aad4e312df8d94d149cc973cf374df35d13116582f7d8c9ea",
+    "index.html": "1880a94d444c0c578f8732c88090c76d6a5ca79838b0581b9e30e3546f338df5",
+    "manifest.json": "2598d706ea2c98a5c5e3b79e0204dc68e7db6bb0a9b6ad7f8731e615f6acf1ac",
+    "sw.js": "99b8e017bee27ac9a5878ae30391db6930d30069ae5f294c20d752d40a6077d6"
+  }
+}

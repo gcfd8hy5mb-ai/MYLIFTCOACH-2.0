@@ -46,7 +46,7 @@ function scopedTransport(transport,prefix,sessionIds){
 }
 
 // Both identities must already be verified synthetic accounts.
-async function rehearse(first,second){
+async function rehearse(first,second,{requireDeletionFinality=true}={}){
  assert.notEqual(first.owner,second.owner,'Use distinct synthetic identities');
  const label=randomUUID();
  const prefix='synthetic-recovery-'+label+'-';
@@ -81,9 +81,12 @@ async function rehearse(first,second){
  assert.equal((await source.workouts.flush()).uploaded,2);
  assert.equal((await source.auxiliary.backup()).uploaded,2);
  const gone=await transport.read('session',deleted.id,owner);
- await transport.commit({owner,opId:randomUUID(),type:'session',id:deleted.id,baseRevision:gone.revision,kind:'delete'},owner);
+ const deletion={owner,opId:randomUUID(),type:'session',id:deleted.id,baseRevision:gone.revision,kind:'delete'};
+ const acknowledged=await transport.commit(deletion,owner);
  const tombstone=await transport.read('session',deleted.id,owner);
  assert.equal(tombstone.deleted,true);
+ assert.deepEqual(await transport.commit(deletion,owner),acknowledged,'Exact receipt retry must return the original revision');
+ assert.deepEqual(await transport.read('session',deleted.id,owner),tombstone);
 
  const absent=make(second,memory());
  assert.equal(await second.transport.read('session',active.id,second.owner),null);
@@ -112,6 +115,11 @@ async function rehearse(first,second){
  assert.equal((await make(first,stale).auxiliary.backup()).status,'conflict');
  await assert.rejects(transport.commit({owner,opId:randomUUID(),type:'session',id:deleted.id,
   baseRevision:gone.revision,kind:'upsert',payload:deleted},owner),{code:'CONFLICT'});
+ if(requireDeletionFinality){
+  await assert.rejects(transport.commit({owner,opId:randomUUID(),type:'session',id:deleted.id,
+   baseRevision:tombstone.revision,kind:'upsert',payload:deleted},owner),{code:'CONFLICT'});
+  assert.deepEqual(await transport.read('session',deleted.id,owner),tombstone);
+ }
  assert.deepEqual(await Promise.all([
   transport.listSessions(owner),
   transport.read('custom-plan','snapshot-v1',owner),
@@ -127,7 +135,8 @@ async function rehearse(first,second){
  assert.equal((await afterCleanup.workouts.previewRecovery()).missing,0);
  assert.deepEqual((await afterCleanup.auxiliary.previewRecovery()).missing,[]);
  return {accountIsolation:true,workoutHistory:true,customRoutines:true,weeklySchedules:true,
-  deletedRecordsExcluded:true,backupIntegrity:true};
+  deletedRecordsExcluded:true,backupIntegrity:true,receiptReplay:true,staleRevisionRejected:true,
+  deletedIdReuseRejected:requireDeletionFinality};
 }
 
 async function verifyHosted({baseUrl,key,accounts,fetcher=fetch}){

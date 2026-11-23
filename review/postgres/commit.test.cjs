@@ -172,8 +172,10 @@ test('full recovery preserves populated accounts with both current and corrected
   await role(null);
   await db.exec(migration);
   const result=await rehearse({owner:sourceOwner,transport:transport(sourceOwner)},
-   {owner:separateOwner,transport:transport(separateOwner)});
-  assert.equal(Object.values(result).filter(Boolean).length,6);
+   {owner:separateOwner,transport:transport(separateOwner)},{requireDeletionFinality:migration===patch});
+  assert.deepEqual(result,{accountIsolation:true,workoutHistory:true,customRoutines:true,weeklySchedules:true,
+   deletedRecordsExcluded:true,backupIntegrity:true,receiptReplay:true,staleRevisionRejected:true,
+   deletedIdReuseRejected:migration===patch});
   await role(null);
   assert.deepEqual(await existing(),baseline);
  }
