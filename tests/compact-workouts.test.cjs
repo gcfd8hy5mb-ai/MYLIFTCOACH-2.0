@@ -40,10 +40,10 @@ test('Weekly schedule and guest recovery remain available under correct tabs',()
  assert.match(app,/window\.MLC2Custom\.recoverGuest\(\)/);
 });
 test('Approved teal/gold styling stays scoped to Workouts; active logger, login and sync unaffected',()=>{
- assert.ok(html.includes('compact-workouts.css?v=3'));
+ assert.ok(html.includes('compact-workouts.css?v=4'));
  assert.match(css,/#workouts \.workout-today-card/);
  assert.match(css,/#workouts \.workout-compact-card/);
- assert.match(css,/background:#082e35!important/);
+ assert.match(css,/background:#04252d!important/);
  assert.match(css,/border:1px solid rgba\(213,176,109,\.65\)/);
  assert.ok(html.includes('active-workout-ux.css?v=5'));
  assert.ok(html.includes('workout-auth-ux-fix.css?v=2'));
@@ -60,4 +60,20 @@ test('Today workout follows approved rich dark-teal card material, not the old l
  assert.match(today,/background-image:var\(--mlc-rich-teal-surface/);
  assert.match(today,/border:1\.5px solid #d7b476!important/);
  assert.match(read('rich-teal-cards.css'),/--mlc-rich-teal-top:#04252d/);
+});
+
+test('following the weekly schedule shows Today and visible confirmation',()=>{
+ const schedule=read('weekly-workout-schedule.js');
+ assert.ok(html.includes('weekly-workout-schedule.js?v=2'));
+ assert.match(schedule,/onChanged\?\.\('follow',selected\)/);
+ assert.match(schedule,/Following weekly schedule · Today:/);
+ assert.match(schedule,/Manual selection active:/);
+ assert.match(app,/if\(action==='follow'\)\{/);
+ assert.match(app,/setWorkoutTab\('today'\)/);
+ assert.match(app,/notice\(plan\?\.scheduleSource==='weekly'/);
+});
+test('compact workout and schedule cards use the approved deep teal material',()=>{
+ assert.match(css,/#workouts \.workout-compact-card[\s\S]*?background:#04252d!important/);
+ assert.match(css,/#workouts \.workout-schedule-panel[\s\S]*?background:#04252d!important/);
+ assert.match(css,/--mlc-rich-teal-surface/);
 });
