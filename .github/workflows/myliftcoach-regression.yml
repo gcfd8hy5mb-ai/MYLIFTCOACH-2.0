@@ -21,6 +21,7 @@ on:
       - fix/global-marble-text-readability-20261122
       - fix/easier-custom-workout-builder-teal-20261122
       - fix/optional-exercise-targets-20261122
+      - integration/custom-schedule-cloud-20261123
   workflow_dispatch:
 
 permissions:
