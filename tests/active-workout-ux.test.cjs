@@ -42,7 +42,7 @@ test('invalid previous values are never shown or used as defaults',()=>{
  assert.deepEqual(UX.defaults('press',[],hist,'a'),{weight:'',reps:'',source:'empty'});
 });
 test('active workout uses inline checkmark logging and preserves existing draft/save pipeline',()=>{
- for(const token of ['id="workoutLog"','id="autoRestToggle"','id="activeWorkoutProgress"','data-addset','data-set-rows','data-undo','function updateExerciseFeedback(id)','window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)','window.MLC2AccountWorkouts.complete(localStorage,verifiedOwnerId,entry)','queueWorkoutForSync(proposed.find(row=>row.id===entry.id))']){
+ for(const token of ['id="workoutLog"','id="autoRestToggle"','id="activeWorkoutProgress"','data-addset','data-set-rows','data-undo','function updateExerciseFeedback(id)','window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)','window.MLC2AccountWorkouts.complete(localStorage,workoutStartedOwner,entry)','queueWorkoutForSync(proposed.find(row=>row.id===entry.id))']){
   assert.ok(app.includes(token),'missing workflow element: '+token);
  }
  assert.ok(html.includes('workout-active-ux.js?v=3'));

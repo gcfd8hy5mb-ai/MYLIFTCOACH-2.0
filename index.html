@@ -146,6 +146,15 @@
   </details>
  </section>
  <section id="workoutPanelSchedule" class="workout-tab-panel" role="tabpanel" aria-labelledby="workoutTabSchedule" hidden>
+  <article id="coachSchedulePanel" class="panel workout-schedule-panel" hidden>
+   <h2>Schedule <span id="coachScheduleTitle"></span></h2>
+   <label>Day <select id="coachScheduleDay">
+    <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+   </select></label>
+   <button type="button" class="button-outline" id="coachScheduleApply">Assign workout</button>
+   <button type="button" class="button-outline" id="coachScheduleCancel">Cancel</button>
+   <p id="coachScheduleStatus" role="status"></p>
+  </article>
   <article class="panel workout-schedule-panel"><div class="panel-heading"><h2>Weekly schedule</h2><span class="micro-tag">YOUR PLAN</span></div><div id="weeklySchedule"></div></article>
  </section>
 </section>
@@ -362,18 +371,19 @@
 <script defer src="./sync/supabase-transport.js?v=1"></script>
 <script defer src="./sync/aux-data.js?v=1"></script>
 <script defer src="./sync/completed-workout-bridge.js?v=1"></script>
-<script defer src="./sync/account-workout-store.js?v=2"></script>
+<script defer src="./sync/account-workout-store.js?v=3"></script>
 <script defer src="./sync/auth-session-store.js?v=1"></script>
 <script defer src="./sync/verified-auth.js?v=1"></script>
 <script defer src="./sync/refresh-session.js?v=1"></script>
 <script defer src="./sync/cloud-session-inspection.js?v=1"></script>
-<script defer src="./sync/account-recovery.js?v=1"></script>
+<script defer src="./sync/account-recovery.js?v=2"></script>
 <script defer src="./sync/account-draft-store.js?v=1"></script>
-<script defer src="./sync/automatic-workouts.js?v=4"></script>
+<script defer src="./sync/automatic-workouts.js?v=5"></script>
 <script defer src="./sync/auxiliary-cloud.js?v=2"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=41"></script>
+<script defer src="./app.js?v=42"></script>
+<script defer src="./offline-shell.js?v=1"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>
 </body>

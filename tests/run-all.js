@@ -69,7 +69,12 @@ const tests=[
  'progress-weekly-summary.test.cjs',
  'coach-plan-preview.test.cjs',
  'coach-program-builder.test.cjs',
- 'coach-save-custom.test.cjs'
+ 'coach-save-custom.test.cjs',
+ 'coach-weekly-schedule.test.cjs',
+ 'workout-simulation.test.cjs',
+ 'workout-simulation-integration.test.cjs',
+ 'offline-shell.test.cjs',
+ 'account-write-lock.test.cjs'
 ];
 for(const test of tests){
  console.log('Running '+test);

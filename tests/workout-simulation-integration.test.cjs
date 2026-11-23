@@ -28,20 +28,22 @@ test('audit shows inconsistent catalog data rather than silently passing',()=>{
  assert.equal(result.status,'attention');
  assert.equal(result.checks.find(c=>c.title==='Exercise catalog mappings resolve').pass,false);
 });
-test('History uses simulation view only for 2.0 sessions and leaves original history separate',()=>{
- const app=fs.readFileSync('app.js','utf8'),html=fs.readFileSync('index.html','utf8');
- const code=app.slice(app.indexOf('function renderHistory(){'),app.indexOf('function renderOriginalPlans(){'));
- assert.ok(code.includes('const original=originalSnapshot?.sessions||[]'));
- assert.ok(code.includes('const demo=viewedHistory()'));
- assert.ok(code.includes("'SIMULATED · TEST DATA':'SAVED 2.0 RECORDS'"));
- assert.ok(code.includes("history2SimulationNotice"));
- assert.ok(html.includes('id="history2SourceLabel"')&&html.includes('id="history2SimulationNotice"'));
- assert.ok(app.includes('renderHistory();if(page===\'coaching\')renderCoach();'));
-});
-test('the simulation audit is read-only, not a browser storage or cloud action',()=>{
- const source=fs.readFileSync('workout-simulation-audit.js','utf8');
- assert.doesNotMatch(source,/\b(localStorage|sessionStorage|indexedDB|fetch|XMLHttpRequest|supabase|setItem|removeItem)\b/i);
- assert.ok(fs.readFileSync('index.html','utf8').includes('id="simulationAudit"'));
- assert.ok(fs.readFileSync('app.js','utf8').includes('window.MLC2SimulationAudit?.audit('));
- assert.equal(Audit.audit([],catalog,window.MLC2Progress,Weekly,window.MLC2Coach).status,'inactive');
+test('Diagnostics can generate and clear a 90-day audit and separate fictional history',()=>{
+ const script=fs.readFileSync('review/workout-history-check.js','utf8');
+ const elements=new Map();
+ const element=id=>{
+  if(!elements.has(id))elements.set(id,{dataset:{days:id.slice(-2)},addEventListener(_,fn){this.click=fn},replaceChildren(...rows){this.rows=rows}});
+  return elements.get(id);
+ };
+ let audit;
+ const document={getElementById:element,createElement:()=>({})};
+ vm.runInNewContext(script,{document,window:{...window,MLC2_EXERCISE_CATALOG:catalog,MLC2Simulation:Sim,
+  MLC2SimulationAudit:{...Audit,render:(_,report)=>{audit=report}},MLC2ProgressWeekly:Weekly}});
+ element('simulation90').click({currentTarget:element('simulation90')});
+ assert.equal(audit.status,'pass');
+ assert.match(element('simulationStatus').textContent,/SIMULATED TEST DATA/);
+ assert.equal(element('simulationHistory').rows.length,audit.summary.sessions);
+ element('simulationClear').click();
+ assert.equal(audit.status,'inactive');
+ assert.equal(element('simulationHistory').rows.length,0);
 });

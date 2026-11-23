@@ -36,30 +36,16 @@ test('Simulation module never invokes account storage, sync or network and rejec
  assert.throws(()=>Sim.generate(catalog,plan,100,now),/Unsupported/);
  assert.throws(()=>Sim.generate([],plan,30,now),/three catalog/);
 });
-test('Only Progress and Coach consume fictional history; workouts, drafts and account store use real sessions',()=>{
+test('Combined app uses real history; diagnostics have no access to workout persistence or sync',()=>{
  const app=fs.readFileSync('app.js','utf8');
- const html=fs.readFileSync('index.html','utf8');
- const progress=app.slice(app.indexOf('function renderProgress(){'),app.indexOf('function renderSettings(){'));
- assert.ok(progress.includes('const progressData=viewedHistory()'));
- assert.ok(progress.includes("$('progressSets').textContent=progressData.reduce((n,x)=>n+x.sets.length,0)"));
- assert.ok(progress.includes('const coachData=viewedHistory()'));
- assert.ok(progress.includes('function renderProgressChart(progressData=viewedHistory())'));
- const active=app.slice(app.indexOf('function openWorkout(id){'),app.indexOf('function renderWorkoutLog(){'));
- assert.ok(active.includes('demoSessions'));
- assert.ok(!active.includes('viewedHistory()'));
- assert.ok(app.includes('if(simulated)throw Error(\'Disable test history before saving a Coach workout\')'));
- assert.ok(app.includes('window.MLC2Simulation?.clear();'));
- for(const id of ['simulation30','simulation90','simulationClear','simulationStatus','coachSimulationNotice'])assert.ok(html.includes('id="'+id+'"'),id);
- assert.ok(html.indexOf('workout-simulation.js')<html.indexOf('app.js?v=15'));
-});
-
-test('simulation source is clearly labeled in Progress and Coach without affecting real Home totals',()=>{
- const app=fs.readFileSync('app.js','utf8'),html=fs.readFileSync('index.html','utf8');
- assert.ok(app.includes("'SIMULATED TEST DATA':'ACTUAL 2.0 LOGS'"));
- assert.ok(app.includes("simulated test sessions"));
- assert.ok(html.includes('id="progressWeeklySourceLabel"'));
- assert.ok(html.includes('id="coachSimulationNotice"'));
- const home=app.slice(app.indexOf('function renderHome(){'),app.indexOf('function openCoachSchedule('));
- assert.ok(home.includes('demoSessions.length'));
- assert.ok(!home.includes('viewedHistory()'));
+ const main=fs.readFileSync('index.html','utf8');
+ const diagnostics=fs.readFileSync('review/workout-history-check.html','utf8');
+ const script=fs.readFileSync('review/workout-history-check.js','utf8');
+ assert.match(app,/const demo=demoSessions/);
+ assert.doesNotMatch(main,/workout-simulation\.js/);
+ assert.doesNotMatch(diagnostics,/app\.js|supabase|account-workout-store/);
+ assert.doesNotMatch(script,/Storage|indexedDB|fetch|supabase/);
+ assert.match(diagnostics,/connect-src 'none'/);
+ assert.match(script,/SIMULATED TEST DATA/);
+ assert.match(script,/simulation\.clear\(\)/);
 });

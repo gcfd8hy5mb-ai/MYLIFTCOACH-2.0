@@ -76,7 +76,13 @@ let toastTimer;
 let muscleFilter='';
 let restSeconds=90,restPaused=true,restClock=null;
 function loadDemo(){try{return window.MLC2AccountWorkouts?.read(localStorage,null)||[]}catch{return []}}
-function storeDemo(){return window.MLC2AccountWorkouts.save(localStorage,verifiedOwnerId,demoSessions)}
+function withAccountLock(kind,owner,epoch,work){
+ const guarded=()=>{
+  if(owner!==verifiedOwnerId||epoch!==authEpoch)throw Error('Workout account changed');
+  return work();
+ };
+ return navigator.locks?.request('myliftcoach2:'+kind+':'+(owner===null?'guest':'user:'+owner),guarded)??guarded();
+}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
 function switchWorkoutOwner(owner){
  coachAutonomousDraft=null;
@@ -84,7 +90,7 @@ function switchWorkoutOwner(owner){
  if(auxSyncTimer!==null){clearTimeout(auxSyncTimer);auxSyncTimer=null}
  syncAgainAfterCurrent=false;workoutSyncFailures=0;auxSyncAttempts=0;
  if(verifiedOwnerId!==owner){
-  closeModal(false);$('calorieGoalForm')?.reset();
+  closeModal(false);closeCoachSchedule();$('calorieGoalForm')?.reset();
   for(const id of ['cloudPreviewResult','cloudAuditResult','cloudArchiveResult','inspectCloudSessionsStatus','accountRecoveryStatus','otherFitnessCloudStatus']){
    $(id)?.replaceChildren();
   }
@@ -137,7 +143,7 @@ async function runAutomaticAuxSync(){
  auxOperationBusy=true;
  setAuxSyncMessage('Checking your account fitness-data backups…');
  try{
-  const result=await auxEngine(owner).backup();
+  const result=await withAccountLock('journal',owner,epoch,()=>auxEngine(owner).backup());
   if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
   if(result.status==='conflict'){
    auxSyncAttempts=0;
@@ -184,10 +190,11 @@ function syncEngine(owner){
   owner,storage:localStorage,accountStore:window.MLC2AccountWorkouts,
   Sync:window.MLC2Sync,transport,verify:id=>verifier.verify(id),
   active:()=>epoch===authEpoch&&verifiedOwnerId===account?.id?verifiedOwnerId:null,
-  online:()=>navigator.onLine
+  online:()=>navigator.onLine,
+  withHistoryWrite:work=>withAccountLock('history',owner,epoch,work)
  });
 }
-function queueWorkoutForSync(entry){
+async function queueWorkoutForSync(entry){
  if(!verifiedOwnerId||account?.id!==verifiedOwnerId||entry?.ownerId!==verifiedOwnerId)return;
  // When a workout upload is running, it owns an in-memory journal snapshot.
  // Never write to that journal concurrently: the in-flight flush could overwrite it.
@@ -198,15 +205,20 @@ function queueWorkoutForSync(entry){
   setWorkoutSyncState('Workout saved locally — syncing immediately after current upload.');
   return;
  }
+ const owner=verifiedOwnerId,epoch=authEpoch;
  try{
-  syncEngine(verifiedOwnerId).queue(entry);
+  await withAccountLock('journal',owner,epoch,()=>syncEngine(owner).queue(entry));
+  if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
   if(auxOperationBusy){
    syncAgainAfterCurrent=true;
    setWorkoutSyncState('Workout queued locally — syncing after fitness backup.');
    return;
   }
   setWorkoutSyncState(navigator.onLine?'Workout saved — queued for cloud sync.':'Saved offline — queued for cloud sync.');
- }catch{setWorkoutSyncState('Workout saved locally — cloud queue requires attention.')}
+ }catch{
+  if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
+  setWorkoutSyncState('Workout saved locally — cloud queue requires attention.');
+ }
  scheduleWorkoutSync();
 }
 async function runWorkoutSync(){
@@ -216,7 +228,7 @@ async function runWorkoutSync(){
  const owner=verifiedOwnerId,epoch=authEpoch;
  workoutSyncBusy=true;setWorkoutSyncState('Checking your private workout cloud…');
  try{
-  let result=await syncEngine(owner).flush();
+  let result=await withAccountLock('journal',owner,epoch,()=>syncEngine(owner).flush());
   if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
   if(result.status==='owner-changed')return;
   if(result.status==='conflict'){
@@ -565,6 +577,34 @@ function renderAutonomousCoach(){
  start.disabled=false;
 }
 
+let pendingCoachSchedule=null;
+function closeCoachSchedule(){
+ pendingCoachSchedule=null;
+ $('coachSchedulePanel').hidden=true;
+}
+function openCoachSchedule(plan){
+ pendingCoachSchedule={id:plan.id,owner:verifiedOwnerId,epoch:authEpoch};
+ $('coachScheduleTitle').textContent=plan.title;
+ $('coachScheduleStatus').textContent='';
+ $('coachSchedulePanel').hidden=false;
+ setWorkoutTab('schedule');
+ $('coachScheduleDay').focus();
+}
+function assignCoachSchedule(){
+ const pending=pendingCoachSchedule;
+ if(!pending||pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch){closeCoachSchedule();return}
+ const allPlans=window.MLC2Custom.allPlans(plans);
+ const routine=allPlans.find(plan=>plan.coachSaved&&plan.id===pending.id);
+ if(!routine){closeCoachSchedule();notice('That routine is no longer available.');return}
+ const day=Number($('coachScheduleDay').value);
+ if(!confirm('Assign '+routine.title+' to '+window.MLC2WeeklySchedule.DAYS[day]+'?'))return;
+ if(pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch)return;
+ try{
+  window.MLC2WeeklySchedule.assign(planStorage(),day,routine.id,allPlans);
+  closeCoachSchedule();renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+  notice('Weekly schedule updated.');
+ }catch(err){$('coachScheduleStatus').textContent=err.message}
+}
 function renderWorkouts(){
  const selected=nextPlan();
  const activeId=selected?.id||'';
@@ -611,6 +651,7 @@ function renderWorkouts(){
     '<div class="workout-compact-actions">'+
     '<button type="button" class="workout-compact-start" data-workout="'+escapeHTML(p.id)+'">Start workout</button>'+
     '<button type="button" class="workout-compact-select" data-custom-select="'+escapeHTML(p.id)+'"'+(pinned?' disabled':'')+'>'+(pinned?'Selected':'Use for today')+'</button>'+
+    (p.coachSaved?'<button type="button" class="button-outline" data-custom-schedule="'+escapeHTML(p.id)+'">Schedule</button>':'')+
     (isCustom?'<button type="button" class="workout-compact-icon" data-custom-edit="'+escapeHTML(p.id)+'" aria-label="Edit '+escapeHTML(p.title)+'">Edit</button>'+
     '<button type="button" class="workout-compact-icon workout-compact-delete" data-custom-delete="'+escapeHTML(p.id)+'" aria-label="Delete '+escapeHTML(p.title)+'">Delete</button>':'')+
     '</div></article>';
@@ -950,17 +991,25 @@ function openWorkout(id){
  for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
  $('cancelWorkout').addEventListener('click',closeModal);
  $('startRest').addEventListener('click',openRest);
- $('finishWorkout').addEventListener('click',()=>{
+ $('finishWorkout').addEventListener('click',async event=>{
   if(workoutStartedOwner!==verifiedOwnerId){notice('Account changed during this workout. Return to the original account or restart before saving.');return}
   if(!session?.sets.length){notice('Add at least one practice set first.');return}
   const entry={id:workoutId,created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(verifiedOwnerId?{ownerId:verifiedOwnerId}:{})};
   // Persist first. A failed local write must not create a phantom completed workout.
+  const button=event.currentTarget,epoch=authEpoch,draftStore=activeDraftStore;
+  button.disabled=true;
   let proposed;
-  try{proposed=window.MLC2AccountWorkouts.complete(localStorage,verifiedOwnerId,entry)}
-  catch{notice('Could not save the session; it stays open for retry. Check browser storage.');return}
+  try{
+   proposed=await withAccountLock('history',workoutStartedOwner,epoch,()=>window.MLC2AccountWorkouts.complete(localStorage,workoutStartedOwner,entry));
+  }catch{
+   if(epoch===authEpoch)notice('Could not save the session; it stays open for retry. Check browser storage.');
+   return;
+  }finally{button.disabled=false}
+  if(epoch!==authEpoch)return;
   demoSessions=proposed;
   queueWorkoutForSync(proposed.find(row=>row.id===entry.id));
-  try{window.MLC2SessionDraft?.clear(activeDraftStore,plan.id,workoutId)}catch{}
+  try{window.MLC2SessionDraft?.clear(draftStore,plan.id,workoutId)}catch{}
+  if($('finishWorkout')!==button){renderHome();renderProgress();return}
   closeModal(false);renderHome();setPage('progress');
   notice(verifiedOwnerId?'Workout saved on this device. Account backup will sync when connected.':'Workout saved on this device.');
   if(betaView().mode==='pro')openModal(liveCoachRecap(proposed));
@@ -1011,6 +1060,7 @@ function updateExerciseFeedback(id){
  updateWorkoutProgress();
 }
 function addSet(id){
+ if($('finishWorkout')?.disabled)return;
  if(!session||!activePlan?.ids.includes(id))return;
  if(activeDraftOwner!==verifiedOwnerId){notice('Account changed; restart the workout before logging sets.');return}
  if(session.sets.length>=window.MLC2SessionDraft.MAX_SETS){
@@ -1032,6 +1082,7 @@ function addSet(id){
  if($('autoRestToggle')?.checked)openRest();
 }
 function undoSet(id){
+ if($('finishWorkout')?.disabled)return;
  if(!session||!activePlan?.ids.includes(id))return;
  if(activeDraftOwner!==verifiedOwnerId){notice('Account changed; restart the workout before changing sets.');return}
  const index=session.sets.findLastIndex(x=>x.exerciseId===id);
@@ -1211,7 +1262,9 @@ function bind(){
  $('heroStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('heroViewPlan').addEventListener('click',()=>setPage('workouts'));
  $('todayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
- $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openWorkout))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
+ $('coachScheduleApply').addEventListener('click',assignCoachSchedule);
+ $('coachScheduleCancel').addEventListener('click',closeCoachSchedule);
+ $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openCoachSchedule))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
  $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
  $('workoutTodayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
@@ -1269,7 +1322,15 @@ function bind(){
  $('restPause').addEventListener('click',()=>{restPaused=!restPaused;updateRestClock()});
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
- $('clearDemo').addEventListener('click',()=>{if(!confirm('Delete only the local 2.0 workout history for the current '+(verifiedOwnerId?'account':'guest')+'?'))return;try{window.MLC2AccountWorkouts.clear(localStorage,verifiedOwnerId);demoSessions=[];renderProgress();renderHome();notice('Current local workout history cleared. Production data untouched.')}catch{notice('Unable to clear this device history.')}});
+ $('clearDemo').addEventListener('click',async()=>{
+  const owner=verifiedOwnerId,epoch=authEpoch;
+  if(!confirm('Delete only the local 2.0 workout history for the current '+(owner?'account':'guest')+'?'))return;
+  try{
+   await withAccountLock('history',owner,epoch,()=>window.MLC2AccountWorkouts.clear(localStorage,owner));
+   if(epoch!==authEpoch)return;
+   loadCurrentWorkouts();renderProgress();renderHome();notice('Current local workout history cleared. Production data untouched.');
+  }catch{if(epoch===authEpoch)notice('Unable to clear this device history.')}
+ });
  let pendingRecovery=null;
  $('recoveryImportFile').addEventListener('change',async e=>{
   pendingRecovery=null;
@@ -1284,14 +1345,19 @@ function bind(){
    if(preview.canRestore&&preview.writes.length){pendingRecovery=parsed;$('recoveryRestoreAction').disabled=false}
   }catch(err){status.textContent='Rejected backup: '+String(err.message||err).slice(0,180)}
  });
- $('recoveryRestoreAction').addEventListener('click',()=>{
+ $('recoveryRestoreAction').addEventListener('click',async()=>{
   if(verifiedOwnerId){$('recoveryImportResult').textContent='Legacy guest recovery cannot run while signed in. Account history was not changed.';return}
   if(!pendingRecovery)return;
   const preview=window.MLC2RecoveryImport.planRestore(pendingRecovery,localStorage);
   if(!preview.canRestore){$('recoveryImportResult').textContent='Existing data changed or conflicts. Restore blocked.';$('recoveryRestoreAction').disabled=true;pendingRecovery=null;return}
   if(!confirm('Restore '+preview.writes.length+' missing 2.0 storage categories in this browser? Existing records will NOT be replaced. Photos and cloud are unchanged.'))return;
   try{
-   const result=window.MLC2RecoveryImport.restore(pendingRecovery,localStorage);
+   const backup=pendingRecovery,epoch=authEpoch;
+   const result=await withAccountLock('history',null,epoch,()=>{
+    if(pendingRecovery!==backup)throw Error('Backup selection changed');
+    return window.MLC2RecoveryImport.restore(backup,localStorage);
+   });
+   if(epoch!==authEpoch||pendingRecovery!==backup)return;
    $('recoveryImportResult').textContent='Recovered '+result.restored+' missing storage categories. Reload this page to display recovered workout data.';
    $('recoveryRestoreAction').disabled=true;pendingRecovery=null;
   }catch(err){$('recoveryImportResult').textContent='Restore blocked: '+String(err.message||err).slice(0,180)}
@@ -1532,7 +1598,7 @@ function bind(){
    if(plan.missing.length){pendingAccountRecovery={owner,epoch,backup};$('restoreAccountWorkouts').disabled=false}
   }catch(err){output.textContent='Backup rejected: '+String(err.message||err).slice(0,160)}
  });
- $('restoreAccountWorkouts').addEventListener('click',()=>{
+ $('restoreAccountWorkouts').addEventListener('click',async()=>{
   const output=$('accountRecoveryStatus'),pending=pendingAccountRecovery;
   if(!pending||pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch||
      pending.owner!==account?.id){output.textContent='Account changed. Select the backup again.';return}
@@ -1544,11 +1610,15 @@ function bind(){
    // Re-check ownership and local state after the confirmation dialog.
    if(pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch||
       pending.owner!==account?.id)throw Error('Account changed; restore cancelled');
-   const report=window.MLC2AccountRecovery.restore(localStorage,pending.backup,pending.owner);
+   const report=await withAccountLock('history',pending.owner,pending.epoch,()=>{
+    if(pendingAccountRecovery!==pending)throw Error('Backup selection changed');
+    return window.MLC2AccountRecovery.restore(localStorage,pending.backup,pending.owner);
+   });
+   if(pending.epoch!==authEpoch)return;
    pendingAccountRecovery=null;$('restoreAccountWorkouts').disabled=true;
    loadCurrentWorkouts();renderHome();renderProgress();renderHistory();if(page==='coaching')renderCoach();scheduleWorkoutSync();
    output.textContent='Restored '+report.restored+' missing account workouts. Existing data was preserved; nothing uploaded to Supabase.';
-  }catch(err){output.textContent='Restore blocked: '+String(err.message||err).slice(0,160)}
+  }catch(err){if(pending.epoch===authEpoch)output.textContent='Restore blocked: '+String(err.message||err).slice(0,160)}
  });
  async function manageOtherData(action){
   const output=$('otherFitnessCloudStatus');
@@ -1559,7 +1629,7 @@ function bind(){
   output.textContent=action==='backup'?'Checking existing private backups…':'Checking for missing fitness records…';
   try{
    const engine=auxEngine(owner);
-   const result=action==='backup'?await engine.backup():await engine.restore({
+   const result=action==='backup'?await withAccountLock('journal',owner,epoch,()=>engine.backup()):await engine.restore({
     confirmRestore:labels=>{
      if(owner!==verifiedOwnerId||epoch!==authEpoch)return false;
      return confirm('Recover '+labels.join(', ')+' from your private 2.0 cloud? Only missing or empty data is filled.');

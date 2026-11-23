@@ -9,15 +9,16 @@
  'use strict';
  const LEGACY_KEY='mlc2-demo-workouts-v1';
  const PREFIX='mlc2-account-workouts-v1:';
+ const MAX_CHARS=2_500_000;
  const OWNER=/^[a-zA-Z0-9_-]{1,128}$/;
  function key(owner){if(owner===null)return LEGACY_KEY;if(!OWNER.test(owner||''))throw Error('Verified account ID required');return PREFIX+owner}
  function read(storage,owner=null){
   const raw=storage.getItem(key(owner));
   if(raw===null)return [];
-  if(raw.length>2_500_000)throw Error('Workout history exceeds safety limit');
+  if(raw.length>MAX_CHARS)throw Error('Workout history exceeds safety limit');
   let entries;
   try{entries=JSON.parse(raw)}catch{throw Error('Workout history cannot be parsed')}
-  if(!Array.isArray(entries)||entries.length>500)throw Error('Invalid workout history');
+  if(!Array.isArray(entries))throw Error('Invalid workout history');
   const ids=new Set();
   for(const entry of entries){
    if(!entry||typeof entry.id!=='string'||!Array.isArray(entry.sets)||
@@ -31,7 +32,7 @@
   return owner===null?entries.filter(entry=>!entry.ownerId):entries;
  }
  function save(storage,owner,entries){
-  if(!Array.isArray(entries)||entries.length>500)throw Error('Workout history limit reached; export before adding more');
+  if(!Array.isArray(entries))throw Error('Workout history limit reached; export before adding more');
   const storageKey=key(owner);
   // Preserve old account-stamped records in the legacy shared key, without
   // treating them as guest sessions or uploading them to another account.
@@ -45,9 +46,9 @@
     full=[...protectedRows,...entries];
    }
   }
-  if(full.length>500)throw Error('Workout history limit reached; no records changed');
   // Reuse read's strict owner/shape/duplicate checks without touching actual storage.
   const payload=JSON.stringify(full);
+  if(payload.length>MAX_CHARS)throw Error('Workout history storage limit reached; export before adding more');
   const validationStore={getItem:()=>payload};
   read(validationStore,owner);
   storage.setItem(storageKey,payload);
@@ -78,5 +79,5 @@
    read({getItem:()=>next},null);storage.setItem(LEGACY_KEY,next);
   }else storage.removeItem(LEGACY_KEY);
  }
- return Object.freeze({LEGACY_KEY,PREFIX,key,read,save,complete,clear});
+ return Object.freeze({LEGACY_KEY,PREFIX,MAX_CHARS,key,read,save,complete,clear});
 });

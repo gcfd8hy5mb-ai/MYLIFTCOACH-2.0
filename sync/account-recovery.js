@@ -1,10 +1,10 @@
 /* MYLIFTCOACH 2.0 — owner-bound offline workout backup and fill-only recovery.
    No Supabase writes, no imported legacy keys, no auth tokens or photo bytes. */
 (function(root,factory){
- const api=factory();
+ const api=factory(typeof module==='object'&&module.exports?require('./account-workout-store.js'):root.MLC2AccountWorkouts);
  if(typeof module==='object'&&module.exports)module.exports=api;
  else root.MLC2AccountRecovery=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(){
+})(typeof globalThis!=='undefined'?globalThis:this,function(accountStore){
  'use strict';
  const FORMAT='MYLIFTCOACH-2.0-account-workouts';
  const VERSION=1,MAX_BYTES=4*1024*1024,OWNER=/^[a-zA-Z0-9_-]{1,128}$/;
@@ -23,7 +23,7 @@
  }
  function validate(sessions,owner){
   assertOwner(owner);
-  if(!Array.isArray(sessions)||sessions.length>500)throw Error('Invalid workout history list');
+  if(!Array.isArray(sessions))throw Error('Invalid workout history list');
   const seen=new Set();
   for(const s of sessions){
    if(!validSession(s,owner)||seen.has(s.id))throw Error('Invalid, duplicate or foreign-owned workout in backup');
@@ -75,7 +75,7 @@
    else conflicts.push(item.id);
   }
   return {owner,missing,identical,conflicts,localCount:existing.length,
-   backupCount:backup.sessions.length,canRestore:conflicts.length===0&&existing.length+missing.length<=500};
+   backupCount:backup.sessions.length,canRestore:conflicts.length===0&&JSON.stringify([...existing,...missing]).length<=accountStore.MAX_CHARS};
  }
  function restore(storage,backup,owner){
   const p=plan(storage,backup,owner);
@@ -85,13 +85,12 @@
   const next=[...existing,...p.missing].sort((a,b)=>Date.parse(b.created)-Date.parse(a.created));
   validate(next,owner);
   const key='mlc2-account-workouts-v1:'+owner,payload=JSON.stringify(next);
-  if(payload.length>MAX_BYTES)throw Error('Restored history exceeds storage size limit');
+  if(payload.length>accountStore.MAX_CHARS)throw Error('Restored history exceeds storage size limit');
   // Detect intervening edits to the account's local storage before saving.
   const prior=storage.getItem(key);
   const expected=JSON.stringify(existing);
   if(prior!==null&&prior!==expected)throw Error('Account history changed before restore');
-  storage.setItem(key,payload);
-  if(storage.getItem(key)!==payload)throw Error('Device did not retain restored workout history');
+  accountStore.save(storage,owner,next);
   return {restored:p.missing.length,alreadyPresent:p.identical.length};
  }
  return Object.freeze({FORMAT,VERSION,MAX_BYTES,make,parse,plan,restore,validate});

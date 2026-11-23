@@ -199,3 +199,18 @@ test('rejected updated recovery list preserves existing user workouts',async()=>
  assert.equal(outcome.status,'changed-reconfirm');
  assert.equal(db.getItem(Store.key(owner)),initial,'local records stay byte-for-byte unchanged');
 });
+
+test('large cloud history recovers across 20 full pages without truncating or duplicating',async()=>{
+ const db=storage(),cloud=remote();
+ for(let i=0;i<1001;i++){
+  const id='history-'+String(i).padStart(4,'0');
+  cloud.rows.set(owner+'/'+id,{owner,type:'session',id,revision:1,deleted:false,payload:session(id)});
+ }
+ const {engine}=setup(db,cloud);
+ const outcome=await engine.restore({confirmRestore:count=>count===1001});
+ const recovered=Store.read(db,owner);
+ assert.equal(outcome.restored,1001);
+ assert.equal(new Set(recovered.map(row=>row.id)).size,1001);
+ assert.equal((await engine.previewRecovery()).missing,0);
+ assert.equal(cloud.commits,0);
+});

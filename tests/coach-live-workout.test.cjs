@@ -160,10 +160,10 @@ test('Synthetic Coach evidence is always labeled and never mutates account histo
 });
 
 test('Active workout mounts Coach, uses existing draft and cloud paths, and avoids automatic plan changes',()=>{
- for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.complete(localStorage,verifiedOwnerId,entry)","queueWorkoutForSync(proposed.find(row=>row.id===entry.id))","window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)"]){
+ for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.complete(localStorage,workoutStartedOwner,entry)","queueWorkoutForSync(proposed.find(row=>row.id===entry.id))","window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)"]){
   assert.ok(app.includes(marker),'missing '+marker);
  }
  assert.match(css,/\.live-coach-box/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
- assert.match(html,/app\.js\?v=41/);
+ assert.match(html,/app\.js\?v=42/);
 });

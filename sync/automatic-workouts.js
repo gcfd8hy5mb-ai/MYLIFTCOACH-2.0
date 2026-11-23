@@ -29,7 +29,7 @@
   return {...p,ownerId:owner};
  }
 
- function create({owner,storage,accountStore,Sync,transport,verify,active,online=()=>true}){
+ function create({owner,storage,accountStore,Sync,transport,verify,active,online=()=>true,withHistoryWrite=work=>work()}){
   if(!owner||!storage||!accountStore||!Sync||!transport||typeof verify!=='function'||
      typeof active!=='function')throw Error('Authenticated sync dependencies required');
   let busy=false;
@@ -37,7 +37,7 @@
   function local(){if(!isActive())throw Error('Account changed');return accountStore.read(storage,owner)}
   async function pageCloud(){
    const result=[],seen=new Set();let afterId='';
-   for(let p=0;p<20;p++){
+   for(let p=0;p<=100;p++){
     if(!isActive())throw Error('Account changed');
     const rows=await transport.listSessions(owner,{afterId,limit:50});
     if(!isActive())throw Error('Account changed');
@@ -48,6 +48,7 @@
         seen.has(row.id)||row.id<=afterId)throw Error('Invalid or unordered cloud workout');
      seen.add(row.id);result.push(row);
     }
+    if(result.length>5000)throw Error('Cloud history exceeds safe limit');
     if(rows.length<50)return result;
     afterId=rows[rows.length-1].id;
    }
@@ -115,7 +116,7 @@
    if(!isActive())throw Error('Account changed');
    return {missing:report.missing.length,conflicts:report.conflicts.length,
     existing:report.device.length,canRestore:report.missing.length>0&&
-    report.device.length+report.missing.length<=500};
+    JSON.stringify([...report.device,...report.missing]).length<=accountStore.MAX_CHARS};
   }
   async function restore({confirmRestore}={}){
    if(typeof confirmRestore!=='function')throw Error('Explicit restore confirmation required');
@@ -125,7 +126,7 @@
    if(!report.missing.length)return report.conflicts.length?
     {status:'conflict',restored:0,conflicts:report.conflicts.length}:
     {status:'up-to-date',restored:0,conflicts:0};
-   if(report.device.length+report.missing.length>500)throw Error('Device workout limit reached');
+   if(JSON.stringify([...report.device,...report.missing]).length>accountStore.MAX_CHARS)throw Error('Device workout limit reached');
    if(!await confirmRestore(report.missing.length))return {status:'cancelled',restored:0};
    if(!isActive())throw Error('Account changed while confirming recovery');
    // Re-fetch remotely and locally after confirmation, never trust a stale snapshot.
@@ -135,24 +136,25 @@
    const approvedIds=new Set(report.missing.map(row=>row.id));
    if(fresh.missing.some(row=>!approvedIds.has(row.id)))
     return {status:'changed-reconfirm',restored:0,conflicts:fresh.conflicts.length};
-   // Never overwrite an existing ID. A conflict in an unrelated existing
-   // record must not prevent restoring distinct, missing IDs.
-   if(!isActive())throw Error('Account changed during restore');
-   const latest=local(),byId=new Map(latest.map(x=>[x.id,x]));
-   const added=[];
-   for(const row of fresh.missing){
-    if(byId.has(row.id)){if(!same(byId.get(row.id),row))throw Error('Local record changed');}
-    else added.push(row);
-   }
-   if(latest.length+added.length>500)throw Error('Device workout limit reached');
-   if(!added.length)return {status:fresh.conflicts.length?'conflict':'up-to-date',
-    restored:0,conflicts:fresh.conflicts.length};
-   const key=accountStore.key(owner),prior=storage.getItem(key);
-   // Prevent concurrent edits from being overwritten.
-   if(prior!==null&&prior!==JSON.stringify(latest))throw Error('Local history changed');
-   accountStore.save(storage,owner,[...latest,...added].sort((a,b)=>Date.parse(b.created)-Date.parse(a.created)));
-   return {status:fresh.conflicts.length?'restored-with-conflicts':'restored',
-    restored:added.length,conflicts:fresh.conflicts.length};
+   return withHistoryWrite(()=>{
+    // Never overwrite an existing ID. A conflict in an unrelated existing
+    // record must not prevent restoring distinct, missing IDs.
+    if(!isActive())throw Error('Account changed during restore');
+    const latest=local(),byId=new Map(latest.map(x=>[x.id,x]));
+    const added=[];
+    for(const row of fresh.missing){
+     if(byId.has(row.id)){if(!same(byId.get(row.id),row))throw Error('Local record changed');}
+     else added.push(row);
+    }
+    if(!added.length)return {status:fresh.conflicts.length?'conflict':'up-to-date',
+     restored:0,conflicts:fresh.conflicts.length};
+    const key=accountStore.key(owner),prior=storage.getItem(key);
+    // Prevent concurrent edits from being overwritten.
+    if(prior!==null&&prior!==JSON.stringify(latest))throw Error('Local history changed');
+    accountStore.save(storage,owner,[...latest,...added].sort((a,b)=>Date.parse(b.created)-Date.parse(a.created)));
+    return {status:fresh.conflicts.length?'restored-with-conflicts':'restored',
+     restored:added.length,conflicts:fresh.conflicts.length};
+   });
   }
   return Object.freeze({queue,flush,previewRecovery,restore});
  }
