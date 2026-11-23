@@ -3,7 +3,7 @@
 const scope = self.registration.scope;
 const shell = new URL('./index.html', scope).href;
 const prefix = 'myliftcoach2-shell:' + scope + ':';
-const cacheName = prefix + '46';
+const cacheName = prefix + '47';
 const artwork = [
  './assets/approved-vertical-marble-sharp.webp?v=11',
  './assets/hero-dumbbells-photo.jpg?v=7',
@@ -24,6 +24,9 @@ self.addEventListener('install', event => {
   const cache = await caches.open(cacheName);
   await cache.addAll(assets.map(url => new Request(url, {cache:'reload'})));
   await cache.put(shell, response);
+  // A safely staged shell can take control immediately. A page already in use
+  // decides when to reload; the worker never modifies workout storage.
+  await self.skipWaiting();
  })());
 });
 
@@ -31,6 +34,7 @@ self.addEventListener('activate', event => {
  event.waitUntil((async () => {
   const keys = await caches.keys();
   await Promise.all(keys.filter(key => key.startsWith(prefix) && key !== cacheName).map(key => caches.delete(key)));
+  await self.clients.claim();
  })());
 });
 
@@ -40,8 +44,14 @@ self.addEventListener('fetch', event => {
  const url = new URL(request.url);
  if (request.mode === 'navigate') {
   if (url.href !== scope && url.href !== shell) return;
-  event.respondWith(fetch(request).catch(async () => (await caches.open(cacheName)).match(shell)));
+  event.respondWith(fetch(request, {cache:'no-store'}).catch(async () => (await caches.open(cacheName)).match(shell)));
  } else if (['script','style','image','manifest'].includes(request.destination)) {
-  event.respondWith((async () => (await (await caches.open(cacheName)).match(request)) || fetch(request))());
+  // Prefer current versioned JS/CSS on connection, retain offline copies.
+  // Images remain cache-first; no account API requests are intercepted.
+  if (['script','style','manifest'].includes(request.destination)) {
+   event.respondWith(fetch(request, {cache:'no-store'}).catch(async () => (await caches.open(cacheName)).match(request)));
+  } else {
+   event.respondWith((async () => (await (await caches.open(cacheName)).match(request)) || fetch(request))());
+  }
  }
 });
