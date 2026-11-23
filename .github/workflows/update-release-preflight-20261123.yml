@@ -1,0 +1,69 @@
+name: MYLIFTCOACH six-feature release package preflight (nondeploying)
+on:
+  push:
+    branches: [review/update-6-feature-production-prep-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  immutable-release-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact proposed candidate
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: b567184c72a765fea8de7dcd8c16ee99c871983c
+          path: candidate
+          persist-credentials: false
+      - name: Checkout deployed MYLIFTCOACH 2.0 rollback source
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: acf85b4f30fd1f6edb0fdd579758c5f976800d8e
+          path: previous
+          persist-credentials: false
+      - name: Checkout original read-only baseline used by existing packager
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/workout-tracker
+          ref: 24b3e3a40076f8d6aeb6fe6c603068652b268351
+          path: original
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build proposed replacement and current 2.0 rollback
+        env:
+          MLC2_REPLACEMENT_PACKAGE: ${{ github.workspace }}/output
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = 'b567184c72a765fea8de7dcd8c16ee99c871983c'
+          test "$(git -C previous rev-parse HEAD)" = 'acf85b4f30fd1f6edb0fdd579758c5f976800d8e'
+          node candidate/review/production/package-update.cjs original previous output
+          node --test candidate/review/production/package-integration.test.cjs candidate/review/production/migration-preview.test.cjs candidate/review/production/pages-gate.test.cjs
+          test -f output/replacement/schedule-library.js
+          test -f output/replacement/sync/account-signup.js
+          test -f output/replacement/assets/myliftcoach-2-icon-180.png
+          test -f output/update-rollback/index.html
+          ! cmp -s output/replacement/index.html output/update-rollback/index.html
+          tree_hash() {
+            (cd "$1" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+          }
+          echo "release=b567184c72a765fea8de7dcd8c16ee99c871983c" > output/UPDATE-RELEASE-CHECKSUMS.txt
+          echo "previous=acf85b4f30fd1f6edb0fdd579758c5f976800d8e" >> output/UPDATE-RELEASE-CHECKSUMS.txt
+          echo "replacement=$(tree_hash output/replacement)" >> output/UPDATE-RELEASE-CHECKSUMS.txt
+          echo "update-rollback=$(tree_hash output/update-rollback)" >> output/UPDATE-RELEASE-CHECKSUMS.txt
+          cat output/UPDATE-RELEASE-CHECKSUMS.txt
+      - name: Check current website matches previous deployed 2.0 package
+        run: |
+          set -euo pipefail
+          for file in index.html manifest.json sw.js; do
+            curl --fail --silent --show-error --location "https://gcfd8hy5mb-ai.github.io/workout-tracker/$file" -o live-file
+            cmp "output/update-rollback/$file" live-file
+            echo "Current deployed 2.0 $file matches verified rollback package"
+          done
+      - name: Confirm no production publication step exists
+        run: |
+          echo 'Nondeploying preflight only. No GitHub Pages deploy, database writes, user-record changes, or production workflow edits.'
