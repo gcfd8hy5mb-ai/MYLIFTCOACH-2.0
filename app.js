@@ -1333,6 +1333,7 @@ function bind(){
  $('coachScheduleCancel').addEventListener('click',closeCoachSchedule);
  $('workoutGrid').addEventListener('click',e=>{if(window.MLC2Custom?.handleClick(e,()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()},openCoachSchedule))return;const el=e.target.closest('[data-workout]');if(el)openWorkout(el.dataset.workout)});
  $('createWorkout').addEventListener('click',()=>window.MLC2Custom?.openEditor(null,libraryExercises(),()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}));
+ $('createWeeklyProgram').addEventListener('click',()=>window.MLC2FullWeekBuilder?.open(()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach();notice('Your full weekly program is saved and the new schedule is active.')}));
  $('workoutTodayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
  $('coachAutoStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,coachAutonomousPlan));
