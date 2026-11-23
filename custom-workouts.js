@@ -1,7 +1,7 @@
 /* MYLIFTCOACH 2.0 custom workout manager. Browser-only preview; never writes original or Supabase records. */
 (function(){
 'use strict';
-const KEY='mlc2-custom-plans-v1', TODAY='mlc2-selected-workout-v1';
+const KEY='mlc2-custom-plans-v1', TODAY='mlc2-selected-workout-v1', WEEK='mlc2-weekly-schedule-v1';
 let owner=null,closeEditor=null;
 const validOwner=o=>typeof o==='string'&&/^[a-zA-Z0-9_-]{1,128}$/.test(o);
 function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw Error('Verified owner required');if(nextOwner!==owner)closeEditor?.();owner=nextOwner}
@@ -108,8 +108,14 @@ function openEditor(id,unused,onChanged){
  const existing=read().find(p=>p.id===id);
  let selected=existing?[...existing.ids]:[];
  let draftTargets=normalizeTargets(existing?.targets,selected);
+ // Editing preselects the weekdays already assigned to this exact routine.
+ const scheduleAPI=window.MLC2WeeklySchedule;
+ const initialSchedule=scheduleAPI?.read({
+  getItem:key=>localStorage.getItem(scoped(key))
+ })||{};
+ let chosenDays=new Set(Object.keys(initialSchedule).filter(day=>initialSchedule[day]===existing?.id).map(Number));
  const root=document.createElement('div');root.className='custom-editor-backdrop';root.setAttribute('role','presentation');
- root.innerHTML='<div class="custom-editor-dialog" role="dialog" aria-modal="true" aria-label="Custom workout editor"><div class="custom-editor-heading"><div><span class="custom-editor-kicker">MYLIFTCOACH 2.0 · YOUR ROUTINE</span><h2>'+esc(existing?'Edit custom workout':'Create your workout')+'</h2></div><button type="button" data-editor-close aria-label="Close workout editor">✕</button></div><form id="mlc-custom-form"><div class="custom-editor-fields"><label>Workout name<input id="customName" name="title" maxlength="75" required value="'+esc(existing?.title||'')+'" placeholder="e.g. Upper Body — Custom"></label><label class="custom-editor-optional">Notes (optional)<input name="description" maxlength="160" value="'+esc(existing?.description||'')+'" placeholder="What is this workout focused on?"></label></div><section class="custom-editor-selection" aria-label="Exercises in your workout"><div class="custom-editor-section-title"><h3>Your exercises</h3><span id="customCount" aria-live="polite"></span></div><div id="customSelected"></div></section><section class="custom-editor-picker" aria-label="Add exercises"><div class="custom-editor-section-title"><h3>Add exercises</h3><span>Search the library</span></div><label class="custom-editor-search-label">Search by name or muscle<input id="customSearch" type="search" placeholder="Search 344 exercises" autocomplete="off"></label><div class="custom-editor-filters" id="customMuscleFilters" role="group" aria-label="Filter by muscle group"></div><div id="customOptions" aria-label="Exercise search results"></div></section><div class="custom-editor-footer"><button type="button" data-editor-close>Cancel</button><button type="submit">Save workout</button></div></form></div>';
+ root.innerHTML='<div class="custom-editor-dialog" role="dialog" aria-modal="true" aria-label="Custom workout editor"><div class="custom-editor-heading"><div><span class="custom-editor-kicker">MYLIFTCOACH 2.0 · YOUR ROUTINE</span><h2>'+esc(existing?'Edit custom workout':'Create your workout')+'</h2></div><button type="button" data-editor-close aria-label="Close workout editor">✕</button></div><form id="mlc-custom-form"><div class="custom-editor-fields"><label>Workout name<input id="customName" name="title" maxlength="75" required value="'+esc(existing?.title||'')+'" placeholder="e.g. Upper Body — Custom"></label><label class="custom-editor-optional">Notes (optional)<input name="description" maxlength="160" value="'+esc(existing?.description||'')+'" placeholder="What is this workout focused on?"></label></div><section class="custom-editor-selection" aria-label="Exercises in your workout"><div class="custom-editor-section-title"><h3>Your exercises</h3><span id="customCount" aria-live="polite"></span></div><div id="customSelected"></div></section><section class="custom-editor-weekdays" aria-label="Schedule this workout"><div class="custom-editor-section-title"><h3>Training days</h3><span>Choose any days</span></div><p class="custom-weekday-help">Choose when to train. Saving will add this workout to those days and automatically follow your weekly schedule. Other days stay unchanged.</p><div class="custom-weekday-grid" id="customWeekdays" role="group" aria-label="Days for this workout"></div></section><section class="custom-editor-picker" aria-label="Add exercises"><div class="custom-editor-section-title"><h3>Add exercises</h3><span>Search the library</span></div><label class="custom-editor-search-label">Search by name or muscle<input id="customSearch" type="search" placeholder="Search 344 exercises" autocomplete="off"></label><div class="custom-editor-filters" id="customMuscleFilters" role="group" aria-label="Filter by muscle group"></div><div id="customOptions" aria-label="Exercise search results"></div></section><div class="custom-editor-footer"><button type="button" data-editor-close>Cancel</button><button type="submit">Save workout</button></div></form></div>';
  document.body.appendChild(root);
  const $=id=>root.querySelector('#'+id);
  const close=()=>{
@@ -126,6 +132,14 @@ function openEditor(id,unused,onChanged){
   return typeof thumbnail==='string'&&thumbnail.startsWith('assets/exercise-demonstrations/')&&thumbnail.endsWith('.webp')&& !thumbnail.includes('..')
    ?'<img src="./'+esc(thumbnail)+'" alt="" loading="lazy">':'<span class="custom-exercise-glyph" aria-hidden="true">✦</span>';
  };
+ const weekdays=scheduleAPI?.DAYS||['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+ $('customWeekdays').innerHTML=weekdays.map((name,day)=>'<label class="custom-weekday-option"><input type="checkbox" data-custom-day="'+day+'" '+(chosenDays.has(day)?'checked':'')+'><span>'+esc(name.slice(0,3))+'</span></label>').join('');
+ $('customWeekdays').addEventListener('change',event=>{
+  const field=event.target.closest('[data-custom-day]');if(!field)return;
+  const day=Number(field.dataset.customDay);
+  if(!Number.isInteger(day)||day<0||day>6)return;
+  if(field.checked)chosenDays.add(day);else chosenDays.delete(day);
+ });
  const groups=['All',...new Set(catalog().map(e=>e.group).filter(Boolean))];
  $('customMuscleFilters').innerHTML=groups.map(g=>'<button type="button" data-custom-filter="'+esc(g)+'" aria-pressed="'+(g==='All'?'true':'false')+'">'+esc(g)+'</button>').join('');
  function selectedView(){
@@ -192,11 +206,57 @@ function openEditor(id,unused,onChanged){
   if(!existing&&plans.length>=60){alert('Maximum 60 custom workouts.');return}
   const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',coachSaved:existing?.coachSaved===true,description:description.slice(0,160),ids:[...selected],targets:normalizeTargets(draftTargets,selected)};
   const next=existing?plans.map(p=>p.id===existing.id?updated:p):[updated,...plans];
-  try{persistPlans(next)}catch{alert('Browser storage is unavailable; workout was not saved.');return}
-  // Editing a Coach suggestion must not silently override the Home workout.
-  // An explicit "Use for today" action is still available in Workouts.
-  if(!existing&&!updated.coachSaved){
-   try{localStorage.setItem(scoped(TODAY),updated.id)}catch{alert('Workout saved, but selecting it for today failed. You can select it from Workouts.')}
+  // Save the routine and weekday assignments as one local transaction.
+  // Preserve all other weekdays and any unrelated workout history.
+  const scheduleKey=scoped(WEEK),plansKey=scoped(KEY),selectedKey=scoped(TODAY);
+  const keys=[plansKey,scheduleKey,selectedKey],before=keys.map(key=>localStorage.getItem(key));
+  const hasDays=chosenDays.size>0;
+  const shouldUpdateSchedule=hasDays||Boolean(existing&&Object.values(initialSchedule).includes(existing.id));
+  let nextSchedule;
+  try{
+   if(shouldUpdateSchedule){
+    if(!scheduleAPI)throw Error('Workout scheduling is temporarily unavailable.');
+    const raw=localStorage.getItem(scheduleKey);
+    let current={};
+    if(raw!==null){
+     current=JSON.parse(raw);
+     if(!scheduleAPI.valid(current))throw Error('Saved weekly schedule needs review. Nothing changed.');
+    }
+    // An edit can remove only days that previously belonged to this routine.
+    nextSchedule={...current};
+    if(existing){
+     for(const [day,workout] of Object.entries(nextSchedule))if(workout===existing.id&&!chosenDays.has(Number(day)))delete nextSchedule[day];
+    }
+    for(const day of chosenDays)nextSchedule[String(day)]=updated.id;
+    if(!scheduleAPI.valid(nextSchedule))throw Error('Invalid day selection.');
+   }
+   const payload=JSON.stringify(next);
+   localStorage.setItem(plansKey,payload);
+   if(localStorage.getItem(plansKey)!==payload)throw Error('Could not verify saved workout.');
+   if(shouldUpdateSchedule){
+    const schedulePayload=JSON.stringify(nextSchedule);
+    localStorage.setItem(scheduleKey,schedulePayload);
+    if(localStorage.getItem(scheduleKey)!==schedulePayload)throw Error('Could not verify saved training days.');
+   }
+   // A saved weekday schedule should immediately take priority over manual
+   // "Use for today" choices; unscheduled routines retain existing behavior.
+   if(hasDays){
+    if(owner===null){
+     localStorage.removeItem(selectedKey);
+     if(localStorage.getItem(selectedKey)!==null)throw Error('Could not follow the weekly schedule.');
+    }else{
+     localStorage.setItem(selectedKey,'');
+     if(localStorage.getItem(selectedKey)!=='')throw Error('Could not follow the weekly schedule.');
+    }
+   }else if(!existing&&!updated.coachSaved){
+    localStorage.setItem(selectedKey,updated.id);
+    if(localStorage.getItem(selectedKey)!==updated.id)throw Error('Could not select workout.');
+   }
+  }catch(error){
+   for(let i=keys.length-1;i>=0;i--){
+    try{if(before[i]===null)localStorage.removeItem(keys[i]);else localStorage.setItem(keys[i],before[i])}catch{}
+   }
+   alert('Workout not saved: '+String(error.message||error).slice(0,120));return;
   }
   try{window.MLC2ScheduleAuxSync?.()}catch{}
   close();onChanged?.();
