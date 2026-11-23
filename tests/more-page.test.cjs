@@ -34,3 +34,12 @@ test('advanced visibility requires the verified owner and server-managed metadat
  assert.equal(allow('other',approved),false);
  assert.equal(allow('owner',{id:'owner',user_metadata:approved.app_metadata}),false);
 });
+
+test('all More panels close within their intended disclosure',()=>{
+ const stack=[];
+ for(const [tag,closing,type] of more.matchAll(/<(\/?)(section|article|div|details)(?=[\s>])[^>]*>/g)){
+  if(closing)assert.equal(stack.pop(),type,tag);
+  else stack.push(type);
+ }
+ assert.deepEqual(stack,[]);
+});
