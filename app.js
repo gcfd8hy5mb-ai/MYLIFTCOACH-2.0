@@ -2111,31 +2111,86 @@ function bind(){
    if(epoch===authEpoch){output.textContent='Beta mode unchanged: '+String(err.message||err).slice(0,125);select.value=before}
   }finally{betaModeSaving=false;renderSettings()}
  });
+ let incomingTransfer=null,transferOwner=null,receivingBackup=null;
+ const transferKeys=window.MLC2ProgramTransfer.KEYS;
+ const currentProgramState=owner=>JSON.stringify(transferKeys.map(key=>
+  localStorage.getItem(key+':user:'+owner)));
+ function refreshTransferPreview(){
+  const output=$('inspectAccountProgramsStatus'),button=$('applyAccountPrograms');
+  button.disabled=true;
+  const owner=verifiedOwnerId;
+  if(!incomingTransfer||transferOwner!==owner||account?.id!==owner){output.textContent='Choose a private file from your source installation.';return}
+  try{
+   const merge=window.MLC2ProgramTransfer.planMerge(incomingTransfer,localStorage,owner,window.MLC2AuxData,
+    {activateSource:$('activateImportedProgram').checked});
+   output.textContent=merge.canApply
+    ?merge.changes.length+' account program categories would change. Existing workout history and progress photos remain untouched. No cloud write is performed by this preview.'
+    :'Import blocked: '+merge.conflicts.slice(0,4).join('; ')+'. No data changed.';
+   button.disabled=!merge.canApply||!merge.changes.length||
+    !receivingBackup||receivingBackup.owner!==owner||
+    receivingBackup.state!==currentProgramState(owner);
+   $('applyAccountProgramsStatus').textContent=button.disabled
+    ?'Save a fresh receiving-installation backup before importing. Conflicts must be resolved without overwriting existing routines.'
+    :'Ready for explicit confirmation. This changes only account settings in the receiving installation; cloud conflicts remain protected.';
+  }catch(err){output.textContent='Merge preview rejected: '+String(err.message||err).slice(0,160)}
+ }
  $('exportAccountPrograms').addEventListener('click',()=>{
   const status=$('exportAccountProgramsStatus'),owner=verifiedOwnerId;
   if(!owner||account?.id!==owner){status.textContent='Sign in to your verified account before exporting programs.';return}
-  if(!confirm('Download a PRIVATE copy of this installation’s custom routines, saved schedules and Coach settings? Keep it in Files and do not share it. This does not change cloud data.'))return;
+  if(!confirm('Download a PRIVATE copy of this installation’s custom routines, saved schedules and Coach settings? Keep it in Files and do not share it. No cloud data will change.'))return;
   try{
+   const state=currentProgramState(owner);
    const record=window.MLC2ProgramTransfer.capture(localStorage,owner,window.MLC2AuxData);
-   if(verifiedOwnerId!==owner||account?.id!==owner)throw Error('Account changed before download');
+   if(verifiedOwnerId!==owner||account?.id!==owner||state!==currentProgramState(owner))
+    throw Error('Account or programs changed before download');
    const result=window.MLC2ProgramTransfer.download(record);
-   status.textContent='Exported '+result.categories+' account program categories. Save the private file securely. Existing workouts and Supabase data unchanged.';
+   receivingBackup={owner,state};
+   status.textContent='Exported '+result.categories+' account program categories ('+result.bytes+' bytes). Keep your private backup. No Supabase records changed.';
+   refreshTransferPreview();
   }catch(err){status.textContent='Export unavailable: '+String(err.message||err).slice(0,160)}
  });
  $('inspectAccountProgramsFile').addEventListener('change',async event=>{
   const status=$('inspectAccountProgramsStatus'),file=event.target.files?.[0],owner=verifiedOwnerId,epoch=authEpoch;
+  incomingTransfer=null;transferOwner=null;$('applyAccountPrograms').disabled=true;
   if(!file){status.textContent='No private transfer file selected.';return}
   if(!owner||account?.id!==owner){status.textContent='Sign in to the same verified account first.';return}
   if(file.size>500000){status.textContent='File exceeds private transfer size limit.';return}
   try{
    const record=window.MLC2ProgramTransfer.parse(await file.text(),owner,window.MLC2AuxData);
    if(epoch!==authEpoch||verifiedOwnerId!==owner||account?.id!==owner)throw Error('Account changed during comparison');
-   const plan=window.MLC2ProgramTransfer.compare(record,localStorage,owner,window.MLC2AuxData);
-   status.textContent='Read-only comparison: '+plan.missing.length+' missing categories, '+plan.matching.length+' matching, '+plan.different.length+' differing. '+
-    (plan.different.length?'Differing categories: '+plan.different.join(', ')+'. ':'')+
-    'Nothing restored or uploaded. Keep both installations and the private backup until a safe merge is approved.';
+   incomingTransfer=record;transferOwner=owner;refreshTransferPreview();
   }catch(err){status.textContent='Comparison rejected: '+String(err.message||err).slice(0,160)}
   finally{event.target.value=''}
+ });
+ $('activateImportedProgram').addEventListener('change',refreshTransferPreview);
+ $('applyAccountPrograms').addEventListener('click',async()=>{
+  const status=$('applyAccountProgramsStatus'),owner=verifiedOwnerId,epoch=authEpoch,record=incomingTransfer;
+  if(!record||transferOwner!==owner||account?.id!==owner){status.textContent='Re-select the private source backup.';return}
+  if(!receivingBackup||receivingBackup.owner!==owner||
+     receivingBackup.state!==currentProgramState(owner)){status.textContent='Receiving installation changed. Export a fresh backup first.';refreshTransferPreview();return}
+  const sourceActive=$('activateImportedProgram').checked;
+  const preview=window.MLC2ProgramTransfer.planMerge(record,localStorage,owner,window.MLC2AuxData,{activateSource:sourceActive});
+  if(!preview.canApply||!preview.changes.length){status.textContent='There is no safe change to import. No data changed.';refreshTransferPreview();return}
+  if(!confirm('Apply '+preview.changes.length+' reviewed program categories to THIS installation? Existing custom workouts are combined, and any same-ID differences are blocked. Cloud backups may still require conflict review. Your source app remains untouched.'))return;
+  $('applyAccountPrograms').disabled=true;
+  try{
+   await window.MLC2Custom.runPlanWrite(()=>{
+    if(epoch!==authEpoch||owner!==verifiedOwnerId||owner!==account?.id)
+     throw Error('Account changed; import cancelled');
+    if(receivingBackup.state!==currentProgramState(owner))
+     throw Error('Receiving installation changed; export another backup');
+    const fresh=window.MLC2ProgramTransfer.planMerge(record,localStorage,owner,window.MLC2AuxData,{activateSource:sourceActive});
+    if(!fresh.canApply||JSON.stringify(fresh.changes)!==JSON.stringify(preview.changes))
+     throw Error('Import preview changed. Review again');
+    window.MLC2Custom.commitRecoveredPlans(fresh.changes);
+   });
+   if(epoch!==authEpoch||owner!==verifiedOwnerId)return;
+   incomingTransfer=null;transferOwner=null;receivingBackup=null;
+   renderHome();renderWorkouts();renderCoach();renderSettings();
+   status.textContent='Imported '+preview.changes.length+' reviewed program categories into this installation. Local workout history and photos were preserved. Cloud conflict must be reviewed separately; no cloud record was force-overwritten.';
+   $('inspectAccountProgramsStatus').textContent='Import completed. Source backup remains in Files.';
+  }catch(err){status.textContent='Import blocked: '+String(err.message||err).slice(0,165)}
+  finally{refreshTransferPreview()}
  });
  $('autoWorkoutSyncNow').addEventListener('click',()=>{scheduleWorkoutSync(0)});
  $('autoWorkoutRecover').addEventListener('click',async()=>{
