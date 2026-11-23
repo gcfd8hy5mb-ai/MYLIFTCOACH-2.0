@@ -57,7 +57,7 @@ const currentTrackingKey=()=>verifiedOwnerId?TRACK_KEY+':user:'+verifiedOwnerId:
 const planStorage=()=>{
  const owner=verifiedOwnerId;
  const selected='mlc2-selected-workout-v1';
- const map=k=>owner&&[selected,'mlc2-weekly-schedule-v1'].includes(k)?k+':user:'+owner:k;
+ const map=k=>owner&&[selected,'mlc2-weekly-schedule-v1','mlc2-schedule-library-v1'].includes(k)?k+':user:'+owner:k;
  return {
   getItem:k=>{const raw=localStorage.getItem(map(k));return owner&&k===selected&&raw===''?null:raw},
   setItem:(k,v)=>localStorage.setItem(map(k),v),
@@ -67,7 +67,7 @@ const planStorage=()=>{
   }
  };
 };
-const healthStorage=()=>({getItem:k=>{const scoped=['mlc2-custom-plans-v1','mlc2-local-daily-v1','mlc2-measurements-v1','mlc2-selected-workout-v1','mlc2-weekly-schedule-v1','mlc2-coach-readiness-v1','mlc2-weekly-goal-v1'];return localStorage.getItem(verifiedOwnerId&&scoped.includes(k)?k+':user:'+verifiedOwnerId:k)}});
+const healthStorage=()=>({getItem:k=>{const scoped=['mlc2-custom-plans-v1','mlc2-local-daily-v1','mlc2-measurements-v1','mlc2-selected-workout-v1','mlc2-weekly-schedule-v1','mlc2-schedule-library-v1','mlc2-coach-readiness-v1','mlc2-weekly-goal-v1'];return localStorage.getItem(verifiedOwnerId&&scoped.includes(k)?k+':user:'+verifiedOwnerId:k)}});
 let trackingEntries=loadLocalTracking();
 let originalSnapshot=null;
 let cloudHistorySnapshot=null; // in-memory, account-bound, original archive only
@@ -454,6 +454,10 @@ function nextPlan(){
   window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length];
  // Explicit manual choices and weekday schedule ALWAYS win, even during an active program.
  if(standard?.scheduleSource==='manual'||standard?.scheduleSource==='weekly'||standard?.scheduleSource==='rest')return standard;
+ if(window.MLC2ScheduleLibrary?.read(planStorage()).mode==='coach'&&betaView().mode==='pro'){
+  const coach=coachAutonomousPlan();
+  if(coach)return {...coach,scheduleSource:'program'};
+ }
  if(betaView().mode!=='pro')return standard;
  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
  const active=program&&window.MLC2GoalProgram.progress(program)?.status==='active';
@@ -500,7 +504,8 @@ function renderHomeTrainingPlan(){
  const all=window.MLC2Custom?.allPlans(plans)||plans;
  const days=Object.values(schedule).filter(id=>id!=='rest-day'&&all.some(p=>p.id===id)).length;
  const custom=Object.values(schedule).some(id=>id.startsWith('custom-')&&all.some(p=>p.id===id));
- const restWeek=Object.values(schedule).length===7&&Object.values(schedule).every(id=>id==='rest-day');
+ const schedulePaused=window.MLC2ScheduleLibrary?.read(planStorage()).mode==='coach';
+ const restWeek=!schedulePaused&&Object.values(schedule).length===7&&Object.values(schedule).every(id=>id==='rest-day');
  // A generated Coach goal program uses its saved training-day preference until
  // the user explicitly assigns a weekly schedule. Manual and rest days still win.
  const upcoming=nextPlan();
@@ -508,8 +513,8 @@ function renderHomeTrainingPlan(){
   window.MLC2GoalProgram?.progress(window.MLC2GoalProgram.read(localStorage,verifiedOwnerId))?.status==='active';
  const coachDays=activeCoach?window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.days:null;
  const chosenCoachDays=Number.isInteger(coachDays)&&coachDays>=1&&coachDays<=7?coachDays:null;
- $('metricTrainingPlanDays').textContent=restWeek?'Rest week':days?days+'-day':chosenCoachDays?chosenCoachDays+'-day':'4-day';
- $('metricTrainingPlanType').textContent=restWeek?'Weekly schedule':days?(custom?'Custom weekly program':'Weekly schedule'):chosenCoachDays?'Coach goal program':'Strength split';
+ $('metricTrainingPlanDays').textContent=restWeek?'Rest week':!schedulePaused&&days?days+'-day':chosenCoachDays?chosenCoachDays+'-day':'4-day';
+ $('metricTrainingPlanType').textContent=restWeek?'Weekly schedule':!schedulePaused&&days?(custom?'Custom weekly program':'Weekly schedule'):chosenCoachDays?'Coach goal program':'Strength split';
 }
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
@@ -674,7 +679,50 @@ async function assignCoachSchedule(){
   notice('Weekly schedule updated.');
  }catch(err){$('coachScheduleStatus').textContent=err.message}
 }
-function renderWorkouts(){
+function renderScheduleLibrary(){
+ const library=window.MLC2ScheduleLibrary,choice=$('savedScheduleChoice'),status=$('savedScheduleStatus');
+ if(!library||!choice||!status)return;
+ try{
+  const state=library.read(planStorage()),prior=choice.value;
+  choice.replaceChildren();
+  const empty=document.createElement('option');
+  empty.value='';empty.textContent=state.profiles.length?'Choose saved program':'No saved programs yet';choice.append(empty);
+  for(const p of state.profiles){
+   const option=document.createElement('option');option.value=p.id;
+   option.textContent=p.name+(p.id===state.activeId&&state.mode==='weekly'?' · active':'');
+   choice.append(option);
+  }
+  choice.value=state.profiles.some(p=>p.id===prior)?prior:state.activeId||'';
+  const selected=state.profiles.find(p=>p.id===choice.value);
+  $('activateSavedSchedule').disabled=!selected||(state.mode==='weekly'&&selected.id===state.activeId);
+  $('saveScheduleChanges').disabled=!state.activeId;
+  $('removeSavedSchedule').disabled=!selected;
+  $('activateCoachMode').disabled=state.mode==='coach';
+  status.textContent=state.mode==='coach'?'Coach is active. Weekly programs are saved and paused.':
+   selected?.id===state.activeId?'Active weekly program: '+selected.name:
+   'Select a saved program to activate it without deleting the current schedule.';
+ }catch(error){
+  status.textContent='Saved program library needs review: '+String(error.message||error).slice(0,120);
+  for(const id of ['activateSavedSchedule','saveScheduleCopy','saveScheduleChanges','removeSavedSchedule','activateCoachMode'])$(id).disabled=true;
+ }
+}
+async function changeScheduleLibrary(work,success){
+ const owner=verifiedOwnerId,epoch=authEpoch;
+ try{
+  await window.MLC2Custom.runPlanWrite(()=>{
+   if(owner!==verifiedOwnerId||epoch!==authEpoch)throw Error('Workout account changed.');
+   return window.MLC2Custom.transactScheduleLibrary(work);
+  });
+  if(owner!==verifiedOwnerId||epoch!==authEpoch)return;
+  renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+  if(success)notice(success);
+ }catch(error){
+  if(owner===verifiedOwnerId&&epoch===authEpoch)
+   $('savedScheduleStatus').textContent='Could not switch: '+String(error.message||error).slice(0,140);
+ }
+}
+function renderWorkouts(){ 
+ renderScheduleLibrary();
  const selected=nextPlan();
  const activeId=selected?.id||'';
  const ownerReady=!!verifiedOwnerId&&account?.id===verifiedOwnerId;
@@ -1520,6 +1568,31 @@ function bind(){
  $('createWeeklyProgram').addEventListener('click',()=>window.MLC2FullWeekBuilder?.open(()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach();notice('Your full weekly program is saved and the new schedule is active.')}));
  $('workoutTodayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
+ const scheduleLib=window.MLC2ScheduleLibrary;
+ $('savedScheduleChoice').addEventListener('change',renderScheduleLibrary);
+ $('activateSavedSchedule').addEventListener('click',()=>{
+  const id=$('savedScheduleChoice').value;if(!id)return;
+  void changeScheduleLibrary(store=>scheduleLib.activate(store,id,window.MLC2Custom.allPlans(plans)),'Saved program activated.');
+ });
+ $('activateCoachMode').addEventListener('click',()=>{
+  void changeScheduleLibrary(store=>scheduleLib.useCoach(store),'Coach is active. Weekly programs are saved.');
+ });
+ $('saveScheduleCopy').addEventListener('click',()=>{
+  const name=prompt('Name this saved weekly program:','My weekly program');
+  if(name===null)return;
+  void changeScheduleLibrary(store=>scheduleLib.saveCopy(store,name),'Weekly program saved as a new copy.');
+ });
+ $('saveScheduleChanges').addEventListener('click',()=>{
+  const state=scheduleLib.read(planStorage()),active=state.profiles.find(p=>p.id===state.activeId);
+  if(!active)return;
+  void changeScheduleLibrary(store=>scheduleLib.saveCurrent(store,active.name),'Weekly program changes saved.');
+ });
+ $('removeSavedSchedule').addEventListener('click',()=>{
+  const id=$('savedScheduleChoice').value;if(!id)return;
+  const saved=scheduleLib.read(planStorage()).profiles.find(p=>p.id===id);
+  if(!saved||!confirm('Remove saved copy “'+saved.name+'”? Workouts and history are retained.'))return;
+  void changeScheduleLibrary(store=>scheduleLib.remove(store,id),'Saved program removed. Workouts kept.');
+ });
  $('coachAutoStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,coachAutonomousPlan));
  $('coachAutoPreferences').addEventListener('change',async event=>{
   if(betaView().mode!=='pro')return;
