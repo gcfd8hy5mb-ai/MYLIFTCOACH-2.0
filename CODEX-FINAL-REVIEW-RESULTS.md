@@ -61,6 +61,14 @@ The reproduction column describes the pre-fix behavior. The test column identifi
 - New regression files: `tests/account-write-lock.test.cjs`, `tests/offline-shell.test.cjs`.
 - Updated regression files: `tests/account-workout-store.test.cjs`, `tests/active-workout-ux.test.cjs`, `tests/automatic-workouts.test.cjs`, `tests/coach-live-workout.test.cjs`, `tests/coach-periodization.test.cjs`, `tests/coach-weekly-schedule.test.cjs`, `tests/concurrent-workout-sync.test.cjs`, `tests/goal-program-adherence.test.cjs`, `tests/resume-workout-cta.test.cjs`, `tests/run-all.js`, `tests/workout-auth-ux-fix.test.cjs`, `tests/workout-simulation-integration.test.cjs`, `tests/workout-simulation.test.cjs`.
 
+## Legacy test progress-photo disposition — owner decision, November 22, 2026
+
+- The owner confirms one tester used the original app's body-progress photo feature solely for demonstration and that the tester agrees the old sample photos need not be transferred into MYLIFTCOACH 2.0.
+- **Migration decision:** legacy unowned demonstration photos do **not** require a claim-and-transfer feature as a release prerequisite. Leave unowned rows hidden and unclaimed; never automatically assign them to any signed-in account.
+- This decision is **not authorization to delete photos, clear the original device, wipe browser storage, or access a tester's account**. Original app and storage remain untouched until explicit release authorization.
+- Maintain the corrected ownership protections for all new progress photos. Treat the old-photo migration requirement as **waived for the current known test data**, not as a software bug fix or verified deletion.
+- Remaining release gates: iPhone Safari/Home Screen acceptance of the reviewed offline-shell and concurrent-write changes, staging cloud/recovery validation as needed for changed code, and verified rollback and deployment source. Release remains **BLOCKED** pending these checks.
+
 ## Verification
 
 | Check | Result |
