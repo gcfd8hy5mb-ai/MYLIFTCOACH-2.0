@@ -36,5 +36,5 @@ test('Free mode and missing programs keep the existing selected workout',()=>{
 });
 test('Home is refreshed when goal or program is started or restarted',()=>{
  assert.match(app,/renderCalorieGoal\(\);renderHome\(\);renderWorkouts\(\)/);
- assert.match(app,/if\(standard\?\.scheduleSource==='manual'\|\|standard\?\.scheduleSource==='weekly'\)return standard/);
+ assert.match(app,/if\(standard\?\.scheduleSource==='manual'\|\|standard\?\.scheduleSource==='weekly'\|\|standard\?\.scheduleSource==='rest'\)return standard/);
 });
