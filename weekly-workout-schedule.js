@@ -32,7 +32,10 @@ function assign(storage,day,id,plans){
  const dayIndex=Number(day);
  if(!Number.isInteger(dayIndex)||dayIndex<0||dayIndex>6)throw Error('Unknown weekday');
  if(id!==''&&id!=='rest-day'&&(!ID.test(String(id))||!plans.some(p=>p.id===id)))throw Error('Unknown workout');
- const next={...read(storage)};if(id==='')delete next[String(dayIndex)];else next[String(dayIndex)]=id;
+ const raw=storage.getItem(KEY);
+ const current=raw===null?{}:JSON.parse(raw);
+ if(!valid(current))throw Error('Saved weekly schedule needs review. Nothing changed.');
+ const next={...current};if(id==='')delete next[String(dayIndex)];else next[String(dayIndex)]=id;
  return save(storage,next);
 }
 function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date()}){

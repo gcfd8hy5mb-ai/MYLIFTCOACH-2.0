@@ -26,13 +26,13 @@ function summarizeWeek(sessions,first,last){
 }
 function report(sessions,now=new Date(),target=4){
  if(!(now instanceof Date)||!Number.isFinite(now.getTime()))throw Error('Valid date required');
- const goal=Number.isInteger(target)&&target>=1&&target<=7?target:4;
+ const goal=Number.isInteger(target)&&target>=0&&target<=7?target:4;
  const start=monday(now),current=weekRange(start);
  const prevStart=new Date(start);prevStart.setDate(start.getDate()-7);
  const previous=weekRange(prevStart);
  const thisWeek=summarizeWeek(sessions,current.start,current.end);
  const lastWeek=summarizeWeek(sessions,previous.start,previous.end);
- const goalProgress=Math.min(100,Math.round(thisWeek.sessions/goal*100));
+ const goalProgress=goal?Math.min(100,Math.round(thisWeek.sessions/goal*100)):0;
  const goalMet=thisWeek.sessions>=goal;
  const changes={sessions:thisWeek.sessions-lastWeek.sessions,sets:thisWeek.sets-lastWeek.sets,
   volume:thisWeek.volume-lastWeek.volume,activeDays:thisWeek.activeDays-lastWeek.activeDays};
@@ -53,7 +53,7 @@ function render(root,sessions,target=4){
  root.appendChild(volume);
  const status=document.createElement('p');
  status.className='coach-trend-footnote';
- status.textContent=!data.hasHistory?'Finish a 2.0 workout to see a real training trend.':data.goalMet?
+ status.textContent=data.goal===0?'No workouts scheduled this week.':!data.hasHistory?'Finish a 2.0 workout to see a real training trend.':data.goalMet?
  'You have met your '+data.goal+'-workout weekly target.':
  'You have '+Math.max(0,data.goal-data.thisWeek.sessions)+' workout'+(data.goal-data.thisWeek.sessions===1?'':'s')+' remaining toward this week’s selected target.';
  root.appendChild(status);

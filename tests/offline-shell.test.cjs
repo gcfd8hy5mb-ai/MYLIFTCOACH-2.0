@@ -17,11 +17,11 @@ test('public app assets can boot offline and account traffic bypasses the worker
   put:async (url,response)=>cached.set(url,await response.text()),
   match:async request=>cached.get(request.url||request)
  };
- let online=true;
+ let online=true,status=200;
  vm.runInNewContext(source,{
   URL,Request,Response,caches:{open:async()=>cache,keys:async()=>['unrelated-cache','myliftcoach2-shell:'+scope+':46','myliftcoach2-shell:'+scope+':47'],delete:async()=>true},
   self:{registration:{scope},skipWaiting:async()=>{},clients:{claim:async()=>{}},addEventListener:(event,fn)=>{listeners[event]=fn}},
-  fetch:async()=>{if(!online)throw Error('offline');return new Response(html)}
+  fetch:async()=>{if(!online)throw Error('offline');return new Response(html,{status})}
  });
  let task;
  listeners.install({waitUntil:promise=>{task=promise}});
@@ -33,7 +33,10 @@ test('public app assets can boot offline and account traffic bypasses the worker
   return response;
  }
  assert.equal(await fetchThrough(scope,'navigate','document'),html);
- assert.equal(await fetchThrough(scope+'app.js?v=44','cors','script'),'app.js');
+ assert.equal(await fetchThrough(scope+'?launch=home','navigate','document'),html);
+ online=true;status=503;
+ assert.equal(await fetchThrough(scope,'navigate','document'),html);
+ assert.equal(await fetchThrough(scope+'app.js?v=45','cors','script'),'app.js');
  assert.equal(await fetchThrough(scope+'app.webmanifest?v=1','cors','manifest'),'app.webmanifest');
  assert.equal(fetchThrough(scope+'private','cors','','POST'),undefined);
  assert.equal(fetchThrough('https://cloud.example/rest','cors',''),undefined);
@@ -67,9 +70,9 @@ test('installed iPhone updates activate only after the full shell is cached, and
 
 test('installed update coordinator checks on resume and never reloads an open workout',async()=>{
  const coordinator=fs.readFileSync('offline-shell.js','utf8');
- assert.match(html,/offline-shell\.js\?v=2/);
+ assert.match(html,/offline-shell\.js\?v=3/);
  const events={},serviceEvents={};
- let pending,updates=0,reloads=0;
+ let editor=null,updates=0,reloads=0;
  const registration={update:async()=>{updates++}};
  const modal={hidden:false};
  const navigator={serviceWorker:{
@@ -78,6 +81,7 @@ test('installed update coordinator checks on resume and never reloads an open wo
  }};
  const document={hidden:false,
   getElementById:id=>id==='modal'?modal:null,
+  querySelector:selector=>selector==='.custom-editor-backdrop'?editor:null,
   addEventListener:(name,cb)=>events['document:'+name]=cb
  };
  const window={addEventListener:(name,cb)=>events['window:'+name]=cb};
@@ -87,7 +91,9 @@ test('installed update coordinator checks on resume and never reloads an open wo
  assert.equal(updates,1);
  serviceEvents.controllerchange();
  assert.equal(reloads,0);
- modal.hidden=true;
+ modal.hidden=true;editor={};
  events['window:pageshow']();
+ assert.equal(reloads,0);
+ editor=null;events['window:pageshow']();
  assert.equal(reloads,1);
 });

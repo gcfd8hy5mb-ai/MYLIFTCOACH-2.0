@@ -87,6 +87,12 @@
    return value===null||Object.keys(value).length===0;
   return config.type==='goal'?value===null:Array.isArray(value)&&value.length===0;
  }
+ function canFill(config,local){
+  if(!local.exists)return true;
+  // These keys persist explicit user clears. Their empty values are existing data.
+  if(config.type==='custom-plan'||config.kind==='weekly-schedule'||config.kind==='selected-workout')return false;
+  return empty(config,local.value);
+ }
  function payload(data){return {format:'mlc2-aux-v1',entries:data}}
  function validateRemote(config,record){
   if(!record||record.deleted)return null;
@@ -97,13 +103,14 @@
  }
  function restoreMissing(store,owner,records){
   if(!Array.isArray(records))throw Error('Cloud records must be an array');
+  if(records.some(record=>record&&record.owner!==owner))throw Error('Cloud recovery owner mismatch');
   const actions=[];
   for(const config of CONFIG){
    const record=records.find(x=>x&&x.type===config.type&&x.id===recordId(config)&&!x.deleted);
    if(!record)continue;
    const entries=validateRemote(config,record);
    const local=loadLocal(store,owner,config);
-   if(local.exists&&!empty(config,local.value))continue;
+   if(!canFill(config,local))continue;
    if(empty(config,entries))continue;
    actions.push({key:local.key,previous:store.getItem(local.key),
     value:config.kind==='selected-workout'?entries:JSON.stringify(entries),label:config.label});
@@ -125,5 +132,5 @@
   }
   return actions.map(x=>x.label);
  }
- return Object.freeze({CONFIG,id,recordId,canonical,equal,valid,loadLocal,empty,payload,validateRemote,restoreMissing});
+ return Object.freeze({CONFIG,id,recordId,canonical,equal,valid,loadLocal,empty,canFill,payload,validateRemote,restoreMissing});
 });

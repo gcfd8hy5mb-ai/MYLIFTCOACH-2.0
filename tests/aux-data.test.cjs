@@ -28,7 +28,7 @@ test('never overwrite local nonempty category on recovery',()=>{
  assert.deepEqual(changes,[]);
  assert.equal(s.getItem('mlc2-measurements-v1:user:user-a'),before);
 });
-test('restore only missing or empty categories',()=>{
+test('restore missing categories while preserving an explicit custom workout clear',()=>{
  const s=store();
  s.setItem('mlc2-custom-plans-v1:user:user-a','[]');
  s.setItem('mlc2-food-goals-v1:user:user-a',JSON.stringify({calories:2200,protein:130}));
@@ -37,8 +37,8 @@ test('restore only missing or empty categories',()=>{
   record('tracking',[{id:'t1',day:'2026-11-15',type:'water',value:250}]),
   record('goal',{calories:1800,protein:100})
  ]);
- assert.deepEqual(changes,['Custom workouts','Water and weight tracking']);
- assert.equal(JSON.parse(s.getItem('mlc2-custom-plans-v1:user:user-a'))[0].id,'p1');
+ assert.deepEqual(changes,['Water and weight tracking']);
+ assert.equal(s.getItem('mlc2-custom-plans-v1:user:user-a'),'[]');
  assert.equal(JSON.parse(s.getItem('mlc2-food-goals-v1:user:user-a')).calories,2200);
 });
 test('missing cloud records and tombstones do not delete local data',()=>{
@@ -73,7 +73,7 @@ test('recovering another account never reads guest or unrelated owner data',()=>
  s.setItem('mlc2-custom-plans-v1:user:user-a',JSON.stringify([{id:'a',title:'A'}]));
  s.setItem('mlc2-custom-plans-v1:user:user-b',JSON.stringify([{id:'b',title:'B'}]));
  s.setItem('mlc2-custom-plans-v1',JSON.stringify([{id:'guest',title:'Guest'}]));
- restoreMissing(s,'user-b',[record('custom-plan',[{id:'cloud'}])]);
+ assert.throws(()=>restoreMissing(s,'user-b',[record('custom-plan',[{id:'cloud'}])]),/owner mismatch/);
  assert.equal(JSON.parse(s.getItem('mlc2-custom-plans-v1:user:user-a'))[0].id,'a');
  assert.equal(JSON.parse(s.getItem('mlc2-custom-plans-v1:user:user-b'))[0].id,'b');
  assert.equal(JSON.parse(s.getItem('mlc2-custom-plans-v1'))[0].id,'guest');

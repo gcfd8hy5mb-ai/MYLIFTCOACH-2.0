@@ -78,3 +78,57 @@ test('Home and workout logger use saved exercise targets rather than generic def
  assert.ok(app.includes('const optional=activePlan.targets?.[id]||{}'));
  assert.ok(app.includes("Number.isInteger(optional.restSeconds)"));
 });
+
+test('editing a complete weekly program preserves rest days and rejects replacing unreadable plans',()=>{
+ const d=device(),key=d.scope('mlc2-custom-plans-v1');
+ const schedule={...Object.fromEntries(Array.from({length:7},(_,i)=>[i,'rest-day'])),1:plan.id,3:plan.id};
+ d.storage.setItem(key,JSON.stringify([plan]));
+ d.storage.setItem(d.scope(Weekly.KEY),JSON.stringify(schedule));
+ const api=d.window.MLC2Custom;
+ api.saveWithWeekdays({next:[plan],updated:plan,existing:plan,chosenDays:[3]});
+ assert.equal(JSON.parse(d.storage.getItem(d.scope(Weekly.KEY)))['1'],'rest-day');
+ const unreadable=JSON.stringify([plan,{id:'custom-unavailable',ids:['discontinued-exercise']}]);
+ d.storage.setItem(key,unreadable);
+ assert.throws(()=>api.deleteCustomPlan(plan.id),/unreadable/);
+ assert.equal(d.storage.getItem(key),unreadable);
+});
+
+test('routine deletion protects the current owner’s unfinished workout and existing metadata',()=>{
+ const d=device(),key=d.scope('mlc2-custom-plans-v1');
+ const other={...plan,id:'custom-other',archiveNote:'retain verbatim'};
+ const saved=JSON.stringify([plan,other]);d.storage.setItem(key,saved);
+ d.window.MLC2AccountDraft={scope:(store,owner)=>{assert.equal(owner,'accountA');return store}};
+ d.window.MLC2SessionDraft={read:()=>({planId:plan.id,sets:[{exerciseId:'press',reps:9,weight:70}]})};
+ assert.throws(()=>d.window.MLC2Custom.deleteCustomPlan(plan.id),/Finish the saved workout/);
+ assert.equal(d.storage.getItem(key),saved);
+ d.window.MLC2SessionDraft.read=()=>null;
+ d.window.MLC2Custom.deleteCustomPlan(plan.id);
+ assert.deepEqual(JSON.parse(d.storage.getItem(key)),[other]);
+});
+
+test('schedule editing rejects corrupt storage rather than replacing the week',()=>{
+ const d=device();
+ const scope={getItem:key=>d.storage.getItem(d.scope(key)),setItem:(key,value)=>d.storage.setItem(d.scope(key),value)};
+ d.storage.setItem(d.scope(Weekly.KEY),'{"1":"custom-mon","2":null}');
+ assert.throws(()=>Weekly.assign(scope,3,'rest-day',[plan]),/schedule needs review/);
+ assert.equal(d.storage.getItem(d.scope(Weekly.KEY)),'{"1":"custom-mon","2":null}');
+});
+
+test('an updated optional target invalidates a stale workout preview',()=>{
+ const app=read('app.js'),from=app.indexOf('function workoutPreviewKey(');
+ const key=vm.runInNewContext(app.slice(from,app.indexOf('function startPreviewWorkout',from))+';workoutPreviewKey');
+ assert.notEqual(key(plan),key({...plan,targets:{press:{...plan.targets.press,reps:12}}}));
+});
+
+test('a full rest week does not invent four planned workouts or divide by zero',()=>{
+ const d=device();
+ d.storage.setItem(d.scope(Weekly.KEY),JSON.stringify(Object.fromEntries(Array.from({length:7},(_,day)=>[day,'rest-day']))));
+ vm.runInNewContext(read('coach-readiness.js'),{window:d.window,localStorage:d.storage,Date});
+ const readiness=d.window.MLC2CoachReadiness;
+ readiness.setOwner('accountA');
+ assert.equal(readiness.weeklyGoal(),0);
+ assert.equal(readiness.weekSummary([],new Date(),0).target,0);
+ const trends=require('../coach-trends.js').report([],new Date(),0);
+ assert.equal(trends.goal,0);
+ assert.equal(trends.goalProgress,0);
+});

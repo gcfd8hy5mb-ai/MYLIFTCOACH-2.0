@@ -143,7 +143,7 @@
     if(!row||row.deleted)continue;
     const entries=aux.validateRemote(config,row);
     const local=aux.loadLocal(storage,owner,config);
-    if((!local.exists||aux.empty(config,local.value))&&
+    if(aux.canFill(config,local)&&
        !aux.empty(config,entries))missing.push(config.label);
    }
    return {missing,canRestore:missing.length>0,readOnly:true};
@@ -167,7 +167,7 @@
      if(!row||row.deleted)continue;
      const entries=aux.validateRemote(config,row);
      const local=aux.loadLocal(storage,owner,config);
-     if((!local.exists||aux.empty(config,local.value))&&
+     if(aux.canFill(config,local)&&
         !aux.empty(config,entries)&&!approved.has(config.label))
       return {status:'changed-reconfirm',restored:[]};
     }

@@ -33,8 +33,16 @@ function normalizeTargets(raw,ids){
 function persistPlans(next){const payload=JSON.stringify(next);localStorage.setItem(scoped(KEY),payload);if(localStorage.getItem(scoped(KEY))!==payload)throw Error('Workout changes were not retained.');try{window.MLC2ScheduleAuxSync?.()}catch{}}
 function read({forWrite=false}={}){
  try{
- const a=JSON.parse(localStorage.getItem(scoped(KEY))||'[]');
- if(forWrite&&!Array.isArray(a))throw Error('Saved workouts are unreadable');
+ const raw=localStorage.getItem(scoped(KEY));
+ const a=raw===null?[]:JSON.parse(raw);
+ if(forWrite){
+  if(!Array.isArray(a)||a.length>60||a.some(p=>!p||typeof p.id!=='string'||!/^custom-[a-z0-9-]{1,93}$/.test(p.id)||
+    !Array.isArray(p.ids)||p.ids.length<1||p.ids.length>40||new Set(p.ids).size!==p.ids.length||
+    p.ids.some(id=>typeof id!=='string'||!byId(id)))||new Set(a.map(p=>p.id)).size!==a.length)
+   throw Error('Saved workouts are unreadable. Nothing was changed.');
+  // Keep all fields belonging to untouched plans, including older metadata.
+  return a;
+ }
  return Array.isArray(a)?a.slice(0,60).filter(p=>p&&typeof p.id==='string'&&p.id.startsWith('custom-')&&Array.isArray(p.ids)).map(p=>({
   id:p.id,title:String(p.title||'My workout').slice(0,75),kind:'Custom',description:String(p.description||'Custom routine').slice(0,160),
   ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40),coachSaved:p.coachSaved===true,
@@ -66,7 +74,10 @@ function saveWithWeekdays({next,updated,existing=null,chosenDays=[]}){
     // An edit can remove only days that previously belonged to this routine.
     nextSchedule={...current};
     if(existing){
-     for(const [day,workout] of Object.entries(nextSchedule))if(workout===existing.id&&!selectedDays.has(Number(day)))delete nextSchedule[day];
+     for(const [day,workout] of Object.entries(nextSchedule))if(workout===existing.id&&!selectedDays.has(Number(day))){
+      if(Object.keys(current).length===7)nextSchedule[day]='rest-day';
+      else delete nextSchedule[day];
+     }
     }
     for(const day of selectedDays)nextSchedule[String(day)]=updated.id;
     if(!scheduleAPI.valid(nextSchedule))throw Error('Invalid day selection.');
@@ -180,7 +191,7 @@ function recoverGuest(){
  const guestRaw=localStorage.getItem(KEY);
  if(guestRaw!==null&&!Array.isArray(JSON.parse(guestRaw)))
   throw Error('Guest workout data needs review; recovery did not write');
- const existing=read(),seen=new Set(existing.map(p=>p.id)),before=owner;
+ const existing=read({forWrite:true}),seen=new Set(existing.map(p=>p.id)),before=owner;
  let guest=[],previousChoice='';
  try{
   owner=null;guest=read();
@@ -208,7 +219,7 @@ function saveCoachDay(day){
   let parsed;try{parsed=JSON.parse(original)}catch{throw Error('Saved workouts are unreadable. Nothing was changed.')}
   if(!Array.isArray(parsed))throw Error('Saved workouts are unreadable. Nothing was changed.');
  }
- const existing=read();
+ const existing=read({forWrite:true});
  if(existing.length>=60)throw Error('Custom workout limit reached');
  let id=newPlanId();
  while(existing.some(p=>p.id===id))id=newPlanId();
@@ -326,7 +337,7 @@ function openEditor(id,unused,onChanged){
   try{plans=read({forWrite:true})}catch{alert('Saved workouts are unreadable. Nothing was changed.');return}
   if(existing&&!plans.some(plan=>plan.id===existing.id)){alert('This workout was deleted.');close();return}
   if(!existing&&plans.length>=60){alert('Maximum 60 custom workouts.');return}
-  const updated={id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',coachSaved:existing?.coachSaved===true,description:description.slice(0,160),ids:[...selected],targets:normalizeTargets(draftTargets,selected)};
+  const updated={...(existing?plans.find(plan=>plan.id===existing.id):{}),id:existing?.id||newPlanId(),title:name.slice(0,75),kind:'Custom',coachSaved:existing?.coachSaved===true,description:description.slice(0,160),ids:[...selected],targets:normalizeTargets(draftTargets,selected)};
   const next=existing?plans.map(p=>p.id===existing.id?updated:p):[updated,...plans];
   try{saveWithWeekdays({next,updated,existing,chosenDays:[...chosenDays]})}
   catch(error){alert('Workout not saved: '+String(error.message||error).slice(0,120));return}
@@ -339,6 +350,9 @@ function openEditor(id,unused,onChanged){
 function deleteCustomPlan(id){
  const current=read({forWrite:true}),item=current.find(p=>p.id===id);
  if(!item)throw Error('Workout no longer exists');
+ const draftStore=window.MLC2AccountDraft?.scope(localStorage,owner);
+ const draft=draftStore&&window.MLC2SessionDraft?.read(draftStore);
+ if(draft?.planId===id&&draft.sets.length)throw Error('Finish the saved workout before deleting this routine.');
  const pkey=scoped(KEY),wkey=scoped(WEEK),tkey=scoped(TODAY);
  const keys=[pkey,wkey,tkey],before=keys.map(k=>localStorage.getItem(k));
  let currentSchedule={};

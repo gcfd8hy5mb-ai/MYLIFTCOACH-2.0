@@ -8,7 +8,7 @@ if ('serviceWorker' in navigator) {
  let lastCheck = 0;
  const dialogBusy = () => {
   const modal = document.getElementById('modal');
-  return !!(modal && !modal.hidden);
+  return !!(modal && !modal.hidden) || Boolean(document.querySelector('.custom-editor-backdrop'));
  };
  const refreshWhenSafe = () => {
   if (!pendingRefresh || refreshing || document.hidden || dialogBusy()) return;

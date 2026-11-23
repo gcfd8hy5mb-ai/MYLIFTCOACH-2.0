@@ -102,3 +102,16 @@ test('missing category storage never authorizes a cloud delete or empty snapshot
  assert.equal(outcome.uploaded,0);
  assert.equal(remote.records.get(owner+':custom-plan:snapshot-v1').revision,1);
 });
+
+test('stale cloud settings cannot resurrect locally cleared routines, schedule, or manual choice',async()=>{
+ const local=store(),server=db();
+ const plansKey='mlc2-custom-plans-v1:user:'+owner;
+ local.setItem(plansKey,JSON.stringify([{id:'custom-press',title:'Press',ids:['chest-press']}]));
+ local.setItem(selected,'custom-press');
+ local.setItem(schedule,JSON.stringify({'1':'custom-press'}));
+ await engine(local,server).backup();
+ local.setItem(plansKey,'[]');local.setItem(selected,'');local.setItem(schedule,'{}');
+ const result=await engine(local,server).restore({confirmRestore:async()=>{throw Error('No recovery should be proposed')}});
+ assert.equal(result.status,'up-to-date');
+ assert.equal(local.getItem(plansKey),'[]');assert.equal(local.getItem(selected),'');assert.equal(local.getItem(schedule),'{}');
+});

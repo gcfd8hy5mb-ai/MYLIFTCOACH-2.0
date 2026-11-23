@@ -57,7 +57,7 @@ test('Workout modal distinguishes restored draft from finish and save actions',(
  const style=fs.readFileSync('live-coach-workout.css','utf8');
  const html=fs.readFileSync('index.html','utf8');
  assert.match(style,/\.active-resume-confirmation/);
- assert.match(html,/app\.js\?v=44/);
+ assert.match(html,/app\.js\?v=45/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
 });
 
@@ -66,4 +66,15 @@ test('completed draft IDs cannot offer Resume again after a failed draft cleanup
  draft.save(scoping.scope(db,'owner-a'),{...plan,workoutId:'demo-completed'},[{exerciseId:'press',weight:80,reps:8}]);
  assert.equal(lookup(db,'owner-a',plan,[{id:'demo-completed'}]),null);
  assert.equal(lookup(db,'owner-a',plan,[]).workoutId,'demo-completed');
+});
+
+test('closing an active workout keeps the in-memory session open if draft storage is unavailable',()=>{
+ const start=app.indexOf('function closeModal('),end=app.indexOf('/* Strictly isolated',start);
+ const messages=[],plan={id:'custom-day'},session={sets:[{exerciseId:'press',weight:30,reps:8}]};
+ const context={activePlan:plan,session,activeDraftStore:{},$:()=>null,notice:message=>messages.push(message),
+  window:{MLC2SessionDraft:{save(){throw Error('quota')}}}};
+ vm.runInNewContext(app.slice(start,end)+';closeModal()',context);
+ assert.equal(context.activePlan,plan);
+ assert.equal(session.sets.length,1);
+ assert.match(messages[0],/still open/);
 });

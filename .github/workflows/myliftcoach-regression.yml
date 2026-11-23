@@ -26,6 +26,7 @@ on:
       - feature/full-week-program-builder-20261123
       - fix/home-weekly-program-next-session-20261123
       - review/final-integration-codex-readiness-20261123
+      - review/independent-final-integration-20261123
   workflow_dispatch:
 
 permissions:

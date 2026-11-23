@@ -82,7 +82,7 @@ test('UI has single and weekly builders with editable day tabs and optional targ
  const html=read('index.html'),ui=read('full-week-builder.js'),css=read('custom-workouts.css');
  assert.ok(html.includes('id="createWeeklyProgram"'));
  assert.ok(html.includes('id="createWorkout"'));
- assert.ok(html.includes('full-week-builder.js?v=1'));
+ assert.ok(html.includes('full-week-builder.js?v=2'));
  assert.ok(html.includes('custom-workouts.css?v=5'));
  for(const term of ['weeklyProgramName','weeklyBuilderTabs','weeklyRestDay','weeklyExerciseSearch','weekly-target-grid','saveFullWeek','restSeconds'])assert.ok((ui+css).includes(term));
  assert.ok(ui.includes('onSaved?.(result)'));
@@ -94,4 +94,50 @@ test('weekly builder parses and binds saving to its original account',()=>{
  assert.ok(custom.includes("if(expectedOwner!==owner)throw Error"));
  assert.ok(custom.includes('MLC2FullWeekBuilder?.forceClose?.()'));
  assert.ok(ui.includes('expectedOwner:initialOwner'));
+});
+
+test('each one-to-seven-day program saves all weekdays without inventing optional targets',()=>{
+ for(let count=1;count<=7;count++){
+  const fixture=setup(),program=Array.from({length:7},(_,i)=>i<count?{ids:['chest']}:{rest:true});
+  const result=fixture.api.saveFullWeek({title:'Test week',days:program});
+  assert.equal(result.created,count);
+  assert.equal(result.restDays,7-count);
+  const schedule=Weekly.read({getItem:key=>fixture.storage.getItem(fixture.key(key))});
+  assert.equal(Object.keys(schedule).length,7);
+  assert.ok(result.plans.every(plan=>Object.keys(plan.targets).length===0));
+ }
+});
+
+test('weekly editor prevents duplicate dialogs and rejects invalid targets before saving',()=>{
+ const dialogs=[],messages=[];let saves=0;
+ function node(){
+  return {events:{},value:'',addEventListener(type,fn){this.events[type]=fn},focus(){},innerHTML:''};
+ }
+ const document={
+  body:{append(dialog){dialogs.push(dialog)}},
+  createElement(){
+   const fields=new Map(),dialog=node();
+   dialog.querySelector=selector=>{
+    if(!fields.has(selector))fields.set(selector,node());
+    return fields.get(selector);
+   };
+   dialog.remove=()=>dialogs.splice(dialogs.indexOf(dialog),1);
+   return dialog;
+  },
+  addEventListener(){},removeEventListener(){}
+ };
+ const window={MLC2Custom:{getOwner:()=>null,saveFullWeek(){saves++}},
+  MLC2_EXERCISE_CATALOG:[{id:'chest',name:'Press',group:'Chest'}]};
+ let confirmed=false;
+ vm.runInNewContext(read('full-week-builder.js'),{window,document,confirm:()=>confirmed,alert:message=>messages.push(message)});
+ window.MLC2FullWeekBuilder.open();
+ const dialog=dialogs[0],q=id=>dialog.querySelector('#'+id),day=q('weeklyBuilderDay');
+ q('weeklyProgramName').value='Week';q('weeklyProgramName').events.input();
+ window.MLC2FullWeekBuilder.open();assert.equal(dialogs.length,1);
+ day.events.change({target:{id:'weeklyRestDay',checked:false}});
+ day.events.click({target:{closest:selector=>selector==='[data-week-add]'?{dataset:{weekAdd:'chest'}}:null}});
+ const input=value=>day.events.input({target:{id:'',matches:()=>true,value,dataset:{weekTarget:'chest',field:'reps'}}});
+ input('101');confirmed=true;
+ q('saveWeeklyProgram').events.click();assert.equal(saves,0);assert.match(messages.at(-1),/Correct the optional targets/);
+ input('');q('saveWeeklyProgram').events.click();assert.equal(saves,1);assert.equal(dialogs.length,0);
 });

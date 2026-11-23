@@ -22,7 +22,7 @@ test('Cloud recovery fills only missing goal settings for verified owner, never 
  const db=store(),owner='verified-a',other='verified-b';
  const records=expectations.map(([kind,value])=>{
   const config=aux.CONFIG.find(x=>x.kind===kind);
-  return {type:config.type,id:aux.recordId(config),payload:{format:'mlc2-aux-v1',entries:value}};
+  return {owner,type:config.type,id:aux.recordId(config),payload:{format:'mlc2-aux-v1',entries:value}};
  });
  const restored=aux.restoreMissing(db,owner,records);
  assert.equal(restored.length,4);
