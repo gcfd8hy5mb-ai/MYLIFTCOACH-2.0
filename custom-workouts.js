@@ -194,7 +194,7 @@ function saveWithWeekdays({next,updated,existing=null,chosenDays=[]}){
   const selected=hasDays?(owner===null?null:''):
    (!existing&&!updated.coachSaved?updated.id:before[2]);
   const after=[JSON.stringify(next),shouldUpdateSchedule?JSON.stringify(nextSchedule):before[1],selected,before[3]];
-  if(shouldUpdateSchedule){
+  if(shouldUpdateSchedule&&window.MLC2ScheduleLibrary){
    const staged=stagedScheduleStore(keys,before);
    window.MLC2ScheduleLibrary.edited(staged,nextSchedule);
    after[1]=staged.getItem(WEEK);after[2]=staged.getItem(TODAY);after[3]=staged.getItem(LIB);
@@ -245,10 +245,9 @@ function saveFullWeek({title,days,expectedOwner=owner}){
  }
  const staged=stagedScheduleStore(keys,prior);
  const library=window.MLC2ScheduleLibrary;
- if(!library)throw Error('Saved weekly programs unavailable. Nothing changed.');
- const updatedLibrary=library.newFullWeek(staged,title.trim(),nextSchedule);
+ const updatedLibrary=library?library.newFullWeek(staged,title.trim(),nextSchedule):null;
  commitPlanWrite(keys,prior,[JSON.stringify([...added,...existing]),
-  JSON.stringify(nextSchedule),owner===null?null:'',JSON.stringify(updatedLibrary)]);
+  JSON.stringify(nextSchedule),owner===null?null:'',updatedLibrary?JSON.stringify(updatedLibrary):prior[3]]);
  try{window.MLC2ScheduleAuxSync?.()}catch{}
  return {created:added.length,restDays:7-added.length,plans:added};
 }
