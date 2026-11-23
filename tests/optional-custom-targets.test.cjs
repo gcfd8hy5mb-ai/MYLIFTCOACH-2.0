@@ -33,6 +33,6 @@ test('optional exercise inputs only appear inside chosen exercise and live log d
  assert.match(js,/Leave any field blank/);
  assert.match(js,/targets:normalizeTargets\(draftTargets,selected\)/);
  assert.match(app,/activePlan\.targets\?\.\[id\]/);
- assert.match(app,/activePlan\.targets\?\.\[exerciseId\]/);
+ assert.ok(app.includes('activePlan?.targets?.[exerciseId]?.restSeconds'));
  assert.match(css,/custom-target-fields/);
 });
