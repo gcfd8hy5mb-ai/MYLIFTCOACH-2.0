@@ -435,7 +435,7 @@ function nextPlan(){
   sessionsCompleted:demoSessions.length,storage:planStorage()})||
   window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length];
  // Explicit manual choices and weekday schedule ALWAYS win, even during an active program.
- if(standard?.scheduleSource==='manual'||standard?.scheduleSource==='weekly')return standard;
+ if(standard?.scheduleSource==='manual'||standard?.scheduleSource==='weekly'||standard?.scheduleSource==='rest')return standard;
  if(betaView().mode!=='pro')return standard;
  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
  const active=program&&window.MLC2GoalProgram.progress(program)?.status==='active';
@@ -474,9 +474,11 @@ function renderHome(){
  const plan=nextPlan();
  $('heroStart').dataset.workoutPreview=$('todayStart').dataset.workoutPreview=workoutPreviewKey(plan);
  const unfinished=unfinishedDraftFor(plan);
+ const restDay=plan?.scheduleSource==='rest';
+ $('heroStart').disabled=restDay;$('todayStart').disabled=restDay;
  $('heroStart').innerHTML=unfinished?'Resume Workout <span aria-hidden="true">▶</span>':'Start Workout <span aria-hidden="true">▶</span>';
  $('todayStart').innerHTML=unfinished?'Resume this session <span aria-hidden="true">↗</span>':'Begin this session <span aria-hidden="true">↗</span>';
- $('todayTitle').textContent=plan.title;$('todayDescription').textContent=plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
+ $('todayTitle').textContent=plan.title;$('todayDescription').textContent=restDay?'Recovery day · No workout scheduled.':' '+plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
  $('todayExercises').innerHTML=plan.ids.map(id=>{
   const e=libraryExercises().find(x=>x.id===id)||exercises.find(x=>x.id===id);
   if(!e)return '';
@@ -624,18 +626,19 @@ function renderWorkouts(){
  const all=[...custom,...plans];
  const top=$('workoutTodayName'),meta=$('workoutTodayMeta'),source=$('workoutTodaySource');
  if(top)top.textContent=selected?.title||'Choose a workout';
- if(meta)meta.textContent=selected?selected.ids.length+' exercises · '+
+ if(meta)meta.textContent=selected?.scheduleSource==='rest'?'Recovery day · No scheduled exercises':selected?selected.ids.length+' exercises · '+
   (selected.scheduleSource==='program'?
     (selected.programSource==='custom'?'Custom goal program':'Coach goal program'):
    selected.kind==='Custom'?'Custom routine':selected.kind==='Coach'?'Coach session':'Preset routine'):'';
  if(source)source.textContent=selected?(selected.scheduleSource==='manual'?'Selected by you':
   selected.scheduleSource==='weekly'?'From your weekly schedule':
+  selected.scheduleSource==='rest'?'Rest day in your weekly program':
   selected.scheduleSource==='program'?'Part of your active goal program':'Recommended next session'):'';
  const savedDraft=unfinishedDraftFor(selected);
  if(savedDraft&&source)source.textContent+=' · '+savedDraft.sets.length+' saved set(s) ready to resume';
  const start=$('workoutTodayStart');if(start){
   start.dataset.workoutPreview=workoutPreviewKey(selected);
-  start.dataset.workout=activeId;start.disabled=!activeId;
+  start.dataset.workout=activeId;start.disabled=!activeId||selected?.scheduleSource==='rest';
   start.textContent=savedDraft?'Resume workout':'Start workout';
  }
  const guestBox=$('guestWorkoutRecovery'),guestStatus=$('guestWorkoutRecoveryStatus');
@@ -1008,7 +1011,8 @@ function workoutPreviewKey(plan){
 function startPreviewWorkout(button,resolve){
  loadCurrentWorkouts();
  const plan=resolve();
- if(!plan||button.dataset.workoutPreview!==workoutPreviewKey(plan)){
+ if(!plan||plan.scheduleSource==='rest'){notice('Today is a rest day. Choose a workout manually if you want to train.');return}
+ if(button.dataset.workoutPreview!==workoutPreviewKey(plan)){
   renderHome();renderWorkouts();
   notice('Your workout selection changed. Review the updated workout before starting.');
   return;
