@@ -113,7 +113,7 @@
    dialog's original absolutely-positioned X sat under the Dynamic Island.
    Keep the close control fixed in the accessible safe-area header region. */
 @media (max-width:760px){
- #modal:has(.active-workout-header) .modal-close{
+ #modal.workout-close-overlay > .modal-close{
   position:fixed!important;
   top:max(72px, calc(env(safe-area-inset-top, 0px) + 14px))!important;
   right:calc(env(safe-area-inset-right, 0px) + 16px)!important;
@@ -131,8 +131,23 @@
   border-radius:50%!important;
   touch-action:manipulation;
  }
- #modal:has(.active-workout-header) .modal-close:focus-visible{
+ #modal.workout-close-overlay > .modal-close:focus-visible{
   outline:3px solid #f3d69e!important;
   outline-offset:3px;
+ }
+}
+
+/* Desktop retains a close control next to the centered dialog rather than the
+   top-right of the entire browser window. On mobile it remains above the
+   scrolling panel and below the iOS status area. */
+@media (min-width:761px){
+ #modal.workout-close-overlay > .modal-close{
+  position:fixed!important;
+  top:max(25px, calc((100dvh - min(90dvh,820px)) / 2 + 12px))!important;
+  right:max(20px, calc((100vw - 720px) / 2 + 16px))!important;
+  z-index:90!important;
+  width:44px!important;height:44px!important;
+  border:1px solid #e9c98e!important;
+  background:#082c33!important;color:#ffedce!important;
  }
 }
