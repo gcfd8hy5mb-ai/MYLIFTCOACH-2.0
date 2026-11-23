@@ -84,6 +84,6 @@ test('active workout close control stays beneath iPhone status area and keeps th
  assert.match(app,/modal\.appendChild\(close\)/);
  assert.match(app,/modal\.classList\.add\('workout-close-overlay'\)/);
  assert.match(app,/panel\.prepend\(close\)/);
- assert.match(app,/modal\.querySelector\('\.modal-panel'\)\.prepend\(\$\('closeModal'\)\)/);
+ assert.ok(app.includes("$('modal').querySelector('.modal-panel').prepend($('closeModal'))"));
  assert.match(app,/function closeModal\(refresh=true\)/);
 });
