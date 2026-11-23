@@ -12,3 +12,62 @@
 #library .library-full-guide .library-image-error{font-size:12px;line-height:1.5;color:#efc994}
 
 #library .reference-exercise .library-info{min-width:0;flex:1 1 0}
+
+/* Exercise library: the approved artwork belongs on the left, not floating
+   between the title and the card actions. Explicit grid tracks also prevent
+   older mobile flex overrides from pushing the thumbnail into the middle. */
+#library .library-card.reference-exercise{
+ display:grid!important;
+ grid-template-columns:76px minmax(0,1fr) 12px!important;
+ column-gap:12px!important;
+ align-items:center!important;
+ justify-items:stretch!important;
+ min-width:0!important;
+ padding:10px!important;
+}
+#library .library-card.reference-exercise > .library-media{
+ grid-column:1!important;
+ grid-row:1!important;
+ justify-self:start!important;
+ align-self:center!important;
+ width:76px!important;
+ min-width:76px!important;
+ height:76px!important;
+ min-height:76px!important;
+ margin:0!important;
+ flex:none!important;
+}
+#library .library-card.reference-exercise > .library-info{
+ grid-column:2!important;
+ grid-row:1!important;
+ width:auto!important;
+ min-width:0!important;
+ padding:0!important;
+ margin:0!important;
+}
+#library .library-card.reference-exercise > .library-chevron{
+ grid-column:3!important;
+ grid-row:1!important;
+ justify-self:end!important;
+ margin:0!important;
+ font-size:20px!important;
+}
+#library .library-card.reference-exercise .library-media img.approved-thumb{
+ position:absolute!important;
+ top:0!important;left:0!important;
+ width:100%!important;height:100%!important;
+ max-width:100%!important;
+ margin:0!important;
+ object-fit:contain!important;
+ object-position:center!important;
+}
+@media(max-width:380px){
+ #library .library-card.reference-exercise{
+  grid-template-columns:68px minmax(0,1fr) 12px!important;
+  column-gap:9px!important;
+ }
+ #library .library-card.reference-exercise > .library-media{
+  width:68px!important;min-width:68px!important;
+  height:68px!important;min-height:68px!important;
+ }
+}
