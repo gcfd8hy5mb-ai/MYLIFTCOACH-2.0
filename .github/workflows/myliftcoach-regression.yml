@@ -11,6 +11,7 @@ on:
       - review/codex-final-integration-20261122
       - fix/active-workout-close-safe-area-20261122
       - fix/iphone-home-screen-update-delivery-20261122
+      - fix/iphone-workout-close-overlay-20261122
   workflow_dispatch:
 
 permissions:
