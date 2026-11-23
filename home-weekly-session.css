@@ -1,0 +1,27 @@
+/* Home controls for the upcoming scheduled workout; preserve approved marble,
+   gold borders and dark-teal panels. Accessible tap and keyboard targets. */
+#home .home-next-session-action{
+ appearance:none;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ cursor:pointer;
+ min-height:38px;
+ padding:7px 12px;
+ border:1px solid #d8b77e;
+ border-radius:999px;
+ background:#062d35;
+ color:#f4d8a4;
+ font-weight:800;
+ font-size:11px;
+ letter-spacing:.045em;
+ text-shadow:none;
+ white-space:nowrap;
+}
+#home .home-next-session-action:not(:disabled):active{background:#dfbe84;color:#062b33}
+#home .home-next-session-action:focus-visible{outline:2px solid #f7e7c6;outline-offset:3px}
+#home .home-next-session-action:disabled{opacity:.52;cursor:default}
+#home .next-panel #todayStart:disabled{cursor:default;opacity:.52}
+@media(max-width:380px){
+ #home .home-next-session-action{padding:7px 9px;font-size:10px;min-height:36px}
+}
