@@ -30,6 +30,7 @@ const tests=[
  'workout-auth-ux-fix.test.cjs',
  'mobile-header-cleanup.test.cjs',
  'more-page.test.cjs',
+ 'marble-text-readability.test.cjs',
  'compact-workouts.test.cjs',
  'cloud-archive.test.js',
  'cloud-migration-readiness.test.js',
