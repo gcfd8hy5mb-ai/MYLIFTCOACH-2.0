@@ -1,0 +1,49 @@
+name: MYLIFTCOACH 2.0 isolated cutover dry-run
+on:
+  push:
+    branches:
+      - review/final-production-cutover-20261123
+    paths:
+      - .github/workflows/isolated-cutover-dry-run.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-packages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact original production snapshot
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/workout-tracker
+          ref: 24b3e3a40076f8d6aeb6fe6c603068652b268351
+          path: original
+          persist-credentials: false
+      - name: Checkout pinned replacement candidate
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: acf85b4f30fd1f6edb0fdd579758c5f976800d8e
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Package and test without deploying
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C original rev-parse HEAD)" = "24b3e3a40076f8d6aeb6fe6c603068652b268351"
+          test "$(git -C source rev-parse HEAD)" = "acf85b4f30fd1f6edb0fdd579758c5f976800d8e"
+          node source/review/production/package.cjs original output
+          node --test source/review/production/package-integration.test.cjs source/review/production/migration-preview.test.cjs source/review/production/pages-gate.test.cjs
+          tree_hash() {
+            (cd "$1" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+          }
+          test "$(tree_hash output/replacement)" = "621ec54f47726e8e7488ba07955ba5b8faf62e22a3cb6918f0bbbfc23c356819"
+          test "$(tree_hash output/rollback)" = "8f6d5f706749e90aad4e312df8d94d149cc973cf374df35d13116582f7d8c9ea"
+          echo "DRY RUN PASS: pinned replacement and rollback packages match reviewed hashes."
+# No pages:write, id-token:write, artifact upload or deploy steps.
