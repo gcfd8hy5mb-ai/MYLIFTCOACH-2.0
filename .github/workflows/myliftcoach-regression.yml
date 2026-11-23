@@ -23,6 +23,7 @@ on:
       - fix/optional-exercise-targets-20261122
       - integration/custom-schedule-cloud-20261123
       - feature/custom-workout-weekdays-autoschedule-20261123
+      - feature/full-week-program-builder-20261123
   workflow_dispatch:
 
 permissions:
