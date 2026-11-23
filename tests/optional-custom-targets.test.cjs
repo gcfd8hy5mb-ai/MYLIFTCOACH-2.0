@@ -27,7 +27,7 @@ test('only explicitly provided validated targets survive read and account switch
 });
 test('optional exercise inputs only appear inside chosen exercise and live log displays valid targets',()=>{
  const js=read('custom-workouts.js'),app=read('app.js'),css=read('custom-workouts.css'),html=read('index.html');
- assert.ok(html.includes('custom-workouts.css?v=3'));
+ assert.ok(html.includes('custom-workouts.css?v=4'));
  for(const field of ['sets','reps','weight','restSeconds'])assert.ok(js.includes("entry('"+field+"'"));
  assert.match(js,/details class="custom-target-details"/);
  assert.match(js,/Leave any field blank/);
