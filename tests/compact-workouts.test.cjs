@@ -24,9 +24,13 @@ test('Today starts the selected workout, not a recalculated preset',()=>{
  assert.match(app,/openWorkout\(id\)/);
  assert.match(app,/\$\('workoutTodayChange'\)\.addEventListener\('click',\(\)=>setWorkoutTab\('routines'\)\)/);
 });
-test('Custom routines remain before presets, with start/select/edit/delete actions',()=>{
+test('Scheduled routines appear first while unused presets remain available for manual selection',()=>{
  assert.match(app,/const all=\[\.\.\.custom,\.\.\.plans\]/);
- assert.match(app,/section\(custom,'Your custom workouts'\)\+section\(plans,'Ready-made presets'\)/);
+ assert.match(app,/const weeklyMap=window\.MLC2WeeklySchedule\?\.read\(planStorage\(\)\)\|\|\{\}/);
+ assert.match(app,/const scheduled=all\.filter\(p=>scheduledDays\.has\(p\.id\)\)/);
+ assert.match(app,/const otherPresets=plans\.filter\(p=>!scheduledDays\.has\(p\.id\)\)/);
+ assert.match(app,/section\(scheduled,'Your scheduled workouts'/);
+ assert.match(app,/otherPresets\.length\?'<details class="workout-other-presets"/);
  for(const x of ['data-custom-select','data-custom-edit','data-custom-delete','data-workout'])assert.ok(app.includes(x));
  assert.match(app,/window\.MLC2Custom\?\.handleClick/);
  assert.match(app,/window\.MLC2Custom\?\.openEditor/);
@@ -40,7 +44,7 @@ test('Weekly schedule and guest recovery remain available under correct tabs',()
  assert.match(app,/window\.MLC2Custom\.recoverGuest\(\)/);
 });
 test('Approved teal/gold styling stays scoped to Workouts; active logger, login and sync unaffected',()=>{
- assert.ok(html.includes('compact-workouts.css?v=4'));
+ assert.ok(html.includes('compact-workouts.css?v=5'));
  assert.match(css,/#workouts \.workout-today-card/);
  assert.match(css,/#workouts \.workout-compact-card/);
  assert.match(css,/background:#04252d!important/);
@@ -76,4 +80,13 @@ test('compact workout and schedule cards use the approved deep teal material',()
  assert.match(css,/#workouts \.workout-compact-card[\s\S]*?background:#04252d!important/);
  assert.match(css,/#workouts \.workout-schedule-panel[\s\S]*?background:#04252d!important/);
  assert.match(css,/--mlc-rich-teal-surface/);
+});
+
+test('weekday assignment labels are not inferred from the full preset catalog',()=>{
+ assert.match(app,/scheduledDays\.get\(id\)\.push\(window\.MLC2WeeklySchedule\.DAYS\[day\]\)/);
+ assert.match(app,/Scheduled: /);
+ const css=read('compact-workouts.css');
+ assert.match(css,/#workouts \.workout-other-presets/);
+ assert.match(css,/#workouts \.workout-assigned-days/);
+ assert.ok(html.includes('app.js?v=44'));
 });
