@@ -8,7 +8,8 @@ function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw E
 const scoped=key=>owner===null?key:key+':user:'+owner;
 const JOURNAL='mlc2-plan-write-v1';
 const PROGRAM_KEYS=['mlc2-goal-program-v1','mlc2-goal-program-source-v1','mlc2-estimated-calorie-goal-v1'];
-const planKeys=()=>[KEY,WEEK,TODAY,LIB,...PROGRAM_KEYS].map(scoped);
+const TRANSFER_KEYS=['mlc2-auto-coach-preferences-v1','mlc2-weekly-goal-v1'];
+const planKeys=()=>[KEY,WEEK,TODAY,LIB,...PROGRAM_KEYS,...TRANSFER_KEYS].map(scoped);
 function writeVerified(key,value){
  if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);
  if(localStorage.getItem(key)!==value)throw Error('Workout changes were not retained.');
