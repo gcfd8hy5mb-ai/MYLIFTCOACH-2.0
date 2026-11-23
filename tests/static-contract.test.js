@@ -39,7 +39,7 @@ before('legacy-media-review.js','app.js');
 before('legacy-reconcile.js','cloud-sync-preview.js');
 assert.match(app,/function nextPlan\(\)\{/);
 assert.match(app,/window\.MLC2WeeklySchedule\?\.resolve/);
-assert.match(app,/if\(standard\?\.scheduleSource==='manual'\|\|standard\?\.scheduleSource==='weekly'\)return standard/);
+assert.match(app,/if\(standard\?\.scheduleSource==='manual'\|\|standard\?\.scheduleSource==='weekly'\|\|standard\?\.scheduleSource==='rest'\)return standard/);
 assert.match(app,/renderNextWorkout\(\$\('coachNextWorkout'\),selected,history,catalog\)/);
 assert.match(app,/renderTechnique\(\$\('coachTechnique'\),selected,catalog\)/);
 const cloud=file('cloud-sync-preview.js');
