@@ -32,6 +32,7 @@ const tests=[
  'custom-builder-weekday-scheduling.test.cjs',
  'full-week-program-builder.test.cjs',
  'home-weekly-next-session.test.cjs',
+ 'final-coach-weekly-integration.test.cjs',
  'active-workout-ux.test.cjs',
  'workout-auth-ux-fix.test.cjs',
  'mobile-header-cleanup.test.cjs',
