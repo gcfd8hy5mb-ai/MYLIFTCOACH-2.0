@@ -28,6 +28,7 @@ const tests=[
  'custom-home-priority.test.cjs',
  'custom-builder-redesign.test.cjs',
  'optional-custom-targets.test.cjs',
+ 'custom-schedule-cloud-integration.test.cjs',
  'active-workout-ux.test.cjs',
  'workout-auth-ux-fix.test.cjs',
  'mobile-header-cleanup.test.cjs',
