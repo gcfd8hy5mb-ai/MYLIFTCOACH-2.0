@@ -29,6 +29,7 @@ const tests=[
  'custom-builder-redesign.test.cjs',
  'optional-custom-targets.test.cjs',
  'custom-schedule-cloud-integration.test.cjs',
+ 'custom-builder-weekday-scheduling.test.cjs',
  'active-workout-ux.test.cjs',
  'workout-auth-ux-fix.test.cjs',
  'mobile-header-cleanup.test.cjs',
