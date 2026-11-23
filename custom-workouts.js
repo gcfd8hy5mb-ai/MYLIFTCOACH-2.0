@@ -4,7 +4,7 @@
 const KEY='mlc2-custom-plans-v1', TODAY='mlc2-selected-workout-v1', WEEK='mlc2-weekly-schedule-v1';
 let owner=null,closeEditor=null;
 const validOwner=o=>typeof o==='string'&&/^[a-zA-Z0-9_-]{1,128}$/.test(o);
-function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw Error('Verified owner required');if(nextOwner!==owner)closeEditor?.();owner=nextOwner}
+function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw Error('Verified owner required');if(nextOwner!==owner){closeEditor?.();window.MLC2FullWeekBuilder?.forceClose?.()}owner=nextOwner}
 const scoped=key=>owner===null?key:key+':user:'+owner;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const catalog=()=>Array.isArray(window.MLC2_EXERCISE_CATALOG)?window.MLC2_EXERCISE_CATALOG:[];
@@ -105,7 +105,8 @@ function saveWithWeekdays({next,updated,existing=null,chosenDays=[]}){
 /* Save a complete weekly training program in one verified local transaction.
  * No existing custom routine or history record is deleted. Each training day
  * becomes a normal editable custom plan, and rest days get explicit markers. */
-function saveFullWeek({title,days}){
+function saveFullWeek({title,days,expectedOwner=owner}){
+ if(expectedOwner!==owner)throw Error('Account changed. Weekly program was not saved');
  if(typeof title!=='string'||!title.trim()||title.trim().length>75)throw Error('Enter a weekly program name');
  if(!Array.isArray(days)||days.length!==7)throw Error('Configure all seven days');
  const scheduleAPI=window.MLC2WeeklySchedule;
@@ -346,5 +347,5 @@ function handleClick(e,onChanged,onSchedule){
  }
  return false;
 }
-window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek};
+window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek,getOwner:()=>owner};
 })();
