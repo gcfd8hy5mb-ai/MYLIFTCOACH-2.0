@@ -79,6 +79,6 @@ test('app wires mode and schedule selector without clearing weekly keys',()=>{
  assert.match(app,/scheduleLib\.activate\(store,id/);
  assert.match(app,/scheduleLib\.saveCopy\(store,name/);
  assert.match(custom,/transactScheduleLibrary/);
- assert.match(custom,/updatedLibrary=library\.newFullWeek/);
+ assert.match(custom,/updatedLibrary=library\?library\.newFullWeek/);
  assert.match(worker,/src="\.\/app\.js\?v=49"/);
 });
