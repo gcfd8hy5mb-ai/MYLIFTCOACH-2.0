@@ -46,7 +46,7 @@ test('active workout uses inline checkmark logging and preserves existing draft/
   assert.ok(app.includes(token),'missing workflow element: '+token);
  }
  assert.ok(html.includes('workout-active-ux.js?v=3'));
- assert.ok(html.includes('active-workout-ux.css?v=3'));
+ assert.ok(html.includes('active-workout-ux.css?v=4'));
  assert.ok(app.includes("if($('autoRestToggle')?.checked)openRest()"));
  assert.ok(app.includes("betaView().mode==='pro'&&e.group!=='Cardio'"));
  assert.ok(app.includes("coach?.status==='ready'"));
@@ -72,4 +72,15 @@ test('blank, null and future weights never prefill the next workout',()=>{
   session('2026-11-02T00:00:00Z','a','press',null,10)];
  assert.equal(UX.previous('press',hist,'a'),null);
  assert.equal(UX.progress(['press'],[{exerciseId:'press',weight:'',reps:10}]).logged,0);
+});
+
+
+test('active workout close control stays beneath iPhone status area and keeps the original exit action',()=>{
+ const css=fs.readFileSync(path.join(__dirname,'..','active-workout-ux.css'),'utf8');
+ assert.match(css,/#modal:has\(\.active-workout-header\) \.modal-close\{[\s\S]*?position:fixed!important/);
+ assert.match(css,/top:max\(72px, calc\(env\(safe-area-inset-top, 0px\) \+ 14px\)\)!important/);
+ assert.match(css,/width:48px!important/);
+ assert.match(css,/height:48px!important/);
+ assert.match(app,/function openModal\(content\).*?\$\('closeModal'\)\.focus\(\)/);
+ assert.match(app,/function closeModal\(refresh=true\)/);
 });
