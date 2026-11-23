@@ -68,3 +68,13 @@ test('Coach suggested weights never auto-write custom target fields and rest day
  assert.ok(app.includes("if(result?.status!=='ready'"));
  assert.ok(js.includes("targets:normalizeTargets(choice.targets,ids)"));
 });
+
+test('Home and workout logger use saved exercise targets rather than generic defaults',()=>{
+ const app=read('app.js');
+ assert.ok(app.includes('const plannedSets=plan.ids.reduce'));
+ assert.ok(app.includes('const saved=upcoming?.targets?.[id]||{}'));
+ assert.ok(app.includes("Number.isInteger(saved.sets)?saved.sets"));
+ assert.ok(app.includes("Number.isInteger(saved.reps)?saved.reps"));
+ assert.ok(app.includes('const optional=activePlan.targets?.[id]||{}'));
+ assert.ok(app.includes("Number.isInteger(optional.restSeconds)"));
+});
