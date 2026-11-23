@@ -605,7 +605,7 @@ function assignCoachSchedule(){
  const pending=pendingCoachSchedule;
  if(!pending||pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch){closeCoachSchedule();return}
  const allPlans=window.MLC2Custom.allPlans(plans);
- const routine=allPlans.find(plan=>plan.coachSaved&&plan.id===pending.id);
+ const routine=allPlans.find(plan=>plan.id===pending.id&&plan.id.startsWith('custom-'));
  if(!routine){closeCoachSchedule();notice('That routine is no longer available.');return}
  const day=Number($('coachScheduleDay').value);
  if(!confirm('Assign '+routine.title+' to '+window.MLC2WeeklySchedule.DAYS[day]+'?'))return;
@@ -680,7 +680,7 @@ function renderWorkouts(){
     '<div class="workout-compact-actions">'+
     '<button type="button" class="workout-compact-start" data-workout="'+escapeHTML(p.id)+'">Start workout</button>'+
     '<button type="button" class="workout-compact-select" data-custom-select="'+escapeHTML(p.id)+'"'+(pinned?' disabled':'')+'>'+(pinned?'Selected':'Use for today')+'</button>'+
-    (p.coachSaved?'<button type="button" class="button-outline" data-custom-schedule="'+escapeHTML(p.id)+'">Schedule</button>':'')+
+    (isCustom?'<button type="button" class="button-outline" data-custom-schedule="'+escapeHTML(p.id)+'">Schedule</button>':'')+
     (isCustom?'<button type="button" class="workout-compact-icon" data-custom-edit="'+escapeHTML(p.id)+'" aria-label="Edit '+escapeHTML(p.title)+'">Edit</button>'+
     '<button type="button" class="workout-compact-icon workout-compact-delete" data-custom-delete="'+escapeHTML(p.id)+'" aria-label="Delete '+escapeHTML(p.title)+'">Delete</button>':'')+
     '</div></article>';
