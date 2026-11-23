@@ -1071,12 +1071,19 @@ function renderWorkoutLog(){
   const prior=ux?.previous(id,demoSessions,activePlan.id);
   const last=prior?.sets?.[prior.sets.length-1];
   const defaults=ux?.defaults(id,session.sets,demoSessions,activePlan.id)||{weight:'',reps:''};
+  const optional=activePlan.targets?.[id]||{};
+  const targetSets=Number.isInteger(optional.sets)?optional.sets:e.sets||3;
+  const targetReps=Number.isInteger(optional.reps)?optional.reps:e.reps||'8–12';
+  const targetExtra=[Number.isFinite(optional.weight)?'Target weight: '+optional.weight+' lb':'',Number.isInteger(optional.restSeconds)?'Rest: '+optional.restSeconds+' sec':''].filter(Boolean);
+  const targetSummary=targetExtra.length?'<span class="active-optional-targets">'+escapeHTML(targetExtra.join(' · '))+'</span>':'';
+  const suggestedWeight=Number.isFinite(optional.weight)?String(optional.weight):defaults.weight;
+  const suggestedReps=Number.isInteger(optional.reps)?String(optional.reps):defaults.reps;
   const previousText=last?'Last workout: '+last.weight+' lb × '+last.reps+' reps':'No previous session for this workout';
   const coach=betaView().mode==='pro'&&e.group!=='Cardio'?window.MLC2Coach?.suggestion(id,coachEvidence(),catalog):null;
   const coachHint=coach?.status==='ready'?
    '<p class="active-coach-hint"><strong>✦ Coach</strong> '+escapeHTML(coach.action.toUpperCase()+': '+coach.weight+' lb suggested')+' · '+escapeHTML(coach.reason)+' <small>Optional · no weights changed</small><button type="button" class="coach-apply-weight" data-coach-apply="'+escapeHTML(id)+'">Use '+escapeHTML(String(coach.weight))+' lb for next set</button><span class="coach-applied-note" data-coach-applied="'+escapeHTML(id)+'" role="status"></span></p>':'';
   const count=logged.length;
-  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</span><span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+defaults.weight+'" placeholder="lb"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+defaults.reps+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="live-coach-set" data-live-coach="'+escapeHTML(id)+'" aria-live="polite">'+escapeHTML(liveCoachFeedback(id))+'</div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
+  return '<article class="log-card active-log-card" data-exercise-card="'+escapeHTML(id)+'"><div class="log-title"><div class="active-exercise-heading"><span class="active-exercise-index">'+(i+1)+'</span><h4>'+escapeHTML(e.name)+'</h4></div><span class="logged-count" data-count="'+escapeHTML(id)+'">'+count+' logged</span></div><div class="active-exercise-context"><span>Target: '+escapeHTML(String(targetSets))+' × '+escapeHTML(String(targetReps))+'</span>'+targetSummary+'<span class="active-previous">'+escapeHTML(previousText)+'</span></div>'+coachHint+'<div class="active-set-header"><span>SET</span><span>PREVIOUS</span><span>WEIGHT</span><span>REPS</span><span>DONE</span></div><div class="active-set-rows" data-set-rows="'+escapeHTML(id)+'"></div><div class="inputs active-set-entry"><span class="active-entry-number" data-next-set="'+escapeHTML(id)+'">'+(count+1)+'</span><span class="active-prev-mini">'+(last?escapeHTML(last.weight+' × '+last.reps):'—')+'</span><label><span class="sr-only">Weight (lb)</span><input aria-label="'+escapeHTML(e.name)+' weight in pounds" type="number" min="0" max="1500" step="2.5" inputmode="decimal" data-weight="'+escapeHTML(id)+'" value="'+escapeHTML(String(suggestedWeight??''))+'" placeholder="lb"></label><label><span class="sr-only">Reps</span><input aria-label="'+escapeHTML(e.name)+' repetitions" type="number" min="1" max="100" step="1" inputmode="numeric" data-reps="'+escapeHTML(id)+'" value="'+escapeHTML(String(suggestedReps??''))+'"></label><button class="active-complete-set" data-addset="'+escapeHTML(id)+'" type="button" aria-label="Complete set for '+escapeHTML(e.name)+'">✓</button></div><div class="live-coach-set" data-live-coach="'+escapeHTML(id)+'" aria-live="polite">'+escapeHTML(liveCoachFeedback(id))+'</div><div class="active-card-actions"><span class="set-feedback" data-feedback="'+escapeHTML(id)+'" role="status" aria-live="polite"></span><button class="undo-set" data-undo="'+escapeHTML(id)+'" type="button" hidden>Undo last set</button></div></article>';
  }).join('');
  updateWorkoutProgress();
  for(const id of activePlan.ids)updateExerciseFeedback(id);
@@ -1124,7 +1131,7 @@ function addSet(id){
  catch{notice('Set logged in memory, but browser draft saving failed.')}
  // Update only this exercise: never erase inputs, keyboard focus, or scroll position.
  updateExerciseFeedback(id);
- if($('autoRestToggle')?.checked)openRest();
+ if($('autoRestToggle')?.checked)openRest(id);
 }
 function undoSet(id){
  if($('finishWorkout')?.disabled)return;
@@ -1151,8 +1158,8 @@ function closeRest(){
  stopRestClock();restPaused=true;$('restScreen').hidden=true;
  document.body.style.overflow=$('modal').hidden?'':'hidden';
 }
-function openRest(){
- restSeconds=90;restPaused=false;
+function openRest(exerciseId){
+ restSeconds=typeof exerciseId==='string'&&Number.isInteger(activePlan?.targets?.[exerciseId]?.restSeconds)?activePlan.targets[exerciseId].restSeconds:90;restPaused=false;
  let next=activePlan?.ids.find(id=>!session?.sets.some(set=>set.exerciseId===id))||activePlan?.ids[0];
  const e=libraryExercises().find(x=>x.id===next)||exercises.find(x=>x.id===next);
  $('restNextName').textContent=e?.name||'Continue workout';
