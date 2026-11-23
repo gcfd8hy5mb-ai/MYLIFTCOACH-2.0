@@ -101,7 +101,7 @@ function openEditor(id,unused,onChanged){
  let activeMuscle='';
  const imageFor=e=>{
   const thumbnail=e?.demonstration?.status==='approved'?e.demonstration.thumbnail:'';
-  return typeof thumbnail==='string'&&/^assets\\/exercise-demonstrations\\/[a-zA-Z0-9._-]+\\.webp$/.test(thumbnail)
+  return typeof thumbnail==='string'&&thumbnail.startsWith('assets/exercise-demonstrations/')&&thumbnail.endsWith('.webp')&& !thumbnail.includes('..')
    ?'<img src="./'+esc(thumbnail)+'" alt="" loading="lazy">':'<span class="custom-exercise-glyph" aria-hidden="true">✦</span>';
  };
  const groups=['All',...new Set(catalog().map(e=>e.group).filter(Boolean))];
