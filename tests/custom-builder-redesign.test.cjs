@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
 test('custom workout editor uses an add-exercise search and editable order without changing stored routine data',()=>{
  const js=read('custom-workouts.js'),css=read('custom-workouts.css'),html=read('index.html');
- assert.ok(html.includes('custom-workouts.css?v=3'));
+ assert.ok(html.includes('custom-workouts.css?v=4'));
  for(const id of ['customName','customSelected','customSearch','customOptions','customMuscleFilters','mlc-custom-form'])assert.ok(js.includes(id));
  assert.ok(js.includes('data-custom-exercise'));
  assert.ok(js.includes('data-custom-remove'));
