@@ -46,6 +46,12 @@ test('one save creates different workouts for different weekdays with explicit r
  assert.equal(tuesday.ids.length,0);
  assert.equal(t.syncs,1);
 });
+
+test('missing weekday objects are rejected instead of becoming silent rest days',()=>{
+ const t=setup(),days=[undefined,{ids:['chest']},...Array.from({length:5},()=>({rest:true}))];
+ assert.throws(()=>t.api.saveFullWeek({title:'Incomplete',days}),/Configure Sunday/);
+ assert.equal(t.storage.getItem(t.key(Weekly.KEY)),null);
+});
 test('failure rolls back every category without deleting prior routines',()=>{
  const t=setup();
  const old=[{id:'custom-old',title:'Old',ids:['chest']}];
@@ -82,7 +88,7 @@ test('UI has single and weekly builders with editable day tabs and optional targ
  const html=read('index.html'),ui=read('full-week-builder.js'),css=read('custom-workouts.css');
  assert.ok(html.includes('id="createWeeklyProgram"'));
  assert.ok(html.includes('id="createWorkout"'));
- assert.ok(html.includes('full-week-builder.js?v=3'));
+ assert.ok(html.includes('full-week-builder.js?v=4'));
  assert.ok(html.includes('custom-workouts.css?v=5'));
  for(const term of ['weeklyProgramName','weeklyBuilderTabs','weeklyRestDay','weeklyExerciseSearch','weekly-target-grid','saveFullWeek','restSeconds'])assert.ok((ui+css).includes(term));
  assert.ok(ui.includes('onSaved?.(result)'));
@@ -134,7 +140,11 @@ test('weekly editor prevents duplicate dialogs and rejects invalid targets befor
  const dialog=dialogs[0],q=id=>dialog.querySelector('#'+id),day=q('weeklyBuilderDay');
  q('weeklyProgramName').value='Week';q('weeklyProgramName').events.input();
  window.MLC2FullWeekBuilder.open();assert.equal(dialogs.length,1);
- day.events.change({target:{id:'weeklyRestDay',checked:false}});
+ assert.equal((q('weeklyBuilderTabs').innerHTML.match(/Add exercises/g)||[]).length,7);
+ await q('saveWeeklyProgram').events.click();assert.match(messages.at(-1),/Sunday/);assert.equal(saves,0);
+ const chooseDay=weekday=>q('weeklyBuilderTabs').events.click({target:{closest:()=>({dataset:{weekday:String(weekday)}})}});
+ for(const weekday of [0,2,3,4,5,6]){chooseDay(weekday);day.events.change({target:{id:'weeklyRestDay',checked:true}})}
+ chooseDay(1);
  day.events.click({target:{closest:selector=>selector==='[data-week-add]'?{dataset:{weekAdd:'chest'}}:null}});
  const input=value=>day.events.input({target:{id:'',matches:()=>true,value,dataset:{weekTarget:'chest',field:'reps'}}});
  input('101');confirmed=true;

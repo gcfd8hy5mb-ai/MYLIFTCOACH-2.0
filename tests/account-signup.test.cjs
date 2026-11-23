@@ -34,12 +34,25 @@ test('confirmed signups may pass a complete token pair to the existing verificat
 test('static signup links preserve existing sign-in and iPhone offline shell',()=>{
  const app=read('app.js'),html=read('index.html'),worker=read('offline-worker.js');
  for(const id of ['welcomeSignUp','authCreateAction'])assert.match(html,new RegExp('id="'+id+'"'));
- assert.match(html,/sync\/account-signup\.js\?v=1/);
- assert.match(html,/app\.js\?v=49/);
- assert.match(worker,/app\.js\?v=49/);
+ assert.match(html,/sync\/account-signup\.js\?v=2/);
+ assert.match(html,/app\.js\?v=50/);
+ assert.match(worker,/app\.js\?v=50/);
  assert.match(app,/function openSignUp\(\)/);
  assert.match(app,/MLC2Signup\.register\(/);
  assert.match(app,/authRequest\('token\?grant_type=password'/);
  assert.match(app,/authRequest\('user',null,response.access_token,'GET'\)/);
  assert.doesNotMatch(app,/service_role/);
+});
+
+test('password recovery links strip credentials from the installed URL before opening the reset form',()=>{
+ const vm=require('node:vm');
+ const source=fs.readFileSync(require('node:path').join(__dirname,'..','app.js'),'utf8');
+ const handler=source.slice(source.indexOf('function handlePasswordResetLink(){'),source.indexOf('function openSignIn(){'));
+ const calls=[];
+ const context={URLSearchParams,location:{hash:'#access_token=fixture&refresh_token=ignored&type=recovery',pathname:'/workout-tracker/',search:'?app=myliftcoach'},
+  history:{state:null,replaceState:(_state,_title,url)=>calls.push(url)},openPasswordReset:token=>calls.push(token)};
+ assert.equal(vm.runInNewContext(handler+';handlePasswordResetLink()',context),true);
+ assert.deepEqual(calls,['/workout-tracker/?app=myliftcoach','fixture']);
+ assert.match(source,/authRequest\('recover\?redirect_to='/);
+ assert.match(source,/authRequest\('user',\{password\},token,'PUT'\)/);
 });

@@ -31,9 +31,9 @@ test('Home plan summary reflects scheduled training days and custom routines',()
  assert.match(html,/id="metricTrainingPlanDays"/);
  assert.match(html,/id="metricTrainingPlanType"/);
  assert.match(app,/function renderHomeTrainingPlan\(/);
- assert.match(app,/Object\.values\(schedule\)\.filter/);
- assert.match(app,/Custom weekly program/);
- assert.match(app,/renderHomeTrainingPlan\(\)/);
+ assert.match(app,/assigned\.filter/);
+ assert.match(app,/Custom Program/);
+ assert.match(app,/renderHomeTrainingPlan\(plan\)/);
  assert.doesNotMatch(html,/<strong>4-day<\/strong><small>Strength split<\/small>/);
 });
 test('Home next-session card and CTA are clickable even while Today is an explicit rest day',()=>{
@@ -41,8 +41,8 @@ test('Home next-session card and CTA are clickable even while Today is an explic
  assert.ok(html.includes('id="homeNextSession"'));
  assert.ok(html.includes('id="homeNextSessionTitle"'));
  assert.ok(html.includes('home-weekly-session.css?v=1'));
- assert.ok(html.includes('weekly-workout-schedule.js?v=6'));
- assert.ok(app.includes("const plan=nextPlan(),upcoming=nextHomeSession();"));
+ assert.ok(html.includes('weekly-workout-schedule.js?v=7'));
+ assert.ok(app.includes("const plan=nextPlan(),upcoming=nextHomeSession(plan);"));
  assert.ok(app.includes("'todayStart').disabled=$('homeNextSession').disabled=!upcoming"));
  assert.ok(app.includes("startPreviewWorkout(event.currentTarget,nextHomeSession)"));
  assert.ok(app.includes("if(today?.scheduleSource!=='rest')return today"));

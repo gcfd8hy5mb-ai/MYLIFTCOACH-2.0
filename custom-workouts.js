@@ -217,7 +217,8 @@ function saveFullWeek({title,days,expectedOwner=owner}){
  const stamp=Date.now().toString(36);
  for(let day=0;day<7;day++){
   const choice=days[day];
-  if(!choice||choice.rest===true){
+  if(!choice)throw Error('Configure '+scheduleAPI.DAYS[day]+' or mark it as a rest day');
+  if(choice.rest===true){
    nextSchedule[String(day)]='rest-day';
    continue;
   }

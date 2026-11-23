@@ -48,11 +48,13 @@ function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date
  const selected=storage.getItem(SELECTED)||'';
  const explicitlyChosen=plans.find(p=>p.id===selected);
  if(explicitlyChosen)return {...explicitlyChosen,scheduleSource:'manual'};
- const paused=typeof window!=='undefined'&&window.MLC2ScheduleLibrary?.read(storage).mode==='coach';
+ const state=typeof window!=='undefined'?window.MLC2ScheduleLibrary?.active(storage):null;
+ const paused=state?.mode==='coach';
  const currentDay=date.getDay();
  if(!paused&&read(storage)[String(currentDay)]==='rest-day')return {id:'rest-day',title:'Rest day',description:'Recovery day on your weekly program.',kind:'Rest',ids:[],scheduleSource:'rest'};
  const scheduled=paused?null:plans.find(p=>p.id===read(storage)[String(currentDay)]);
  if(scheduled)return {...scheduled,scheduleSource:'weekly'};
+ if(!paused&&state?.activeId)return {id:'unscheduled-day',title:'No workout scheduled',description:'No workout is assigned to this day.',kind:'Rest',ids:[],scheduleSource:'rest'};
  const fallback=custom.find(p=>!p.coachSaved)||presets[sessionsCompleted%presets.length]||plans[0];
  return {...fallback,scheduleSource:'default'};
 }
@@ -61,7 +63,7 @@ function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date
    up to one full week. Never changes schedule or a manual choice. */
 function nextTraining({storage,presets=[],custom=[],date=new Date()}){
  const plans=[...custom,...presets],schedule=read(storage);
- if(typeof window!=='undefined'&&window.MLC2ScheduleLibrary?.read(storage).mode==='coach')return null;
+ if(typeof window!=='undefined'&&window.MLC2ScheduleLibrary?.active(storage)?.mode==='coach')return null;
  for(let offset=0;offset<7;offset++){
   const weekday=(date.getDay()+offset)%7,id=schedule[String(weekday)];
   if(!id||id==='rest-day')continue;
@@ -106,7 +108,7 @@ function render(root,{presets,custom,storage,onChanged,runWrite=work=>work([...c
  const status=doc.createElement('p');status.setAttribute('role','status');status.className='mlc-schedule-note';
  const current=resolve({presets,custom,storage});
  const manual=current?.scheduleSource==='manual';
- const coachPaused=typeof window!=='undefined'&&window.MLC2ScheduleLibrary?.read(storage).mode==='coach';
+ const coachPaused=typeof window!=='undefined'&&window.MLC2ScheduleLibrary?.active(storage)?.mode==='coach';
  status.textContent=coachPaused?'Coach mode active. Saved weekly assignments are preserved and paused.':manual
   ?'Manual selection active: '+current.title+'. The weekly schedule is paused until you tap Follow weekly schedule.'
   :current?.scheduleSource==='weekly'

@@ -71,7 +71,7 @@ function build({candidate,original,output}){
  if(!url||!key||!config.includes('"'+url+'"')||!config.includes('"'+key+'"'))
   throw Error('Replacement authentication differs from the deployed project');
 
- const manifestPath='./manifest.json?v=2';
+ const manifestPath='./manifest.json?v=3';
  const html=replace(replace(read('index.html'),'connect-src \'none\'','connect-src '+url),
   './app.webmanifest?v=1',manifestPath);
  write('index.html',html);

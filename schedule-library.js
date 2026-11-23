@@ -27,6 +27,9 @@
   if(!valid(state))throw Error('Saved program library needs review. Nothing changed.');
   return state;
  }
+ function active(storage){
+  try{return read(storage)}catch{return null}
+ }
  function current(storage){
   const raw=storage.getItem(WEEK);
   if(raw===null)return {};
@@ -126,5 +129,5 @@
   store.setItem(KEY,JSON.stringify({...state,profiles:rest,activeId:state.activeId===id?'':state.activeId}));
   // Never delete the active weekly map or workout routines on profile deletion.
  }
- return Object.freeze({KEY,WEEK,SELECTED,validMap,valid,read,current,captureCurrent,newFullWeek,saveCurrent,saveCopy,activate,useCoach,edited,remove});
+ return Object.freeze({KEY,WEEK,SELECTED,validMap,valid,read,active,current,captureCurrent,newFullWeek,saveCurrent,saveCopy,activate,useCoach,edited,remove});
 });

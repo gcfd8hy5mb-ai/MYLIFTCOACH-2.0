@@ -57,7 +57,7 @@ test('Workout modal distinguishes restored draft from finish and save actions',(
  const style=fs.readFileSync('live-coach-workout.css','utf8');
  const html=fs.readFileSync('index.html','utf8');
  assert.match(style,/\.active-resume-confirmation/);
- assert.match(html,/app\.js\?v=49/);
+ assert.match(html,/app\.js\?v=50/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
 });
 

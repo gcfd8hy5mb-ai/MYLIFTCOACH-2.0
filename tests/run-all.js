@@ -86,6 +86,9 @@ const tests=[
  'acceptance-package.test.cjs',
  'legacy-device-archive.test.cjs',
  'production-launch.test.cjs',
+ 'account-signup.test.cjs',
+ 'coach-home-training-days.test.cjs',
+ 'saved-weekly-programs.test.cjs',
  'account-write-lock.test.cjs'
 ];
 for(const test of tests){

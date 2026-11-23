@@ -11,11 +11,11 @@ function open(onSaved){
  if(closeCurrent)return;
  const initialOwner=window.MLC2Custom?.getOwner?.();
  const catalog=()=>Array.isArray(window.MLC2_EXERCISE_CATALOG)?window.MLC2_EXERCISE_CATALOG:[];
- const rows=DAYS.map((day)=>({title:day+' workout',rest:true,ids:[],targets:{}}));
+ const rows=DAYS.map((day)=>({title:day+' workout',rest:false,ids:[],targets:{}}));
  const invalidTargets=DAYS.map(()=>new Map());
  let active=1,dirty=false,query='',group='All';
  const backdrop=document.createElement('div');backdrop.className='custom-editor-backdrop weekly-builder-backdrop';
- backdrop.innerHTML='<div class="custom-editor-dialog weekly-builder-dialog" role="dialog" aria-modal="true" aria-label="Full weekly workout program"><div class="custom-editor-heading"><div><span class="custom-editor-kicker">MYLIFTCOACH 2.0 · WEEKLY PROGRAM</span><h2>Build your entire week</h2></div><button type="button" data-week-close aria-label="Close weekly program">✕</button></div><label class="weekly-program-label">Program name<input id="weeklyProgramName" maxlength="75" placeholder="e.g. My 7-day split"></label><p class="weekly-program-help">Choose a day, add its exercises and optional targets, then save the whole week once. Unconfigured days are rest days. Your old routines and workout history stay saved.</p><div id="weeklyBuilderTabs" class="weekly-builder-tabs" role="tablist" aria-label="Day to edit"></div><div id="weeklyBuilderDay" class="weekly-builder-day"></div><div class="custom-editor-footer weekly-builder-footer"><button type="button" data-week-close>Cancel</button><button type="button" id="saveWeeklyProgram">Save weekly program</button></div></div>';
+ backdrop.innerHTML='<div class="custom-editor-dialog weekly-builder-dialog" role="dialog" aria-modal="true" aria-label="Full weekly workout program"><div class="custom-editor-heading"><div><span class="custom-editor-kicker">MYLIFTCOACH 2.0 · WEEKLY PROGRAM</span><h2>Build your entire week</h2></div><button type="button" data-week-close aria-label="Close weekly program">✕</button></div><label class="weekly-program-label">Program name<input id="weeklyProgramName" maxlength="75" placeholder="e.g. My 7-day split"></label><p class="weekly-program-help">Choose a day, add its exercises and optional targets, then save the whole week once. Mark rest days explicitly. Each day needs exercises or a rest day before saving. Your old routines and workout history stay saved.</p><div id="weeklyBuilderTabs" class="weekly-builder-tabs" role="tablist" aria-label="Day to edit"></div><div id="weeklyBuilderDay" class="weekly-builder-day"></div><div class="custom-editor-footer weekly-builder-footer"><button type="button" data-week-close>Cancel</button><button type="button" id="saveWeeklyProgram">Save weekly program</button></div></div>';
  document.body.append(backdrop);
  const $=id=>backdrop.querySelector('#'+id);
  const forceClose=()=>{
@@ -39,7 +39,7 @@ function open(onSaved){
  };
  function tabs(){
   $('weeklyBuilderTabs').innerHTML=DAYS.map((name,i)=>{
-   const row=rows[i],count=row.rest?'Rest':row.ids.length+' exercises';
+   const row=rows[i],count=row.rest?'Rest day':row.ids.length?row.ids.length+(row.ids.length===1?' exercise':' exercises'):'Add exercises';
    return '<button type="button" role="tab" aria-selected="'+(i===active)+'" data-weekday="'+i+'"><strong>'+name.slice(0,3)+'</strong><small>'+count+'</small></button>';
   }).join('');
  }
@@ -106,7 +106,7 @@ function open(onSaved){
   const title=$('weeklyProgramName').value.trim();
   if(!title){alert('Enter a program name.');$('weeklyProgramName').focus();return}
   const missing=rows.findIndex(r=>!r.rest&&!r.ids.length);
-  if(missing>=0){active=missing;render();alert('Add an exercise or mark '+DAYS[missing]+' as a rest day.');return}
+  if(missing>=0){active=missing;render();alert('Add an exercise or mark '+DAYS[missing]+' as a rest day.');$('weeklyRestDay')?.focus();return}
   const invalid=rows.findIndex((row,day)=>!row.rest&&invalidTargets[day].size);
   if(invalid>=0){active=invalid;render();alert('Correct the optional targets for '+DAYS[invalid]+' before saving.');return}
   if(!rows.some(r=>!r.rest)){alert('Choose at least one training day.');return}

@@ -12,7 +12,7 @@ const read=(tree,file)=>fs.readFileSync(path.join(dir,tree,file),'utf8');
 test('generated root package keeps the production auth project and does not publish a second app',()=>{
  const html=read('replacement','index.html');
  assert.match(html,/connect-src https:\/\/kirlpjflaoriiusfamsk\.supabase\.co/);
- assert.match(html,/href=".\/manifest\.json\?v=2"/);
+ assert.match(html,/href=".\/manifest\.json\?v=3"/);
  assert.match(read('replacement','offline-shell.js'),/register\('\.\/sw\.js'/);
  assert.match(read('replacement','app.js'),/const BACKEND='https:\/\/kirlpjflaoriiusfamsk\.supabase\.co'/);
  for(const file of ['myliftcoach2','review','tests','app.webmanifest','offline-worker.js']){
@@ -22,6 +22,14 @@ test('generated root package keeps the production auth project and does not publ
  const legacy=JSON.parse(read('rollback','manifest.json'));
  for(const key of ['id','scope','start_url'])assert.equal(new URL(staged[key],productionUrl).href,new URL(legacy[key],productionUrl).href);
  assert.equal(staged.display,'standalone');
+ assert.match(html,/rel="apple-touch-icon" sizes="180x180" href="\.\/assets\/myliftcoach-2-icon-180\.png"/);
+ assert.match(html,/rel="icon" sizes="32x32"/);
+ assert.deepEqual(staged.icons.map(icon=>icon.sizes),['192x192','512x512']);
+ for(const size of [32,180,192,512]){
+  const icon=fs.readFileSync(path.join(dir,'replacement','assets','myliftcoach-2-icon-'+size+'.png'));
+  assert.equal(icon.readUInt32BE(16),size);
+  assert.equal(icon.readUInt32BE(20),size);
+ }
 });
 test('production worker caches the root shell and the old installed launch query reopens offline',async()=>{
  const listener={},cached=new Map();
@@ -55,7 +63,8 @@ test('production worker caches the root shell and the old installed launch query
  assert.equal(await intercept(productionUrl+'?app=myliftcoach'),html);
  assert.equal(intercept('https://gcfd8hy5mb-ai.github.io/other-project/'),undefined);
  assert.equal(intercept(productionUrl,'POST'),undefined);
- assert.ok(cached.has(productionUrl+'manifest.json?v=2'));
+ assert.ok(cached.has(productionUrl+'manifest.json?v=3'));
+ for(const size of [32,180,192,512])assert.ok(cached.has(productionUrl+'assets/myliftcoach-2-icon-'+size+'.png'));
 });
 test('exact archive validates and safe rollback only replaces the unsafe worker',()=>{
  const original=JSON.parse(fs.readFileSync(path.join(dir,'CHECKSUMS.json'),'utf8'));

@@ -454,9 +454,10 @@ function nextPlan(){
   window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length];
  // Explicit manual choices and weekday schedule ALWAYS win, even during an active program.
  if(standard?.scheduleSource==='manual'||standard?.scheduleSource==='weekly'||standard?.scheduleSource==='rest')return standard;
- if(window.MLC2ScheduleLibrary?.read(planStorage()).mode==='coach'&&betaView().mode==='pro'){
+ if(window.MLC2ScheduleLibrary?.active(planStorage())?.mode==='coach'){
   const coach=coachAutonomousPlan();
-  if(coach)return {...coach,scheduleSource:'program'};
+  if(coach){coachAutonomousDraft=coach;return {...coach,scheduleSource:'program'}}
+  return {id:'coach-unavailable',title:'No Coach session available',description:'Choose a saved weekly program or check your Coach settings.',ids:[],scheduleSource:'rest'};
  }
  if(betaView().mode!=='pro')return standard;
  const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
@@ -493,34 +494,42 @@ function unfinishedDraftFor(plan){
 }
 /* Home separates today's selection (which may be a rest day) from the next
    scheduled workout that can actually be started. Never rewrites the schedule. */
-function nextHomeSession(){
- const today=nextPlan();
+function nextHomeSession(today=nextPlan()){
  if(today?.scheduleSource!=='rest')return today;
  const custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
  return window.MLC2WeeklySchedule?.nextTraining({storage:planStorage(),presets:plans,custom})||null;
 }
-function renderHomeTrainingPlan(){
- const schedule=window.MLC2WeeklySchedule?.read(planStorage())||{};
- const all=window.MLC2Custom?.allPlans(plans)||plans;
- const days=Object.values(schedule).filter(id=>id!=='rest-day'&&all.some(p=>p.id===id)).length;
- const custom=Object.values(schedule).some(id=>id.startsWith('custom-')&&all.some(p=>p.id===id));
- const schedulePaused=window.MLC2ScheduleLibrary?.read(planStorage()).mode==='coach';
- const restWeek=!schedulePaused&&Object.values(schedule).length===7&&Object.values(schedule).every(id=>id==='rest-day');
- // A generated Coach goal program uses its saved training-day preference until
- // the user explicitly assigns a weekly schedule. Manual and rest days still win.
- const upcoming=nextPlan();
- const activeCoach=upcoming?.scheduleSource==='program'&&
-  window.MLC2GoalProgram?.progress(window.MLC2GoalProgram.read(localStorage,verifiedOwnerId))?.status==='active';
- const coachDays=activeCoach?window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.days:null;
- const chosenCoachDays=Number.isInteger(coachDays)&&coachDays>=1&&coachDays<=7?coachDays:null;
- $('metricTrainingPlanDays').textContent=restWeek?'Rest week':!schedulePaused&&days?days+'-day':chosenCoachDays?chosenCoachDays+'-day':'4-day';
- $('metricTrainingPlanType').textContent=restWeek?'Weekly schedule':!schedulePaused&&days?(custom?'Custom weekly program':'Weekly schedule'):chosenCoachDays?'Coach goal program':'Strength split';
+function renderHomeTrainingPlan(plan=nextPlan()){
+ const store=planStorage();
+ const state=window.MLC2ScheduleLibrary?.active(store);
+ const schedule=window.MLC2WeeklySchedule?.read(store)||{};
+ const known=new Set((window.MLC2Custom?.allPlans(plans)||plans).map(p=>p.id));
+ const assigned=Object.values(schedule);
+ const days=assigned.filter(id=>id!=='rest-day'&&known.has(id)).length;
+ const profile=state?.profiles.find(p=>p.id===state.activeId);
+ let count='',name='No program selected';
+ if(state?.mode==='coach'||(!assigned.length&&plan?.scheduleSource==='program')){
+  const coachDays=plan?.scheduleSource==='program'?plan.programDays:null;
+  const configuredDays=coachDays??window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.days;
+  if(Number.isInteger(configuredDays)&&configuredDays>=1&&configuredDays<=7)count=configuredDays+'-day';
+  name='Coach Program';
+ }else if(days){
+  count=days+'-day';
+  name=profile?.name|| (assigned.some(id=>id.startsWith('custom-')&&known.has(id))?'Custom Program':'Weekly Program');
+  name=name.replace(new RegExp('^'+count+'\\s+','i'),'');
+ }else if(assigned.length===7&&assigned.every(id=>id==='rest-day')){
+  count='Rest week';name=profile?.name||'Weekly Program';
+ }else if(profile){
+  name=profile.name;
+ }
+ $('metricTrainingPlanDays').textContent=count||'—';
+ $('metricTrainingPlanType').textContent=name;
 }
 function renderHome(){
  $('metricWorkouts').textContent=demoSessions.length;
  $('metricSets').textContent=totalSets();
- renderHomeTrainingPlan();
- const plan=nextPlan(),upcoming=nextHomeSession();
+ const plan=nextPlan(),upcoming=nextHomeSession(plan);
+ renderHomeTrainingPlan(plan);
  $('heroStart').dataset.workoutPreview=workoutPreviewKey(plan);
  $('todayStart').dataset.workoutPreview=$('homeNextSession').dataset.workoutPreview=workoutPreviewKey(upcoming);
  const unfinished=unfinishedDraftFor(plan),upcomingDraft=unfinishedDraftFor(upcoming);
@@ -531,7 +540,7 @@ function renderHome(){
  $('todayStart').innerHTML=upcomingDraft?'Resume this session <span aria-hidden="true">↗</span>':restDay&&upcoming?'Start next workout <span aria-hidden="true">↗</span>':upcoming?'Begin this session <span aria-hidden="true">↗</span>':'No workout scheduled';
  $('homeNextSession').textContent=upcoming?'NEXT SESSION ↗':'NO SESSION';
  const plannedSets=plan.ids.reduce((total,id)=>total+(plan.targets?.[id]?.sets??libraryExercises().find(e=>e.id===id)?.sets??3),0);
- $('todayTitle').textContent=plan.title;$('todayDescription').textContent=restDay?'Recovery day · No workout scheduled.':plan.ids.length+' exercises · '+plannedSets+' planned sets';
+ $('todayTitle').textContent=plan.title;$('todayDescription').textContent=restDay?plan.description:plan.ids.length+' exercises · '+plannedSets+' planned sets';
  const nextTitle=$('homeNextSessionTitle');
  if(nextTitle)nextTitle.textContent=restDay&&upcoming?'Next workout · '+window.MLC2WeeklySchedule.DAYS[upcoming.scheduledWeekday]:upcoming?'Session outline':'No upcoming workout';
  $('todayExercises').innerHTML=(upcoming?.ids||[]).map(id=>{
@@ -587,7 +596,7 @@ function coachAutonomousPlan(){
   kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day,programWeek:progress?.week||null}:null;
  const choice=window.MLC2ProgramSource?.choose({source:source||{mode:'generated',customId:''},
   customPlans:programCustomOptions(),generated,completed})||null;
- return choice;
+ return choice&&{...choice,programDays:proposal?.days?.length||null};
 }
 
 function coachProgramAdvice(plan){
@@ -1455,10 +1464,72 @@ function openSignUp(){
   }finally{if(current()){submit.disabled=false;submit.textContent='Create account'}}
  });
 }
+function openPasswordRecovery(){
+ openModal('<div class="modal-eyebrow">MYLIFTCOACH ACCOUNT</div><h2>Reset your password</h2><form id="passwordRecoveryForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><button class="button-primary" type="submit">Send reset link</button></form><p id="passwordRecoveryStatus" role="status"></p><button id="passwordRecoveryBack" class="button-outline">Back to sign in</button>');
+ $('modal').classList.add('auth-fullscreen');
+ $('passwordRecoveryBack').addEventListener('click',openSignIn);
+ $('passwordRecoveryForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const form=event.currentTarget,button=form.querySelector('button'),status=$('passwordRecoveryStatus');
+  if(button.disabled)return;
+  button.disabled=true;
+  try{
+   const email=String(new FormData(form).get('email')).trim();
+   await authRequest('recover?redirect_to='+encodeURIComponent(location.origin+location.pathname),{email});
+   status.textContent='If the address can receive a reset link, check your email and open the link in Safari.';
+  }catch{status.textContent='The reset link could not be requested. Wait a moment and try again.'}
+  finally{button.disabled=false}
+ });
+}
+async function openPasswordReset(token){
+ const epoch=authEpoch;
+ openModal('<h2>Set a new password</h2><p id="passwordResetStatus" role="status">Verifying the reset link…</p><form id="passwordResetForm" class="login-form" hidden><label>New password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><label>Confirm password<input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><button type="submit" class="button-primary">Update password</button></form><button id="passwordResetBack" class="button-outline">Back to sign in</button>');
+ $('modal').classList.add('auth-fullscreen');
+ const form=$('passwordResetForm'),status=$('passwordResetStatus');
+ const current=()=>epoch===authEpoch&&$('passwordResetForm')===form&&!$('modal').hidden;
+ $('passwordResetBack').addEventListener('click',openSignIn);
+ try{
+  const user=await authRequest('user',null,token,'GET');
+  if(!current())return;
+  if(!user?.id||!user.email)throw Error('Invalid reset identity');
+  status.textContent='Set a new password for '+user.email+'.';
+  form.hidden=false;
+  form.addEventListener('submit',async event=>{
+   event.preventDefault();
+   const button=form.querySelector('button');
+   if(button.disabled)return;
+   const data=new FormData(form),password=data.get('password');
+   if(typeof password!=='string'||password.length<8||password.length>128||password!==data.get('confirmPassword')){
+    status.textContent='Enter matching passwords of 8–128 characters.';return;
+   }
+   button.disabled=true;
+   try{
+    await authRequest('user',{password},token,'PUT');
+    if(current()){form.reset();openSignIn();$('loginMessage').textContent='Password updated. Sign in with your new password.'}
+   }catch{if(current())status.textContent='Could not update the password. Request a fresh reset link if this one expired.'}
+   finally{button.disabled=false}
+  });
+ }catch{if(current())status.textContent='This reset link is invalid or expired. Request a fresh link from Sign In.'}
+}
+function handlePasswordResetLink(){
+ const params=new URLSearchParams(location.hash.slice(1));
+ if(params.get('type')==='signup'&&params.has('access_token')){
+  history.replaceState(history.state,'',location.pathname+location.search);
+  openSignIn();$('loginMessage').textContent='Email confirmed. Sign in to continue.';
+  return true;
+ }
+ if(params.get('type')!=='recovery')return false;
+ const token=params.get('access_token');
+ history.replaceState(history.state,'',location.pathname+location.search);
+ if(token)openPasswordReset(token);
+ else{openPasswordRecovery();$('passwordRecoveryStatus').textContent='This reset link is invalid or expired.'}
+ return true;
+}
 function openSignIn(){
- openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">Use your verified account to save your training in 2.0.</p><button id="loginCreateAccount" class="button-outline" type="button">New here? Create an account</button>');
+ openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">Use your verified account to save your training in 2.0.</p><button id="loginCreateAccount" class="button-outline" type="button">New here? Create an account</button><button id="loginForgotPassword" class="button-outline" type="button">Forgot password?</button>');
  $('modal').classList.add('auth-fullscreen');
  $('loginCreateAccount')?.addEventListener('click',openSignUp);
+ $('loginForgotPassword')?.addEventListener('click',openPasswordRecovery);
  // Do not focus through the id-only $ helper: the old selector threw before
  // the submit handler was attached. Avoid autofocus on iPhone to prevent keyboard jumps.
  $('loginForm').addEventListener('submit',async event=>{
@@ -2108,5 +2179,5 @@ function bind(){
  $('authCreateAction')?.addEventListener('click',openSignUp);
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();
-document.body.classList.add('home-active');bind();window.MLC2BodyProgress?.init();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();recoverInterruptedPlans(null);
+document.body.classList.add('home-active');bind();window.MLC2BodyProgress?.init();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();if(!handlePasswordResetLink())validateStoredAuth();recoverInterruptedPlans(null);
 })();

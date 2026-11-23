@@ -36,8 +36,15 @@ test('public app assets can boot offline and account traffic bypasses the worker
  assert.equal(await fetchThrough(scope+'?launch=home','navigate','document'),html);
  online=true;status=503;
  assert.equal(await fetchThrough(scope,'navigate','document'),html);
- assert.equal(await fetchThrough(scope+'app.js?v=49','cors','script'),'app.js');
+ assert.equal(await fetchThrough(scope+'app.js?v=50','cors','script'),'app.js');
  assert.equal(await fetchThrough(scope+'app.webmanifest?v=1','cors','manifest'),'app.webmanifest');
+ for(const size of [32,180,192,512]){
+  const icon='assets/myliftcoach-2-icon-'+size+'.png';
+  const data=fs.readFileSync(icon);
+  assert.equal(data.readUInt32BE(16),size);
+  assert.equal(data.readUInt32BE(20),size);
+  assert.equal(await fetchThrough(scope+icon,'cors','image'),icon);
+ }
  assert.equal(fetchThrough(scope+'private','cors','','POST'),undefined);
  assert.equal(fetchThrough('https://cloud.example/rest','cors',''),undefined);
  assert.equal(fetchThrough(scope+'review/workout-history-check.html','navigate','document'),undefined);
