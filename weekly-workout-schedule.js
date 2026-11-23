@@ -48,6 +48,19 @@ function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date
  const fallback=custom.find(p=>!p.coachSaved)||presets[sessionsCompleted%presets.length]||plans[0];
  return {...fallback,scheduleSource:'default'};
 }
+/* Returns the next scheduled training workout, skipping explicit rest days.
+   Starts today when today's scheduled workout is usable, otherwise looks ahead
+   up to one full week. Never changes schedule or a manual choice. */
+function nextTraining({storage,presets=[],custom=[],date=new Date()}){
+ const plans=[...custom,...presets],schedule=read(storage);
+ for(let offset=0;offset<7;offset++){
+  const weekday=(date.getDay()+offset)%7,id=schedule[String(weekday)];
+  if(!id||id==='rest-day')continue;
+  const plan=plans.find(p=>p.id===id&&Array.isArray(p.ids)&&p.ids.length);
+  if(plan)return {...plan,scheduleSource:'weekly',daysAhead:offset,scheduledWeekday:weekday};
+ }
+ return null;
+}
 function clearOverride(storage){
  storage.removeItem(SELECTED);
  if(storage.getItem(SELECTED)!==null)throw Error('Unable to clear manual selection');
@@ -100,5 +113,5 @@ function render(root,{presets,custom,storage,onChanged,doc=document}){
  });
  root.append(button);
 }
-return Object.freeze({KEY,DAYS,valid,read,save,assign,resolve,clearOverride,render});
+return Object.freeze({KEY,DAYS,valid,read,save,assign,resolve,nextTraining,clearOverride,render});
 });
