@@ -162,7 +162,21 @@
    <button type="button" class="button-outline" id="coachScheduleCancel">Cancel</button>
    <p id="coachScheduleStatus" role="status"></p>
   </article>
-  <article class="panel workout-schedule-panel"><div class="panel-heading"><h2>Weekly schedule</h2><span class="micro-tag">YOUR PLAN</span></div><div id="weeklySchedule"></div></article>
+  <article class="panel workout-schedule-panel" aria-label="Saved weekly workout programs">
+    <div class="panel-heading"><h2>Saved programs</h2><span class="micro-tag">SWITCH ANYTIME</span></div>
+    <p>Switch programs without deleting saved weekly schedules or your workout history.</p>
+    <label for="savedScheduleChoice">Choose program</label>
+    <select id="savedScheduleChoice" aria-label="Saved weekly programs"></select>
+    <div class="workouts-create-actions">
+     <button id="activateSavedSchedule" type="button" class="button-primary">Use selected program</button>
+     <button id="activateCoachMode" type="button" class="button-outline">Switch to Coach</button>
+     <button id="saveScheduleCopy" type="button" class="button-outline">Save current as new</button>
+     <button id="saveScheduleChanges" type="button" class="button-outline">Save changes</button>
+     <button id="removeSavedSchedule" type="button" class="button-outline">Remove saved copy</button>
+    </div>
+    <p id="savedScheduleStatus" role="status" aria-live="polite"></p>
+   </article>
+   <article class="panel workout-schedule-panel"><div class="panel-heading"><h2>Weekly schedule</h2><span class="micro-tag">YOUR PLAN</span></div><div id="weeklySchedule"></div></article>
  </section>
 </section>
 <section id="library" class="page" hidden><div class="page-heading"><div class="eyebrow">MOVEMENT & MASTERY</div><h1>Exercise library</h1><p>Explore all 344 movements, with technique notes and approved demonstrations as they become available.</p></div><label class="search-bar">⌕ <input id="exerciseSearch" type="search" placeholder="Search movements or muscle groups"></label><div class="filter-chips" id="libraryChips"><button type="button" data-muscle="" class="selected">All</button><button type="button" data-muscle="Chest">Chest</button><button type="button" data-muscle="Back">Back</button><button type="button" data-muscle="Shoulders">Shoulders</button><button type="button" data-muscle="Legs">Legs</button><button type="button" data-muscle="Arms">Arms</button><button type="button" data-muscle="Core">Core</button><button type="button" data-muscle="Cardio">Cardio</button></div><p id="approvedMediaStatus" class="library-media-status" role="status" aria-live="polite"></p><div class="library-grid" id="libraryGrid"></div></section>
@@ -372,6 +386,7 @@
 <script defer src="./custom-workouts.js?v=5"></script>
 <script defer src="./full-week-builder.js?v=3"></script>
 <script defer src="./weekly-workout-schedule.js?v=6"></script>
+<script defer src="./schedule-library.js?v=1"></script>
 <script defer src="./session-draft.js?v=2"></script>
 <script defer src="./workout-active-ux.js?v=3"></script>
 <script defer src="./progress-migration.js?v=1"></script>
@@ -422,7 +437,7 @@
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
 <script defer src="./sync/account-signup.js?v=1"></script>
-<script defer src="./app.js?v=48"></script>
+<script defer src="./app.js?v=49"></script>
 <script defer src="./offline-shell.js?v=4"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>
