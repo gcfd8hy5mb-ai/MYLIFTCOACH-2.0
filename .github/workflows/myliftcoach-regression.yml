@@ -20,6 +20,7 @@ on:
       - fix/library-start-position-thumbnails-20261122
       - fix/global-marble-text-readability-20261122
       - fix/easier-custom-workout-builder-teal-20261122
+      - fix/optional-exercise-targets-20261122
   workflow_dispatch:
 
 permissions:
