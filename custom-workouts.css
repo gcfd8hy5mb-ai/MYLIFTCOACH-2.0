@@ -90,3 +90,68 @@
  #customOptions{max-height:225px}
  .custom-editor-footer{bottom:-16px}
 }
+
+/* Optional prescription fields: hidden inside each selected exercise until
+   requested; blank fields are allowed and preserve the default logging flow. */
+#customSelected .custom-selected-row{
+ display:block!important;
+ padding:10px!important;
+}
+#customSelected .custom-selected-main{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ min-width:0;
+}
+#customSelected .custom-target-details{
+ margin:10px 0 0 37px;
+ padding-top:9px;
+ border-top:1px solid rgba(220,178,112,.28);
+}
+#customSelected .custom-target-details summary{
+ font-size:12px;
+ font-weight:750;
+ color:#f1d59e;
+ min-height:38px;
+ cursor:pointer;
+}
+#customSelected .custom-target-fields{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:9px;
+ margin:8px 0;
+}
+#customSelected .custom-target-fields label{
+ font-size:11px;
+ font-weight:700;
+ color:#f5e9d2;
+ min-width:0;
+ display:block;
+}
+#customSelected .custom-target-fields input{
+ display:block;
+ box-sizing:border-box;
+ margin:5px 0 0;
+ width:100%;
+ min-height:42px;
+ padding:8px 9px;
+ background:#041f28!important;
+ border:1px solid #af925f!important;
+ border-radius:8px;
+ color:#fff6e7!important;
+ font-size:16px;
+}
+#customSelected .custom-target-fields input:focus-visible{
+ outline:2px solid #f0d397;
+ outline-offset:1px;
+}
+#customSelected .custom-target-details p{
+ margin:8px 0 0;
+ color:#cbded9;
+ font-size:11px;
+ line-height:1.5;
+}
+@media(max-width:380px){
+ #customSelected .custom-target-details{margin-left:0}
+ #customSelected .custom-target-fields{gap:7px}
+}
