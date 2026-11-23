@@ -21,3 +21,72 @@
 
 .workout-item {min-width:0;display:flex;flex-direction:column}
 .workout-item .workout-card {width:100%;flex:1}
+
+/* Approved charcoal-deep teal custom workout builder, not green-gray.
+   Scoped to the editor so other cards and the marble remain unchanged. */
+.custom-editor-backdrop{background:rgba(0,13,20,.79)!important;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important}
+.custom-editor-dialog{
+ background:#04252d!important;background-image:linear-gradient(155deg,#052b34 0%,#03242c 58%,#031d25 100%)!important;
+ color:#fff3de!important;border:1.5px solid #dbb77d!important;
+ border-radius:18px!important;box-shadow:0 18px 60px rgba(0,8,15,.72)!important;
+ max-height:min(90dvh,950px);padding:18px!important
+}
+.custom-editor-heading{align-items:start!important;margin-bottom:15px}
+.custom-editor-heading h2{font-size:clamp(22px,5vw,30px);margin:5px 0 0!important;color:#fff2dc}
+.custom-editor-kicker{font-size:10px;font-weight:800;letter-spacing:.16em;color:#e4c38d}
+.custom-editor-heading [data-editor-close]{min-width:44px;min-height:44px;background:#072f37!important;color:#f3d7a4!important}
+#mlc-custom-form .custom-editor-fields{display:grid;gap:12px;margin-bottom:17px}
+#mlc-custom-form .custom-editor-fields label,
+#mlc-custom-form .custom-editor-search-label{display:block;color:#f2e2c8!important;font-size:13px;font-weight:650}
+#mlc-custom-form input:not([type]),
+#mlc-custom-form input[type=search],
+#mlc-custom-form input[type=text]{
+ display:block;width:100%;min-height:46px;border-radius:10px!important;
+ border:1px solid rgba(219,183,125,.58)!important;
+ background:#061d25!important;color:#fff9ee!important;font-size:16px!important;
+}
+#mlc-custom-form input:focus-visible{outline:2px solid #e6c488!important;outline-offset:2px}
+.custom-editor-selection,.custom-editor-picker{margin:0 0 18px}
+.custom-editor-section-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.custom-editor-section-title h3{margin:0!important;font-size:17px;color:#f3deb7!important}
+.custom-editor-section-title span{font-size:12px;color:#ecd09d}
+#customSelected{display:block;margin:0 0 15px!important}
+.custom-editor-empty{color:#e3dccf!important;padding:12px;margin:0;font-size:13px;line-height:1.5}
+.custom-selected-row,.custom-option-row{
+ display:flex;align-items:center;gap:10px;
+ padding:10px;border-radius:11px;border:1px solid rgba(218,178,110,.35);
+ background:#062c34!important;margin-bottom:7px;min-width:0
+}
+.custom-exercise-order{display:grid;place-items:center;width:27px;height:27px;flex:0 0 27px;border:1px solid #c5a36f;border-radius:8px;color:#f0d4a3}
+.custom-exercise-copy{display:flex;flex-direction:column;min-width:0;flex:1;gap:3px}
+.custom-exercise-copy strong{font-size:13px;color:#fff5e6;line-height:1.4}
+.custom-exercise-copy small{font-size:11px;color:#c9dcd8!important;line-height:1.3}
+.custom-selected-actions{display:flex;gap:4px;flex-shrink:0}
+#customSelected .custom-selected-actions button{
+ border:1px solid #947850;background:#082631;color:#f4d8a4;
+ border-radius:8px;min-width:30px;min-height:36px;padding:3px 7px;cursor:pointer
+}
+#customSelected .custom-selected-actions button:disabled{opacity:.35;cursor:default}
+.custom-editor-filters{display:flex;gap:6px;overflow:auto;padding:4px 0 9px;scrollbar-width:none}
+.custom-editor-filters button{border:1px solid #b99560;border-radius:20px;background:#072c36;color:#f2d6a1;padding:8px 12px;white-space:nowrap;min-height:38px}
+.custom-editor-filters button[aria-pressed=true]{background:linear-gradient(145deg,#ffe8ab,#c99b5b);color:#082c35;font-weight:800}
+#customOptions{background:#041c24!important;max-height:255px;padding:8px!important;margin-bottom:12px!important}
+.custom-option-row{margin-bottom:6px;padding:8px;background:#082c34!important}
+.custom-option-row img,.custom-exercise-glyph{
+ display:block;width:54px;height:54px;flex:0 0 54px;object-fit:cover;object-position:center top;
+ border:1px solid rgba(228,190,126,.6);border-radius:8px;background:#071b23
+}
+.custom-exercise-glyph{display:grid;place-items:center;color:#dfbd82}
+.custom-option-row [data-custom-exercise]{
+ background:#092f37;border:1px solid #d4ad74;border-radius:9px;
+ color:#ffdfa3;padding:8px 11px;font-weight:750;min-height:40px;flex-shrink:0;cursor:pointer
+}
+.custom-option-row [data-custom-exercise]:disabled{opacity:.63;cursor:default}
+.custom-editor-footer{position:sticky;bottom:-18px;padding:12px 0 calc(4px + env(safe-area-inset-bottom));background:#04252d!important;z-index:2}
+.custom-editor-footer button{min-height:46px}
+.custom-editor-footer button[type=submit]{background:linear-gradient(150deg,#fff0b8,#cfa266)!important;color:#082c35!important}
+@media(max-width:760px){
+ .custom-editor-dialog{width:100%!important;max-height:calc(100dvh - 26px)!important;padding:16px!important}
+ #customOptions{max-height:225px}
+ .custom-editor-footer{bottom:-16px}
+}
