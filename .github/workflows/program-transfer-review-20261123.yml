@@ -1,0 +1,26 @@
+name: MYLIFTCOACH private program-transfer review (no deployment)
+on:
+  push:
+    branches: [feature/account-scoped-program-transfer-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-transfer-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check browser and transfer syntax
+        run: |
+          node --check app.js
+          node --check sync/program-transfer.js
+          node --check sync/aux-data.js
+      - name: Transfer and account separation tests
+        run: node --test tests/account-program-transfer.test.cjs
+      - name: Complete offline regression tests
+        run: node tests/run-all.js
+# No production, Supabase, GitHub Pages, or cloud write permissions.
