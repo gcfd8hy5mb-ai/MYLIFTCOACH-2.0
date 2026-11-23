@@ -22,6 +22,7 @@ on:
       - fix/easier-custom-workout-builder-teal-20261122
       - fix/optional-exercise-targets-20261122
       - integration/custom-schedule-cloud-20261123
+      - feature/custom-workout-weekdays-autoschedule-20261123
   workflow_dispatch:
 
 permissions:
