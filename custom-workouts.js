@@ -102,6 +102,67 @@ function saveWithWeekdays({next,updated,existing=null,chosenDays=[]}){
  try{window.MLC2ScheduleAuxSync?.()}catch{}
  return {days:[...selectedDays].sort(),scheduled:selectedDays.size>0};
 }
+/* Save a complete weekly training program in one verified local transaction.
+ * No existing custom routine or history record is deleted. Each training day
+ * becomes a normal editable custom plan, and rest days get explicit markers. */
+function saveFullWeek({title,days}){
+ if(typeof title!=='string'||!title.trim()||title.trim().length>75)throw Error('Enter a weekly program name');
+ if(!Array.isArray(days)||days.length!==7)throw Error('Configure all seven days');
+ const scheduleAPI=window.MLC2WeeklySchedule;
+ if(!scheduleAPI?.valid)throw Error('Weekly schedule is unavailable');
+ const existing=read({forWrite:true});
+ const added=[],nextSchedule={};
+ const stamp=Date.now().toString(36);
+ for(let day=0;day<7;day++){
+  const choice=days[day];
+  if(!choice||choice.rest===true){
+   nextSchedule[String(day)]='rest-day';
+   continue;
+  }
+  const ids=Array.isArray(choice.ids)?choice.ids:[];
+  if(ids.length<1||ids.length>40||new Set(ids).size!==ids.length||ids.some(id=>!byId(id)))
+   throw Error('Choose 1–40 unique exercises for '+scheduleAPI.DAYS[day]);
+  const customTitle=String(choice.title||'').trim()||scheduleAPI.DAYS[day]+' workout';
+  if(customTitle.length>75)throw Error('Workout name is too long');
+  let id='custom-week-'+stamp+'-'+day;
+  while(existing.some(p=>p.id===id)||added.some(p=>p.id===id))id+='x';
+  const plan={id,title:customTitle,kind:'Custom',description:title.trim().slice(0,75)+' · '+scheduleAPI.DAYS[day],ids:[...ids],
+   targets:normalizeTargets(choice.targets,ids)};
+  added.push(plan);nextSchedule[String(day)]=id;
+ }
+ if(!added.length)throw Error('Add at least one training day');
+ if(existing.length+added.length>60)throw Error('Custom workout limit reached. Your existing routines were not changed.');
+ if(!scheduleAPI.valid(nextSchedule))throw Error('Weekly program schedule is invalid');
+ const plansKey=scoped(KEY),scheduleKey=scoped(WEEK),selectedKey=scoped(TODAY);
+ const keys=[plansKey,scheduleKey,selectedKey],prior=keys.map(k=>localStorage.getItem(k));
+ // Never accept unreadable stored schedules; do not silently erase them.
+ const oldRaw=prior[1];
+ if(oldRaw!==null){
+  let old;try{old=JSON.parse(oldRaw)}catch{throw Error('Existing schedule is unreadable. Nothing changed.')}
+  if(!scheduleAPI.valid(old))throw Error('Existing schedule needs review. Nothing changed.');
+ }
+ try{
+  const plans=JSON.stringify([...added,...existing]),schedule=JSON.stringify(nextSchedule);
+  localStorage.setItem(plansKey,plans);
+  if(localStorage.getItem(plansKey)!==plans)throw Error('Workout save was not verified');
+  localStorage.setItem(scheduleKey,schedule);
+  if(localStorage.getItem(scheduleKey)!==schedule)throw Error('Schedule save was not verified');
+  if(owner===null){
+   localStorage.removeItem(selectedKey);
+   if(localStorage.getItem(selectedKey)!==null)throw Error('Could not follow schedule');
+  }else{
+   localStorage.setItem(selectedKey,'');
+   if(localStorage.getItem(selectedKey)!=='')throw Error('Could not follow schedule');
+  }
+ }catch(error){
+  for(let i=keys.length-1;i>=0;i--){
+   try{if(prior[i]===null)localStorage.removeItem(keys[i]);else localStorage.setItem(keys[i],prior[i])}catch{}
+  }
+  throw error;
+ }
+ try{window.MLC2ScheduleAuxSync?.()}catch{}
+ return {created:added.length,restDays:7-added.length,plans:added};
+}
 function guestRecovery(){
  if(owner===null)return {available:0,conflicts:0};
  const here=read(),ids=new Set(here.map(p=>p.id)),before=owner;
@@ -285,5 +346,5 @@ function handleClick(e,onChanged,onSchedule){
  }
  return false;
 }
-window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays};
+window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek};
 })();
