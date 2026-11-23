@@ -14,6 +14,7 @@
   {type:'meal',key:'mlc2-food-log-v1',label:'Nutrition history',max:400},
   {type:'goal',key:'mlc2-food-goals-v1',label:'Nutrition goals',max:1},
   {type:'goal',id:'weekly-schedule-v1',key:'mlc2-weekly-schedule-v1',label:'Weekly workout schedule',kind:'weekly-schedule',max:7},
+  {type:'goal',id:'schedule-library-v1',key:'mlc2-schedule-library-v1',label:'Saved weekly programs',kind:'schedule-library',max:16},
   {type:'goal',id:'selected-workout-v1',key:'mlc2-selected-workout-v1',label:'Selected workout',kind:'selected-workout',max:1},
   {type:'goal',id:'coach-weekly-goal-v1',key:'mlc2-weekly-goal-v1',label:'Coach weekly goal',kind:'coach-weekly-goal',max:1},
   {type:'goal',id:'coach-readiness-v1',key:'mlc2-coach-readiness-v1',label:'Coach readiness',kind:'coach-readiness',max:365},
@@ -38,6 +39,18 @@
     Object.keys(payload).length<=7&&
     Object.entries(payload).every(([day,workout])=>/^[0-6]$/.test(day)&&
      typeof workout==='string'&&planId.test(workout));
+  if(config.kind==='schedule-library'){
+   const id=/^schedule-[a-z0-9-]{1,88}$/;
+   const maps=map=>!!map&&typeof map==='object'&&!Array.isArray(map)&&Object.keys(map).length<=7&&
+    Object.entries(map).every(([day,workout])=>/^[0-6]$/.test(day)&&typeof workout==='string'&&planId.test(workout));
+   return !!payload&&payload.version===1&&['weekly','coach'].includes(payload.mode)&&
+    typeof payload.activeId==='string'&&(payload.activeId===''||id.test(payload.activeId))&&
+    Array.isArray(payload.profiles)&&payload.profiles.length<=16&&
+    new Set(payload.profiles.map(p=>p.id)).size===payload.profiles.length&&
+    payload.profiles.every(p=>p&&id.test(p.id)&&typeof p.name==='string'&&
+      p.name.trim()===p.name&&p.name.length>0&&p.name.length<=75&&maps(p.days))&&
+    (!payload.activeId||payload.profiles.some(p=>p.id===payload.activeId));
+  }
   if(config.kind==='coach-readiness')
    return !!payload&&typeof payload==='object'&&!Array.isArray(payload)&&
     Object.keys(payload).length<=365&&
@@ -117,7 +130,8 @@
    const entries=validateRemote(config,record);
    const local=loadLocal(store,owner,config);
    if(!canFill(config,local)||empty(config,entries))continue;
-   const references=config.kind==='weekly-schedule'?Object.values(entries):
+   const references=config.kind==='schedule-library'?entries.profiles.flatMap(p=>Object.values(p.days)):
+    config.kind==='weekly-schedule'?Object.values(entries):
     config.kind==='selected-workout'?[entries]:
     config.kind==='goal-program-source'?[entries.customId]:[];
    if(hasMissingPlan(references))continue;
@@ -131,7 +145,7 @@
    value:config.kind==='selected-workout'?entries:JSON.stringify(entries),label:config.label
   }));
   const transactional=writePlans?actions.filter(change=>
-   ['mlc2-custom-plans-v1','mlc2-weekly-schedule-v1','mlc2-selected-workout-v1',
+   ['mlc2-custom-plans-v1','mlc2-weekly-schedule-v1','mlc2-schedule-library-v1','mlc2-selected-workout-v1',
     'mlc2-goal-program-v1','mlc2-goal-program-source-v1','mlc2-estimated-calorie-goal-v1']
     .some(key=>change.key===key+':user:'+owner)):[];
   const written=[];
