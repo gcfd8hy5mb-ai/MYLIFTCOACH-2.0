@@ -82,7 +82,7 @@
  function saveCopy(store,name){
   const map=current(store);
   if(!Object.keys(map).length)throw Error('Assign workout days before saving a copy.');
-  let state=captureCurrent(read(store),map);
+  let state=read(store);
   if(state.profiles.length>=16)throw Error('Maximum 16 saved weekly programs.');
   const id=unique(state);
   state={...state,mode:'weekly',activeId:id,
