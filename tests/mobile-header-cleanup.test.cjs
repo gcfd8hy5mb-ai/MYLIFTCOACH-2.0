@@ -11,7 +11,7 @@ test('iPhone topbar is removed without changing desktop navigation',()=>{
  assert.match(css,/@media \(max-width:760px\)/);
  assert.match(css,/\.topbar\{[\s\S]*?display:none!important/);
  assert.ok(html.includes('mobile-header-cleanup.css?v=1'));
- assert.ok(html.includes('iPhone beta test build 11-21O'));
+ assert.ok(html.includes('MYLIFTCOACH 2.0 · iPhone beta'));
 });
 test('mobile Settings stays reachable through fixed More bottom tab',()=>{
  assert.match(html,/<nav class="bottom-tabs"[^>]*>[\s\S]*?<button data-page="settings"[^>]*>[\s\S]*?<small>More<\/small>/);

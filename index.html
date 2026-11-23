@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#06454c">
+<meta name="theme-color" content="#06454c" media="(min-width:761px)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="MYLIFTCOACH 2.0 — premium training and progress">
 <title>MYLIFTCOACH 2.0</title>
 <link rel="stylesheet" href="./styles.css?v=1">
@@ -29,6 +31,7 @@
 <link rel="stylesheet" href="./active-exercise-guide.css?v=1">
 <link rel="stylesheet" href="./progress-weekly-summary.css?v=1">
 <link rel="stylesheet" href="./progress-compact.css?v=1">
+<link rel="stylesheet" href="./more-page.css?v=1">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -251,7 +254,21 @@
   <p class="calorie-goal-note">This is an adult-only starting estimate, not a precise measurement or medical prescription. Activity includes ordinary exercise; no exercise-calorie double counting. Goal changes are never applied without your input. Review the target if you have specific medical or nutritional needs.</p>
  </article>
 </section>
- <section id="settings" class="page" hidden><div class="account-brand"><img src="./assets/myliftcoach-mark.svg?v=6" alt=""><h2>My Account</h2><p>Manage your profile, training and settings</p></div><div class="account-menu" aria-label="Additional training tools"><button type="button" data-account-page="library"><span>▣</span> Exercise Library <b>›</b></button><button type="button" data-account-page="history"><span>▤</span> Workout History <b>›</b></button><button type="button" data-account-page="tracking"><span>◉</span> Daily Tracking <b>›</b></button><button type="button" data-account-page="coaching"><span>✦</span> Coaching &amp; Guidance <b>›</b></button></div><div class="page-heading"><div class="eyebrow">YOUR ACCOUNT</div><h1>Settings</h1><p>Sign in with your existing MYLIFTCOACH account. Training data import remains off until validated.</p></div><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen design ↗</button><article class="panel settings-panel" id="betaAccessCard" hidden>
+ <section id="settings" class="page more-page" hidden>
+ <div class="more-heading"><img src="./assets/myliftcoach-mark.svg?v=6" alt=""><h1>More</h1></div>
+ <div class="more-sections">
+<details class="more-section">
+ <summary><svg class="app-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span><strong>Account &amp; Profile</strong><small>Sign-in and fitness goals</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
+ <div class="more-section-content"><div class="panel settings-panel">
+ <div class="setting-line"><div><strong>Account</strong><p id="accountIdentity">Signed out</p></div><span class="micro-tag" id="backendStatus">NOT CONNECTED</span></div>
+ <button id="authAction" type="button" class="button-primary">Sign in</button>
+ </div><button type="button" class="button-outline" data-account-page="nutrition">Fitness goals & calorie profile</button></div>
+</details><details class="more-section">
+ <summary><svg class="app-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span><strong>App Settings</strong><small>Measurement units and daily tracking</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
+ <div class="more-section-content"><p>Training weights are logged in pounds. Height is entered in feet and inches on the goal profile.</p><button type="button" class="button-outline" data-account-page="nutrition">Open your goal profile</button><button type="button" class="button-outline" data-account-page="tracking">Daily tracking</button></div>
+</details><details class="more-section">
+ <summary><svg class="app-icon" aria-hidden="true"><use href="#i-dumbbell"></use></svg><span><strong>Membership &amp; Beta Access</strong><small>Current access and Free / Pro mode</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
+ <div class="more-section-content"><article class="panel settings-panel" id="betaAccessCard" hidden>
 <div class="panel-heading"><h3>Beta Access Mode</h3><span class="micro-tag">PRIVATE BETA</span></div>
 <p>Everyone can switch between Free and Pro features during the private beta without purchasing a subscription. Signed-in choices save to your account; guest choices last for this browser session. This is a feature preview, not a paid subscription entitlement.</p>
 <label for="betaAccessSelect">Choose beta access</label>
@@ -260,8 +277,10 @@
 </select>
 <p id="betaAccessStatus" role="status" aria-live="polite">Select Free or Pro to preview the available features. No payment required.</p>
 </article>
-<article class="panel settings-panel"><div class="setting-line"><div><strong>Supabase account</strong><p id="accountIdentity">Not signed in</p></div><span class="micro-tag" id="backendStatus">NOT CONNECTED</span></div><div class="setting-line"><div><strong>Data protection</strong><p>Existing workout records are read-only and are not yet imported into 2.0.</p></div><span class="micro-tag">ISOLATED</span></div><div class="setting-line"><div><strong>Demo session history</strong><p>Saved to this browser only, separate from your original workout app.</p></div><button id="clearDemo" type="button" class="button-outline">Clear demo</button></div><button id="authAction" type="button" class="button-primary">Sign in</button></article>
-<article class="panel settings-panel" aria-label="Account workout backup and recovery">
+</div>
+</details><details class="more-section">
+ <summary><svg class="app-icon" aria-hidden="true"><use href="#i-chart"></use></svg><span><strong>Data &amp; Backup</strong><small>Workout sync, backups and recovery</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
+ <div class="more-section-content"><article class="panel settings-panel" aria-label="Account workout backup and recovery">
 <div class="panel-heading"><h3>Account workout backup</h3><span class="micro-tag">DEVICE BACKUP</span></div>
 <p>Download your signed-in account's completed workouts, or restore only missing workouts from a backup for the same account. Conflicting sessions are never replaced. This does not upload to Supabase.</p>
 <button type="button" class="button-outline" id="exportAccountWorkouts">Download account workouts</button>
@@ -270,7 +289,6 @@
 <button type="button" class="button-outline" id="restoreAccountWorkouts" disabled>Restore missing workouts</button>
 <p role="status" aria-live="polite" id="accountRecoveryStatus">Sign in to back up or recover this account's workouts.</p>
 </article>
-<p id="phoneBuildMarker" class="mlc-schedule-note" role="status">iPhone beta test build 11-21O · compact tabbed workouts</p>
 <article class="panel settings-panel" aria-label="Automatic isolated cloud sync">
 <div class="panel-heading"><h3>Automatic workout sync</h3><span class="micro-tag">ISOLATED 2.0</span></div>
 <p>Completed workouts are saved locally first, then synced to your verified account. Offline sessions retry on reconnect. Original MYLIFTCOACH records are not changed.</p>
@@ -285,7 +303,29 @@
 <button id="restoreOtherFitnessData" class="button-outline" type="button">Recover missing data</button>
 <p id="otherFitnessCloudStatus" role="status" aria-live="polite">Sign in to manage other fitness data backups.</p>
 </article>
-<article class="panel settings-panel" aria-label="Read-only cloud workout check"><div class="panel-heading"><h3>Check cloud workouts</h3><span class="micro-tag">READ ONLY</span></div><p>See how many isolated 2.0 workouts are available for your signed-in account. No sessions are uploaded, restored, or overwritten.</p><button type="button" class="button-outline" id="inspectCloudSessions">Check cloud workouts</button><p id="inspectCloudSessionsStatus" role="status" aria-live="polite">Sign in to check the isolated cloud backup.</p></article><article class="panel mlc-legacy-media-panel"><div class="panel-heading"><h3>Original exercise images for review</h3><span class="micro-tag">14 SOURCE CANDIDATES · NOT APPROVED</span></div><p>Preview original-app exercise image candidates against their 2.0 exercise IDs. This does not import, approve, or replace exercise media. The independently approved 268 files still need their current manifest.</p><button id="reviewLegacyMedia" type="button" class="button-outline">Review 14 original image candidates</button><div id="legacyMediaReviewResults" aria-live="polite"></div></article>
+<div class="panel settings-panel mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
+<p>Download a private JSON backup of this browser's 2.0 workouts, unfinished session sets, practice history, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Save important progress photos individually using Save copy in Daily Tracking. Keep all exported files private. This option does not sync records.</p>
+<button id="recoveryExportAction" class="button-outline" type="button">Download recovery copy</button>
+<p id="recoveryExportResult" role="status" aria-live="polite"></p>
+<div class="mlc-recovery-import"><h4>Restore missing 2.0 data (this browser only)</h4>
+<p>Choose a previously downloaded MYLIFTCOACH 2.0 recovery file, including any unfinished workout draft. Check the preview first. Any category with existing different data will block the entire restore. Existing data is never overwritten. Private photos and cloud records are not included.</p>
+<label for="recoveryImportFile">Choose recovery JSON</label>
+<input type="file" id="recoveryImportFile" accept=".json,application/json">
+<button type="button" id="recoveryRestoreAction" class="button-outline" disabled>Restore only missing data</button>
+<p id="recoveryImportResult" role="status" aria-live="polite"></p>
+</div></div><button type="button" class="button-outline" data-account-page="history">Workout history</button></div>
+</details><details class="more-section">
+ <summary><svg class="app-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span><strong>Privacy &amp; Security</strong><small>Local history and progress photos</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
+ <div class="more-section-content"><div class="panel settings-panel"><h3>Your data</h3><p>Progress photos stay on this device. You can save a private copy from Daily Tracking.</p>
+ <div class="setting-line"><div><strong>Local workout history</strong><p>Clearing affects workout history on this device for the current account or guest.</p></div><button id="clearDemo" type="button" class="button-outline">Clear local workout history</button></div></div><button type="button" class="button-outline" data-account-page="tracking">Manage progress photos</button></div>
+</details><details class="more-section">
+ <summary><svg class="app-icon" aria-hidden="true"><use href="#i-book"></use></svg><span><strong>Help &amp; Support</strong><small>Exercise guidance and app information</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
+ <div class="more-section-content"><p id="phoneBuildMarker" class="mlc-schedule-note" role="status">MYLIFTCOACH 2.0 · iPhone beta</p>
+<div class="more-links"><button type="button" class="button-outline" data-account-page="library">Exercise library & technique</button><button type="button" class="button-outline" data-account-page="coaching">Coaching & guidance</button><button type="button" id="previewWelcome" class="welcome-preview-link">View welcome screen</button></div></div>
+</details><details id="advancedTools" class="more-section" hidden>
+ <summary><svg class="app-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span><strong>Advanced Tools</strong><small>Diagnostics and migration checks</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
+ <div class="more-section-content"><article class="panel settings-panel" aria-label="Read-only cloud workout check"><div class="panel-heading"><h3>Check cloud workouts</h3><span class="micro-tag">READ ONLY</span></div><p>See how many isolated 2.0 workouts are available for your signed-in account. No sessions are uploaded, restored, or overwritten.</p><button type="button" class="button-outline" id="inspectCloudSessions">Check cloud workouts</button><p id="inspectCloudSessionsStatus" role="status" aria-live="polite">Sign in to check the isolated cloud backup.</p><div class="mlc-data-health"><h4>Check local workout data</h4><p>Verify saved plans, session sets, exercise references and daily tracking without changing records or connecting to the cloud.</p><button id="dataHealthAction" class="button-outline" type="button">Check local data integrity</button><div id="dataHealthResult" role="status" aria-live="polite"></div></div>
+</article><article class="panel mlc-legacy-media-panel"><div class="panel-heading"><h3>Original exercise images for review</h3><span class="micro-tag">14 SOURCE CANDIDATES · NOT APPROVED</span></div><p>Preview original-app exercise image candidates against their 2.0 exercise IDs. This does not import, approve, or replace exercise media. The independently approved 268 files still need their current manifest.</p><button id="reviewLegacyMedia" type="button" class="button-outline">Review 14 original image candidates</button><div id="legacyMediaReviewResults" aria-live="polite"></div></article>
 <article class="panel mlc-cloud-audit-panel"><div class="panel-heading"><h3>Cloud compatibility</h3><span class="micro-tag">READ-ONLY</span></div>
 <p>Check which original account record categories are accessible with your existing sign-in. This does not transfer, sync, edit, or delete any workout information. Run only when you want to verify compatibility.</p>
 <button type="button" id="cloudAuditAction" class="button-outline">Check cloud data (read-only)</button>
@@ -300,20 +340,10 @@
 <label for="migrationReadinessFile">Choose original cloud archive JSON</label>
 <input type="file" id="migrationReadinessFile" accept=".json,application/json">
 <div id="migrationReadinessResult" role="status" aria-live="polite"></div></div>
-<div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><div class="mlc-mapping-preview"><h4>2.0 workout format mapping</h4><p>Review which 2.0 practice workouts and sessions can be represented in the original app's format. This is a local-only dry run; no cloud connection or changes occur.</p><div class="mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
-<p>Download a private JSON backup of this browser's 2.0 workouts, unfinished session sets, practice history, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Save important progress photos individually using Save copy in Daily Tracking. Keep all exported files private. This option does not sync records.</p>
-<button id="recoveryExportAction" class="button-outline" type="button">Download recovery copy</button>
-<p id="recoveryExportResult" role="status" aria-live="polite"></p>
-<div class="mlc-data-health"><h4>Check local workout data</h4><p>Verify saved plans, session sets, exercise references and daily tracking without changing records or connecting to the cloud.</p><button id="dataHealthAction" class="button-outline" type="button">Check local data integrity</button><div id="dataHealthResult" role="status" aria-live="polite"></div></div>
-<div class="mlc-recovery-import"><h4>Restore missing 2.0 data (this browser only)</h4>
-<p>Choose a previously downloaded MYLIFTCOACH 2.0 recovery file, including any unfinished workout draft. Check the preview first. Any category with existing different data will block the entire restore. Existing data is never overwritten. Private photos and cloud records are not included.</p>
-<label for="recoveryImportFile">Choose recovery JSON</label>
-<input type="file" id="recoveryImportFile" accept=".json,application/json">
-<button type="button" id="recoveryRestoreAction" class="button-outline" disabled>Restore only missing data</button>
-<p id="recoveryImportResult" role="status" aria-live="polite"></p>
-</div></div><button type="button" id="mappingPreviewAction" class="button-outline">Check local workout conversion</button><div id="mappingPreviewResult" role="status" aria-live="polite"></div></div>
+<div class="mlc-cloud-preview"><h4>Migration conflict preview</h4><p>Optional, read-only comparison using the original MYLIFTCOACH record rules. No syncing, restoration, or uploads are enabled.</p><div class="mlc-mapping-preview"><h4>2.0 workout format mapping</h4><p>Review which 2.0 practice workouts and sessions can be represented in the original app's format. This is a local-only dry run; no cloud connection or changes occur.</p></div><button type="button" id="mappingPreviewAction" class="button-outline">Check local workout conversion</button><div id="mappingPreviewResult" role="status" aria-live="polite"></div></div>
 <button type="button" id="cloudPreviewAction" class="button-outline">Preview possible conflicts (read-only)</button><div id="cloudPreviewResult" role="status" aria-live="polite"></div></div>
-</article></section>
+</article><a class="button-outline" href="./review/workout-history-check.html">Simulated workout history</a></div>
+ </details></div></section>
 </main>
 <footer class="site-footer"><span>MYLIFTCOACH 2.0</span><span>STRONGER BY DESIGN · PREVIEW</span></footer>
 </div></div>
@@ -382,7 +412,7 @@
 <script defer src="./sync/auxiliary-cloud.js?v=2"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=42"></script>
+<script defer src="./app.js?v=43"></script>
 <script defer src="./offline-shell.js?v=1"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>

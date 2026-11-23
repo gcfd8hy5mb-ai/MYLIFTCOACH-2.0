@@ -1,0 +1,89 @@
+/* Keep the approved marble visible behind the More navigation. */
+#settings.more-page {
+ max-width: 780px;
+ margin-inline: auto;
+}
+.more-heading {
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ margin-bottom: 16px;
+}
+.more-heading img {
+ width: 48px;
+ height: 48px;
+}
+.more-heading h1 { margin: 0; }
+.more-sections {
+ display: grid;
+ gap: 9px;
+}
+.more-section {
+ border: 1px solid rgba(229,196,126,.45);
+ border-radius: 16px;
+ background: var(--mlc-rich-teal-surface, linear-gradient(145deg,#0a4249,#04252d));
+ background-color: #04252d;
+ box-shadow: 0 8px 20px rgba(0,26,32,.24);
+}
+.more-section > summary {
+ display: grid;
+ grid-template-columns: 22px minmax(0,1fr) 10px;
+ gap: 13px;
+ align-items: center;
+ min-height: 64px;
+ padding: 10px 15px;
+ cursor: pointer;
+ list-style: none;
+ color: #fff3de;
+}
+.more-section > summary::-webkit-details-marker { display: none; }
+.more-section > summary:focus-visible { outline: 2px solid #f6d795; outline-offset: 2px; }
+.more-section > summary strong,
+.more-section > summary small { display: block; }
+.more-section > summary small { margin-top: 3px; color: #dfdecf; }
+.more-section > summary .app-icon,
+.more-chevron { color: #f6d795; }
+.more-chevron {
+ width: 7px;
+ height: 7px;
+ border-right: 1.5px solid currentColor;
+ border-bottom: 1.5px solid currentColor;
+ transform: rotate(-45deg);
+}
+.more-section[open] > summary .more-chevron { transform: rotate(45deg); }
+.more-section-content {
+ display: grid;
+ gap: 9px;
+ min-width: 0;
+ padding: 4px 13px 13px;
+}
+.more-section-content .panel { min-width: 0; margin: 0; padding: 13px; }
+.more-section-content .setting-line { flex-wrap: wrap; }
+.more-section-content input[type="file"] { max-inline-size: 100%; }
+.more-section-content p { overflow-wrap: anywhere; }
+.more-links { display: grid; gap: 8px; }
+
+@media (max-width:760px) {
+ /* The fixed body layer covers the viewport; the root paints the same
+    wallpaper under it during overscroll and viewport resizing. */
+ html:root {
+  background: #0e5357 url('./assets/approved-vertical-marble-sharp.webp?v=11') center top / cover no-repeat !important;
+ }
+ body,
+ body.home-active {
+  background: transparent !important;
+ }
+ body::before,
+ body.home-active::before,
+ body:not(.home-active)::before {
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 100lvh;
+  background-position: center top;
+ }
+ body .main-wrap > .content {
+  padding-top: calc(16px + env(safe-area-inset-top)) !important;
+ }
+ body:not(.welcome-view) .topbar { background: transparent !important; }
+}

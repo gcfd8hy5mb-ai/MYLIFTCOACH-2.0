@@ -410,7 +410,7 @@ function renderCalorieGoal(){
 function setPage(next){if(!['welcome','home','workouts','library','progress','settings','coaching','nutrition','history','tracking'].includes(next))return;page=next;
  document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==next);
  document.querySelectorAll('[data-page]').forEach(el=>{const is=el.dataset.page===next;el.classList.toggle('selected',is);el.classList.toggle('active',is);if(is)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
- $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'My Account',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
+ $('pageTitle').textContent=({welcome:'Welcome',home:'Home',workouts:'Workouts',library:'Exercise library',progress:'Progress',settings:'More',coaching:'Coaching',nutrition:'Nutrition',history:'Workout history',tracking:'Daily tracking'})[next];
  $('sidebar').classList.remove('open');document.body.classList.toggle('welcome-view',next==='welcome');document.body.classList.toggle('home-active',next==='home');window.scrollTo({top:0,behavior:'instant'});
  if(next==='home')renderHome();if(next==='workouts')renderWorkouts();if(next==='library')renderLibrary();
  if(next==='coaching')renderCoach();if(next==='nutrition')renderCalorieGoal();if(next==='progress')renderProgress();if(next==='settings')renderSettings();if(next==='history')renderHistory();if(next==='tracking')renderTracking();
@@ -784,7 +784,16 @@ function renderCoach(){
  window.MLC2CoachReadiness?.render($('coachReadiness'),history,selected,updateCoachPlan);
  window.MLC2CoachTrends?.render($('coachTrends'),history,window.MLC2CoachReadiness?.weeklyGoal()||4);
 }
+function canViewAdvancedTools(owner, user){
+ return Boolean(owner&&owner===user?.id&&user.app_metadata?.myliftcoach_advanced_tools===true);
+}
 function renderSettings(){
+ const advanced=$('advancedTools');
+ if(advanced){
+  advanced.hidden=!canViewAdvancedTools(verifiedOwnerId,account);
+  if(advanced.hidden||advanced.dataset.owner!==verifiedOwnerId)advanced.open=false;
+  advanced.dataset.owner=advanced.hidden?'':verifiedOwnerId;
+ }
  $('accountIdentity').textContent=account?.email?account.email+' · authenticated (production workout data is not loaded)':'Not signed in. You can still explore the demo.';
  $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
  $('cloudPill').textContent=verifiedOwnerId&&account?.id===verifiedOwnerId?'ACCOUNT CONNECTED · 2.0 SYNC':'DEMO WORKSPACE';
