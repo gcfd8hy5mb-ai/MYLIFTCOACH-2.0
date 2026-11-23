@@ -3,7 +3,7 @@
 const scope = self.registration.scope;
 const shell = new URL('./index.html', scope).href;
 const prefix = 'myliftcoach2-shell:' + scope + ':';
-const cacheName = prefix + '45';
+const cacheName = prefix + '46';
 const artwork = [
  './assets/approved-vertical-marble-sharp.webp?v=11',
  './assets/hero-dumbbells-photo.jpg?v=7',
