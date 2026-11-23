@@ -91,3 +91,13 @@ test('Library opens original full-size approved art on demand and protects again
  assert.ok(app.includes('feedback.hidden=false'));
  assert.ok(css.includes('#library .library-full-guide img'));
 });
+
+test('approved thumbnails have visible fixed dimensions inside compact iPhone cards',()=>{
+ const css=read('exercise-placeholders.css');
+ const html=read('index.html');
+ assert.ok(html.includes('exercise-placeholders.css?v=2'));
+ assert.match(css,/#library \.reference-exercise \.library-media \{[^}]*flex:0 0 84px/);
+ assert.match(css,/#library \.reference-exercise \.library-media\{[^}]*flex-basis:76px/);
+ assert.match(css,/#library \.library-media \.approved-thumb \{[^}]*object-fit:contain/);
+ assert.match(css,/#library \.library-media \.approved-thumb \{[^}]*z-index:2/);
+});
