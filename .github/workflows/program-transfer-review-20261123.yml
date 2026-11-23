@@ -23,4 +23,32 @@ jobs:
         run: node --test tests/account-program-transfer.test.cjs
       - name: Complete offline regression tests
         run: node tests/run-all.js
+      - name: Checkout original read-only package baseline
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/workout-tracker
+          ref: 24b3e3a40076f8d6aeb6fe6c603068652b268351
+          path: original
+          persist-credentials: false
+      - name: Checkout current live 2.0 rollback baseline
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: acf85b4f30fd1f6edb0fdd579758c5f976800d8e
+          path: previous
+          persist-credentials: false
+      - name: Verify non-deploying replacement and old-2.0 rollback packages
+        env:
+          MLC2_REPLACEMENT_PACKAGE: ${{ runner.temp }}/recovery-package
+        run: |
+          set -euo pipefail
+          node review/production/package-update.cjs original previous "$MLC2_REPLACEMENT_PACKAGE"
+          node --test review/production/package-integration.test.cjs review/production/migration-preview.test.cjs review/production/pages-gate.test.cjs
+          test -f "$MLC2_REPLACEMENT_PACKAGE/replacement/sync/program-transfer.js"
+          test -f "$MLC2_REPLACEMENT_PACKAGE/update-rollback/app.js"
+          cmp "$MLC2_REPLACEMENT_PACKAGE/replacement/sync/program-transfer.js" sync/program-transfer.js
+          node --check "$MLC2_REPLACEMENT_PACKAGE/replacement/app.js"
+          node --check "$MLC2_REPLACEMENT_PACKAGE/replacement/sw.js"
+          (cd "$MLC2_REPLACEMENT_PACKAGE/replacement" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum)
+
 # No production, Supabase, GitHub Pages, or cloud write permissions.
