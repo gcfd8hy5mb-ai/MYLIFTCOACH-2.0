@@ -634,7 +634,13 @@ function renderWorkouts(){
   guestStatus.textContent=recoverable.available+' guest workout(s) available to copy to this verified account. Existing workouts will not be replaced.';
  window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
   presets:plans,custom,
-  storage:planStorage(),onChanged:()=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach()}
+  storage:planStorage(),onChanged:(action,plan)=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+   if(action==='follow'){
+    if(page!=='workouts')setPage('workouts');
+    setWorkoutTab('today');
+    notice(plan?.scheduleSource==='weekly'?'Following weekly schedule · Today: '+plan.title:'Manual selection cleared · No scheduled workout today.');
+   }
+  }
  });
  const section=(items,label)=>{
   const cards=items.map(p=>{
