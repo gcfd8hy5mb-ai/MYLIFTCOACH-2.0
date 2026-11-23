@@ -88,5 +88,5 @@ test('weekday assignment labels are not inferred from the full preset catalog',(
  const css=read('compact-workouts.css');
  assert.match(css,/#workouts \.workout-other-presets/);
  assert.match(css,/#workouts \.workout-assigned-days/);
- assert.ok(html.includes('app.js?v=43'));
+ assert.ok(html.includes('app.js?v=44'));
 });

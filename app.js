@@ -498,7 +498,8 @@ function renderHome(){
  $('heroStart').innerHTML=unfinished?'Resume Workout <span aria-hidden="true">▶</span>':'Start Workout <span aria-hidden="true">▶</span>';
  $('todayStart').innerHTML=upcomingDraft?'Resume this session <span aria-hidden="true">↗</span>':restDay&&upcoming?'Start next workout <span aria-hidden="true">↗</span>':upcoming?'Begin this session <span aria-hidden="true">↗</span>':'No workout scheduled';
  $('homeNextSession').textContent=upcoming?'NEXT SESSION ↗':'NO SESSION';
- $('todayTitle').textContent=plan.title;$('todayDescription').textContent=restDay?'Recovery day · No workout scheduled.':plan.ids.length+' exercises · '+(plan.ids.length*3)+' sets · ~45 min';
+ const plannedSets=plan.ids.reduce((total,id)=>total+(Number.isInteger(plan.targets?.[id]?.sets)?plan.targets[id].sets:3),0);
+ $('todayTitle').textContent=plan.title;$('todayDescription').textContent=restDay?'Recovery day · No workout scheduled.':plan.ids.length+' exercises · '+plannedSets+' planned sets';
  const nextTitle=$('homeNextSessionTitle');
  if(nextTitle)nextTitle.textContent=restDay&&upcoming?'Next workout · '+window.MLC2WeeklySchedule.DAYS[upcoming.scheduledWeekday]:upcoming?'Session outline':'No upcoming workout';
  $('todayExercises').innerHTML=(upcoming?.ids||[]).map(id=>{
@@ -507,7 +508,9 @@ function renderHome(){
   const approved=approvedThumbnail(e);
   const picture=approved||'./assets/image-coming-approved.webp';
   const alt=approved?'Approved demonstration of '+e.name:'Exercise image awaiting approval';
-  return '<div class="preview-exercise"><span class="preview-exercise-picture"><img src="'+escapeHTML(picture)+'" alt="'+escapeHTML(alt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><span class="preview-exercise-copy"><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(e.sets||3))+' × '+escapeHTML(String(e.reps||'8–12'))+'</small></span></div>';
+  const saved=upcoming?.targets?.[id]||{};
+  const sets=Number.isInteger(saved.sets)?saved.sets:(e.sets||3),reps=Number.isInteger(saved.reps)?saved.reps:(e.reps||'8–12');
+  return '<div class="preview-exercise"><span class="preview-exercise-picture"><img src="'+escapeHTML(picture)+'" alt="'+escapeHTML(alt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><span class="preview-exercise-copy"><strong>'+escapeHTML(e.name)+'</strong><small>'+escapeHTML(String(sets))+' × '+escapeHTML(String(reps))+'</small></span></div>';
  }).join('');
  wireWorkoutPreviewImages($('todayExercises'));
  $('recentActivity').innerHTML=demoSessions.length?demoSessions.slice(0,3).map(x=>'<div class="recent-item"><div><strong>'+escapeHTML(x.title)+'</strong><small>'+new Date(x.created).toLocaleDateString()+'</small></div><span>'+x.sets.length+' sets</span></div>').join(''):'<div class="empty-note">Your next session starts here. Practice workouts you complete in this demo will appear in this section.</div>';

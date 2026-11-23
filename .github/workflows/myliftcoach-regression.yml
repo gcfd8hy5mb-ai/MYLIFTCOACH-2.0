@@ -25,6 +25,7 @@ on:
       - feature/custom-workout-weekdays-autoschedule-20261123
       - feature/full-week-program-builder-20261123
       - fix/home-weekly-program-next-session-20261123
+      - review/final-integration-codex-readiness-20261123
   workflow_dispatch:
 
 permissions:
@@ -53,6 +54,9 @@ jobs:
           node --check sync/automatic-workouts.js
           node --check sync/auxiliary-cloud.js
           node --check custom-workouts.js
+          node --check full-week-builder.js
+          node --check coach-program-builder.js
+          node --check coach-periodization.js
           node --check body-progress.js
           node --check coach-readiness.js
           node --check weekly-workout-schedule.js
