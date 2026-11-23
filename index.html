@@ -332,7 +332,10 @@
 <p role="status" aria-live="polite" id="exportAccountProgramsStatus"></p>
 <label for="inspectAccountProgramsFile">Choose the private program copy in the other installation</label>
 <input type="file" id="inspectAccountProgramsFile" accept=".json,application/json">
-<p role="status" aria-live="polite" id="inspectAccountProgramsStatus">Read-only comparison. Restore is not enabled until conflicts have been reviewed.</p>
+<label class="setting-line" for="activateImportedProgram"><span><strong>Use source app's active schedule and Coach settings</strong><small>Only after selecting your source backup. Off keeps this installation's active setup, while preserving new saved programs.</small></span><input id="activateImportedProgram" type="checkbox" checked></label>
+<p role="status" aria-live="polite" id="inspectAccountProgramsStatus">Choose the private source file to preview the merge. No cloud records are overwritten.</p>
+<button id="applyAccountPrograms" type="button" class="button-outline" disabled>Import reviewed programs into this installation</button>
+<p role="status" aria-live="polite" id="applyAccountProgramsStatus">To enable import, save a backup of this receiving installation first. Existing workout history and photos stay untouched.</p>
 </article>
 <div class="panel settings-panel mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
 <p>Download a private JSON backup of this browser's 2.0 workouts, unfinished session sets, practice history, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Save important progress photos individually using Save copy in Daily Tracking. Keep all exported files private. This option does not sync records.</p>
