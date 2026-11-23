@@ -117,7 +117,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
-          ref: f1b18a18ae040f4ebceedb62173974d5b2b31a66
+          ref: 6b47b3f8697a1e90d851db4d606b4ffae8c04d33
           path: phone-ui-n
           persist-credentials: false
       - name: Validate reviewed iPhone candidate before packaging
@@ -145,8 +145,8 @@ jobs:
           test -s dist/myliftcoach2/more-page.css
           grep -q 'offline-shell.js?v=2' dist/myliftcoach2/index.html
           grep -q 'active-workout-ux.css?v=5' dist/myliftcoach2/index.html
-          grep -q "cacheName = prefix + '51'" dist/myliftcoach2/offline-worker.js
-          grep -q 'exercise-placeholders.css?v=2' dist/myliftcoach2/index.html
+          grep -q "cacheName = prefix + '52'" dist/myliftcoach2/offline-worker.js
+          grep -q 'exercise-placeholders.css?v=3' dist/myliftcoach2/index.html
           grep -q 'compact-workouts.css?v=5' dist/myliftcoach2/index.html
           grep -q 'weekly-workout-schedule.js?v=2' dist/myliftcoach2/index.html
           grep -q 'more-page.css' dist/myliftcoach2/index.html
