@@ -31,7 +31,7 @@ function save(storage,map){
 function assign(storage,day,id,plans){
  const dayIndex=Number(day);
  if(!Number.isInteger(dayIndex)||dayIndex<0||dayIndex>6)throw Error('Unknown weekday');
- if(id!==''&&(!ID.test(String(id))||!plans.some(p=>p.id===id)))throw Error('Unknown workout');
+ if(id!==''&&id!=='rest-day'&&(!ID.test(String(id))||!plans.some(p=>p.id===id)))throw Error('Unknown workout');
  const next={...read(storage)};if(id==='')delete next[String(dayIndex)];else next[String(dayIndex)]=id;
  return save(storage,next);
 }
@@ -42,6 +42,7 @@ function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date
  const explicitlyChosen=plans.find(p=>p.id===selected);
  if(explicitlyChosen)return {...explicitlyChosen,scheduleSource:'manual'};
  const currentDay=date.getDay();
+ if(read(storage)[String(currentDay)]==='rest-day')return {id:'rest-day',title:'Rest day',description:'Recovery day on your weekly program.',kind:'Rest',ids:[],scheduleSource:'rest'};
  const scheduled=plans.find(p=>p.id===read(storage)[String(currentDay)]);
  if(scheduled)return {...scheduled,scheduleSource:'weekly'};
  const fallback=custom.find(p=>!p.coachSaved)||presets[sessionsCompleted%presets.length]||plans[0];
@@ -65,8 +66,9 @@ function render(root,{presets,custom,storage,onChanged,doc=document}){
   const select=doc.createElement('select');
   select.setAttribute('aria-label',name+' workout');
   const none=doc.createElement('option');none.value='';none.textContent='No scheduled workout';select.append(none);
+  const rest=doc.createElement('option');rest.value='rest-day';rest.textContent='Rest day';select.append(rest);
   for(const p of plans){const option=doc.createElement('option');option.value=p.id;option.textContent=p.title;select.append(option)}
-  select.value=map[String(index)]&&plans.some(p=>p.id===map[String(index)])?map[String(index)]:'';
+  select.value=map[String(index)]&&(map[String(index)]==='rest-day'||plans.some(p=>p.id===map[String(index)]))?map[String(index)]:'';
   select.addEventListener('change',()=>{
    try{assign(storage,index,select.value,plans);onChanged?.()}
    catch(e){select.value=read(storage)[String(index)]||'';status.textContent='Could not save schedule: '+e.message}
@@ -81,6 +83,7 @@ function render(root,{presets,custom,storage,onChanged,doc=document}){
   ?'Manual selection active: '+current.title+'. The weekly schedule is paused until you tap Follow weekly schedule.'
   :current?.scheduleSource==='weekly'
    ?'Following weekly schedule · Today: '+current.title
+   :current?.scheduleSource==='rest'?'Rest day · Follow your recovery plan today.'
    :'No workout scheduled for today. Choose a workout above to follow the weekly schedule.';
  root.append(status);
  const button=doc.createElement('button');button.type='button';button.className='button-outline';
