@@ -891,6 +891,7 @@ function renderSettings(){
  $('backendStatus').textContent=account?'AUTHENTICATED':'NOT CONNECTED';
  $('cloudPill').textContent=verifiedOwnerId&&account?.id===verifiedOwnerId?'ACCOUNT CONNECTED · 2.0 SYNC':'DEMO WORKSPACE';
  $('authAction').textContent=account?'Sign out':'Sign in with existing account';
+ if($('authCreateAction'))$('authCreateAction').hidden=!!account;
  const beta=betaView();
  const betaCard=$('betaAccessCard'),betaSelect=$('betaAccessSelect'),betaStatus=$('betaAccessStatus');
  if(betaCard)betaCard.hidden=false;
@@ -1358,9 +1359,51 @@ async function validateStoredAuth(){
  }
  if(thisEpoch===authEpoch)renderSettings();
 }
-function openSignIn(){
- openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">The training area stays in demo mode until the legacy data mapping is verified.</p>');
+function openSignUp(){
+ openModal('<div class="modal-eyebrow">MYLIFTCOACH ACCOUNT</div><h2>Create your account</h2><p>Start a new MYLIFTCOACH 2.0 training profile using your email. Your original workout data will not be imported.</p><form id="signupForm" class="login-form"><label>Name (optional)<input name="name" autocomplete="name" maxlength="80"></label><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><label>Confirm password<input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><button class="button-primary" id="signupSubmit" type="submit">Create account</button></form><p id="signupMessage" role="status" aria-live="polite"></p><button id="signupReturnSignIn" class="button-outline" type="button">Already have an account? Sign in</button>');
  $('modal').classList.add('auth-fullscreen');
+ $('signupReturnSignIn').addEventListener('click',openSignIn);
+ $('signupForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const form=event.currentTarget,submit=$('signupSubmit'),message=$('signupMessage');
+  if(submit.disabled)return;
+  const epoch=authEpoch,current=()=>epoch===authEpoch&&$('signupForm')===form&&!$('modal').hidden;
+  const data=new FormData(form);
+  submit.disabled=true;submit.textContent='Creating account…';message.textContent='';
+  try{
+   const result=await window.MLC2Signup.register({
+    name:data.get('name'),email:data.get('email'),password:data.get('password'),confirmPassword:data.get('confirmPassword')
+   },authRequest);
+   if(!current())return;
+   if(result.kind==='confirmation'){
+    form.reset();form.hidden=true;
+    message.className='auth-success';
+    message.textContent='Check your email for a confirmation link, then return here and sign in. If you already have an account, use Sign In instead.';
+    return;
+   }
+   const response=result.session;
+   const verified=await authRequest('user',null,response.access_token,'GET');
+   if(!current())return;
+   if(!verified?.id||verified.id!==response.user.id)throw Error('Account identity could not be verified.');
+   authEpoch++;saveAuth({...response,user:verified});switchWorkoutOwner(verified.id);
+   if(verifiedOwnerId!==verified.id||account?.id!==verified.id||
+      authStore.read(sessionStorage,localStorage)?.user?.id!==verified.id)
+    throw Error('Account session was not retained; sign-in was not completed.');
+   closeModal();setPage('home');renderSettings();
+   notice('Your MYLIFTCOACH 2.0 account is ready.');
+  }catch(err){
+   if(!current())return;
+   message.className='auth-error';
+   message.textContent=err.name==='AbortError'?'The account service timed out.':
+    /password|valid email|match|name must/i.test(err.message)?err.message:
+    'Registration could not be completed. Check your email or try again later.';
+  }finally{if(current()){submit.disabled=false;submit.textContent='Create account'}}
+ });
+}
+function openSignIn(){
+ openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">Use your verified account to save your training in 2.0.</p><button id="loginCreateAccount" class="button-outline" type="button">New here? Create an account</button>');
+ $('modal').classList.add('auth-fullscreen');
+ $('loginCreateAccount').addEventListener('click',openSignUp);
  // Do not focus through the id-only $ helper: the old selector threw before
  // the submit handler was attached. Avoid autofocus on iPhone to prevent keyboard jumps.
  $('loginForm').addEventListener('submit',async event=>{
@@ -1450,6 +1493,7 @@ function bind(){
  $('previewWelcome').addEventListener('click',()=>setPage('welcome'));
  $('welcomeExplore').addEventListener('click',()=>setPage('home'));
  $('welcomeSignIn').addEventListener('click',openSignIn);
+ $('welcomeSignUp')?.addEventListener('click',openSignUp);
  document.querySelectorAll('[data-shortcut]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.shortcut)));
  document.querySelectorAll('[data-coach-link]').forEach(el=>el.addEventListener('click',()=>setPage(el.dataset.coachLink)));
 
@@ -1981,6 +2025,7 @@ function bind(){
   }finally{button.disabled=false}
  });
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
+ $('authCreateAction')?.addEventListener('click',openSignUp);
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();
 document.body.classList.add('home-active');bind();window.MLC2BodyProgress?.init();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();recoverInterruptedPlans(null);
