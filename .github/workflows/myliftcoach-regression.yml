@@ -12,6 +12,7 @@ on:
       - fix/active-workout-close-safe-area-20261122
       - fix/iphone-home-screen-update-delivery-20261122
       - fix/iphone-workout-close-overlay-20261122
+      - fix/weekly-follow-and-approved-workout-cards-20261122
   workflow_dispatch:
 
 permissions:
