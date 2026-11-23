@@ -821,11 +821,25 @@ function renderSettings(){
    backupStatus.textContent='Signed in · account workout backup and recovery are available.';
  }
 }
-function openModal(content){$('modalContent').innerHTML=content;$('modal').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus()}
+function openModal(content){
+ const modal=$('modal'),close=$('closeModal'),panel=modal.querySelector('.modal-panel');
+ $('modalContent').innerHTML=content;
+ if($('modalContent').querySelector('.active-workout-header')){
+  // Keep the close button outside the scrolling workout panel so iOS cannot clip it.
+  modal.appendChild(close);
+  modal.classList.add('workout-close-overlay');
+ }else{
+  panel.prepend(close);
+  modal.classList.remove('workout-close-overlay');
+ }
+ modal.hidden=false;document.body.style.overflow='hidden';close.focus();
+}
 function closeModal(refresh=true){
  const hadWorkout=!!activePlan;
  previewCoachHistory=null;closeRest();
- $('modal').hidden=true;$('modal').classList.remove('auth-fullscreen');$('modalContent').replaceChildren();
+ $('modal').hidden=true;$('modal').classList.remove('auth-fullscreen','workout-close-overlay');
+ $('modal').querySelector('.modal-panel').prepend($('closeModal'));
+ $('modalContent').replaceChildren();
  document.body.style.overflow='';
  activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null;
  if(hadWorkout&&refresh){renderHome();renderWorkouts()}
