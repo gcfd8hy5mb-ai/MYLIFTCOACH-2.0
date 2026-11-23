@@ -34,6 +34,7 @@ test('public app assets can boot offline and account traffic bypasses the worker
  }
  assert.equal(await fetchThrough(scope,'navigate','document'),html);
  assert.equal(await fetchThrough(scope+'app.js?v=43','cors','script'),'app.js');
+ assert.equal(await fetchThrough(scope+'app.webmanifest?v=1','cors','manifest'),'app.webmanifest');
  assert.equal(fetchThrough(scope+'private','cors','','POST'),undefined);
  assert.equal(fetchThrough('https://cloud.example/rest','cors',''),undefined);
  assert.equal(fetchThrough(scope+'review/workout-history-check.html','navigate','document'),undefined);

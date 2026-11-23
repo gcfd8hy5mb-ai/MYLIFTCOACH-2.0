@@ -65,7 +65,11 @@
 
 /* The same viewport-fixed surface stays mounted under every mobile page. */
 @media(max-width:760px) {
-  html,
+  /* Native window color fallback when iOS does not extend the web view. */
+  html {
+    color-scheme:dark;
+    background:#04252d!important;
+  }
   body {
     background:none!important;
   }

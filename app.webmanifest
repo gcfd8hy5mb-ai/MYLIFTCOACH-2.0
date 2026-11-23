@@ -1,0 +1,13 @@
+{
+  "id": "./",
+  "name": "MYLIFTCOACH 2.0",
+  "short_name": "MYLIFTCOACH",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#04252d",
+  "background_color": "#04252d",
+  "icons": [
+    { "src": "./assets/myliftcoach-mark.svg?v=6", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

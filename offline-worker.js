@@ -3,7 +3,7 @@
 const scope = self.registration.scope;
 const shell = new URL('./index.html', scope).href;
 const prefix = 'myliftcoach2-shell:' + scope + ':';
-const cacheName = prefix + '44';
+const cacheName = prefix + '45';
 const artwork = [
  './assets/approved-vertical-marble-sharp.webp?v=11',
  './assets/hero-dumbbells-photo.jpg?v=7',
@@ -16,8 +16,8 @@ self.addEventListener('install', event => {
   if (!response.ok || response.redirected) throw Error('App shell unavailable');
   const html = await response.clone().text();
   // A worker waiting on an edge cache must not cache a mixed release.
-  if (!html.includes('href="./rich-teal-cards.css?v=7"')) throw Error('App shell version mismatch');
-  const references = [...html.matchAll(/(?:src|href)="(\.\/[\w./-]+\.(?:js|css|webp|jpg|png|svg)(?:\?v=\d+)?)"/g)]
+  if (!html.includes('href="./rich-teal-cards.css?v=8"')) throw Error('App shell version mismatch');
+  const references = [...html.matchAll(/(?:src|href)="(\.\/[\w./-]+\.(?:js|css|webp|jpg|png|svg|webmanifest)(?:\?v=\d+)?)"/g)]
    .map(match => match[1]);
   const assets = [...new Set([...references, ...artwork].map(path => new URL(path, scope).href))];
   if (assets.some(url => !url.startsWith(scope))) throw Error('Out-of-scope app asset');
@@ -41,7 +41,7 @@ self.addEventListener('fetch', event => {
  if (request.mode === 'navigate') {
   if (url.href !== scope && url.href !== shell) return;
   event.respondWith(fetch(request).catch(async () => (await caches.open(cacheName)).match(shell)));
- } else if (['script','style','image'].includes(request.destination)) {
+ } else if (['script','style','image','manifest'].includes(request.destination)) {
   event.respondWith((async () => (await (await caches.open(cacheName)).match(request)) || fetch(request))());
  }
 });
