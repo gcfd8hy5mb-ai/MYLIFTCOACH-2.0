@@ -325,6 +325,15 @@
 <button id="restoreOtherFitnessData" class="button-outline" type="button">Recover missing data</button>
 <p id="otherFitnessCloudStatus" role="status" aria-live="polite">Sign in to manage other fitness data backups.</p>
 </article>
+<article class="panel settings-panel" aria-label="Transfer account programs to another Home Screen installation">
+<div class="panel-heading"><h3>Preserve this app's programs</h3><span class="micro-tag">PRIVATE ACCOUNT COPY</span></div>
+<p>For an older and newer Home Screen installation that show different saved routines, schedules or Coach settings. Download a PRIVATE, account-bound copy from the installation you want to keep. Then inspect that copy on the other installation. Inspection never overwrites either installation or Supabase. This does not include workout history, passwords, or progress photos.</p>
+<button id="exportAccountPrograms" type="button" class="button-outline">Download my programs and Coach settings</button>
+<p role="status" aria-live="polite" id="exportAccountProgramsStatus"></p>
+<label for="inspectAccountProgramsFile">Choose the private program copy in the other installation</label>
+<input type="file" id="inspectAccountProgramsFile" accept=".json,application/json">
+<p role="status" aria-live="polite" id="inspectAccountProgramsStatus">Read-only comparison. Restore is not enabled until conflicts have been reviewed.</p>
+</article>
 <div class="panel settings-panel mlc-recovery-export"><h4>Save a 2.0 recovery copy</h4>
 <p>Download a private JSON backup of this browser's 2.0 workouts, unfinished session sets, practice history, daily tracking, measurements and readiness before a future migration. Excludes progress photos and sign-in credentials. Save important progress photos individually using Save copy in Daily Tracking. Keep all exported files private. This option does not sync records.</p>
 <button id="recoveryExportAction" class="button-outline" type="button">Download recovery copy</button>
@@ -436,6 +445,7 @@
 <script defer src="./sync/account-draft-store.js?v=2"></script>
 <script defer src="./sync/automatic-workouts.js?v=6"></script>
 <script defer src="./sync/auxiliary-cloud.js?v=5"></script>
+<script defer src="./sync/program-transfer.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
 <script defer src="./sync/account-signup.js?v=2"></script>
