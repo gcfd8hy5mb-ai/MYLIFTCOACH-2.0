@@ -5,9 +5,10 @@
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const LIMITS={sets:[1,20],reps:[1,100],weight:[0,1500],restSeconds:[0,1800]};
-let closeCurrent=null;
+let closeCurrent=null,forceCurrent=null;
 function open(onSaved){
  closeCurrent?.();
+ const initialOwner=window.MLC2Custom?.getOwner?.();
  const catalog=()=>Array.isArray(window.MLC2_EXERCISE_CATALOG)?window.MLC2_EXERCISE_CATALOG:[];
  const rows=DAYS.map((day)=>({title:day+' workout',rest:true,ids:[],targets:{}}));
  let active=1,dirty=false,query='',group='All';
@@ -15,12 +16,16 @@ function open(onSaved){
  backdrop.innerHTML='<div class="custom-editor-dialog weekly-builder-dialog" role="dialog" aria-modal="true" aria-label="Full weekly workout program"><div class="custom-editor-heading"><div><span class="custom-editor-kicker">MYLIFTCOACH 2.0 · WEEKLY PROGRAM</span><h2>Build your entire week</h2></div><button type="button" data-week-close aria-label="Close weekly program">✕</button></div><label class="weekly-program-label">Program name<input id="weeklyProgramName" maxlength="75" placeholder="e.g. My 7-day split"></label><p class="weekly-program-help">Choose a day, add its exercises and optional targets, then save the whole week once. Unconfigured days are rest days. Your old routines and workout history stay saved.</p><div id="weeklyBuilderTabs" class="weekly-builder-tabs" role="tablist" aria-label="Day to edit"></div><div id="weeklyBuilderDay" class="weekly-builder-day"></div><div class="custom-editor-footer weekly-builder-footer"><button type="button" data-week-close>Cancel</button><button type="button" id="saveWeeklyProgram">Save weekly program</button></div></div>';
  document.body.append(backdrop);
  const $=id=>backdrop.querySelector('#'+id);
- const close=()=>{
-  if(dirty&&!confirm('Discard your unsaved weekly program?'))return;
+ const forceClose=()=>{
   backdrop.remove();document.removeEventListener('keydown',onKey);
   if(closeCurrent===close)closeCurrent=null;
+  if(forceCurrent===forceClose)forceCurrent=null;
  };
- closeCurrent=close;
+ const close=()=>{
+  if(dirty&&!confirm('Discard your unsaved weekly program?'))return;
+  forceClose();
+ };
+ closeCurrent=close;forceCurrent=forceClose;
  const onKey=e=>{if(e.key==='Escape')close()};
  document.addEventListener('keydown',onKey);
  backdrop.addEventListener('click',e=>{if(e.target===backdrop||e.target.closest('[data-week-close]'))close()});
@@ -99,12 +104,12 @@ function open(onSaved){
   if(!confirm('Save this weekly program and replace the current weekday assignments? Existing workouts and history will remain saved.'))return;
   const editorOwner=window.MLC2Custom;
   try{
-   const result=editorOwner.saveFullWeek({title,days:rows});
+   const result=editorOwner.saveFullWeek({title,days:rows,expectedOwner:initialOwner});
    dirty=false;close();
    onSaved?.(result);
   }catch(err){alert('Weekly program was not saved: '+String(err.message||err).slice(0,140))}
  });
  render();$('weeklyProgramName').focus();
 }
-window.MLC2FullWeekBuilder={open};
+window.MLC2FullWeekBuilder={open,forceClose:()=>forceCurrent?.()};
 })();
