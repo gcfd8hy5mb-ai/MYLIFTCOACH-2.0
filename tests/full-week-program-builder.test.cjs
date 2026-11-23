@@ -87,3 +87,11 @@ test('UI has single and weekly builders with editable day tabs and optional targ
  for(const term of ['weeklyProgramName','weeklyBuilderTabs','weeklyRestDay','weeklyExerciseSearch','weekly-target-grid','saveFullWeek','restSeconds'])assert.ok((ui+css).includes(term));
  assert.ok(ui.includes('onSaved?.(result)'));
 });
+
+test('weekly builder parses and binds saving to its original account',()=>{
+ assert.doesNotThrow(()=>new vm.Script(read('full-week-builder.js')));
+ const custom=read('custom-workouts.js'),ui=read('full-week-builder.js');
+ assert.ok(custom.includes("if(expectedOwner!==owner)throw Error"));
+ assert.ok(custom.includes('MLC2FullWeekBuilder?.forceClose?.()'));
+ assert.ok(ui.includes('expectedOwner:initialOwner'));
+});
