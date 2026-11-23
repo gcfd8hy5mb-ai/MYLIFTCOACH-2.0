@@ -642,7 +642,18 @@ function renderWorkouts(){
    }
   }
  });
- const section=(items,label)=>{
+ const weeklyMap=window.MLC2WeeklySchedule?.read(planStorage())||{};
+ const scheduledDays=new Map();
+ for(let day=0;day<7;day++){
+  const id=weeklyMap[String(day)];
+  if(!id||!all.some(p=>p.id===id))continue;
+  if(!scheduledDays.has(id))scheduledDays.set(id,[]);
+  scheduledDays.get(id).push(window.MLC2WeeklySchedule.DAYS[day]);
+ }
+ const scheduled=all.filter(p=>scheduledDays.has(p.id));
+ const unscheduledCustom=custom.filter(p=>!scheduledDays.has(p.id));
+ const otherPresets=plans.filter(p=>!scheduledDays.has(p.id));
+ const section=(items,label,emptyMessage)=> {
   const cards=items.map(p=>{
    const imageExercise=(p.ids||[]).map(id=>libraryExercises().find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e));
    const imagePath=imageExercise?approvedThumbnail(imageExercise):'./assets/image-coming-approved.webp';
@@ -652,7 +663,8 @@ function renderWorkouts(){
    const isCustom=p.id.startsWith('custom-');
    return '<article class="workout-compact-card'+(current?' is-selected':'')+'">'+
     '<div class="workout-compact-heading"><span class="workout-compact-illustration"><img src="'+escapeHTML(imagePath)+'" alt="'+escapeHTML(imageAlt)+'" loading="lazy" decoding="async" data-workout-preview-image></span><div><h3>'+escapeHTML(p.title)+'</h3>'+
-    '<p>'+p.ids.length+' exercises · '+(isCustom?'Custom':'Preset')+'</p></div>'+
+    '<p>'+p.ids.length+' exercises · '+(isCustom?'Custom':'Preset')+'</p>'+
+    (scheduledDays.has(p.id)?'<p class="workout-assigned-days">Scheduled: '+escapeHTML(scheduledDays.get(p.id).join(', '))+'</p>':'')+'</div>'+
     (current?'<span class="workout-selected-tag">Today ✓</span>':'')+'</div>'+
     '<div class="workout-compact-actions">'+
     '<button type="button" class="workout-compact-start" data-workout="'+escapeHTML(p.id)+'">Start workout</button>'+
@@ -663,9 +675,14 @@ function renderWorkouts(){
     '</div></article>';
   }).join('');
   return '<div class="workout-compact-section"><h3 class="workout-compact-label">'+label+'</h3>'+
-   (cards||'<p class="workout-compact-empty">No custom routines yet. Create one to get started.</p>')+ '</div>';
+   (cards||'<p class="workout-compact-empty">'+emptyMessage+'</p>')+ '</div>';
  };
- $('workoutGrid').innerHTML=section(custom,'Your custom workouts')+section(plans,'Ready-made presets');
+ const scheduledSection=section(scheduled,'Your scheduled workouts','No workouts assigned to your weekly schedule. Choose workouts in the Schedule tab.');
+ const customSection=unscheduledCustom.length?section(unscheduledCustom,'Other custom workouts',''):'';
+ const otherSection=otherPresets.length?'<details class="workout-other-presets"><summary>Other available presets ('+
+  otherPresets.length+') · Not in your weekly schedule</summary>'+
+  section(otherPresets,'Available to add or use manually','')+'</details>':'';
+ $('workoutGrid').innerHTML=scheduledSection+customSection+otherSection;
  wireWorkoutPreviewImages($('workoutGrid'));
  renderAutonomousCoach();
  setWorkoutTab(workoutTab);
