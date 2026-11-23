@@ -74,11 +74,28 @@ function render(root,{presets,custom,storage,onChanged,doc=document}){
   label.append(select);grid.append(label);
  });
  root.append(grid);
+ const status=doc.createElement('p');status.setAttribute('role','status');status.className='mlc-schedule-note';
+ const current=resolve({presets,custom,storage});
+ const manual=current?.scheduleSource==='manual';
+ status.textContent=manual
+  ?'Manual selection active: '+current.title+'. The weekly schedule is paused until you tap Follow weekly schedule.'
+  :current?.scheduleSource==='weekly'
+   ?'Following weekly schedule · Today: '+current.title
+   :'No workout scheduled for today. Choose a workout above to follow the weekly schedule.';
+ root.append(status);
  const button=doc.createElement('button');button.type='button';button.className='button-outline';
  button.textContent='Follow weekly schedule (clear manual selection)';
- button.addEventListener('click',()=>{try{clearOverride(storage);onChanged?.()}catch(e){status.textContent=e.message}});
+ button.addEventListener('click',()=>{
+  try{
+   clearOverride(storage);
+   const selected=resolve({presets,custom,storage});
+   status.textContent=selected?.scheduleSource==='weekly'
+    ?'Following weekly schedule · Today: '+selected.title
+    :'Manual selection cleared. No workout scheduled for today.';
+   onChanged?.('follow',selected);
+  }catch(e){status.textContent='Unable to follow weekly schedule: '+e.message}
+ });
  root.append(button);
- const status=doc.createElement('p');status.setAttribute('role','status');status.className='mlc-schedule-note';root.append(status);
 }
 return Object.freeze({KEY,DAYS,valid,read,save,assign,resolve,clearOverride,render});
 });
