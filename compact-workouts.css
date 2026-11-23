@@ -167,3 +167,23 @@
  background:#04252d!important;
  border:1px solid #d8b77b!important;
 }
+
+/* The weekly plan is the primary list. Unassigned presets stay accessible
+   without appearing to be part of the user's selected training week. */
+#workouts .workout-assigned-days{
+ color:#e7c68e!important;font-size:11px!important;
+ line-height:1.5;margin:7px 0 0!important;
+}
+#workouts .workout-other-presets{
+ border:1px solid rgba(215,178,108,.50)!important;
+ background:#04252d!important;
+ background-image:var(--mlc-rich-teal-surface)!important;
+ border-radius:14px;padding:14px;margin-bottom:20px;
+}
+#workouts .workout-other-presets > summary{
+ color:#f0d5a3!important;font-size:13px;font-weight:750;
+ cursor:pointer;line-height:1.5;min-height:44px;
+ display:list-item;align-content:center;
+}
+#workouts .workout-other-presets[open] > summary{margin-bottom:15px}
+#workouts .workout-other-presets .workout-compact-section{margin:0}
