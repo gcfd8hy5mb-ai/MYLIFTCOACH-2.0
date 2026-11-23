@@ -105,3 +105,17 @@ test('offline change remains local without cloud writes or remote mutation',asyn
  assert.equal(cloud.rows.size,0);
  assert.deepEqual(JSON.parse(JSON.stringify(d.custom.allPlans([])[0].targets)),plan.targets);
 });
+
+test('every saved custom workout has a schedule shortcut; presets remain optional',()=>{
+ const app=read('app.js'),custom=read('custom-workouts.js');
+ assert.ok(app.includes("(isCustom?'<button type=\"button\" class=\"button-outline\" data-custom-schedule="));
+ assert.ok(app.includes("allPlans.find(plan=>plan.id===pending.id&&plan.id.startsWith('custom-'))"));
+ assert.ok(custom.includes("read().find(p=>p.id===schedule.dataset.customSchedule)"));
+ assert.ok(app.includes('window.MLC2WeeklySchedule.assign('));
+});
+test('cloud recovery availability is informational until user approves restore',()=>{
+ const app=read('app.js');
+ assert.ok(app.includes('auxEngine(owner).previewRecovery()'));
+ assert.ok(app.includes('Open Data & Backup → Recover missing data'));
+ assert.ok(app.includes("confirm('Recover '"));
+});
