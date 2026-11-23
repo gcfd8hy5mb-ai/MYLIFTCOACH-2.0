@@ -31,8 +31,20 @@ function save(planId,value,day=today()){
  const entries=read();entries[day+':'+planId]=value;
  try{const payload=JSON.stringify(entries);localStorage.setItem(scoped(KEY),payload);if(localStorage.getItem(scoped(KEY))!==payload)return false;try{window.MLC2ScheduleAuxSync?.()}catch{}return true}catch{return false}
 }
+// On a newly created weekly program, derive the Coach progress goal from
+// actual scheduled training days until the person explicitly sets a goal.
+function scheduledGoal(storage){
+ try{
+  const raw=storage.getItem(scoped('mlc2-weekly-schedule-v1'));
+  if(raw===null)return null;
+  const parsed=JSON.parse(raw);
+  if(!window.MLC2WeeklySchedule?.valid(parsed))return null;
+  const count=Object.values(parsed).filter(x=>x&&x!=='rest-day').length;
+  return count>=1&&count<=7?count:null;
+ }catch{return null}
+}
 function weeklyGoal(storage=localStorage){
- try{const raw=storage.getItem(scoped(GOAL_KEY));if(raw===null)return 4;
+ try{const raw=storage.getItem(scoped(GOAL_KEY));if(raw===null)return scheduledGoal(storage)||4;
   const value=Number(raw);return Number.isInteger(value)&&value>=1&&value<=7?value:4;
  }catch{return 4}
 }
@@ -89,5 +101,5 @@ function render(root,sessions,plan,onChange){
  });
 }
 function escapeText(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-window.MLC2CoachReadiness={monday,read,current,save,weeklyGoal,saveWeeklyGoal,weekSummary,render,setOwner};
+window.MLC2CoachReadiness={monday,read,current,save,weeklyGoal,saveWeeklyGoal,scheduledGoal,weekSummary,render,setOwner};
 })();
