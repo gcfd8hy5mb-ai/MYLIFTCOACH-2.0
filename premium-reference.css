@@ -10,12 +10,8 @@
  --card-rich:#07535a;
  --glass:rgba(5,60,66,.91);
 }
-html{background:#064348}
-body{
- background:#063f45 url("./assets/approved-vertical-marble-sharp.webp?v=11") center top / cover fixed!important;
-
- color:#fff6df;
-}
+@media(min-width:761px){html{background:#064348}}
+body{color:#fff6df;}
 .app-shell,.main-wrap,.content{background:transparent!important}
 .sidebar{
  background:#053f45 url("./assets/approved-vertical-marble-sharp.webp?v=11") 25% center / cover!important;
@@ -260,7 +256,6 @@ body{
 .rest-next small{font-size:13px;color:#d9e6dc}
 .rest-demo{font-size:11px;color:#ccdbd1;text-align:center;margin:22px 0 4px}
 @media(max-width:760px){
- html,body{background:#063f45 url("./assets/approved-vertical-marble-sharp.webp?v=11") 51% top / auto 100vh fixed!important}
  .topbar{
   background:rgba(2,51,56,.88)!important;
   backdrop-filter:blur(12px);

@@ -43,3 +43,14 @@ test('all More panels close within their intended disclosure',()=>{
  }
  assert.deepEqual(stack,[]);
 });
+
+test('mobile routes share the same existing fixed wallpaper without page-specific painters',()=>{
+ const read=name=>fs.readFileSync(name,'utf8');
+ const wallpaper=read('rich-teal-cards.css');
+ assert.equal((wallpaper.match(/body::before/g)||[]).length,1);
+ assert.match(wallpaper,/html,\s*body\s*\{\s*background:none!important/);
+ assert.match(wallpaper,/body::before\s*\{[^}]*position:fixed;[^}]*inset:0;[^}]*approved-vertical-marble-sharp\.webp\?v=11[^}]*cover no-repeat/);
+ for(const name of ['home-rebuild.css','more-page.css'])assert.doesNotMatch(read(name),/body[^\n{]*::before|approved-vertical-marble-sharp/);
+ assert.match(html,/apple-mobile-web-app-status-bar-style" content="black-translucent"/);
+ assert.match(read('mobile-header-cleanup.css'),/env\(safe-area-inset-top\)/);
+});

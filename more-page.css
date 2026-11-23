@@ -62,28 +62,3 @@
 .more-section-content input[type="file"] { max-inline-size: 100%; }
 .more-section-content p { overflow-wrap: anywhere; }
 .more-links { display: grid; gap: 8px; }
-
-@media (max-width:760px) {
- /* The fixed body layer covers the viewport; the root paints the same
-    wallpaper under it during overscroll and viewport resizing. */
- html:root {
-  background: #0e5357 url('./assets/approved-vertical-marble-sharp.webp?v=11') center top / cover no-repeat !important;
- }
- body,
- body.home-active {
-  background: transparent !important;
- }
- body::before,
- body.home-active::before,
- body:not(.home-active)::before {
-  inset: 0;
-  width: auto;
-  height: auto;
-  min-height: 100lvh;
-  background-position: center top;
- }
- body .main-wrap > .content {
-  padding-top: calc(16px + env(safe-area-inset-top)) !important;
- }
- body:not(.welcome-view) .topbar { background: transparent !important; }
-}

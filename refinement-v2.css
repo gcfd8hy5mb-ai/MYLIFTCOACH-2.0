@@ -6,7 +6,6 @@
 .shortcut-symbol{display:grid;place-items:center}
 .shortcut-symbol .app-icon{width:25px;height:25px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.22))}
 .bottom-tabs .app-icon{width:23px;height:23px;flex-shrink:0}
-body{background-color:#08484b!important}
 .hero .button-primary{background:linear-gradient(180deg,#fff4bf 0%,#f8d68c 45%,#d4a35b 100%)!important}
 .brand-mark{filter:drop-shadow(0 2px 5px #00191e) drop-shadow(0 0 4px rgba(255,220,143,.22))}
 .mobile-brand{gap:9px!important}
@@ -14,10 +13,6 @@ body{background-color:#08484b!important}
 .quick-grid button strong{font-weight:600}
 .quick-grid button:focus-visible,.bottom-tabs button:focus-visible{outline:2px solid #ffe5a8;outline-offset:2px}
 @media (max-width:760px){
-  html,body{
-    background:#064a4c url("./assets/approved-vertical-marble-sharp.webp?v=11") center top/cover no-repeat fixed!important;
-
-  }
   .topbar{
     height:47px!important;min-height:47px!important;
     background:rgba(3,59,64,.50)!important;
