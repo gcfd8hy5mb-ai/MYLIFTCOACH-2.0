@@ -95,7 +95,7 @@ test('Library opens original full-size approved art on demand and protects again
 test('approved thumbnails have visible fixed dimensions inside compact iPhone cards',()=>{
  const css=read('exercise-placeholders.css');
  const html=read('index.html');
- assert.ok(html.includes('exercise-placeholders.css?v=3'));
+ assert.ok(html.includes('exercise-placeholders.css?v=4'));
  assert.match(css,/#library \.reference-exercise \.library-media \{[^}]*flex:0 0 84px/);
  assert.match(css,/#library \.reference-exercise \.library-media\{[^}]*flex-basis:76px/);
  assert.match(css,/#library \.library-media \.approved-thumb \{[^}]*object-fit:contain/);
@@ -110,4 +110,12 @@ test('iPhone library approved thumbnails stay left of the exercise title and det
  assert.match(css,/> \.library-info\{[^}]*grid-column:2!important/);
  assert.match(css,/> \.library-chevron\{[^}]*grid-column:3!important/);
  assert.match(css,/object-fit:contain!important/);
+});
+
+test('library card stylesheet contains real line breaks and constrained thumbnails',()=>{
+ const css=read('exercise-placeholders.css');
+ assert.equal(css.includes('\\\\n'),false,'literal escaped newlines break stylesheet parsing');
+ assert.match(css,/#library \.library-card\.reference-exercise \{[\s\S]*?grid-template-columns:80px minmax\(0,1fr\) 12px!important/);
+ assert.match(css,/#library \.library-card\.reference-exercise > \.library-media \{[\s\S]*?max-width:80px!important/);
+ assert.match(css,/#library \.library-card\.reference-exercise > \.library-media > img\.library-thumb \{[\s\S]*?object-fit:contain!important/);
 });
