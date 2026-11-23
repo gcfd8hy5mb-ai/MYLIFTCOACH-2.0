@@ -1403,7 +1403,7 @@ function openSignUp(){
 function openSignIn(){
  openModal('<div class="modal-eyebrow">EXISTING SUPABASE ACCOUNT</div><h2>Welcome back</h2><p>Use the email and password from your original MYLIFTCOACH account. This only verifies your identity; it will not import, overwrite, or modify workout records.</p><form id="loginForm" class="login-form"><label>Email<input name="email" type="email" autocomplete="email" autocapitalize="none" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label><button class="button-primary" id="loginSubmit" type="submit">Sign in securely</button></form><p id="loginMessage" role="status"></p><p class="small">Use your verified account to save your training in 2.0.</p><button id="loginCreateAccount" class="button-outline" type="button">New here? Create an account</button>');
  $('modal').classList.add('auth-fullscreen');
- $('loginCreateAccount').addEventListener('click',openSignUp);
+ $('loginCreateAccount')?.addEventListener('click',openSignUp);
  // Do not focus through the id-only $ helper: the old selector threw before
  // the submit handler was attached. Avoid autofocus on iPhone to prevent keyboard jumps.
  $('loginForm').addEventListener('submit',async event=>{
