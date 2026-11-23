@@ -66,5 +66,5 @@ test('Coach program Save Day requires confirmation and stays in the existing cus
  assert.ok(custom.includes('function saveCoachDay(day)'));
  assert.ok(custom.includes('persistPlans([plan,...existing])'));
  assert.ok(!custom.slice(custom.indexOf('function saveCoachDay(day)'),custom.indexOf('function allPlans(')).includes('scoped(TODAY)'));
- assert.ok(app.includes("if(betaView().mode!=='pro')throw Error"));
+ assert.ok(app.includes("coachEpoch!==authEpoch||betaView().mode!=='pro')throw Error"));
 });

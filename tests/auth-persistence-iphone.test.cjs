@@ -40,14 +40,14 @@ test('account session can be stored when sessionStorage is unavailable',()=>{
 test('store never authorizes cloud access before Supabase user verification',()=>{
  assert.match(app,/const user=await authRequest\('user',null,candidate.access_token,'GET'\)/);
  assert.match(app,/if\(!user\?\.id\|\|user.id!==saved.user.id\)/);
- assert.match(app,/authStore.save\(sessionStorage,localStorage,candidate\);\s*auth=candidate;account=user;switchWorkoutOwner\(user.id\)/);
+ assert.match(app,/authStore.replace\(sessionStorage,localStorage,saved,candidate\)\)return;[\s\S]*?auth=candidate;account=user;switchWorkoutOwner\(user.id\)/);
  assert.match(app,/if\(\[400,401,403\]\.includes\(err\?\.status\)\)/);
  assert.match(app,/authEpoch\+\+;saveAuth\(\{\.\.\.response,user:verified\}\);switchWorkoutOwner\(verified.id\)/);
 });
 test('old production auth key never used or overwritten',()=>{
  assert.equal(Store.KEY,'mlc2-auth-session-v1');
  assert.ok(!app.includes('sb-')||app.includes('sb_publishable_'));
- assert.match(app,/authStore.clear\(sessionStorage,localStorage\)/);
+ assert.match(app,/authStore.clear\(sessionStorage,localStorage,expected\)/);
 });
 
 test('full-screen login attaches submit handler without querying CSS via ID-only helper',()=>{
@@ -76,4 +76,17 @@ test('closing sign-in during a pending password request prevents late authentica
  reply({access_token:'fixture-token',user:{id:'fixture-account'}});
  await signingIn;
  assert.equal(commits,0);
+});
+
+test('a background token renewal and stale sign-out cannot replace another account’s persistent session',()=>{
+ const first=makeStorage(),second=makeStorage(),shared=makeStorage();
+ const original=validSession(),other={...original,user:{id:'second-owner'},access_token:'other-account-token-1234'};
+ Store.save(first,shared,original);
+ Store.save(second,shared,other);
+ const renewed={...original,access_token:'renewed-account-token-1234',expires_at:original.expires_at+30};
+ assert.equal(Store.replace(first,shared,original,renewed),true);
+ assert.deepEqual(Store.read(first,shared),renewed);
+ assert.deepEqual(Store.read(second,shared),other);
+ Store.clear(first,shared,renewed);
+ assert.deepEqual(Store.read(makeStorage(),shared),other);
 });

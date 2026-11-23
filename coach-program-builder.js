@@ -70,7 +70,7 @@ function build(catalog,sessions,options={}){
 function render(root,catalog,sessions,options={}){
  if(!root)return;
  root.replaceChildren();
- if(options.mode!=='pro')return;
+ if(options.mode!=='pro'||button.disabled)return;
  let settings=normalizeOptions(options.initial);
  const create=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x};
  const intro=create('p','coach-program-disclaimer','Optional suggested routine from the 344-exercise catalog. Your Home workout and custom routines are never replaced. No weights are assigned automatically.');
@@ -105,13 +105,15 @@ function render(root,catalog,sessions,options={}){
    if(d.exercises.length&&typeof options.onSaveDay==='function'){
     const button=create('button','button-outline coach-program-save','Save Day '+d.day+' as custom workout');
     button.type='button';
-    button.addEventListener('click',()=>{
-     if(options.mode!=='pro')return;
+    button.addEventListener('click',async()=>{
+     if(options.mode!=='pro'||button.disabled)return;
      if(!window.confirm('Save Coach Day '+d.day+' as a NEW custom workout? Your current Home workout and schedule will not change.'))return;
      try{
-      const saved=options.onSaveDay({day:d.day,exercises:d.exercises.map(e=>({...e}))});
+      button.disabled=true;
+      const saved=await options.onSaveDay({day:d.day,exercises:d.exercises.map(e=>({...e}))});
       status.textContent='Saved '+(saved?.title||'Coach workout')+' in Workouts. Your selected Home workout remains unchanged.';
      }catch(error){status.textContent='Could not save Coach day: '+String(error.message||error).slice(0,145)}
+     finally{button.disabled=false}
     });
     details.append(button);
    }

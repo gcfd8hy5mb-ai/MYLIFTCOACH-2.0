@@ -52,7 +52,7 @@ test('Approved teal/gold styling stays scoped to Workouts; active logger, login 
  assert.ok(html.includes('active-workout-ux.css?v=5'));
  assert.ok(html.includes('workout-auth-ux-fix.css?v=2'));
  assert.match(app,/queueWorkoutForSync\(entry\)/);
- assert.match(app,/window\.MLC2SessionDraft\?\.save\(activeDraftStore,activePlan,session.sets\)/);
+ assert.match(app,/window\.MLC2SessionDraft\.save\(draft,plan,next\)/);
 });
 
 test('Today workout follows approved rich dark-teal card material, not the old light teal',()=>{
@@ -68,7 +68,7 @@ test('Today workout follows approved rich dark-teal card material, not the old l
 
 test('following the weekly schedule shows Today and visible confirmation',()=>{
  const schedule=read('weekly-workout-schedule.js');
- assert.ok(html.includes('weekly-workout-schedule.js?v=5'));
+ assert.ok(html.includes('weekly-workout-schedule.js?v=6'));
  assert.match(schedule,/onChanged\?\.\('follow',selected\)/);
  assert.match(schedule,/Following weekly schedule · Today:/);
  assert.match(schedule,/Manual selection active:/);
@@ -88,5 +88,5 @@ test('weekday assignment labels are not inferred from the full preset catalog',(
  const css=read('compact-workouts.css');
  assert.match(css,/#workouts \.workout-other-presets/);
  assert.match(css,/#workouts \.workout-assigned-days/);
- assert.ok(html.includes('app.js?v=45'));
+ assert.ok(html.includes('app.js?v=47'));
 });

@@ -42,7 +42,7 @@ const sessionRefresh=window.MLC2FreshAuth.create({
  fetchUser:token=>authRequest('user',null,token,'GET'),
  commit:session=>{
   const previousMode=betaView().mode;
-  authStore.save(sessionStorage,localStorage,session);
+  if(!authStore.replace(sessionStorage,localStorage,auth,session))throw Error('Account session changed in another window');
   auth=session;account=session.user;renderSettings();
   if(betaView().mode!==previousMode){renderHome();renderWorkouts();renderCoach()}
  }
@@ -55,13 +55,14 @@ let demoSessions=loadDemo();
 const TRACK_KEY='mlc2-local-daily-v1'; // New 2.0 log, NEVER a legacy key
 const currentTrackingKey=()=>verifiedOwnerId?TRACK_KEY+':user:'+verifiedOwnerId:TRACK_KEY;
 const planStorage=()=>{
+ const owner=verifiedOwnerId;
  const selected='mlc2-selected-workout-v1';
- const map=k=>verifiedOwnerId&&[selected,'mlc2-weekly-schedule-v1'].includes(k)?k+':user:'+verifiedOwnerId:k;
+ const map=k=>owner&&[selected,'mlc2-weekly-schedule-v1'].includes(k)?k+':user:'+owner:k;
  return {
-  getItem:k=>{const raw=localStorage.getItem(map(k));return verifiedOwnerId&&k===selected&&raw===''?null:raw},
+  getItem:k=>{const raw=localStorage.getItem(map(k));return owner&&k===selected&&raw===''?null:raw},
   setItem:(k,v)=>localStorage.setItem(map(k),v),
   removeItem:k=>{
-   if(verifiedOwnerId&&k===selected){localStorage.setItem(map(k),'');try{window.MLC2ScheduleAuxSync?.()}catch{}}
+   if(owner&&k===selected){localStorage.setItem(map(k),'');try{window.MLC2ScheduleAuxSync?.()}catch{}}
    else localStorage.removeItem(map(k));
   }
  };
@@ -83,6 +84,20 @@ function withAccountLock(kind,owner,epoch,work){
  };
  return navigator.locks?.request('myliftcoach2:'+kind+':'+(owner===null?'guest':'user:'+owner),guarded)??guarded();
 }
+function recoverInterruptedPlans(owner){
+ const epoch=authEpoch;
+ void (async()=>{
+  try{
+   const recovered=await withAccountLock('plans',owner,epoch,()=>window.MLC2Custom?.recoverPlanWrite());
+   if(recovered&&epoch===authEpoch&&owner===verifiedOwnerId){
+    renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+    scheduleAuxSync();
+   }
+  }catch{
+   if(epoch===authEpoch&&owner===verifiedOwnerId)notice('A pending workout schedule needs review. Existing records were kept.');
+  }
+ })();
+}
 function loadCurrentWorkouts(){try{demoSessions=window.MLC2AccountWorkouts.read(localStorage,verifiedOwnerId)}catch{demoSessions=[];notice('Workout history is unreadable; it has not been overwritten.')}}
 function switchWorkoutOwner(owner){
  coachAutonomousDraft=null;
@@ -98,7 +113,7 @@ function switchWorkoutOwner(owner){
   auxSyncMessage='Checking account fitness backup status…';
  }
  verifiedOwnerId=owner;
- window.MLC2Custom?.setOwner(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);
+ window.MLC2Custom?.setOwner(owner);recoverInterruptedPlans(owner);window.MLC2BodyProgress?.setOwner(owner);window.MLC2CoachReadiness?.setOwner(owner);
  trackingEntries=loadLocalTracking();pendingAccountRecovery=null;
  const file=$('accountRecoveryFile');if(file)file.value='';
  loadCurrentWorkouts();renderHome();renderProgress();renderWorkouts();renderHistory();renderTracking();renderSettings();
@@ -185,7 +200,9 @@ function auxEngine(owner){
  const epoch=authEpoch;
  const verifier=window.MLC2VerifiedAuth.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>sessionRefresh.sessionFor(owner),fetcher:fetch,enabled:true});
  const transport=window.MLC2SupabaseTransport.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,fetcher:fetch,enabled:true,getVerifiedAuth:()=>verifier.verify(owner)});
- return window.MLC2AuxCloud.create({owner,storage:localStorage,aux:window.MLC2AuxData,Sync:window.MLC2Sync,transport,verify:id=>verifier.verify(id),active:()=>epoch===authEpoch&&account?.id===verifiedOwnerId?verifiedOwnerId:null,online:()=>navigator.onLine});
+ return window.MLC2AuxCloud.create({owner,storage:localStorage,aux:window.MLC2AuxData,Sync:window.MLC2Sync,transport,verify:id=>verifier.verify(id),active:()=>epoch===authEpoch&&account?.id===verifiedOwnerId?verifiedOwnerId:null,online:()=>navigator.onLine,
+  withLocalAccess:work=>withAccountLock('plans',owner,epoch,()=>{window.MLC2Custom.requireStablePlans();return work()}),
+  writePlans:changes=>window.MLC2Custom.commitRecoveredPlans(changes)});
 }
 function syncEngine(owner){
  if(owner!==verifiedOwnerId||owner!==account?.id||!auth?.access_token)throw Error('Verified sign-in required');
@@ -268,7 +285,8 @@ function safeOriginal(key,kind){
   // The original app stores signed-in data under a user-scoped key.
   // Never browse another user's scoped records or fall back to guest data
   // while an account is authenticated in 2.0.
-  const keyForOwner=account?.id?'prismAccountLocalV1:'+account.id+':'+key:key;
+  if(account?.id&&account.id!==verifiedOwnerId)return kind==='array'?[]:{};
+  const keyForOwner=verifiedOwnerId?'prismAccountLocalV1:'+verifiedOwnerId+':'+key:key;
   const raw=localStorage.getItem(keyForOwner);
   if(!raw||raw.length>5_000_000)return kind==='array'?[]:{};
   const value=JSON.parse(raw);
@@ -463,7 +481,8 @@ function unfinishedDraftFor(plan){
  try{
   const scoped=window.MLC2AccountDraft.scope(localStorage,verifiedOwnerId);
   const draft=window.MLC2SessionDraft?.read(scoped);
-  if(!draft?.sets?.length||(draft.workoutId&&demoSessions.some(row=>row.id===draft.workoutId))||draft.planId!==plan.id||
+  if(!draft?.sets?.length||(draft.workoutId&&(demoSessions.some(row=>row.id===draft.workoutId)||
+     window.MLC2AccountWorkouts?.removed(localStorage,verifiedOwnerId).has(draft.workoutId)))||draft.planId!==plan.id||
      JSON.stringify(draft.ids)!==JSON.stringify(plan.ids))return null;
   return draft;
  }catch{return null}
@@ -629,7 +648,7 @@ function openCoachSchedule(plan){
  setWorkoutTab('schedule');
  $('coachScheduleDay').focus();
 }
-function assignCoachSchedule(){
+async function assignCoachSchedule(){
  const pending=pendingCoachSchedule;
  if(!pending||pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch){closeCoachSchedule();return}
  const allPlans=window.MLC2Custom.allPlans(plans);
@@ -639,7 +658,11 @@ function assignCoachSchedule(){
  if(!confirm('Assign '+routine.title+' to '+window.MLC2WeeklySchedule.DAYS[day]+'?'))return;
  if(pending.owner!==verifiedOwnerId||pending.epoch!==authEpoch)return;
  try{
-  window.MLC2WeeklySchedule.assign(planStorage(),day,routine.id,allPlans);
+  await window.MLC2Custom.runPlanWrite(()=>{
+   if(pending!==pendingCoachSchedule||pending.epoch!==authEpoch)throw Error('Schedule selection changed');
+   return window.MLC2WeeklySchedule.assign(planStorage(),day,routine.id,window.MLC2Custom.allPlans(plans));
+  });
+  if(pending!==pendingCoachSchedule)return;
   closeCoachSchedule();renderHome();renderWorkouts();if(page==='coaching')renderCoach();
   notice('Weekly schedule updated.');
  }catch(err){$('coachScheduleStatus').textContent=err.message}
@@ -649,7 +672,7 @@ function renderWorkouts(){
  const activeId=selected?.id||'';
  const ownerReady=!!verifiedOwnerId&&account?.id===verifiedOwnerId;
  const custom=(window.MLC2Custom?.allPlans(plans)||plans).filter(p=>p.id.startsWith('custom-'));
- const all=[...custom,...plans];
+ const all=[...custom,...plans],scheduleOwner=verifiedOwnerId,scheduleEpoch=authEpoch;
  const top=$('workoutTodayName'),meta=$('workoutTodayMeta'),source=$('workoutTodaySource');
  if(top)top.textContent=selected?.title||'Choose a workout';
  if(meta)meta.textContent=selected?.scheduleSource==='rest'?'Recovery day · No scheduled exercises':selected?selected.ids.length+' exercises · '+
@@ -674,7 +697,12 @@ function renderWorkouts(){
   guestStatus.textContent=recoverable.available+' guest workout(s) available to copy to this verified account. Existing workouts will not be replaced.';
  window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
   presets:plans,custom,
-  storage:planStorage(),onChanged:(action,plan)=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+  storage:planStorage(),runWrite:work=>{
+   return window.MLC2Custom.runPlanWrite(()=>{
+    if(scheduleOwner!==verifiedOwnerId||scheduleEpoch!==authEpoch)throw Error('Workout account changed');
+    return work(window.MLC2Custom.allPlans(plans));
+   });
+  },onChanged:(action,plan)=>{renderHome();renderWorkouts();if(page==='coaching')renderCoach();
    if(action==='follow'){
     if(page!=='workouts')setPage('workouts');
     setWorkoutTab('today');
@@ -802,15 +830,18 @@ function renderCoach(){
  document.querySelectorAll('[data-pro-coach]').forEach(el=>{el.hidden=!pro});
  const note=$('coachFreeNotice');if(note)note.hidden=pro;
  if(pro){
+  const coachOwner=verifiedOwnerId,coachEpoch=authEpoch;
   window.MLC2Coach?.render($('coachSuggestions'),history,catalog);
   window.MLC2Coach?.renderTools($('coachSubstitutions'),catalog,selected);
   window.MLC2ProgramBuilder?.render($('coachProgramBuilder'),catalog,history,{
    mode:'pro',initial:window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId),
    onSaveDay:day=>{
-    if(betaView().mode!=='pro')throw Error('Pro beta access is required.');
-    const saved=window.MLC2Custom?.saveCoachDay(day);
-    if(!saved)throw Error('Could not save Coach workout');
-    renderHome();renderWorkouts();return saved;
+    return window.MLC2Custom.runPlanWrite(()=>{
+     if(coachOwner!==verifiedOwnerId||coachEpoch!==authEpoch||betaView().mode!=='pro')throw Error('Pro beta access is required for this account.');
+     const saved=window.MLC2Custom?.saveCoachDay(day);
+     if(!saved)throw Error('Could not save Coach workout');
+     renderHome();renderWorkouts();return saved;
+    });
    }
   });
   window.MLC2CoachPlan?.render($('coachPlanPreview'),selected,catalog,history,{
@@ -897,11 +928,25 @@ function openModal(content){
  modal.hidden=false;document.body.style.overflow='hidden';close.focus();
 }
 function closeModal(refresh=true){
+ if(!activePlan||refresh===false)return closeModalForOwner(refresh);
+ const plan=activePlan,owner=activeDraftOwner,epoch=authEpoch;
+ void (async()=>{
+  try{
+   await withAccountLock('history',owner,epoch,()=>{
+    if(plan===activePlan)closeModalForOwner(refresh);
+   });
+  }catch{if(epoch===authEpoch)notice('The workout is still open. Try closing again.')}
+ })();
+}
+function closeModalForOwner(refresh){
  const hadWorkout=!!activePlan;
  if(hadWorkout&&refresh){
   if($('finishWorkout')?.disabled)return;
   try{window.MLC2SessionDraft.save(activeDraftStore,activePlan,session.sets)}
-  catch{notice('Draft could not be saved. Your workout is still open for retry.');return}
+  catch(error){
+   if(error.code!=='STALE_DRAFT'){notice('Draft could not be saved. Your workout is still open for retry.');return}
+   notice('Kept the newer draft from another window. Reopen the workout to continue.');
+  }
  }
  previewCoachHistory=null;closeRest();
  $('modal').hidden=true;$('modal').classList.remove('auth-fullscreen','workout-close-overlay');
@@ -1055,6 +1100,14 @@ function startPreviewWorkout(button,resolve){
  openWorkout(plan.id);
 }
 function openWorkout(id){
+ const owner=verifiedOwnerId,epoch=authEpoch;
+ void (async()=>{
+  try{await withAccountLock('history',owner,epoch,()=>openWorkoutForOwner(id))}
+  catch{if(epoch===authEpoch)notice('Could not open the workout. Check browser storage and try again.')}
+ })();
+}
+function openWorkoutForOwner(id){
+ if(activePlan)return;
  $('modal').classList.remove('auth-fullscreen');
  const workoutStartedOwner=verifiedOwnerId;
  // A Coach recommendation is ephemeral: never trust a cached plan after
@@ -1065,10 +1118,11 @@ function openWorkout(id){
  if(!plan){notice('That workout is no longer available. Review your current selection and try again.');return}
  if(freshCoach&&plan===freshCoach)coachAutonomousDraft=freshCoach;
  const draftAPI=window.MLC2SessionDraft;
- const draftStore=window.MLC2AccountDraft.scope(localStorage,workoutStartedOwner);
+ const draftStore=window.MLC2AccountDraft.scope(localStorage,workoutStartedOwner,{guarded:true});
  let other=draftAPI?.read(draftStore);
  loadCurrentWorkouts();
- if(other?.workoutId&&demoSessions.some(row=>row.id===other.workoutId)){
+ if(other?.workoutId&&(demoSessions.some(row=>row.id===other.workoutId)||
+    window.MLC2AccountWorkouts.removed(localStorage,workoutStartedOwner).has(other.workoutId))){
   try{draftAPI.clear(draftStore,other.planId,other.workoutId)}catch{notice('Could not clear a completed draft. Check browser storage.');return}
   other=null;
  }
@@ -1080,7 +1134,10 @@ function openWorkout(id){
  activePlan={...plan,workoutId};activeDraftStore=draftStore;activeDraftOwner=workoutStartedOwner;
  session={sets:restoredSets};
  try{draftAPI?.save(draftStore,activePlan,session.sets)}
- catch{notice('This browser could not save the workout draft. Use Finish session to save completed sets.')}
+ catch(error){
+  if(error.code==='STALE_DRAFT'){activePlan=null;session=null;activeDraftStore=null;activeDraftOwner=null;notice(error.message);return}
+  notice('This browser could not save the workout draft. Use Finish session to save completed sets.');
+ }
  openModal('<div class="active-workout-header"><span class="modal-eyebrow">ACTIVE WORKOUT · 2.0 BETA</span><h2>'+escapeHTML(plan.title)+'</h2><p>'+escapeHTML(plan.description)+'</p><div class="active-workout-progress" id="activeWorkoutProgress" role="status" aria-live="polite"></div>'+ (restoredSets.length?'<p class="active-resume-confirmation" role="status">Resumed workout · '+restoredSets.length+' saved set'+(restoredSets.length===1?'':'s')+' restored. Finish workout when you are done.</p>':'')+'</div>'+liveCoachPreview(plan)+coachTestControls()+'<div class="active-workout-toolbar"><label class="active-rest-toggle"><input type="checkbox" id="autoRestToggle"> Auto rest after each set</label><button type="button" class="button-outline" id="startRest">Rest 1:30</button></div><div id="workoutLog" class="workout-log"></div><div class="modal-footer active-workout-footer"><button type="button" class="button-outline" id="cancelWorkout">Save draft &amp; exit</button><button type="button" class="button-primary" id="finishWorkout">Finish workout</button></div>');
  renderWorkoutLog();
  for(const exerciseId of plan.ids)updateExerciseFeedback(exerciseId);
@@ -1088,22 +1145,28 @@ function openWorkout(id){
  $('startRest').addEventListener('click',openRest);
  $('finishWorkout').addEventListener('click',async event=>{
   if(workoutStartedOwner!==verifiedOwnerId){notice('Account changed during this workout. Return to the original account or restart before saving.');return}
-  if(!session?.sets.length){notice('Add at least one practice set first.');return}
-  const entry={id:workoutId,created:new Date().toISOString(),title:plan.title,planId:plan.id,sets:session.sets.map(set=>({...set})),...(verifiedOwnerId?{ownerId:verifiedOwnerId}:{})};
-  // Persist first. A failed local write must not create a phantom completed workout.
+  // Persist history first, then clear the exact draft from this window.
   const button=event.currentTarget,epoch=authEpoch,draftStore=activeDraftStore;
   button.disabled=true;
   let proposed;
   try{
-   proposed=await withAccountLock('history',workoutStartedOwner,epoch,()=>window.MLC2AccountWorkouts.complete(localStorage,workoutStartedOwner,entry));
-  }catch{
-   if(epoch===authEpoch)notice('Could not save the session; it stays open for retry. Check browser storage.');
+   proposed=await withAccountLock('history',workoutStartedOwner,epoch,()=>{
+    if(!session?.sets.length){notice('Add at least one practice set first.');return null}
+    draftStore.assertCurrent();
+    const entry={id:workoutId,created:new Date().toISOString(),title:plan.title,planId:plan.id,
+     sets:session.sets.map(set=>({...set})),...(workoutStartedOwner?{ownerId:workoutStartedOwner}:{})};
+    const next=window.MLC2AccountWorkouts.complete(localStorage,workoutStartedOwner,entry);
+    try{window.MLC2SessionDraft?.clear(draftStore,plan.id,workoutId)}catch{}
+    return next;
+   });
+  }catch(error){
+   if(epoch===authEpoch)notice(error.code==='STALE_DRAFT'?'This workout changed in another window. Reopen the latest saved draft.':'Could not save the session; it stays open for retry. Check browser storage.');
    return;
   }finally{button.disabled=false}
+  if(!proposed)return;
   if(epoch!==authEpoch)return;
   demoSessions=proposed;
-  queueWorkoutForSync(proposed.find(row=>row.id===entry.id));
-  try{window.MLC2SessionDraft?.clear(draftStore,plan.id,workoutId)}catch{}
+  queueWorkoutForSync(proposed.find(row=>row.id===workoutId));
   if($('finishWorkout')!==button){renderHome();renderProgress();return}
   closeModal(false);renderHome();setPage('progress');
   notice(verifiedOwnerId?'Workout saved on this device. Account backup will sync when connected.':'Workout saved on this device.');
@@ -1176,23 +1239,38 @@ function addSet(id){
  if(weightField.value.trim()===''||repsField.value.trim()===''||!Number.isFinite(weight)||weight<0||weight>1500||!Number.isInteger(reps)||reps<1||reps>100){
   notice('Enter a valid weight and rep count.');return;
  }
- session.sets.push({exerciseId:id,weight,reps});
- try{window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)}
- catch{notice('Set logged in memory, but browser draft saving failed.')}
- // Update only this exercise: never erase inputs, keyboard focus, or scroll position.
- updateExerciseFeedback(id);
- if($('autoRestToggle')?.checked)openRest(id);
+ updateDraftSets(id,sets=>sets.length<window.MLC2SessionDraft.MAX_SETS?
+  [...sets,{exerciseId:id,weight,reps}]:null,true);
 }
 function undoSet(id){
  if($('finishWorkout')?.disabled)return;
  if(!session||!activePlan?.ids.includes(id))return;
  if(activeDraftOwner!==verifiedOwnerId){notice('Account changed; restart the workout before changing sets.');return}
- const index=session.sets.findLastIndex(x=>x.exerciseId===id);
- if(index<0)return;
- session.sets.splice(index,1);
- try{window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)}
- catch{notice('Set removed in memory, but browser draft saving failed.')}
- updateExerciseFeedback(id);
+ updateDraftSets(id,sets=>{
+  const index=sets.findLastIndex(set=>set.exerciseId===id);
+  return index<0?null:sets.filter((_,i)=>i!==index);
+ });
+}
+function updateDraftSets(id,change,autoRest=false){
+ const owner=activeDraftOwner,epoch=authEpoch,plan=activePlan,draft=activeDraftStore;
+ void (async()=>{
+  try{
+   await withAccountLock('history',owner,epoch,()=>{
+    if(plan!==activePlan)return;
+    draft.assertCurrent();
+    const next=change(session.sets);
+    if(!next)return;
+    window.MLC2SessionDraft.save(draft,plan,next);
+    session.sets=next;
+    updateExerciseFeedback(id);
+    if(autoRest&&$('autoRestToggle')?.checked)openRest(id);
+   });
+  }catch(error){
+   if(plan===activePlan&&epoch===authEpoch)notice(error.code==='STALE_DRAFT'?
+    'This draft changed in another window. Exit and reopen the latest draft.':
+    'The set change was not saved. Your previously saved sets are available. Try again.');
+  }
+ })();
 }
 function stopRestClock(){
  if(restClock!==null){clearInterval(restClock);restClock=null;}
@@ -1241,18 +1319,20 @@ function saveAuth(data){originalSnapshot=null;
  const session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};
  authStore.save(sessionStorage,localStorage,session);auth=session;account=data.user;renderSettings();
 }
-function clearAuth(){authEpoch++;switchWorkoutOwner(null);cloudHistoryRequestId++;authStore.clear(sessionStorage,localStorage);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
+function clearAuth(expected=auth||authStore.read(sessionStorage,localStorage)){authEpoch++;switchWorkoutOwner(null);cloudHistoryRequestId++;authStore.clear(sessionStorage,localStorage,expected);auth=null;account=null;originalSnapshot=null;cloudHistorySnapshot=null;if($('cloudOriginalHistoryResults'))$('cloudOriginalHistoryResults').replaceChildren();if($('cloudOriginalHistoryStatus'))$('cloudOriginalHistoryStatus').textContent='Signed out. Cloud archive cleared from memory.';renderSettings();renderHistory();renderTracking();renderOriginalPlans();renderProgress()}
 async function validateStoredAuth(){
- const thisEpoch=++authEpoch;
+ if(activePlan||document.querySelector('.custom-editor-backdrop'))return;
  const saved=authStore.read(sessionStorage,localStorage);
  if(!saved)return;
+ const thisEpoch=++authEpoch;
+ if(!navigator.onLine){notice('Connect to verify this account and reopen its saved workouts.');return}
  try{
   let candidate=saved;
   if(saved.expires_at<Date.now()/1000+45){
    const refreshed=await authRequest('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
    if(thisEpoch!==authEpoch)return;
    if(!refreshed?.access_token||!refreshed?.user?.id||refreshed.user.id!==saved.user.id){
-    clearAuth();return;
+    clearAuth(saved);return;
    }
    candidate={access_token:refreshed.access_token,refresh_token:refreshed.refresh_token,
     user:refreshed.user,expires_at:Math.floor(Date.now()/1000)+(refreshed.expires_in||3600)};
@@ -1260,13 +1340,17 @@ async function validateStoredAuth(){
   // Stored auth is untrusted: never activate or sync an account before /user verifies.
   const user=await authRequest('user',null,candidate.access_token,'GET');
   if(thisEpoch!==authEpoch)return;
-  if(!user?.id||user.id!==saved.user.id){clearAuth();return}
+  if(!user?.id||user.id!==saved.user.id){clearAuth(saved);return}
   candidate.user=user;
-  authStore.save(sessionStorage,localStorage,candidate);
+  if(!authStore.replace(sessionStorage,localStorage,saved,candidate))return;
+  if(activePlan||document.querySelector('.custom-editor-backdrop'))return;
   auth=candidate;account=user;switchWorkoutOwner(user.id);
  }catch(err){
   if(thisEpoch!==authEpoch)return;
-  if([400,401,403].includes(err?.status)){clearAuth();return}
+  if([400,401,403].includes(err?.status)){
+   if(authStore.read(sessionStorage,localStorage)?.access_token===saved.access_token)clearAuth(saved);
+   return;
+  }
   // Transient network/offline/storage errors are not sign-outs.
   // Do not discard the refresh token or falsely show authenticated access.
   auth=null;account=null;
@@ -1305,20 +1389,26 @@ function bind(){
  $('goalProgramSource').addEventListener('change',()=>{
   $('goalProgramCustomGroup').hidden=$('goalProgramSource').value==='generated';
  });
- $('goalProgramRestart').addEventListener('click',()=>{
+ $('goalProgramRestart').addEventListener('click',async()=>{
   const profile=window.MLC2CalorieGoal?.read(localStorage,verifiedOwnerId);
   const program=window.MLC2GoalProgram?.read(localStorage,verifiedOwnerId);
   if(!profile||!program)return;
   if(!confirm('Restart this '+program.weeks+'-week '+program.goal+' program from today? Workout history and custom routines will be kept.'))return;
   try{
-   const previousSource=window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program);
-   const renewed=window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:program.goal,weeks:program.weeks});
-   if(previousSource)window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,renewed,previousSource);
+   const owner=verifiedOwnerId,epoch=authEpoch;
+   await withAccountLock('plans',owner,epoch,()=>window.MLC2Custom.transactProgram(store=>{
+    const latest=window.MLC2GoalProgram.read(store,owner);
+    if(JSON.stringify(latest)!==JSON.stringify(program))throw Error('Training program changed. Review it before restarting.');
+    const previousSource=window.MLC2ProgramSource?.read(store,owner,program);
+    const renewed=window.MLC2GoalProgram.start(store,owner,{goal:program.goal,weeks:program.weeks});
+    if(previousSource)window.MLC2ProgramSource.save(store,owner,renewed,previousSource);
+   }));
+   if(epoch!==authEpoch)return;
    try{window.MLC2ScheduleAuxSync?.()}catch{}
    renderCalorieGoal();renderHome();renderWorkouts();notice('New '+program.weeks+'-week program started. Your prior workouts are retained.');
   }catch(e){notice('Could not restart program: '+String(e.message||e).slice(0,100))}
  });
- $('calorieGoalForm').addEventListener('submit',event=>{
+ $('calorieGoalForm').addEventListener('submit',async event=>{
   event.preventDefault();
   const form=event.currentTarget,field=name=>form.elements.namedItem(name).value;
   try{
@@ -1337,10 +1427,17 @@ function bind(){
     throw Error('Create a custom workout before choosing custom or combined programs');
    if(customId&&!programCustomOptions().some(p=>p.id===customId))
     throw Error('Selected custom routine is unavailable');
-   const next=(!old||old.goal!==profile.goal||old.weeks!==weeks)?
-    window.MLC2GoalProgram.start(localStorage,verifiedOwnerId,{goal:profile.goal,weeks}):old;
-   window.MLC2ProgramSource.save(localStorage,verifiedOwnerId,next,{mode,customId:mode==='generated'?'':customId});
-   window.MLC2CalorieGoal.save(localStorage,verifiedOwnerId,profile);
+   const owner=verifiedOwnerId,epoch=authEpoch;
+   await withAccountLock('plans',owner,epoch,()=>window.MLC2Custom.transactProgram(store=>{
+    const latest=window.MLC2GoalProgram.read(store,owner);
+    if(JSON.stringify(latest)!==JSON.stringify(old))throw Error('Training program changed. Review it before saving.');
+    if(customId&&!programCustomOptions().some(plan=>plan.id===customId))throw Error('Selected custom routine is unavailable');
+    const next=(!old||old.goal!==profile.goal||old.weeks!==weeks)?
+     window.MLC2GoalProgram.start(store,owner,{goal:profile.goal,weeks}):old;
+    window.MLC2ProgramSource.save(store,owner,next,{mode,customId:mode==='generated'?'':customId});
+    window.MLC2CalorieGoal.save(store,owner,profile);
+   }));
+   if(epoch!==authEpoch)return;
    try{window.MLC2ScheduleAuxSync?.()}catch{}
    renderCalorieGoal();renderHome();renderWorkouts();
    if(estimate.needsReview)notice('Calorie estimate requires review before use.');
@@ -1373,11 +1470,18 @@ function bind(){
  $('workoutTodayStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,nextPlan));
  $('workoutTodayChange').addEventListener('click',()=>setWorkoutTab('routines'));
  $('coachAutoStart').addEventListener('click',event=>startPreviewWorkout(event.currentTarget,coachAutonomousPlan));
- $('coachAutoPreferences').addEventListener('change',()=>{
+ $('coachAutoPreferences').addEventListener('change',async event=>{
   if(betaView().mode!=='pro')return;
   try{
-   const options={goal:$('coachAutoGoal').value,days:Number($('coachAutoDays').value),equipment:$('coachAutoEquipment').value};
-   window.MLC2CoachPreferences.save(localStorage,verifiedOwnerId,options);
+   const fields={coachAutoGoal:'goal',coachAutoDays:'days',coachAutoEquipment:'equipment'};
+   const name=fields[event.target.id];if(!name)return;
+   const value=name==='days'?Number(event.target.value):event.target.value,owner=verifiedOwnerId,epoch=authEpoch;
+   await withAccountLock('plans',owner,epoch,()=>{
+    if(betaView().mode!=='pro')throw Error('Pro beta access is required.');
+    const preferences=window.MLC2CoachPreferences;
+    preferences.save(localStorage,owner,{...preferences.read(localStorage,owner),[name]:value});
+   });
+   if(epoch!==authEpoch)return;
    try{window.MLC2ScheduleAuxSync?.()}catch{}
    renderAutonomousCoach();notice('Coach training preferences saved on this device.');
   }catch(err){notice('Coach preference update failed: '+String(err.message||err).slice(0,100));renderAutonomousCoach()}
@@ -1395,13 +1499,13 @@ function bind(){
   });
  });
 
- $('recoverGuestWorkouts').addEventListener('click',()=>{
+ $('recoverGuestWorkouts').addEventListener('click',async()=>{
   if(!verifiedOwnerId||verifiedOwnerId!==account?.id){notice('Sign in to recover guest workouts.');return}
   const recovery=window.MLC2Custom?.guestRecovery();
   if(!recovery?.available)return;
   if(!confirm('Copy '+recovery.available+' guest workout(s) into this account? The guest copies and existing account routines will remain untouched.'))return;
   try{
-   const result=window.MLC2Custom.recoverGuest();
+   const result=await window.MLC2Custom.runPlanWrite(()=>window.MLC2Custom.recoverGuest());
    renderHome();renderWorkouts();if(page==='coaching')renderCoach();
    notice(result.added+' guest workout(s) copied. Original copies preserved.');
   }catch(err){notice('Recovery not completed: '+String(err?.message||err).slice(0,95))}
@@ -1428,9 +1532,14 @@ function bind(){
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
  $('clearDemo').addEventListener('click',async()=>{
   const owner=verifiedOwnerId,epoch=authEpoch;
+  const readHistory=()=>localStorage.getItem(window.MLC2AccountWorkouts.key(owner));
+  let approved;try{approved=readHistory()}catch{notice('Unable to inspect this device history.');return}
   if(!confirm('Delete only the local 2.0 workout history for the current '+(owner?'account':'guest')+'?'))return;
   try{
-   await withAccountLock('history',owner,epoch,()=>window.MLC2AccountWorkouts.clear(localStorage,owner));
+   await withAccountLock('journal',owner,epoch,()=>withAccountLock('history',owner,epoch,()=>{
+    if(readHistory()!==approved)throw Error('Device history changed. Review it before clearing.');
+    window.MLC2AccountWorkouts.clear(localStorage,owner);
+   }));
    if(epoch!==authEpoch)return;
    loadCurrentWorkouts();renderProgress();renderHome();notice('Current local workout history cleared. Production data untouched.');
   }catch{if(epoch===authEpoch)notice('Unable to clear this device history.')}
@@ -1629,6 +1738,16 @@ function bind(){
    button.textContent='Hide original image candidates';
    if(report.unmatched)notice(report.unmatched+' candidate images do not match a catalog ID.');
   }catch(err){root.textContent='Media review unavailable: '+String(err.message||err).slice(0,180)}
+ });
+ $('deviceArchiveAction').addEventListener('click',()=>{
+  const output=$('cloudArchiveResult'),owner=verifiedOwnerId;
+  if(!owner||account?.id!==owner){output.textContent='Sign in to verify your original account first.';return}
+  if(!confirm('Download a private checkpoint of your original account data on this device? It can contain workout and health information.'))return;
+  try{
+   const file=window.MLC2LegacyDeviceArchive.capture(localStorage,owner);
+   window.MLC2LegacyDeviceArchive.download(file,document,URL,Blob,callback=>setTimeout(callback,60000));
+   output.textContent='Private checkpoint prepared with '+file.categories+' original categories and any pending deletion metadata. Photo files are separate.';
+  }catch(error){output.textContent='Device checkpoint unavailable: '+String(error.message||error).slice(0,160)}
  });
  $('cloudArchiveAction').addEventListener('click',async()=>{
   const output=$('cloudArchiveResult'),button=$('cloudArchiveAction');
@@ -1864,5 +1983,5 @@ function bind(){
  $('authAction').addEventListener('click',()=>{if(!account){openSignIn();return}clearAuth();notice('Signed out of 2.0. Original app session remains unchanged.')});
 }
 $('waterDay').value=localDayString();$('weightDay').value=localDayString();
-document.body.classList.add('home-active');bind();window.MLC2BodyProgress?.init();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();
+document.body.classList.add('home-active');bind();window.MLC2BodyProgress?.init();renderHome();renderWorkouts();renderLibrary();renderProgress();renderSettings();validateStoredAuth();recoverInterruptedPlans(null);
 })();

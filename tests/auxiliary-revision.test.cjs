@@ -87,8 +87,39 @@ test('a local edit after a lost cloud acknowledgement can advance the confirmed 
  c.commit=commit;
  s.setItem(key,JSON.stringify(data('edited')));
  const result=await make(s,c).backup();
- assert.equal(result.status,'pending');
- await make(s,c).backup();
+ assert.equal(result.uploaded,1);
+ assert.equal(result.pending,0);
  assert.equal(c.writes,2);
  assert.equal(c.rows.get(owner+'/tracking/snapshot-v1').payload.entries[0].id,'edited');
+});
+
+test('an uncommitted retry is superseded by the latest local data without uploading the stale value',async()=>{
+ const s=store(),c=cloud(),commit=c.commit;
+ s.setItem(key,JSON.stringify(data('old')));
+ c.commit=async()=>{throw Error('Connection lost before commit')};
+ assert.equal((await make(s,c).backup()).status,'retry');
+ s.setItem(key,JSON.stringify(data('latest')));
+ c.commit=commit;
+ assert.equal((await make(s,c).backup()).uploaded,1);
+ assert.equal(c.writes,1);
+ assert.equal(c.rows.get(owner+'/tracking/snapshot-v1').payload.entries[0].id,'latest');
+});
+
+test('a local clear during an earlier cloud commit keeps the later stale schedule out of the batch',async()=>{
+ const s=store(),c=cloud(),commit=c.commit;
+ const weekly='mlc2-weekly-schedule-v1:user:'+owner;
+ s.setItem(key,JSON.stringify(data('tracking')));
+ s.setItem(weekly,JSON.stringify({'1':'custom-first'}));
+ c.commit=async(op,who)=>{
+  if(op.type==='tracking')s.setItem(weekly,'{}');
+  return commit(op,who);
+ };
+ const first=await make(s,c).backup();
+ const remoteKey=owner+'/goal/weekly-schedule-v1';
+ assert.equal(first.uploaded,1);
+ assert.equal(c.rows.has(remoteKey),false);
+ assert.equal(first.pending,1);
+ assert.equal((await make(s,c).backup()).pending,0);
+ assert.equal(c.rows.has(remoteKey),false);
+ assert.equal(s.getItem(weekly),'{}');
 });

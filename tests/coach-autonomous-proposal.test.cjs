@@ -35,5 +35,5 @@ test('Autonomous proposal cannot replace a selected workout or persist generated
  assert.doesNotMatch(builder.build.toString(),/localStorage|fetch|setItem|\.save\(/);
  assert.match(html,/id="coachAutoPanel"/);
  assert.match(html,/id="coachAutoStart"/);
- assert.match(html,/coach-program-builder\.js\?v=1/);
+ assert.match(html,/coach-program-builder\.js\?v=2/);
 });

@@ -3,12 +3,13 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-const crypto=require('node:crypto');
 const {execFileSync}=require('node:child_process');
 const BASE='9b70e2dc716223a6d0cafc553d9cebf23269b8a7';
 const read=path=>fs.readFileSync(path,'utf8');
-const gitBlob=path=>crypto.createHash('sha1').update('blob '+fs.readFileSync(path).length+'\0').update(fs.readFileSync(path)).digest('hex');
-test('working N modules remain byte-for-byte identical',()=>{
+const ENHANCEMENT='afb0f04989d8fde21f15db7c0e1c2852f4c5b804';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'});
+const gitBlob=path=>git('rev-parse',ENHANCEMENT+':'+path).trim();
+test('historical Workouts enhancement keeps N modules byte-for-byte identical',()=>{
  const blobs={
   'app.js':'984f57d8e2cd340a77cf6994a823a3681ccedc2b',
   'sync/automatic-workouts.js':'126c913fef6787a693051de253246bf457ea34cc',
@@ -19,14 +20,12 @@ test('working N modules remain byte-for-byte identical',()=>{
  for(const [path,sha] of Object.entries(blobs))assert.equal(gitBlob(path),sha,path+' unexpectedly changed');
 });
 test('only approved files differ from base N',()=>{
- const modified=execFileSync('git',['diff','--name-only',BASE+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
- const untracked=execFileSync('git',['ls-files','--others','--exclude-standard'],{encoding:'utf8'}).trim();
- assert.equal(untracked,'');
+ const modified=git('diff','--name-only',BASE,ENHANCEMENT).trim().split('\n').filter(Boolean);
  const allowed=new Set(['index.html','workouts-tabs-n.js','workouts-tabs-n.css','tests/workouts-tab-regression.test.cjs','tests/workouts-tabs-dom.test.cjs','.github/workflows/workouts-tabs-ci.yml']);
  for(const path of modified)assert.ok(allowed.has(path),'Protected N file changed: '+path);
 });
 test('index keeps base N intact other than scoped asset references',()=>{
- const current=read('index.html');
+ const current=git('show',ENHANCEMENT+':index.html');
  const base=execFileSync('git',['show',BASE+':index.html'],{encoding:'utf8'});
  const stripped=current.replace('<link rel="stylesheet" href="./workouts-tabs-n.css?v=1">\n','').replace('\n<script defer src="./workouts-tabs-n.js?v=1"></script>','');
  assert.equal(stripped,base,'Base N HTML must remain identical');

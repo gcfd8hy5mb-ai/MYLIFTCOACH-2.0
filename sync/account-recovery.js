@@ -68,9 +68,10 @@
   const existing=validate(windowlessRead(storage,owner),owner);
   const byId=new Map(existing.map(row=>[row.id,row]));
   const missing=[],identical=[],conflicts=[];
+  const removed=accountStore.removed(storage,owner);
   for(const item of backup.sessions){
    const current=byId.get(item.id);
-   if(!current)missing.push(item);
+   if(!current){if(!removed.has(item.id))missing.push(item)}
    else if(JSON.stringify(current)===JSON.stringify(item))identical.push(item.id);
    else conflicts.push(item.id);
   }

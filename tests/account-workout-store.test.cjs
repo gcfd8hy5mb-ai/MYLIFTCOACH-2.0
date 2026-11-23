@@ -88,3 +88,12 @@ test('completing from a stale screen preserves all durable workouts and is idemp
  assert.deepEqual(storeAPI.complete(storage,owner,completed),[completed,other]);
  assert.throws(()=>storeAPI.complete(storage,owner,{...completed,sets:[]}),/already completed/);
 });
+
+test('a blocked removal marker leaves the original completed history intact',()=>{
+ const db=makeStore(),owner='local-account';
+ const row={id:'demo-protected',ownerId:owner,title:'Completed',sets:[{exerciseId:'row',weight:30,reps:8}]};
+ storeAPI.save(db,owner,[row]);
+ const blocked={...db,setItem:()=>{throw Error('Quota reached')}};
+ assert.throws(()=>storeAPI.clear(blocked,owner),/Quota reached/);
+ assert.deepEqual(storeAPI.read(db,owner),[row]);
+});

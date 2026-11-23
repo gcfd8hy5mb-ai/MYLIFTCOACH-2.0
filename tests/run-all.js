@@ -83,6 +83,9 @@ const tests=[
  'workout-simulation.test.cjs',
  'workout-simulation-integration.test.cjs',
  'offline-shell.test.cjs',
+ 'acceptance-package.test.cjs',
+ 'legacy-device-archive.test.cjs',
+ 'production-launch.test.cjs',
  'account-write-lock.test.cjs'
 ];
 for(const test of tests){

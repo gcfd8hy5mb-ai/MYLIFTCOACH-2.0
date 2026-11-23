@@ -20,6 +20,7 @@ test('Program profile, duration, source and Coach preferences have separate veri
 });
 test('Cloud recovery fills only missing goal settings for verified owner, never another account',()=>{
  const db=store(),owner='verified-a',other='verified-b';
+ db.setItem('mlc2-custom-plans-v1:user:'+owner,JSON.stringify([{id:'custom-c1',ids:['chest-press']}]));
  const records=expectations.map(([kind,value])=>{
   const config=aux.CONFIG.find(x=>x.kind===kind);
   return {owner,type:config.type,id:aux.recordId(config),payload:{format:'mlc2-aux-v1',entries:value}};
@@ -50,6 +51,6 @@ test('Invalid injected program preferences are rejected before cloud backups or 
 });
 test('Changing program preferences queues the existing account cloud backup without cloud login in tests',()=>{
  const app=fs.readFileSync('app.js','utf8');
- assert.match(app,/window\.MLC2CoachPreferences\.save\(localStorage,verifiedOwnerId,options\);\s*try\{window\.MLC2ScheduleAuxSync/);
- assert.match(app,/window\.MLC2CalorieGoal\.save\(localStorage,verifiedOwnerId,profile\);\s*try\{window\.MLC2ScheduleAuxSync/);
+ assert.match(app,/preferences\.save\(localStorage,owner,[\s\S]*?if\(epoch!==authEpoch\)return;\s*try\{window\.MLC2ScheduleAuxSync/);
+ assert.match(app,/window\.MLC2CalorieGoal\.save\(store,owner,profile\);\s*\}\)\);\s*if\(epoch!==authEpoch\)return;\s*try\{window\.MLC2ScheduleAuxSync/);
 });

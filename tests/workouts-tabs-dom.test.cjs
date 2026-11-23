@@ -28,7 +28,9 @@ function setup(){
  const ids={workouts:page,createWorkout:create,todayTitle:homeTitle,todayStart:homeStart,todayDescription:Object.assign(new Element(),{textContent:'4 exercises'})};
  const document={readyState:'complete',getElementById:id=>ids[id]||null,createElement:tag=>new Element(tag)};
  const MutationObserver=class{observe(){}};
- new Function('document','MutationObserver',source)(document,MutationObserver);
+ const window={};
+ new Function('document','MutationObserver','window',source)(document,MutationObserver,window);
+ assert.equal(typeof window.MLC2WorkoutsSelectTab,'function');
  const nav=page.children.find(el=>el.className==='workout-tabs-n');
  const tabs=nav.children;
  const panels=page.children.filter(el=>el.className==='workouts-n-panel');

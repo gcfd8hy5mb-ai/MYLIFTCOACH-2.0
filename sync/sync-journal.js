@@ -31,7 +31,9 @@
   const reload=()=>{state=load(storage,owner)};
   function persist(next){
    // Treat failed write as no-op so displayed state never outruns durable data.
-   storage.setItem(key,JSON.stringify(next));
+   const raw=JSON.stringify(next);
+   storage.setItem(key,raw);
+   if(storage.getItem(key)!==raw)throw Error('Sync journal could not be verified');
    state=next;
   }
   function validate(type,id){if(!TYPES.has(type)||!validId(id))throw Error('Unsupported sync record')}
@@ -62,7 +64,13 @@
    return clone(item);
   }
   function list(){reload();return clone(state)}
-  async function drain({verifiedOwner,online=true,maxOperations=50,types=null,onAcknowledged}={}){
+  function discardUpserts(predicate){
+   reload();
+   const discarded=new Set(state.items.filter(item=>item.kind==='upsert'&&predicate(item)).map(item=>item.opId));
+   if(discarded.size)persist({...state,items:state.items.filter(item=>!discarded.has(item.opId)),
+    conflicts:state.conflicts.filter(item=>!discarded.has(item.opId))});
+  }
+  async function drain({verifiedOwner,online=true,maxOperations=50,types=null,onAcknowledged,canSend}={}){
    reload();
    const selected=()=>state.items.filter(item=>!types||types.includes(item.type));
    if(!enabled)return {status:'disabled',pending:selected().length};
@@ -75,8 +83,14 @@
     let sent=0;
     for(const snapshot of selected().slice(0,Math.min(50,maxOperations))){
      reload();
-     const item=state.items.find(op=>op.opId===snapshot.opId);
+     let item=state.items.find(op=>op.opId===snapshot.opId);
      if(!item)continue;
+     if(canSend){
+      if(!await canSend(item))continue;
+      reload();
+      item=state.items.find(op=>op.opId===snapshot.opId);
+      if(!item)continue;
+     }
      if(item.status==='conflict')return {status:'conflict',pending:selected().length};
      if(verifiedOwner!==owner)break;
      const next={...item,attempts:item.attempts+1};
@@ -134,7 +148,7 @@
    }
    throw Error('Conflict must be resolved explicitly against server revision');
   }
-  return Object.freeze({enqueue,enqueueDelete,list,drain,resolveConflict,inspectRemote});
+  return Object.freeze({enqueue,enqueueDelete,list,discardUpserts,drain,resolveConflict,inspectRemote});
  }
  return Object.freeze({create,load,VERSION,PREFIX});
 });

@@ -37,7 +37,7 @@ test('Automatic plan respects user goals, equipment and training days without in
 test('Active Today UI includes account-scoped Coach preferences and no silent workout selection',()=>{
  const app=fs.readFileSync('app.js','utf8'),html=fs.readFileSync('index.html','utf8');
  assert.match(app,/MLC2CoachPreferences\?\.read\(localStorage,verifiedOwnerId\)/);
- assert.match(app,/MLC2CoachPreferences\.save\(localStorage,verifiedOwnerId,options\)/);
+ assert.match(app,/preferences\.save\(localStorage,owner,\{\.\.\.preferences\.read\(localStorage,owner\),\[name\]:value\}\)/);
  assert.match(app,/panel\.hidden=!enabled/);
  assert.match(app,/start\.disabled=true;return/);
  for(const id of ['coachAutoGoal','coachAutoDays','coachAutoEquipment','coachAutoPreferences'])assert.ok(html.includes('id="'+id+'"'));

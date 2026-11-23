@@ -87,11 +87,10 @@
    return value===null||Object.keys(value).length===0;
   return config.type==='goal'?value===null:Array.isArray(value)&&value.length===0;
  }
- function canFill(config,local){
-  if(!local.exists)return true;
-  // These keys persist explicit user clears. Their empty values are existing data.
-  if(config.type==='custom-plan'||config.kind==='weekly-schedule'||config.kind==='selected-workout')return false;
-  return empty(config,local.value);
+ function canFill(_config,local){
+  // An empty stored value can reflect a deliberate clear, just like a populated
+  // value reflects a current edit. Only a genuinely absent key is fillable.
+  return !local.exists;
  }
  function payload(data){return {format:'mlc2-aux-v1',entries:data}}
  function validateRemote(config,record){
@@ -101,29 +100,52 @@
    throw Error(config.label+' remote backup is invalid; no local changes');
   return record.payload.entries;
  }
- function restoreMissing(store,owner,records){
+ function recoveryCandidates(store,owner,records){
   if(!Array.isArray(records))throw Error('Cloud records must be an array');
   if(records.some(record=>record&&record.owner!==owner))throw Error('Cloud recovery owner mismatch');
-  const actions=[];
+  const plansConfig=CONFIG.find(config=>config.type==='custom-plan');
+  const planRecord=records.find(row=>row?.type===plansConfig.type&&row.id===recordId(plansConfig));
+  const localPlans=loadLocal(store,owner,plansConfig);
+  const plans=planRecord?.deleted?[]:localPlans.exists?localPlans.value:
+   planRecord?validateRemote(plansConfig,planRecord):[];
+  const knownPlans=new Set(plans.map(plan=>plan.id));
+  const hasMissingPlan=ids=>ids.some(id=>id.startsWith('custom-')&&!knownPlans.has(id));
+  const candidates=[];
   for(const config of CONFIG){
    const record=records.find(x=>x&&x.type===config.type&&x.id===recordId(config)&&!x.deleted);
    if(!record)continue;
    const entries=validateRemote(config,record);
    const local=loadLocal(store,owner,config);
-   if(!canFill(config,local))continue;
-   if(empty(config,entries))continue;
-   actions.push({key:local.key,previous:store.getItem(local.key),
-    value:config.kind==='selected-workout'?entries:JSON.stringify(entries),label:config.label});
+   if(!canFill(config,local)||empty(config,entries))continue;
+   const references=config.kind==='weekly-schedule'?Object.values(entries):
+    config.kind==='selected-workout'?[entries]:
+    config.kind==='goal-program-source'?[entries.customId]:[];
+   if(hasMissingPlan(references))continue;
+   candidates.push({config,record,entries,local});
   }
+  return candidates;
+ }
+ function restoreMissing(store,owner,records,{writePlans}={}){
+  const actions=recoveryCandidates(store,owner,records).map(({config,entries,local})=>({
+   key:local.key,previous:store.getItem(local.key),
+   value:config.kind==='selected-workout'?entries:JSON.stringify(entries),label:config.label
+  }));
+  const transactional=writePlans?actions.filter(change=>
+   ['mlc2-custom-plans-v1','mlc2-weekly-schedule-v1','mlc2-selected-workout-v1',
+    'mlc2-goal-program-v1','mlc2-goal-program-source-v1','mlc2-estimated-calorie-goal-v1']
+    .some(key=>change.key===key+':user:'+owner)):[];
   const written=[];
   try{
    for(const change of actions){
+    if(transactional.includes(change))continue;
+    if(store.getItem(change.key)!==change.previous)throw Error('Local recovery data changed');
     // Record the attempted mutation before read-back so even a partial or
     // corrupted write is rolled back if verification fails.
     written.push(change);
     store.setItem(change.key,change.value);
     if(store.getItem(change.key)!==change.value)throw Error('Write not verified');
    }
+   if(transactional.length)writePlans(transactional);
   }catch{
    for(const change of [...written].reverse()){
     try{if(change.previous===null)store.removeItem(change.key);else store.setItem(change.key,change.previous)}catch{}
@@ -132,5 +154,5 @@
   }
   return actions.map(x=>x.label);
  }
- return Object.freeze({CONFIG,id,recordId,canonical,equal,valid,loadLocal,empty,canFill,payload,validateRemote,restoreMissing});
+ return Object.freeze({CONFIG,id,recordId,canonical,equal,valid,loadLocal,empty,canFill,payload,validateRemote,recoveryCandidates,restoreMissing});
 });

@@ -9,6 +9,7 @@
  'use strict';
  const LEGACY_KEY='mlc2-demo-workouts-v1';
  const PREFIX='mlc2-account-workouts-v1:';
+ const REMOVED_PREFIX='mlc2-locally-removed-workouts-v1:';
  const MAX_CHARS=2_500_000;
  const OWNER=/^[a-zA-Z0-9_-]{1,128}$/;
  function key(owner){if(owner===null)return LEGACY_KEY;if(!OWNER.test(owner||''))throw Error('Verified account ID required');return PREFIX+owner}
@@ -56,6 +57,7 @@
   return entries;
  }
  function complete(storage,owner,entry){
+  if(removed(storage,owner).has(entry.id))throw Error('This workout was deliberately removed from this device');
   const current=read(storage,owner);
   const existing=current.find(record=>record.id===entry.id);
   if(existing){
@@ -67,8 +69,26 @@
   }
   return save(storage,owner,[entry,...current]);
  }
+ function removed(storage,owner){
+  if(owner===null)return new Set();
+  key(owner);
+  const raw=storage.getItem(REMOVED_PREFIX+owner);
+  if(raw===null)return new Set();
+  const ids=JSON.parse(raw);
+  if(!Array.isArray(ids)||ids.some(id=>typeof id!=='string'))throw Error('Removed-workout metadata is unreadable');
+  return new Set(ids);
+ }
  function clear(storage,owner){
-  if(owner!==null){storage.removeItem(key(owner));return}
+  if(owner!==null){
+   const ids=removed(storage,owner);
+   for(const entry of read(storage,owner))ids.add(entry.id);
+   const marker=REMOVED_PREFIX+owner,value=JSON.stringify([...ids]);
+   storage.setItem(marker,value);
+   if(storage.getItem(marker)!==value)throw Error('Removed workouts could not be recorded');
+   storage.removeItem(key(owner));
+   if(storage.getItem(key(owner))!==null)throw Error('Workout history could not be cleared');
+   return;
+  }
   const raw=storage.getItem(LEGACY_KEY);
   if(raw===null)return;
   const all=JSON.parse(raw);
@@ -79,5 +99,5 @@
    read({getItem:()=>next},null);storage.setItem(LEGACY_KEY,next);
   }else storage.removeItem(LEGACY_KEY);
  }
- return Object.freeze({LEGACY_KEY,PREFIX,MAX_CHARS,key,read,save,complete,clear});
+ return Object.freeze({LEGACY_KEY,PREFIX,MAX_CHARS,key,read,save,complete,clear,removed});
 });

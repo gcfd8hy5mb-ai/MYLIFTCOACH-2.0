@@ -215,6 +215,7 @@
  <p>These preview photos stay in this browser's separate local photo storage. They are not synced or uploaded to your original MYLIFTCOACH account. Use Save copy on each important photo before clearing website data, which can permanently erase them.</p>
  <label class="mlc-photo-picker">Add progress photo <input type="file" id="mlcPhotoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
  <p id="mlcPhotoStatus" role="status"></p><div id="mlcPhotoList" class="mlc-photo-list"></div>
+ <details><summary>Original account photos on this device</summary><button type="button" id="mlcOriginalPhotoLoad" class="button-outline">View original photos</button><p id="mlcOriginalPhotoStatus" role="status"></p><div id="mlcOriginalPhotoList" class="mlc-photo-list"></div></details>
  </article>
 </section>
 <section id="coaching" class="page" hidden>
@@ -333,7 +334,7 @@
 <p>Check which original account record categories are accessible with your existing sign-in. This does not transfer, sync, edit, or delete any workout information. Run only when you want to verify compatibility.</p>
 <button type="button" id="cloudAuditAction" class="button-outline">Check cloud data (read-only)</button>
 <div id="cloudAuditResult" role="status" aria-live="polite"></div>
-<div class="mlc-cloud-archive"><h4>Original cloud recovery archive</h4><p>Optional: download a private, read-only snapshot of the original account’s accessible cloud records before a future migration. This may include sensitive workout and personal information. The file remains on your device; keep it secure. This is not a 2.0 restore or working cloud sync. If any table fails, no partial archive is offered.</p><button type="button" id="cloudArchiveAction" class="button-outline">Download original cloud archive (read-only)</button><p id="cloudArchiveResult" role="status" aria-live="polite"></p></div>
+<div class="mlc-cloud-archive"><h4>Original cloud recovery archive</h4><p>Optional: download a private, read-only snapshot of the original account’s accessible cloud records before a future migration. This may include sensitive workout and personal information. The file remains on your device; keep it secure. This is not a 2.0 restore or working cloud sync. If any table fails, no partial archive is offered.</p><button type="button" id="cloudArchiveAction" class="button-outline">Download original cloud archive (read-only)</button><button type="button" id="deviceArchiveAction" class="button-outline">Download original device checkpoint</button><p id="cloudArchiveResult" role="status" aria-live="polite"></p></div>
 <div class="mlc-cloud-checkpoints"><h4>Original account revision checkpoint comparison</h4><p>Choose two original account archives from different dates to inspect record additions, changes, deletions and revision anomalies. Both files stay in this browser. This cannot authorize cloud writes or prove a current server checkpoint.</p>
 <label for="checkpointBaselineFile">Older original cloud archive</label><input type="file" id="checkpointBaselineFile" accept=".json,application/json">
 <label for="checkpointCurrentFile">Newer original cloud archive</label><input type="file" id="checkpointCurrentFile" accept=".json,application/json">
@@ -366,9 +367,9 @@
 <script defer src="./exercise-instruction-coverage.js?v=1"></script>
 <script defer src="./exercise-instruction-depth.js?v=1"></script>
 <script defer src="./legacy-media-review.js?v=1"></script>
-<script defer src="./custom-workouts.js?v=4"></script>
-<script defer src="./full-week-builder.js?v=2"></script>
-<script defer src="./weekly-workout-schedule.js?v=5"></script>
+<script defer src="./custom-workouts.js?v=5"></script>
+<script defer src="./full-week-builder.js?v=3"></script>
+<script defer src="./weekly-workout-schedule.js?v=6"></script>
 <script defer src="./session-draft.js?v=2"></script>
 <script defer src="./workout-active-ux.js?v=3"></script>
 <script defer src="./progress-migration.js?v=1"></script>
@@ -376,7 +377,7 @@
 <script defer src="./coach-attributes.js?v=1"></script>
 <script defer src="./coach-catalog-coverage.js?v=2"></script>
 <script defer src="./coach-migration.js?v=3"></script>
-<script defer src="./coach-program-builder.js?v=1"></script>
+<script defer src="./coach-program-builder.js?v=2"></script>
 <script defer src="./coach-plan-preview.js?v=1"></script>
 <script defer src="./coach-preferences.js?v=1"></script>
 <script defer src="./calorie-goal-estimate.js?v=3"></script>
@@ -387,8 +388,10 @@
 <script defer src="./coach-readiness.js?v=3"></script>
 <script defer src="./coach-trends.js?v=2"></script>
 <script defer src="./coach-post-workout.js?v=1"></script>
-<script defer src="./body-progress.js?v=2"></script>
+<script defer src="./legacy-device-photos.js?v=1"></script>
+<script defer src="./body-progress.js?v=3"></script>
 <script defer src="./legacy-storage-model.js?v=1"></script>
+<script defer src="./legacy-device-archive.js?v=1"></script>
 <script defer src="./legacy-reconcile.js?v=1"></script>
 <script defer src="./recovery-export.js?v=1"></script>
 <script defer src="./recovery-import.js?v=1"></script>
@@ -401,23 +404,23 @@
 <script defer src="./cloud-checkpoint-review.js?v=1"></script>
 <script defer src="./cloud-sync-preview.js?v=1"></script>
 <script defer src="./cloud-compatibility.js?v=1"></script>
-<script defer src="./sync/sync-journal.js?v=2"></script>
+<script defer src="./sync/sync-journal.js?v=3"></script>
 <script defer src="./sync/supabase-transport.js?v=1"></script>
-<script defer src="./sync/aux-data.js?v=2"></script>
+<script defer src="./sync/aux-data.js?v=5"></script>
 <script defer src="./sync/completed-workout-bridge.js?v=1"></script>
-<script defer src="./sync/account-workout-store.js?v=3"></script>
-<script defer src="./sync/auth-session-store.js?v=1"></script>
+<script defer src="./sync/account-workout-store.js?v=4"></script>
+<script defer src="./sync/auth-session-store.js?v=2"></script>
 <script defer src="./sync/verified-auth.js?v=1"></script>
 <script defer src="./sync/refresh-session.js?v=1"></script>
 <script defer src="./sync/cloud-session-inspection.js?v=1"></script>
 <script defer src="./sync/account-recovery.js?v=2"></script>
-<script defer src="./sync/account-draft-store.js?v=1"></script>
-<script defer src="./sync/automatic-workouts.js?v=5"></script>
-<script defer src="./sync/auxiliary-cloud.js?v=3"></script>
+<script defer src="./sync/account-draft-store.js?v=2"></script>
+<script defer src="./sync/automatic-workouts.js?v=6"></script>
+<script defer src="./sync/auxiliary-cloud.js?v=5"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
-<script defer src="./app.js?v=45"></script>
-<script defer src="./offline-shell.js?v=3"></script>
+<script defer src="./app.js?v=47"></script>
+<script defer src="./offline-shell.js?v=4"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>
 </body>

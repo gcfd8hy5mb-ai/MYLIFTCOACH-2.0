@@ -36,7 +36,7 @@ test('public app assets can boot offline and account traffic bypasses the worker
  assert.equal(await fetchThrough(scope+'?launch=home','navigate','document'),html);
  online=true;status=503;
  assert.equal(await fetchThrough(scope,'navigate','document'),html);
- assert.equal(await fetchThrough(scope+'app.js?v=45','cors','script'),'app.js');
+ assert.equal(await fetchThrough(scope+'app.js?v=47','cors','script'),'app.js');
  assert.equal(await fetchThrough(scope+'app.webmanifest?v=1','cors','manifest'),'app.webmanifest');
  assert.equal(fetchThrough(scope+'private','cors','','POST'),undefined);
  assert.equal(fetchThrough('https://cloud.example/rest','cors',''),undefined);
@@ -44,7 +44,7 @@ test('public app assets can boot offline and account traffic bypasses the worker
 });
 
 
-test('installed iPhone updates activate only after the full shell is cached, and leave private data alone',async()=>{
+test('worker stages the complete shell without taking control of an open app, and leave private data alone',async()=>{
  const listeners={},sequence=[],scope='https://test.example/MYLIFTCOACH-2.0/';
  const cache={addAll:async()=>sequence.push('assets'),put:async()=>sequence.push('shell'),match:async()=>null};
  const keys=['unrelated-cache','myliftcoach2-shell:'+scope+':46','myliftcoach2-shell:'+scope+':47'];
@@ -57,9 +57,9 @@ test('installed iPhone updates activate only after the full shell is cached, and
  };
  vm.runInNewContext(source,context);
  let work;listeners.install({waitUntil:p=>work=p});await work;
- assert.deepEqual(sequence.slice(0,3),['assets','shell','skipWaiting']);
+ assert.deepEqual(sequence,['assets','shell']);
  listeners.activate({waitUntil:p=>work=p});await work;
- assert.ok(sequence.includes('claim'));
+ assert.ok(!sequence.includes('claim'));
  assert.ok(sequence.includes('delete:myliftcoach2-shell:'+scope+':46'));
  assert.ok(!sequence.includes('delete:unrelated-cache'));
  const privateRequest={method:'POST',url:scope+'rest/v1/workouts',destination:'',mode:'cors'};
@@ -68,32 +68,31 @@ test('installed iPhone updates activate only after the full shell is cached, and
  assert.equal(intercepted,false);
 });
 
-test('installed update coordinator checks on resume and never reloads an open workout',async()=>{
+test('update coordinator checks on foregrounding and never automatically reloads the page',async()=>{
  const coordinator=fs.readFileSync('offline-shell.js','utf8');
- assert.match(html,/offline-shell\.js\?v=3/);
+ assert.match(html,/offline-shell\.js\?v=4/);
  const events={},serviceEvents={};
- let editor=null,updates=0,reloads=0;
+ let updates=0,reloads=0,clock=0;
  const registration={update:async()=>{updates++}};
- const modal={hidden:false};
  const navigator={serviceWorker:{
   controller:{},addEventListener:(name,cb)=>serviceEvents[name]=cb,
   register:async()=>registration
  }};
- const document={hidden:false,
-  getElementById:id=>id==='modal'?modal:null,
-  querySelector:selector=>selector==='.custom-editor-backdrop'?editor:null,
-  addEventListener:(name,cb)=>events['document:'+name]=cb
- };
+ const document={hidden:false,addEventListener:(name,cb)=>events['document:'+name]=cb};
  const window={addEventListener:(name,cb)=>events['window:'+name]=cb};
- vm.runInNewContext(coordinator,{navigator,document,window,Date,queueMicrotask,
+ vm.runInNewContext(coordinator,{navigator,document,window,Date:{now:()=>clock},
   location:{reload:()=>reloads++}});
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(updates,1);
- serviceEvents.controllerchange();
- assert.equal(reloads,0);
- modal.hidden=true;editor={};
+ serviceEvents.controllerchange?.();
+ clock=16000;
+ document.hidden=true;events['document:visibilitychange']();
+ assert.equal(updates,1);
+ document.hidden=false;events['document:visibilitychange']();
+ assert.equal(updates,2);
  events['window:pageshow']();
+ assert.equal(updates,2);
+ clock=32000;events['window:pageshow']();
+ assert.equal(updates,3);
  assert.equal(reloads,0);
- editor=null;events['window:pageshow']();
- assert.equal(reloads,1);
 });

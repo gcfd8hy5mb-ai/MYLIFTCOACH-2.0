@@ -25,25 +25,25 @@ test('Invalid weekdays and unknown plan IDs do not write schedule',()=>{
   assert.equal(s.getItem(schedule.KEY),baseline);
  }
 });
-test('Coach shortcut enters the native Schedule panel, rejects stale accounts and requires confirmation',()=>{
+test('Coach shortcut enters the native Schedule panel, rejects stale accounts and requires confirmation',async()=>{
  const vm=require('node:vm');
  const from=app.indexOf('let pendingCoachSchedule='),to=app.indexOf('function renderWorkouts(){');
  const nodes=new Map(),s=storage();
  const $=id=>{if(!nodes.has(id))nodes.set(id,{value:'3',focus(){this.focused=true}});return nodes.get(id)};
  let confirmation=false,tab;
  const ctx={coach,$,verifiedOwnerId:'a',authEpoch:1,plans:presets,
-  window:{MLC2WeeklySchedule:schedule,MLC2Custom:{allPlans:()=>[coach,...presets]}},
+  window:{MLC2WeeklySchedule:schedule,MLC2Custom:{allPlans:()=>[coach,...presets],runPlanWrite:work=>work()}},
   planStorage:()=>s,confirm:()=>confirmation,setWorkoutTab:name=>{tab=name},
   page:'workouts',renderHome(){},renderWorkouts(){},notice(){}};
  vm.runInNewContext(app.slice(from,to),ctx);
- vm.runInNewContext('openCoachSchedule(coach);assignCoachSchedule()',ctx);
+ await vm.runInNewContext('openCoachSchedule(coach);assignCoachSchedule()',ctx);
  assert.equal(tab,'schedule');
  assert.equal($('coachScheduleDay').focused,true);
  assert.deepEqual(schedule.read(s),{});
  ctx.confirm=()=>true;ctx.authEpoch=2;
- vm.runInNewContext('assignCoachSchedule()',ctx);
+ await vm.runInNewContext('assignCoachSchedule()',ctx);
  assert.deepEqual(schedule.read(s),{});
- vm.runInNewContext('openCoachSchedule(coach);assignCoachSchedule()',ctx);
+ await vm.runInNewContext('openCoachSchedule(coach);assignCoachSchedule()',ctx);
  assert.equal(schedule.read(s)['3'],coach.id);
  assert.equal(s.getItem('mlc2-selected-workout-v1'),null);
  assert.match(html,/<section id="workoutPanelSchedule"[\s\S]*?<article id="coachSchedulePanel"/);

@@ -1,0 +1,6 @@
+{
+  "name": "myliftcoach2-isolated-sql-tests",
+  "private": true,
+  "scripts": {"test": "node --test commit.test.cjs"},
+  "dependencies": {"@electric-sql/pglite": "0.3.14"}
+}

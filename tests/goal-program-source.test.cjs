@@ -45,8 +45,8 @@ test('Missing custom workouts do not fabricate custom sessions',()=>{
 test('App links custom program mode to actual selected workout without overwriting custom plans',()=>{
  const app=fs.readFileSync('app.js','utf8'),html=fs.readFileSync('index.html','utf8');
  assert.match(app,/MLC2ProgramSource\?\.choose/);
- assert.match(app,/MLC2ProgramSource\.save\(localStorage,verifiedOwnerId,next/);
- assert.match(app,/MLC2ProgramSource\.save\(localStorage,verifiedOwnerId,renewed,previousSource\)/);
+ assert.match(app,/MLC2ProgramSource\.save\(store,owner,next/);
+ assert.match(app,/MLC2ProgramSource\.save\(store,owner,renewed,previousSource\)/);
  assert.match(app,/const plan=selected\|\|\(freshCoach\?\.id===id\?freshCoach:null\)/);
  assert.match(html,/name="programSource"/);
  assert.match(html,/name="programCustom"/);

@@ -19,7 +19,7 @@ function run(mode='pro'){
  MLC2CoachPreferences:{read:()=>({days:4,goal:'balanced',equipment:'Any'})}},
   document:{querySelectorAll:()=>[{hidden:false}]},'$':id=>elements[id]||{},nextPlan:()=>plan,
   libraryExercises:()=>catalog,coachEvidence:()=>[good],betaView:()=>({mode}),localStorage:{},
-  verifiedOwnerId:'account-a',renderHome(){},renderWorkouts(){},notice(){},openWorkout(){},renderAutonomousCoach(){}};
+  verifiedOwnerId:'account-a',authEpoch:1,renderHome(){},renderWorkouts(){},notice(){},openWorkout(){},renderAutonomousCoach(){}};
  vm.createContext(context);vm.runInContext(code,context);
  vm.runInContext('renderCoach()',context);
  return {used,context};

@@ -12,16 +12,31 @@
   if(!OWNER.test(owner||''))throw Error('Verified owner required for draft');
   return KEY+':owner:'+owner;
  }
- function scope(storage,owner){
+ function scope(storage,owner,{guarded=false}={}){
   const prefix=scopedKey(owner);
   if(!storage||typeof storage.getItem!=='function'||
      typeof storage.setItem!=='function'||typeof storage.removeItem!=='function')
    throw Error('Draft storage unavailable');
   const check=key=>{if(key!==KEY)throw Error('Unsupported draft storage key');return prefix};
+  let expected=guarded?storage.getItem(prefix):null;
+  const assertCurrent=()=>{
+   if(guarded&&storage.getItem(prefix)!==expected){
+    const error=Error('Workout draft changed in another window');
+    error.code='STALE_DRAFT';
+    throw error;
+   }
+  };
   return Object.freeze({
    getItem:key=>storage.getItem(check(key)),
-   setItem:(key,value)=>storage.setItem(check(key),value),
-   removeItem:key=>storage.removeItem(check(key))
+   setItem(key,value){
+    const target=check(key);assertCurrent();storage.setItem(target,value);
+    if(guarded){if(storage.getItem(target)!==value)throw Error('Draft storage could not be verified.');expected=value}
+   },
+   removeItem(key){
+    const target=check(key);assertCurrent();storage.removeItem(target);
+    if(guarded){if(storage.getItem(target)!==null)throw Error('Draft storage could not be verified.');expected=null}
+   },
+   assertCurrent
   });
  }
  return Object.freeze({KEY,scopedKey,scope});

@@ -79,7 +79,7 @@ test('Coach weight button delegates through active modal and cannot auto-log a s
  assert.match(app,/data-coach-apply/);
  assert.match(app,/applyCoachWeight\(suggest\.dataset\.coachApply\)/);
  assert.match(app,/input\.value=String\(weight\)/);
- assert.match(app,/session\.sets\.push\(\{exerciseId:id,weight,reps\}\)/);
+ assert.match(app,/updateDraftSets\(id,sets=>sets.length[\s\S]*?\[\.\.\.sets,\{exerciseId:id,weight,reps\}\]/);
  assert.match(css,/\.coach-apply-weight/);
 });
 
@@ -160,10 +160,10 @@ test('Synthetic Coach evidence is always labeled and never mutates account histo
 });
 
 test('Active workout mounts Coach, uses existing draft and cloud paths, and avoids automatic plan changes',()=>{
- for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.complete(localStorage,workoutStartedOwner,entry)","queueWorkoutForSync(proposed.find(row=>row.id===entry.id))","window.MLC2SessionDraft?.save(activeDraftStore,activePlan,session.sets)"]){
+ for(const marker of ["liveCoachPreview(plan)","data-live-coach","coachText.textContent=liveCoachFeedback(id)","liveCoachRecap(proposed)","window.MLC2AccountWorkouts.complete(localStorage,workoutStartedOwner,entry)","queueWorkoutForSync(proposed.find(row=>row.id===workoutId))","window.MLC2SessionDraft.save(draft,plan,next)"]){
   assert.ok(app.includes(marker),'missing '+marker);
  }
  assert.match(css,/\.live-coach-box/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
- assert.match(html,/app\.js\?v=45/);
+ assert.match(html,/app\.js\?v=47/);
 });

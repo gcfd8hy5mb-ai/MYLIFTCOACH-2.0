@@ -31,7 +31,7 @@ test('optional exercise inputs only appear inside chosen exercise and live log d
  for(const field of ['sets','reps','weight','restSeconds'])assert.ok(js.includes("entry('"+field+"'"));
  assert.match(js,/details class="custom-target-details"/);
  assert.match(js,/Leave any field blank/);
- assert.match(js,/targets:normalizeTargets\(draftTargets,selected\)/);
+ assert.match(js,/targets=normalizeTargets\(draftTargets,ids\)/);
  assert.match(app,/activePlan\.targets\?\.\[id\]/);
  assert.ok(app.includes('activePlan?.targets?.[exerciseId]?.restSeconds'));
  assert.match(css,/custom-target-fields/);

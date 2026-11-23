@@ -82,7 +82,7 @@ test('UI has single and weekly builders with editable day tabs and optional targ
  const html=read('index.html'),ui=read('full-week-builder.js'),css=read('custom-workouts.css');
  assert.ok(html.includes('id="createWeeklyProgram"'));
  assert.ok(html.includes('id="createWorkout"'));
- assert.ok(html.includes('full-week-builder.js?v=2'));
+ assert.ok(html.includes('full-week-builder.js?v=3'));
  assert.ok(html.includes('custom-workouts.css?v=5'));
  for(const term of ['weeklyProgramName','weeklyBuilderTabs','weeklyRestDay','weeklyExerciseSearch','weekly-target-grid','saveFullWeek','restSeconds'])assert.ok((ui+css).includes(term));
  assert.ok(ui.includes('onSaved?.(result)'));
@@ -108,7 +108,7 @@ test('each one-to-seven-day program saves all weekdays without inventing optiona
  }
 });
 
-test('weekly editor prevents duplicate dialogs and rejects invalid targets before saving',()=>{
+test('weekly editor prevents duplicate dialogs and rejects invalid targets before saving',async()=>{
  const dialogs=[],messages=[];let saves=0;
  function node(){
   return {events:{},value:'',addEventListener(type,fn){this.events[type]=fn},focus(){},innerHTML:''};
@@ -126,7 +126,7 @@ test('weekly editor prevents duplicate dialogs and rejects invalid targets befor
   },
   addEventListener(){},removeEventListener(){}
  };
- const window={MLC2Custom:{getOwner:()=>null,saveFullWeek(){saves++}},
+ const window={MLC2Custom:{getOwner:()=>null,scheduleVersion:()=>null,runPlanWrite:work=>work(),saveFullWeek(){saves++}},
   MLC2_EXERCISE_CATALOG:[{id:'chest',name:'Press',group:'Chest'}]};
  let confirmed=false;
  vm.runInNewContext(read('full-week-builder.js'),{window,document,confirm:()=>confirmed,alert:message=>messages.push(message)});
@@ -138,6 +138,59 @@ test('weekly editor prevents duplicate dialogs and rejects invalid targets befor
  day.events.click({target:{closest:selector=>selector==='[data-week-add]'?{dataset:{weekAdd:'chest'}}:null}});
  const input=value=>day.events.input({target:{id:'',matches:()=>true,value,dataset:{weekTarget:'chest',field:'reps'}}});
  input('101');confirmed=true;
- q('saveWeeklyProgram').events.click();assert.equal(saves,0);assert.match(messages.at(-1),/Correct the optional targets/);
- input('');q('saveWeeklyProgram').events.click();assert.equal(saves,1);assert.equal(dialogs.length,0);
+ await q('saveWeeklyProgram').events.click();assert.equal(saves,0);assert.match(messages.at(-1),/Correct the optional targets/);
+ input('');await q('saveWeeklyProgram').events.click();assert.equal(saves,1);assert.equal(dialogs.length,0);
+});
+
+test('interrupted program writes resume only when pending keys still match their recorded values',()=>{
+ const t=setup(),plans=t.key('mlc2-custom-plans-v1'),week=t.key(Weekly.KEY),journal=t.key('mlc2-plan-write-v1');
+ const before=JSON.stringify([{id:'custom-old',ids:['row']}]);
+ const after=JSON.stringify([{id:'custom-new',ids:['chest']},{id:'custom-old',ids:['row']}]);
+ const oldWeek=JSON.stringify({'1':'custom-old'}),newWeek=JSON.stringify({'1':'custom-new'});
+ t.storage.setItem(plans,after);
+ t.storage.setItem(week,oldWeek);
+ t.storage.setItem(journal,JSON.stringify({field:'after',changes:[
+  {key:plans,before,after},{key:week,before:oldWeek,after:newWeek}
+ ]}));
+ t.api.setOwner('different-account');
+ assert.equal(t.api.recoverPlanWrite(),false);
+ assert.equal(t.storage.getItem(week),oldWeek);
+ t.api.setOwner('test-user');
+ assert.throws(()=>t.api.requireStablePlans(),/pending/);
+ assert.equal(t.api.recoverPlanWrite(),true);
+ assert.equal(t.storage.getItem(week),newWeek);
+ assert.equal(t.storage.getItem(journal),null);
+ assert.equal(t.api.allPlans([]).length,2);
+});
+
+test('recovery preserves the journal and newer writes when an interrupted transaction diverges',()=>{
+ const t=setup(),plans=t.key('mlc2-custom-plans-v1'),week=t.key(Weekly.KEY),journal=t.key('mlc2-plan-write-v1');
+ const retained='{"2":"rest-day"}',after=JSON.stringify([{id:'custom-new',ids:['chest']}]);
+ t.storage.setItem(week,retained);
+ const pending=JSON.stringify({field:'after',changes:[
+  {key:plans,before:null,after},{key:week,before:null,after:'{"1":"custom-new"}'}
+ ]});
+ t.storage.setItem(journal,pending);
+ assert.throws(()=>t.api.recoverPlanWrite(),/changed in another window/);
+ assert.equal(t.storage.getItem(week),retained);
+ assert.equal(t.storage.getItem(plans),null);
+ assert.equal(t.storage.getItem(journal),pending);
+});
+
+test('goal program edits roll back calendar, source and calorie profile if storage fails',()=>{
+ const t=setup(),calendar=t.key('mlc2-goal-program-v1'),source=t.key('mlc2-goal-program-source-v1');
+ const calories=t.key('mlc2-estimated-calorie-goal-v1'),journal=t.key('mlc2-plan-write-v1');
+ t.storage.setItem(calendar,'old-calendar');
+ t.storage.setItem(source,'old-source');
+ t.storage.setItem(calories,'old-profile');
+ t.failure.key=source;
+ assert.throws(()=>t.api.transactProgram(staged=>{
+  staged.setItem(calendar,'new-calendar');
+  staged.setItem(source,'new-source');
+  staged.setItem(calories,'new-profile');
+ }),/Storage blocked/);
+ assert.equal(t.storage.getItem(calendar),'old-calendar');
+ assert.equal(t.storage.getItem(source),'old-source');
+ assert.equal(t.storage.getItem(calories),'old-profile');
+ assert.equal(t.storage.getItem(journal),null);
 });

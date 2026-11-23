@@ -22,5 +22,5 @@ test('mobile Settings stays reachable through fixed More bottom tab',()=>{
 test('login, cloud saving, and workout draft flow remain connected',()=>{
  assert.match(app,/function openSignIn\(\)/);
  assert.match(app,/queueWorkoutForSync\(entry\)/);
- assert.match(app,/window\.MLC2SessionDraft\?\.save\(activeDraftStore,activePlan,session.sets\)/);
+ assert.match(app,/window\.MLC2SessionDraft\.save\(draft,plan,next\)/);
 });

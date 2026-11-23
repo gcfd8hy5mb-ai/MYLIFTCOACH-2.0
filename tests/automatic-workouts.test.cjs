@@ -214,3 +214,35 @@ test('large cloud history recovers across 20 full pages without truncating or du
  assert.equal((await engine.previewRecovery()).missing,0);
  assert.equal(cloud.commits,0);
 });
+
+test('a newer version of the same cloud workout requires fresh recovery consent',async()=>{
+ const db=storage(),cloud=remote(),rec=session('demo-updated');
+ const key=owner+'/'+rec.id;
+ cloud.rows.set(key,{owner,type:'session',id:rec.id,revision:1,deleted:false,payload:rec});
+ const {engine}=setup(db,cloud);
+ const result=await engine.restore({confirmRestore:()=>{
+  cloud.rows.set(key,{...cloud.rows.get(key),revision:2,payload:session(rec.id,owner,75)});
+  return true;
+ }});
+ assert.equal(result.status,'changed-reconfirm');
+ assert.deepEqual(Store.read(db,owner),[]);
+ assert.equal((await engine.restore({confirmRestore:()=>true})).restored,1);
+ assert.equal(Store.read(db,owner)[0].sets[0].weight,75);
+});
+
+test('cleared local history cannot be recovered from an older cloud copy or uploaded by a pending retry',async()=>{
+ const db=storage(),cloud=remote(),backed=session('demo-backed'),queued=session('demo-queued'),otherRecord=session('demo-other',other);
+ Store.save(db,owner,[backed,queued]);Store.save(db,other,[otherRecord]);
+ cloud.rows.set(owner+'/'+backed.id,{owner,type:'session',id:backed.id,revision:1,deleted:false,payload:backed});
+ const {engine}=setup(db,cloud);
+ engine.queue(queued);
+ Store.clear(db,owner);
+ const preview=await engine.previewRecovery();
+ assert.equal(preview.canRestore,false);
+ assert.equal((await engine.restore({confirmRestore:()=>{throw Error('removed record cannot be approved')}})).restored,0);
+ assert.equal((await engine.flush()).uploaded,0);
+ assert.equal(Journal.load(db,owner).items.length,0);
+ assert.equal(cloud.commits,0);
+ assert.ok(cloud.rows.has(owner+'/'+backed.id));
+ assert.deepEqual(Store.read(db,other),[otherRecord]);
+});

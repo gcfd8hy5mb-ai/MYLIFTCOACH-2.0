@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const app=fs.readFileSync('app.js','utf8');
-const start=app.indexOf('function openWorkout(id){');
+const start=app.indexOf('function openWorkoutForOwner(id){');
 const end=app.indexOf(' const draftAPI=window.MLC2SessionDraft;',start);
 assert.ok(start>=0&&end>start,'Workout handoff source must remain available');
 const source=app.slice(start,end)+'\n}';
@@ -9,13 +9,13 @@ const cached={id:'coach-auto-day-1',title:'Old cached',ids:['old']};
 const updated={id:'coach-auto-day-1',title:'Updated Coach',ids:['new']};
 function open({mode='pro',plans=[],suggestion=updated,id='coach-auto-day-1'}={}){
  const notices=[],ctx={
-  id,plans,verifiedOwnerId:'owner-a',coachAutonomousDraft:cached,
+  id,plans,activePlan:null,verifiedOwnerId:'owner-a',coachAutonomousDraft:cached,
   betaView:()=>({mode}),coachAutonomousPlan:()=>suggestion,notice:m=>notices.push(m),
   window:{MLC2Custom:{allPlans:()=>plans}},
   $:()=>({classList:{remove:()=>{}}})
  };
  vm.createContext(ctx);vm.runInContext(source,ctx);
- vm.runInContext('openWorkout(id)',ctx);
+ vm.runInContext('openWorkoutForOwner(id)',ctx);
  return {ctx,notices};
 }
 test('Free mode cannot open a stale previously generated Pro Coach workout',()=>{

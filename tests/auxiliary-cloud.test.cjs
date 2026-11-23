@@ -84,3 +84,17 @@ test('new cloud fitness category after approval requires reconfirmation before a
  assert.ok(after.restored.includes('Custom workouts'));
  assert.ok(after.restored.includes('Water and weight tracking'));
 });
+
+test('a replacement cloud snapshot for the same category needs reconfirmation',async()=>{
+ const s=storage(),t=records(),key=owner+'/tracking/snapshot-v1';
+ const initial={owner,type:'tracking',id:'snapshot-v1',revision:1,deleted:false,payload:Aux.payload(tracking)};
+ t.m.set(key,initial);
+ const eng=engine(s,t);
+ const result=await eng.restore({confirmRestore:()=>{
+  t.m.set(key,{...initial,revision:2,payload:Aux.payload([{...tracking[0],value:700}])});
+  return true;
+ }});
+ assert.equal(result.status,'changed-reconfirm');
+ assert.equal(s.getItem('mlc2-local-daily-v1:user:'+owner),null);
+ assert.deepEqual((await eng.restore({confirmRestore:()=>true})).restored,['Water and weight tracking']);
+});

@@ -69,7 +69,7 @@ function clearOverride(storage){
  if(storage.getItem(SELECTED)!==null)throw Error('Unable to clear manual selection');
  try{if(typeof window!=='undefined')window.MLC2ScheduleAuxSync?.()}catch{}
 }
-function render(root,{presets,custom,storage,onChanged,doc=document}){
+function render(root,{presets,custom,storage,onChanged,runWrite=work=>work([...custom,...presets]),doc=document}){
  if(!root)return;
  const plans=[...custom,...presets],map=read(storage);
  root.replaceChildren();
@@ -85,9 +85,14 @@ function render(root,{presets,custom,storage,onChanged,doc=document}){
   const rest=doc.createElement('option');rest.value='rest-day';rest.textContent='Rest day';select.append(rest);
   for(const p of plans){const option=doc.createElement('option');option.value=p.id;option.textContent=p.title;select.append(option)}
   select.value=map[String(index)]&&(map[String(index)]==='rest-day'||plans.some(p=>p.id===map[String(index)]))?map[String(index)]:'';
-  select.addEventListener('change',()=>{
-   try{assign(storage,index,select.value,plans);onChanged?.()}
+  select.addEventListener('change',async()=>{
+   const value=select.value;select.disabled=true;
+   try{await runWrite(latestPlans=>{
+    if(read(storage)[String(index)]!==map[String(index)])throw Error('This weekday changed. Review the current schedule.');
+    assign(storage,index,value,latestPlans);
+   });onChanged?.()}
    catch(e){select.value=read(storage)[String(index)]||'';status.textContent='Could not save schedule: '+e.message}
+   finally{select.disabled=false}
   });
   label.append(select);grid.append(label);
  });
@@ -104,9 +109,9 @@ function render(root,{presets,custom,storage,onChanged,doc=document}){
  root.append(status);
  const button=doc.createElement('button');button.type='button';button.className='button-outline';
  button.textContent='Follow weekly schedule (clear manual selection)';
- button.addEventListener('click',()=>{
+ button.addEventListener('click',async()=>{
   try{
-   clearOverride(storage);
+   await runWrite(()=>clearOverride(storage));
    const selected=resolve({presets,custom,storage});
    status.textContent=selected?.scheduleSource==='weekly'
     ?'Following weekly schedule · Today: '+selected.title

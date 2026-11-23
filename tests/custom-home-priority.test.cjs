@@ -65,7 +65,7 @@ test('custom priority persists across manager re-init and selected workout is no
  vm.runInContext(read('custom-workouts.js'),context);
  assert.equal(win.MLC2Custom.currentPlan(plans,0).id,custom.id);
 });
-test('deleting currently selected custom plan removes stale selection and keeps existing workout history intact',()=>{
+test('deleting currently selected custom plan removes stale selection and keeps existing workout history intact',async()=>{
  const {win,db}=make();
  db.setItem('mlc2-custom-plans-v1',JSON.stringify([custom]));
  db.setItem('mlc2-selected-workout-v1',custom.id);
@@ -73,6 +73,7 @@ test('deleting currently selected custom plan removes stale selection and keeps 
  const click={target:{closest:selector=>selector==='[data-custom-delete]'?{dataset:{customDelete:custom.id}}:null}};
  let rendered=0;
  assert.equal(win.MLC2Custom.handleClick(click,()=>rendered++),true);
+ await Promise.resolve();
  assert.equal(rendered,1);
  assert.equal(win.MLC2Custom.allPlans(plans).some(p=>p.id===custom.id),false);
  assert.equal(db.getItem('mlc2-selected-workout-v1'),null);

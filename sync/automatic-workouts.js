@@ -60,17 +60,18 @@
    if(auth?.userId!==owner||!isActive())throw Error('Authenticated owner changed');
    const rows=await pageCloud(),device=local();
    const byId=new Map(rows.map(row=>[row.id,row]));
+   const removed=accountStore.removed(storage,owner);
    const missing=[],conflicts=[],matched=[],newLocal=[];
    for(const record of device){
     if(record.ownerId!==owner)throw Error('Foreign device workout');
     const cloud=byId.get(record.id);
-    if(!cloud)newLocal.push(record);
+    if(!cloud){if(!removed.has(record.id))newLocal.push(record)}
     else if(cloud.deleted||!same(normalizeCloudSession(cloud,owner),record))conflicts.push(record.id);
     else matched.push(record.id);
    }
    const ids=new Set(device.map(row=>row.id));
    for(const row of rows){
-    if(row.deleted||ids.has(row.id))continue;
+    if(row.deleted||ids.has(row.id)||removed.has(row.id))continue;
     const payload=normalizeCloudSession(row,owner);
     if(!payload){conflicts.push(row.id);continue}
     missing.push(payload);
@@ -79,6 +80,7 @@
   }
   function queue(session){
    if(!isActive()||session?.ownerId!==owner)throw Error('Session owner mismatch');
+   if(accountStore.removed(storage,owner).has(session.id))throw Error('Workout was removed from this device');
    const current=local();
    if(!current.some(row=>row.id===session.id&&same(row,session)))
     throw Error('Workout must be durably saved on device before cloud queue');
@@ -97,8 +99,11 @@
     const report=await inspected();
     if(!isActive())return {status:'owner-changed'};
     const journal=Sync.create({owner,storage,transport,enabled:true});
+    const removed=accountStore.removed(storage,owner);
+    journal.discardUpserts(op=>op.type==='session'&&removed.has(op.id));
     const pending=new Set(journal.list().items.filter(op=>op.type==='session').map(op=>op.id));
     for(const record of report.newLocal){
+     if(removed.has(record.id))continue;
      if(!pending.has(record.id)){journal.enqueue('session',record.id,record,0);pending.add(record.id)}
     }
     // If a same-ID remote record differs, abort instead of writing or overwriting.
@@ -131,18 +136,20 @@
    if(!isActive())throw Error('Account changed while confirming recovery');
    // Re-fetch remotely and locally after confirmation, never trust a stale snapshot.
    const fresh=await inspected();
-   // A confirmation approves only the original missing workout IDs.
-   // Cloud additions between approval and re-read need a NEW approval.
+   // Approval applies to the exact cloud snapshots inspected before confirmation.
+   const approvedRows=new Map(report.rows.map(row=>[row.id,row]));
    const approvedIds=new Set(report.missing.map(row=>row.id));
-   if(fresh.missing.some(row=>!approvedIds.has(row.id)))
+   const freshRows=new Map(fresh.rows.map(row=>[row.id,row]));
+   if(fresh.missing.some(row=>!approvedIds.has(row.id)||!same(approvedRows.get(row.id),freshRows.get(row.id))))
     return {status:'changed-reconfirm',restored:0,conflicts:fresh.conflicts.length};
    return withHistoryWrite(()=>{
     // Never overwrite an existing ID. A conflict in an unrelated existing
     // record must not prevent restoring distinct, missing IDs.
     if(!isActive())throw Error('Account changed during restore');
     const latest=local(),byId=new Map(latest.map(x=>[x.id,x]));
-    const added=[];
+    const removed=accountStore.removed(storage,owner),added=[];
     for(const row of fresh.missing){
+     if(removed.has(row.id))continue;
      if(byId.has(row.id)){if(!same(byId.get(row.id),row))throw Error('Local record changed');}
      else added.push(row);
     }

@@ -35,3 +35,17 @@ test('reject malformed owner or access to unrelated storage key',()=>{
  assert.throws(()=>a.getItem('workoutHistoryV52'),/Unsupported draft storage key/);
  assert.equal(s.map.size,0);
 });
+
+test('a stale workout window cannot overwrite or clear another window’s saved sets',()=>{
+ const rows=new Map(),db={getItem:key=>rows.get(key)??null,setItem:(key,v)=>rows.set(key,v),removeItem:key=>rows.delete(key)};
+ const key=adapter.KEY,first=adapter.scope(db,'first-owner',{guarded:true});
+ first.setItem(key,'original-draft');
+ const stale=adapter.scope(db,'first-owner',{guarded:true});
+ const other=adapter.scope(db,'second-owner',{guarded:true});
+ first.setItem(key,'newer-draft');
+ other.setItem(key,'other-account-draft');
+ assert.throws(()=>stale.setItem(key,'stale-draft'),{code:'STALE_DRAFT'});
+ assert.throws(()=>stale.removeItem(key),{code:'STALE_DRAFT'});
+ assert.equal(first.getItem(key),'newer-draft');
+ assert.equal(other.getItem(key),'other-account-draft');
+});

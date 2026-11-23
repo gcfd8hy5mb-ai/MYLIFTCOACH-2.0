@@ -1,0 +1,74 @@
+# Review template. Install in the separately approved <owner>/<owner>.github.io repo.
+name: MYLIFTCOACH 2.0 isolated acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact reviewed MYLIFTCOACH 2.0 commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: mlc2-acceptance-pages
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Require separate approved GitHub Pages owner and exact commit
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.repository }}
+          APPROVED_OWNER: ${{ vars.MLC2_PAGES_OWNER }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          set -euo pipefail
+          [[ -n "$APPROVED_OWNER" && "$OWNER" == "$APPROVED_OWNER" ]]
+          [[ "${OWNER,,}" != "gcfd8hy5mb-ai" ]]
+          [[ "${REPOSITORY,,}" == "${OWNER,,}/${OWNER,,}.github.io" ]]
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+      - uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: ${{ inputs.candidate_sha }}
+          path: source
+          persist-credentials: false
+          token: ${{ secrets.MLC2_SOURCE_READ_TOKEN || github.token }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build acceptance package without production access
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          MLC2_TEST_URL: ${{ vars.MLC2_TEST_URL }}
+          MLC2_TEST_PUBLISHABLE_KEY: ${{ vars.MLC2_TEST_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          [[ "$(git -C source rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
+          node --test source/tests/acceptance-package.test.cjs
+          node source/review/pages/stage.cjs "$GITHUB_WORKSPACE/dist"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+        id: pages
+      - name: Verify configured origin before publishing
+        env:
+          ACTUAL_ORIGIN: ${{ steps.pages.outputs.origin }}
+          OWNER: ${{ github.repository_owner }}
+        run: test "$ACTUAL_ORIGIN" = "https://${OWNER,,}.github.io"
+      - uses: actions/deploy-pages@v4
+        id: deployment

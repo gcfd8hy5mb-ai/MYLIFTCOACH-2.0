@@ -80,7 +80,7 @@ test('editor offers all days before save, preserves optional exercise targets an
   assert.ok(js.includes(phrase),phrase);
  }
  assert.ok(js.indexOf('custom-editor-weekdays')<js.indexOf('custom-editor-picker'));
- assert.ok(js.includes('targets:normalizeTargets(draftTargets,selected)'));
+ assert.ok(js.includes('targets=normalizeTargets(draftTargets,ids)'));
  assert.match(css,/custom-weekday-grid/);
  assert.ok(html.includes('custom-workouts.css?v=5'));
 });

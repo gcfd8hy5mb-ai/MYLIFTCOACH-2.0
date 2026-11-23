@@ -1,14 +1,20 @@
 /* MYLIFTCOACH 2.0 · isolated device measurements and private progress photos.
-   Never read, write, rename, or delete the original app's measurement or photo storage. */
+   The original photo gallery is opt-in and read-only. */
 (function(){
 'use strict';
 const MEASUREMENT_KEY='mlc2-measurements-v1';
 let owner=null,photoEpoch=0,photoRender=0;
+const originalPhotoUrls=[];
+function clearOriginalPhotos(){
+ for(const url of originalPhotoUrls.splice(0))URL.revokeObjectURL(url);
+ document.getElementById('mlcOriginalPhotoList')?.replaceChildren();
+ setStatus('mlcOriginalPhotoStatus','');
+}
 const measurementKey=()=>owner?MEASUREMENT_KEY+':user:'+owner:MEASUREMENT_KEY;
 function setOwner(id){
  if(id!==null&&!/^[a-zA-Z0-9_-]{1,128}$/.test(id||''))throw Error('Invalid measurement owner');
  if(owner===id)return;
- owner=id;photoEpoch++;
+ owner=id;photoEpoch++;clearOriginalPhotos();
  const input=document.getElementById('mlcPhotoInput');if(input)input.value='';
  document.getElementById('mlcPhotoList')?.replaceChildren();
  setStatus('mlcPhotoStatus','');
@@ -106,6 +112,28 @@ async function renderPhotos(){
   }
  }catch(e){if(epoch===photoEpoch&&generation===photoRender)setStatus('mlcPhotoStatus',e.message||'Photos unavailable on this device.')}
 }
+async function showOriginalPhotos(event){
+ const button=event.currentTarget,account=owner,epoch=photoEpoch;
+ clearOriginalPhotos();
+ if(!account){setStatus('mlcOriginalPhotoStatus','Sign in to view original account photos on this device.');return}
+ button.disabled=true;
+ try{
+  const items=await window.MLC2LegacyDevicePhotos.read(indexedDB,localStorage,account,
+   selected=>selected===owner&&epoch===photoEpoch);
+  if(epoch!==photoEpoch)return;
+  const list=document.getElementById('mlcOriginalPhotoList');
+  for(const {day,data} of items){
+   const item=document.createElement('article');item.className='mlc-photo-card';
+   const image=document.createElement('img');image.alt='Original progress photo from '+day;image.loading='lazy';
+   const url=URL.createObjectURL(data);originalPhotoUrls.push(url);image.src=url;
+   const footer=document.createElement('div'),date=document.createElement('span'),save=document.createElement('a');
+   date.textContent=day;save.href=url;save.download='MYLIFTCOACH-original-progress-'+day+'.'+data.type.split('/')[1];
+   save.textContent='Save copy';footer.append(date,save);item.append(image,footer);list.append(item);
+  }
+  setStatus('mlcOriginalPhotoStatus',items.length?items.length+' original photos on this device.':'No original account photos found in this browser.');
+ }catch(error){if(epoch===photoEpoch)setStatus('mlcOriginalPhotoStatus',error.message)}
+ finally{button.disabled=false}
+}
 async function preparePhoto(file){
  if(!file||!/^image\/(jpeg|png|webp|heic|heif)$/.test(file.type)||file.size>20_000_000)throw new Error('Choose a supported image under 20 MB.');
  let source;
@@ -140,6 +168,7 @@ function init(){
   try{saveMeasurements(readMeasurements().filter(x=>x.id!==b.dataset.measurementDelete));showMeasurements()}
   catch{setStatus('mlcMeasurementStatus','Could not remove measurement.')}
  });
+ document.getElementById('mlcOriginalPhotoLoad')?.addEventListener('click',showOriginalPhotos);
  const input=document.getElementById('mlcPhotoInput');
  input?.addEventListener('change',async e=>{
   const file=e.currentTarget.files?.[0];if(!file)return;

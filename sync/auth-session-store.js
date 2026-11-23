@@ -16,15 +16,31 @@
    typeof value.user?.id==='string'&&/^[a-zA-Z0-9_-]{1,128}$/.test(value.user.id)&&
    Number.isFinite(value.expires_at);
  }
+ function stored(storage){
+  try{
+   const record=JSON.parse(storage?.getItem(KEY)||'null');
+   return valid(record)?record:null;
+  }catch{return null}
+ }
  function read(session,persistent){
-  for(const storage of [session,persistent]){
+  const here=stored(session),saved=stored(persistent);
+  if(here&&saved?.user.id===here.user.id&&saved.expires_at>=here.expires_at)return saved;
+  return here||saved;
+ }
+ const matches=(record,expected)=>record?.user.id===expected.user.id&&
+  record.access_token===expected.access_token&&record.refresh_token===expected.refresh_token;
+ function replace(session,persistent,expected,next){
+  if(!valid(expected)||!valid(next)||expected.user.id!==next.user.id)throw Error('Account session changed');
+  const payload=JSON.stringify(next);
+  let updated=false;
+  for(const storage of [persistent,session]){
+   if(!matches(stored(storage),expected))continue;
    try{
-    const raw=storage?.getItem(KEY);if(!raw)continue;
-    const record=JSON.parse(raw);
-    if(valid(record))return record;
+    storage.setItem(KEY,payload);
+    updated=storage.getItem(KEY)===payload||updated;
    }catch{}
   }
-  return null;
+  return updated;
  }
  function save(session,persistent,value){
   if(!valid(value))throw Error('Invalid verified account session');
@@ -39,10 +55,11 @@
   if(!stored)throw Error('Account session could not be saved to this browser');
   return true;
  }
- function clear(session,persistent){
+ function clear(session,persistent,expected){
   for(const storage of [session,persistent]){
+   if(expected&&!matches(stored(storage),expected))continue;
    try{storage?.removeItem(KEY)}catch{}
   }
  }
- return Object.freeze({KEY,valid,read,save,clear});
+ return Object.freeze({KEY,valid,read,save,replace,clear});
 });

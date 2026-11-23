@@ -100,7 +100,9 @@ function open(onSaved){
   const move=up||down;if(move){const i=row.ids.indexOf(up?up.dataset.weekUp:down.dataset.weekDown),j=i+(up?-1:1);if(i<0||j<0||j>=row.ids.length)return;[row.ids[i],row.ids[j]]=[row.ids[j],row.ids[i]];dirty=true;render()}
  });
  $('weeklyProgramName').addEventListener('input',()=>{dirty=true});
- $('saveWeeklyProgram').addEventListener('click',()=>{
+ let saving=false;
+ $('saveWeeklyProgram').addEventListener('click',async()=>{
+  if(saving)return;
   const title=$('weeklyProgramName').value.trim();
   if(!title){alert('Enter a program name.');$('weeklyProgramName').focus();return}
   const missing=rows.findIndex(r=>!r.rest&&!r.ids.length);
@@ -108,13 +110,20 @@ function open(onSaved){
   const invalid=rows.findIndex((row,day)=>!row.rest&&invalidTargets[day].size);
   if(invalid>=0){active=invalid;render();alert('Correct the optional targets for '+DAYS[invalid]+' before saving.');return}
   if(!rows.some(r=>!r.rest)){alert('Choose at least one training day.');return}
+  const editorOwner=window.MLC2Custom,schedule=editorOwner.scheduleVersion();
   if(!confirm('Save this weekly program and replace the current weekday assignments? Existing workouts and history will remain saved.'))return;
-  const editorOwner=window.MLC2Custom;
   try{
-   const result=editorOwner.saveFullWeek({title,days:rows,expectedOwner:initialOwner});
+   saving=true;
+   const days=rows.map(row=>({...row,ids:[...row.ids],targets:JSON.parse(JSON.stringify(row.targets))}));
+   const result=await editorOwner.runPlanWrite(()=>{
+    if(forceCurrent!==forceClose)throw Error('Weekly editor closed before saving.');
+    if(editorOwner.scheduleVersion()!==schedule)throw Error('Weekly assignments changed. Review the schedule before saving.');
+    return editorOwner.saveFullWeek({title,days,expectedOwner:initialOwner});
+   });
    dirty=false;close();
    onSaved?.(result);
-  }catch(err){alert('Weekly program was not saved: '+String(err.message||err).slice(0,140))}
+  }catch(err){if(forceCurrent===forceClose)alert('Weekly program was not saved: '+String(err.message||err).slice(0,140))}
+  finally{saving=false}
  });
  render();$('weeklyProgramName').focus();
 }

@@ -9,7 +9,7 @@ test('custom workout editor uses an add-exercise search and editable order witho
  assert.ok(js.includes('data-custom-remove'));
  assert.ok(js.includes('data-custom-up'));
  assert.ok(js.includes('data-custom-down'));
- assert.ok(js.includes("ids:[...selected]"));
+ assert.ok(js.includes("const ids=[...selected]"));
  assert.ok(js.includes('persistPlans(next)'));
  assert.ok(js.includes('editorOwner!==owner'));
  assert.match(css,/\.custom-editor-dialog\{[\s\S]*background:#04252d!important/);

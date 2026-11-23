@@ -9,7 +9,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
  const BASELINE_PREFIX='mlc2-aux-confirmed-v1:';
- function create({owner,storage,aux,Sync,transport,verify,active,online=()=>true}){
+ function create({owner,storage,aux,Sync,transport,verify,active,online=()=>true,withLocalAccess=work=>work(),writePlans}){
   if(!owner||!storage||!aux||!Sync||!transport||typeof verify!=='function'||typeof active!=='function')
    throw Error('Verified auxiliary backup dependencies required');
   let busy=false;
@@ -60,14 +60,15 @@
    busy=true;
    try{
     const records=await inspect();
+    const localRecords=await withLocalAccess(()=>aux.CONFIG.map(config=>aux.loadLocal(storage,owner,config)));
+    if(!still())throw Error('Account changed');
     const journal=Sync.create({owner,storage,transport,enabled:true});
     const pending=journal.list().items;
     let skipped=0,queued=0,conflicts=0;
-    const proposals=[],expected=new Map();
-    let followUp=0;
+    const proposals=[],expected=new Map(),superseded=new Set();
     for(let i=0;i<aux.CONFIG.length;i++){
      if(!still())throw Error('Account changed');
-     const config=aux.CONFIG[i],local=aux.loadLocal(storage,owner,config);
+     const config=aux.CONFIG[i],local=localRecords[i];
      const row=records[i];
      // An intentionally cleared category may be committed only when this
      // device has a verified previous version. Never treat missing storage
@@ -76,10 +77,21 @@
      if(existingPending){
       if(row?.deleted||existingPending.status==='conflict'||existingPending.kind!=='upsert'||
          !aux.valid(config,existingPending.payload?.entries)){conflicts++;continue}
-      // Pending operation is immutable: replay the same ID rather than enqueue twice.
-      if(local.exists&&!aux.equal(existingPending.payload.entries,local.value))followUp++;
-      expected.set(expectedKey(config),existingPending.payload.entries);
-      skipped++;continue;
+      if(!local.exists){conflicts++;continue}
+      if(aux.equal(existingPending.payload.entries,local.value)){
+       expected.set(expectedKey(config),existingPending.payload.entries);
+       skipped++;continue;
+      }
+      // If an acknowledgement was lost, reconcile the exact committed snapshot
+      // from its next revision. Otherwise the newer local intent replaces an
+      // unsent snapshot only if the original server base is still current.
+      if(row&&row.revision===existingPending.baseRevision+1&&
+         aux.equal(aux.validateRemote(config,row),existingPending.payload.entries)){
+       remember(config,row);
+      }else if((row?.revision||0)!==existingPending.baseRevision){
+       conflicts++;continue;
+      }
+      superseded.add(existingPending.opId);
      }
      if(!local.exists){skipped++;continue}
      if(aux.empty(config,local.value)&&(!row||!baseline(config))){skipped++;continue}
@@ -102,6 +114,7 @@
     }
     if(conflicts)return {status:'conflict',conflicts,queued:0,skipped,
       pending:journal.list().items.length};
+    journal.discardUpserts(op=>superseded.has(op.opId));
     for(const p of proposals){
      if(!still())throw Error('Account changed');
      journal.enqueue(p.config.type,aux.recordId(p.config),aux.payload(p.value),p.revision);
@@ -110,6 +123,13 @@
     if(!still())throw Error('Account changed');
     const result=await journal.drain({verifiedOwner:owner,online:online(),maxOperations:50,
      types:aux.CONFIG.map(config=>config.type),
+     canSend:op=>withLocalAccess(()=>{
+      if(!still())throw Error('Account changed');
+      const config=aux.CONFIG.find(item=>item.type===op.type&&aux.recordId(item)===op.id);
+      if(!config)return false;
+      const current=aux.loadLocal(storage,owner,config);
+      return current.exists&&aux.equal(current.value,op.payload?.entries);
+     }),
      onAcknowledged:(op,ack)=>{
       if(!still())throw Error('Account changed');
       const config=aux.CONFIG.find(item=>item.type===op.type&&aux.recordId(item)===op.id);
@@ -132,47 +152,47 @@
       remember(config,row);baselines++;
      }
     }
-    return {status:followUp?'pending':result.status,queued,uploaded:result.sent||0,
-      skipped,pending:(result.pending||0)+followUp,conflicts:0,baselines};
+    return {status:result.status,queued,uploaded:result.sent||0,
+      skipped,pending:result.pending||0,conflicts:0,baselines};
    }finally{busy=false}
   }
+  function recoverable(records){
+   return new Map(aux.recoveryCandidates(storage,owner,records).map(({config,record})=>[config.label,record]));
+  }
   async function previewRecovery(){
-   const records=await inspect(),missing=[];
-   for(let i=0;i<aux.CONFIG.length;i++){
-    const config=aux.CONFIG[i],row=records[i];
-    if(!row||row.deleted)continue;
-    const entries=aux.validateRemote(config,row);
-    const local=aux.loadLocal(storage,owner,config);
-    if(aux.canFill(config,local)&&
-       !aux.empty(config,entries))missing.push(config.label);
-   }
-   return {missing,canRestore:missing.length>0,readOnly:true};
+   const records=await inspect();
+   return withLocalAccess(()=>{
+    if(!still())throw Error('Account changed');
+    const missing=[...recoverable(records).keys()];
+    return {missing,canRestore:missing.length>0,readOnly:true};
+   });
   }
   async function restore({confirmRestore}={}){
    if(typeof confirmRestore!=='function')throw Error('Explicit recovery approval required');
    if(busy)throw Error('Cloud operation already active');
    busy=true;
    try{
-    const first=await previewRecovery();
-    if(!first.canRestore)return {status:'up-to-date',restored:[]};
-    if(!await confirmRestore(first.missing))return {status:'cancelled',restored:[]};
+    const before=await inspect();
+    const approved=await withLocalAccess(()=>{
+     if(!still())throw Error('Account changed');
+     return recoverable(before);
+    });
+    if(!approved.size)return {status:'up-to-date',restored:[]};
+    if(!await confirmRestore([...approved.keys()]))return {status:'cancelled',restored:[]};
     if(!still())throw Error('Account changed during confirmation');
     const records=await inspect();
-    if(!still())throw Error('Account changed');
-    // Never restore a newly appeared cloud category that was not named
-    // in the user's explicit confirmation. Reconfirm the updated selection.
-    const approved=new Set(first.missing);
-    for(let i=0;i<aux.CONFIG.length;i++){
-     const config=aux.CONFIG[i],row=records[i];
-     if(!row||row.deleted)continue;
-     const entries=aux.validateRemote(config,row);
-     const local=aux.loadLocal(storage,owner,config);
-     if(aux.canFill(config,local)&&
-        !aux.empty(config,entries)&&!approved.has(config.label))
-      return {status:'changed-reconfirm',restored:[]};
-    }
-    const restored=aux.restoreMissing(storage,owner,records.filter(Boolean));
-    return {status:'restored',restored};
+    return await withLocalAccess(()=>{
+     if(!still())throw Error('Account changed');
+     const fresh=recoverable(records);
+     for(const [label,row] of fresh){
+      const original=approved.get(label);
+      if(!original||row.revision!==original.revision||!aux.equal(row.payload,original.payload))
+       return {status:'changed-reconfirm',restored:[]};
+     }
+     if(!fresh.size)return {status:'up-to-date',restored:[]};
+     const restored=aux.restoreMissing(storage,owner,records,{writePlans});
+     return {status:'restored',restored};
+    });
    }finally{busy=false}
   }
   return Object.freeze({backup,previewRecovery,restore});
