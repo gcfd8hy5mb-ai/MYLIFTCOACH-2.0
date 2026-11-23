@@ -30,6 +30,12 @@
 6. For each issue, report path, line(s), severity (blocker/high/medium/low), impact, reproduction, and smallest safe fix. Fix only on an independent review branch, run tests after each batch, and keep original app and account data untouched.
 7. Produce a final release decision: **GO for continuing 2.0 testing**, **GO/NO-GO for replacing the original**, remaining blockers and exact confidence boundaries. Do not claim live cloud sync or actual iPhone UI behavior was personally tested unless it was. Do not merge or deploy to original without explicit user approval.
 
+## Prior independent review and branch topology
+- Existing `CODEX-FINAL-REVIEW-RESULTS.md` documents an earlier 26-finding review and fixes, but **does not review the new seven-day program and subsequent integration**. Recheck only new or affected code unless a previous finding's conditions change. The original review's remaining browser acceptance and Web Locks fallback/cross-context issues must not be erased from the release record.
+- The current candidate and GitHub `main` **diverge heavily** (at the start of this final pass: 859 commits ahead / 61 behind, 300 files returned by compare). **Do not create a blind merge PR from the candidate into main.** The production source is assembled by pinned GitHub Pages checkout; review both source and packaging diff.
+- Original app and original user data stay unchanged until the user explicitly authorizes cutover.
+- A copy of this handoff alone cannot invoke Codex. The user or their connected Codex workflow must run the review; report the actual tool/job/commit before marking Codex PASS.
+
 ## Verification and acceptance boundaries
 - The user already verified the separate 2.0 iPhone Home Screen: weekly program builder works; dynamic training day label and next session actions work. Avoid repeating approved tests unless relevant changes regress them.
 - New source changes in this review batch have automated CI but still require a final same-iPhone smoke test if published.
