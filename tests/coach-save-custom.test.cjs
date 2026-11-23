@@ -68,7 +68,7 @@ test('Saving Coach does not change unscheduled Home fallback; explicit selection
 test('Edited Coach routines retain their non-default status and do not silently select Today',()=>{
  const source=fs.readFileSync('custom-workouts.js','utf8');
  assert.match(source,/coachSaved:existing\?\.coachSaved===true/);
- assert.match(source,/if\(!existing&&!updated\.coachSaved\)\s*\{\s*try\{localStorage\.setItem\(scoped\(TODAY\),updated\.id\)/);
+ assert.match(source,/else if\(!existing&&!updated\.coachSaved\)\s*\{\s*localStorage\.setItem\(selectedKey,updated\.id\)/);
  const {store,window}=setup();
  const newCoach=window.MLC2Custom.saveCoachDay({day:1,exercises:[{id:'row'}]});
  assert.equal(window.MLC2Custom.allPlans([]).find(p=>p.id===newCoach.id).coachSaved,true);
