@@ -143,10 +143,9 @@ jobs:
           test -s dist/myliftcoach2/sync/account-recovery.js
           test -s dist/myliftcoach2/approved-visuals-manifest.js
           test -s dist/myliftcoach2/more-page.css
-          grep -q 'active-workout-ux.css?v=4' dist/myliftcoach2/index.html
           grep -q 'offline-shell.js?v=2' dist/myliftcoach2/index.html
           grep -q 'active-workout-ux.css?v=5' dist/myliftcoach2/index.html
-          grep -q "cacheName = prefix + '47'" dist/myliftcoach2/offline-worker.js
+          grep -q "cacheName = prefix + '48'" dist/myliftcoach2/offline-worker.js
           grep -q 'more-page.css' dist/myliftcoach2/index.html
           # Pin approved 11/16 wallpaper/hero files, not experimental artwork.
           cp original-approved/assets/approved-vertical-marble-sharp.webp dist/myliftcoach2/assets/approved-vertical-marble-sharp.webp
