@@ -16,6 +16,7 @@ on:
       - fix/scheduled-routines-vs-unused-presets-20261122
       - fix/visible-library-thumbnails-20261122
       - fix/library-thumbnails-left-20261122
+      - fix/library-image-css-escape-and-structure-20261122
   workflow_dispatch:
 
 permissions:
