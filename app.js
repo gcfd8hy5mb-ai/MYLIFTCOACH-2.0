@@ -2124,7 +2124,7 @@ function bind(){
    const merge=window.MLC2ProgramTransfer.planMerge(incomingTransfer,localStorage,owner,window.MLC2AuxData,
     {activateSource:$('activateImportedProgram').checked});
    output.textContent=merge.canApply
-    ?merge.changes.length+' account program categories would change. Existing workout history and progress photos remain untouched. No cloud write is performed by this preview.'
+    ?merge.changes.length+' categories would change: '+merge.changes.map(change=>{const category=window.MLC2AuxData.CONFIG.find(item=>item.key===change.category);return category?.label||change.category}).join(', ')+'. Existing workout history and progress photos remain untouched. This preview makes no cloud changes.'
     :'Import blocked: '+merge.conflicts.slice(0,4).join('; ')+'. No data changed.';
    button.disabled=!merge.canApply||!merge.changes.length||
     !receivingBackup||receivingBackup.owner!==owner||
