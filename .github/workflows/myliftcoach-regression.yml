@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   candidate-regressions:
+    if: github.head_ref != 'deploy/reviewed-iphone-2-0-20261122'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -33,3 +34,28 @@ jobs:
           node --check beta-access.js
       - name: Run offline full integration regression suite
         run: node tests/run-all.js
+
+  reviewed-iphone-candidate-regressions:
+    if: github.event_name == 'pull_request' && github.head_ref == 'deploy/reviewed-iphone-2-0-20261122'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout pinned reviewed candidate (not old 11-21N main)
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 239d11975428f02b845528476288e6c7f459b6c9
+          path: reviewed-candidate
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate reviewed runtime and full regression suite
+        working-directory: reviewed-candidate
+        run: |
+          node --check app.js
+          node --check offline-worker.js
+          node --check sync/automatic-workouts.js
+          node --check sync/account-recovery.js
+          node tests/run-all.js
