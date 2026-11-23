@@ -167,3 +167,41 @@
 .custom-weekday-option input:checked+span{background:linear-gradient(145deg,#ffe9b0,#cfa46c);color:#062b34;border-color:#fff0c5;box-shadow:0 0 0 1px rgba(240,206,150,.4)}
 .custom-weekday-option input:focus-visible+span{outline:2px solid #fff3d0;outline-offset:3px}
 @media(max-width:380px){.custom-weekday-grid{gap:4px}.custom-weekday-option span{min-height:40px;font-size:11px}}
+
+/* Full Weekly Program: iPhone-first dark teal and gold; original marble untouched. */
+.workouts-create-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.workouts-create-actions button{min-height:43px;padding:9px 12px;font-size:13px}
+.weekly-builder-dialog{width:min(690px,100%);max-height:92dvh}
+.weekly-program-label{display:block;margin:12px 0;color:#f6e7cc;font-size:13px;font-weight:700}
+.weekly-program-label>input{display:block;box-sizing:border-box;width:100%;min-height:46px;margin-top:6px;padding:11px 12px;background:#051f27;color:#fff5e7;border:1px solid #ba9661;border-radius:10px;font-size:16px}
+.weekly-program-help{font-size:12px;line-height:1.55;color:#e0e0d4;margin:10px 0 15px}
+.weekly-builder-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:17px}
+.weekly-builder-tabs button{min-width:0;border:1px solid #b39261;border-radius:10px;color:#f4d5a0;background:#082e36;padding:10px 1px;display:grid;justify-items:center;gap:4px;min-height:59px}
+.weekly-builder-tabs button[aria-selected=true]{color:#052832;background:linear-gradient(150deg,#f8e5b8,#cba06a);font-weight:800}
+.weekly-builder-tabs button small{font-size:9px;line-height:1.15;text-align:center}
+.weekly-builder-tabs button strong{font-size:12px}
+.weekly-builder-day{background:#052630;border:1px solid rgba(221,181,118,.35);border-radius:13px;padding:13px;margin-bottom:15px}
+.weekly-builder-day-heading{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.weekly-builder-day-heading h3{color:#f2d7aa;margin:4px 0;font-size:18px}
+.weekly-rest-toggle{color:#f5e5cd;display:flex;align-items:center;gap:7px;font-size:13px}
+.weekly-rest-toggle input{accent-color:#e6c28c;width:20px;height:20px}
+.weekly-rest-explanation{font-size:13px;line-height:1.6;color:#e8e6df;padding:14px 4px}
+.weekly-builder-day h4{color:#f6dcaf;margin:16px 0 8px}
+.weekly-selected{border:1px solid rgba(217,171,107,.52);border-radius:11px;background:#062d36;margin:7px 0;padding:10px}
+.weekly-selected-head{display:flex;align-items:center;gap:7px}
+.weekly-selected-head .custom-exercise-copy{flex:1}
+.weekly-selected-head button{border:1px solid #a68c60;color:#f5dfb6;background:#082832;border-radius:8px;min-height:35px;min-width:30px;padding:4px}
+.weekly-selected-head button:disabled{opacity:.34}
+.weekly-selected-targets{margin:9px 0 0 34px;border-top:1px solid rgba(224,179,105,.26);padding:8px 0 0}
+.weekly-selected-targets summary{color:#f2d8ac;font-size:12px;min-height:35px;cursor:pointer}
+.weekly-target-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.weekly-target-grid label{color:#eee1ca;font-size:11px;min-width:0}
+.weekly-target-grid input{display:block;width:100%;box-sizing:border-box;margin:5px 0 0;padding:9px;background:#031e26;border:1px solid #ba9968;border-radius:8px;color:#fff5e8;font-size:16px;min-height:43px}
+.weekly-exercise-results{overflow:auto;max-height:230px;background:#041f28;border-radius:10px;padding:6px;margin-top:8px}
+.weekly-option{display:flex;gap:9px;align-items:center;background:#07313a;border:1px solid rgba(219,180,112,.37);padding:8px;border-radius:11px;margin:5px 0}
+.weekly-exercise-thumb,.weekly-exercise-placeholder{width:54px;height:54px;flex:0 0 54px;border-radius:8px;object-fit:cover;object-position:center top;border:1px solid #d0aa72;background:#071e28}
+.weekly-exercise-placeholder{display:grid;place-items:center;color:#eac78d}
+.weekly-option button{border:1px solid #d1ae76;color:#f9dcaa;background:#072a34;border-radius:9px;min-height:39px;padding:7px 10px;font-weight:800}
+.weekly-option button:disabled{opacity:.56}
+.weekly-builder-footer #saveWeeklyProgram{background:linear-gradient(150deg,#fff0b8,#cea163);color:#062830;font-weight:800}
+@media(max-width:390px){.weekly-builder-tabs{gap:3px}.weekly-builder-tabs button{min-height:56px}.weekly-builder-tabs button small{font-size:8px}.weekly-builder-day{padding:9px}.workouts-create-actions button{font-size:12px}}
