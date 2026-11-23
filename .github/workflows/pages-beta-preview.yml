@@ -134,7 +134,7 @@ jobs:
           # Reviewed candidate for the existing saved 2.0 icon; original workout-tracker is untouched.
           # Keep a full pre-deployment backup branch and do not merge without iPhone acceptance planning.
           mkdir -p dist/myliftcoach2
-          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \\
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
             --exclude='*.md' phone-ui-n/ dist/myliftcoach2/
           test -s dist/myliftcoach2/index.html
           test -s dist/myliftcoach2/app.js
