@@ -1,7 +1,7 @@
 name: MYLIFTCOACH 2.0 signup review (no deployment)
 on:
   push:
-    branches: [feature/account-signup-20261123, fix/coach-home-training-days-20261123]
+    branches: [feature/account-signup-20261123, fix/coach-home-training-days-20261123, feature/saved-weekly-programs-20261123]
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,9 +23,11 @@ jobs:
         run: |
           node --test tests/account-signup.test.cjs tests/workout-auth-ux-fix.test.cjs tests/auth-persistence-iphone.test.cjs tests/offline-shell.test.cjs
       - name: List legacy app cache-version assertions
-        run: grep -Rnl 'v=47' tests || true
+        run: grep -Rnl 'v=48' tests || true
       - name: Verify Coach training-day display priority
         run: node --test tests/coach-home-training-days.test.cjs
+      - name: Saved weekly program and Coach mode regression
+        run: node --test tests/saved-weekly-programs.test.cjs
       - name: Complete existing application regression suite
         run: node tests/run-all.js
 # Intentionally no Pages, SQL, Auth admin changes, secrets, or deploy permissions.
