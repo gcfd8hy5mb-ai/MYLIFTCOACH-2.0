@@ -47,7 +47,7 @@ test('active workout uses inline checkmark logging and preserves existing draft/
  }
  assert.ok(html.includes('workout-active-ux.js?v=3'));
  assert.ok(html.includes('active-workout-ux.css?v=5'));
- assert.ok(app.includes("if($('autoRestToggle')?.checked)openRest()"));
+ assert.ok(app.includes("if($('autoRestToggle')?.checked)openRest(id)"));
  assert.ok(app.includes("betaView().mode==='pro'&&e.group!=='Cardio'"));
  assert.ok(app.includes("coach?.status==='ready'"));
  assert.ok(app.includes("Optional · no weights changed"));
