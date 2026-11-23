@@ -1,0 +1,74 @@
+/* MYLIFTCOACH 2.0 — accessible words over the approved fixed marble.
+   Scoped to unboxed copy. Do not alter marble, panels, cards or controls. */
+:root{
+ --mlc-marble-text:#fff8ed;
+ --mlc-marble-gold:#ffe1ab;
+ --mlc-marble-shade:rgba(0,24,29,.84);
+}
+/* Soft vignettes fade into the surrounding marble (no rectangular cards). */
+.content .page > .page-heading,
+#home .safety-note,
+#workouts .workout-today-note{
+ position:relative;
+ isolation:isolate;
+}
+.content .page > .page-heading::before,
+#home .safety-note::before,
+#workouts .workout-today-note::before{
+ content:"";
+ position:absolute;
+ z-index:-1;
+ pointer-events:none;
+ inset:-14px -14px -14px -14px;
+ background:radial-gradient(ellipse 85% 80% at 39% 52%,
+  var(--mlc-marble-shade) 0%,
+  rgba(0,27,33,.68) 43%,
+  rgba(0,28,33,.25) 76%,
+  transparent 100%);
+ border:0;
+ border-radius:0;
+ box-shadow:none;
+}
+.content .page > .page-heading .eyebrow,
+.content .page > .page-heading h1,
+.content .page > .page-heading p,
+#home .safety-note,
+#home .safety-note strong,
+#workouts .workout-today-note{
+ text-shadow:0 2px 5px rgba(0,12,17,.93),0 0 12px rgba(0,12,17,.64);
+}
+.content .page > .page-heading .eyebrow,
+#home .safety-note strong{
+ color:var(--mlc-marble-gold)!important;
+ font-weight:800!important;
+}
+.content .page > .page-heading h1{
+ color:#fff3df!important;
+}
+.content .page > .page-heading p,
+#home .safety-note,
+#workouts .workout-today-note{
+ color:var(--mlc-marble-text)!important;
+ opacity:1!important;
+ font-weight:550!important;
+ line-height:1.7!important;
+}
+#home .safety-note,
+#workouts .workout-today-note{
+ padding:10px 6px;
+}
+@media(max-width:760px){
+ .content .page > .page-heading::before{
+  inset:-10px -12px -12px;
+  background:radial-gradient(ellipse 96% 88% at 45% 50%,
+   rgba(0,20,26,.88) 0%,
+   rgba(0,25,31,.69) 45%,
+   rgba(0,26,32,.25) 82%,
+   transparent 100%);
+ }
+ .content .page > .page-heading p,
+ #home .safety-note,
+ #workouts .workout-today-note{
+  font-size:max(13px, 0.875rem)!important;
+ }
+}
