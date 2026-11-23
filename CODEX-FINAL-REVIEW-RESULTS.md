@@ -3,10 +3,11 @@
 - **Release recommendation — BLOCKED**
 - **Review branch** `review/codex-final-integration-20261122`
 - **Frozen integration baseline** `e525e962124c2d8fad503c9bd9139d79e69e2bb4`
-- **Fix commits** `7aeced0c77248b31ae269967bd630c5a5db1b305` and `d6c4e3c`
+- **Prior fixes on GitHub** `48d1ba69f1cf11fb499ef17e117512a06cacf35b`
+- **Follow-up fixes on GitHub** `e3b90bd9470b3da81aa02a294bb8090c0f20a7b5`
 - **Review date** November 22, 2026
 
-The review found **26 distinct findings**, with **20 fixed** and **6 open**. The review branch remains local. Draft PR #7 still points to the frozen integration branch. No Pages deployments, production database operations, merges, or artwork changes took place.
+The review identified 26 findings. The first batch fixed 20, and the follow-up resolved three more. Two findings have code fixes with residual compatibility or acceptance work, and one requires a trusted recovery process. The first GitHub commit matches the exact file tree of local review commit `ae63a0e24c098d7afa7f61891e5bf8d8e4fc9969`, including all prior fixes. Draft PR #7 still points to the integration branch. The review branch was the only branch updated.
 
 ## Fixed findings
 
@@ -37,43 +38,45 @@ The reproduction column describes the pre-fix behavior. The test column identifi
 
 `index.html` updates cache versions for changed runtime files. CSS, artwork, image manifests and catalog source were verified unchanged. The regression runner now includes media, progress and Coach modules that existed outside the standard run. Some older tests asserted hard-coded script versions, retired markup, or the prior completion call. Where the candidate still implements the same behavior, those contracts were updated to check its current entry points.
 
+## Follow-up on findings 21–26
+
+| # | Severity | Type and status | Correction or remaining requirement | Regression evidence |
+|---|---|---|---|---|
+| 21 | High | Code defect mitigated. Browser acceptance open. | When Web Locks are available, serialize completion, local clear, guest and account imports, and cloud restore commits independently of network sync. Serialize journal enqueue and drains under a separate owner-scoped lock. Recheck account epoch after waiting. Browsers without Web Locks retain the previously reviewed localStorage path, including its residual cross-context race. Test simultaneous writes in the target Safari and Home Screen environments before accepting this risk. | `tests/account-write-lock.test.cjs`, `tests/concurrent-workout-sync.test.cjs`, `tests/automatic-workouts.test.cjs`. |
+| 22 | High | App-shell defect fixed. Offline launch acceptance open. | Add an origin- and path-scoped service worker that caches the public shell, version-matched runtime files, and static shell artwork after installation. Navigation uses the network first and the cached shell when disconnected. The worker bypasses account traffic. Private workout data remains tied to verified identity, so a signed-in cold launch still requires online authentication before opening the private workspace. Confirm worker installation, guest cold launch and account reconnection on the target iPhone. | `tests/offline-shell.test.cjs` and prior account-session tests. |
+| 23 | Medium | Code defect fixed within the retained resource limits. | Remove the 500-workout count limit from completed storage, backup and restore. Retain the 2.5-million-character device safety bound and lossless rejection on capacity failure. Allow cloud inspection up to 5,000 ordered records, including exact full-page boundaries, and keep explicit recovery confirmation. Larger histories still require future archival or incremental paging support. | `tests/account-workout-store.test.cjs`, `tests/account-recovery.test.cjs`, `tests/automatic-workouts.test.cjs` (1,001-record recovery). |
+| 24 | Medium | Recovery requirement open. | Older progress photos have no trustworthy owner metadata. Rows remain on the original device and remain hidden from normal account and guest views. Ownership must be established on that device before any recovery or assignment; automatically claiming rows would expose private photos to the wrong account. | Existing `tests/body-photo-owner.test.cjs` covers owner filtering. |
+| 25 | Medium | Code defect fixed. | Restore the scheduling shortcut for saved Coach routines using the existing Schedule tab and assignment function. Require confirmation, reject stale accounts and keep the current manual selection intact. | `tests/coach-weekly-schedule.test.cjs`. |
+| 26 | Low | Diagnostics gap fixed. | Restore 30/90-day simulated history and volume/Coach consistency checks in the standalone `review/workout-history-check.html` diagnostic. The page loads no account/runtime sync code, disallows network connections and keeps fictional sessions out of regular history and progression. | `tests/workout-simulation.test.cjs`, `tests/workout-simulation-integration.test.cjs`. |
+
+### Prior review changed files
+
+`CODEX-FINAL-REVIEW-RESULTS.md`, `app.js`, `body-progress.js`, `calorie-goal-estimate.js`, `custom-workouts.js`, `index.html`, `session-draft.js`, `sync/account-workout-store.js`, `sync/automatic-workouts.js`, `sync/auxiliary-cloud.js`, `sync/sync-journal.js`, `tests/account-workout-store.test.cjs`, `tests/active-exercise-guide.test.cjs`, `tests/active-workout-ux.test.cjs`, `tests/auth-persistence-iphone.test.cjs`, `tests/auxiliary-revision.test.cjs`, `tests/body-photo-owner.test.cjs`, `tests/calorie-goal-estimate.test.cjs`, `tests/coach-autonomous-proposal.test.cjs`, `tests/coach-live-handoff.test.cjs`, `tests/coach-live-workout.test.cjs`, `tests/coach-periodization.test.cjs`, `tests/coach-plan-preview.test.cjs`, `tests/coach-program-builder.test.cjs`, `tests/coach-save-custom.test.cjs`, `tests/combined-coach-panels.test.cjs`, `tests/custom-home-priority.test.cjs`, `tests/exercise-instruction-coverage.test.cjs`, `tests/exercise-instruction-depth.test.cjs`, `tests/goal-program-adherence.test.cjs`, `tests/progress-compact.test.cjs`, `tests/progress-real-volume.test.cjs`, `tests/progress-weekly-summary.test.cjs`, `tests/resume-workout-cta.test.cjs`, `tests/run-all.js`, `tests/static-contract.test.js`, `tests/sync-journal.test.cjs`, `tests/workout-auth-ux-fix.test.cjs`, `tests/workout-card-images.test.cjs`, `workout-active-ux.js`.
+
+### Follow-up changed files
+
+- Runtime and assets routing: `app.js`, `index.html`, `offline-shell.js`, `offline-worker.js`.
+- History and recovery: `sync/account-recovery.js`, `sync/account-workout-store.js`, `sync/automatic-workouts.js`.
+- Standalone diagnostic: `review/workout-history-check.html`, `review/workout-history-check.js`.
+- New regression files: `tests/account-write-lock.test.cjs`, `tests/offline-shell.test.cjs`.
+- Updated regression files: `tests/account-workout-store.test.cjs`, `tests/active-workout-ux.test.cjs`, `tests/automatic-workouts.test.cjs`, `tests/coach-live-workout.test.cjs`, `tests/coach-periodization.test.cjs`, `tests/coach-weekly-schedule.test.cjs`, `tests/concurrent-workout-sync.test.cjs`, `tests/goal-program-adherence.test.cjs`, `tests/resume-workout-cta.test.cjs`, `tests/run-all.js`, `tests/workout-auth-ux-fix.test.cjs`, `tests/workout-simulation-integration.test.cjs`, `tests/workout-simulation.test.cjs`.
+
 ## Verification
 
 | Check | Result |
 |---|---|
-| `node tests/run-all.js` | **PASS**. 65 files, 333 Node subtests passed, plus successful standalone assertion scripts. |
-| `node --test tests/*.test.cjs tests/*.test.js` | **356 passed, 14 failed**, out of 370. The original review-branch baseline had 336 passing and 26 failing out of 362. All 14 remaining failures reproduced on the baseline. |
-| `node --check` across tracked JavaScript and CommonJS | **PASS**, 139 files including the new photo-owner test. |
-| Replacement media and workout-card tests | **PASS**, 24 checks including the 344 catalog IDs, all 263 mappings, 81 placeholders and the artwork-loading path. |
-| Image decoding and duplication | **PASS**. Decoded 526 WebP files and the shared placeholder. Zero identical-byte file groups. Mappings match the approval manifest. This verifies the existing approval inventory and file contents; the review did not re-adjudicate artistic or anatomical approval. |
-| HTML entry-point inspection | **PASS**, 84 local static asset paths and 184 unique element IDs. |
-| Browser smoke | **NOT VERIFIED**. The local Chromium process failed to start because the execution environment disallowed a required socket operation. |
-| Physical iPhone | Prior reported acceptance retained for workout persistence, Resume Workout and guest Free/Pro switching with totals retained. No fresh physical Safari or Home Screen assessment of the review commits. |
-| Supabase | Offline identity, token renewal, idempotent operation, revision conflict and recovery fixtures passed. Live account verification and post-fix backup/recovery were not run. The separate public preview intentionally blocks cloud access. |
+| `node tests/run-all.js` | **PASS**. 70 files, 346 Node subtests passed, plus successful standalone assertion scripts. |
+| `node --test tests/*.test.cjs tests/*.test.js` | **362 passed, 7 failed**, out of 369. Remaining failures belong to historical 11-21N tests. The prior broad result was 356 passing and 14 failing. |
+| `node --check` across tracked JavaScript and CommonJS | **PASS**, 144 files. |
+| Replacement media and workout-card checks | **PASS**, 24 checks. Verified the 344 catalog entries, 263 approved pairs and 81 placeholders. Verified all artwork, manifest and catalog files are identical to the incoming review baseline and retain the earlier successful decode of 526 approved WebPs plus the placeholder. |
+| Browser | **NOT VERIFIED**. Headless Chromium again aborted at startup because the execution environment disallowed the socket required by Chromium's process singleton. The worker and account-lock tests use simulated browser APIs. |
+| Physical iPhone | Prior acceptance retained for workout persistence, Resume Workout and guest Free/Pro switching with totals retained. No fresh physical Safari or Home Screen assessment of the follow-up build. |
+| Supabase | Prior verification remains the historical result. Local owner isolation, auth, retries, paging and recovery fixtures passed. No new live production or staging account calls were made. |
 
-### Remaining test failures
-
-| Count | Files | Finding |
-|---|---|---|
-| 3 | `coach-weekly-schedule.test.cjs` | Expects the separate Coach scheduling panel. The combined route uses the existing weekly editor to select saved routines. |
-| 4 | `workout-simulation-integration.test.cjs`, `workout-simulation.test.cjs` | Expects 30/90-day simulation controls in the regular History and Progress screens. The combined app has separate Coach-only preview sample history. The legacy simulation modules' computational tests pass. |
-| 7 | `workouts-tab-regression.test.cjs`, `workouts-tabs-dom.test.cjs` | Three tests require byte-identical files from the older 11-21N checkpoint and four use a DOM fixture for its inactive enhancer that lacks a browser `window`. The combined page has native tab markup and its own routing checks. |
-
-## Open findings
-
-| # | Severity | Issue and release impact |
-|---|---|---|
-| 21 | High | Workout completion and journal updates preserve newer observed records but still use multi-step localStorage read-modify-write operations. Independent tabs committing at precisely the same time lack an atomic transaction across contexts. An approved storage change or browser-supported locking and device testing are required to close that race. |
-| 22 | High | Full offline cold start is unverified, and the root candidate does not provide a service-worker app-shell cache. A currently loaded app can persist offline writes, but a signed-in workspace reopened offline still waits for identity verification before opening private records. This behavior protects account boundaries. |
-| 23 | Medium | Durable completed-workout history is capped at 500 local records and cloud inspection at fewer than 1,000 rows under the current paging guard. Long-running accounts will need an archive/paging strategy that preserves existing workout IDs and recovery. |
-| 24 | Medium | Older progress photo rows lack an owner field. They remain on the device and are excluded from guest and account views because their ownership cannot be proven. Any recovery requires an explicit, reviewed assignment path. |
-| 25 | Medium | The combined Schedule screen lacks the prior Coach-specific shortcut panel. Manual assignment of a saved Coach routine remains available through the weekly editor. The earlier dedicated panel's three assertions remain unresolved. |
-| 26 | Low | The combined candidate does not expose the earlier 30/90-day simulation dashboard. Its diagnostic tests and the current isolated Coach sample mode cover different entry points. |
-
-No styling or payment-policy changes were needed to address the findings. The repository's approved beta policy allows guests and authenticated accounts to choose Free or Pro as a preview; no mode grants a paid subscription.
+The seven broad-sweep failures are in `tests/workouts-tab-regression.test.cjs` and `tests/workouts-tabs-dom.test.cjs`. Three assert byte-identical files or diffs against the 11-21N base. Four exercise its inactive Workouts enhancer with a fixture that lacks the browser `window`. The combined candidate uses native tab markup and is covered by its own schedule and workout integration checks.
 
 ## Merge and release safety
 
 The merge base is `5f8f5b7cd528ec7a39297519f1125fc3103f97e6`. The integration branch is **705 commits ahead and 39 behind** `main`. The base-to-integration diff touches 691 files, with most additions in exercise assets, application modules and tests. The main-only tip changes touch seven files, including the Pages workflow and six files under `review/`. Main's Pages workflow checks out pinned references from a different repository and the approved visual branch. A successful application merge would not establish that the published artifact uses the combined candidate. Review the intended packaging source, reversible original release snapshot, and deployment trigger together before selecting a merge strategy.
 
-The candidate remains blocked for release until signed-in recovery and updated iPhone/PWA behavior are verified in authorized staging, the open data durability and cutover risks are resolved or explicitly accepted, and the original deployment's rollback path is established. Earlier successful iPhone acceptance remains part of the release evidence and does not need to be rerun merely because an unrelated code path changed.
+The code is ready to enter controlled iPhone acceptance once an authorized staging build is available. Release remains **BLOCKED** until the new build passes Safari and Home Screen checks, signed-in backup and recovery are verified in authorized staging, and the concurrent-write, legacy photo recovery and rollback requirements are resolved or accepted. Verify staging includes both offline scripts at the application root. No deployments, production Supabase writes, merges, or artwork changes were performed.
