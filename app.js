@@ -2192,6 +2192,21 @@ function bind(){
   }catch(err){status.textContent='Import blocked: '+String(err.message||err).slice(0,165)}
   finally{refreshTransferPreview()}
  });
+ $('diagnoseOtherFitnessCloud').addEventListener('click',async()=>{
+  const output=$('otherFitnessCloudDiagnostic'),button=$('diagnoseOtherFitnessCloud');
+  const owner=verifiedOwnerId,epoch=authEpoch;
+  if(!owner||owner!==account?.id){output.textContent='Sign in to your verified account before comparing cloud categories.';return}
+  button.disabled=true;output.textContent='Reading cloud category revisions without writing…';
+  try{
+   const report=await auxEngine(owner).diagnose();
+   if(epoch!==authEpoch||verifiedOwnerId!==owner)return;
+   const changed=report.categories.filter(item=>!['matching','absent'].includes(item.state));
+   output.textContent=changed.length
+    ?'Read-only review: '+changed.map(item=>item.label+': '+item.state.replaceAll('-',' ')).join(' · ')+'. No backups were overwritten.'
+    :'No missing or divergent fitness categories detected. Cloud records unchanged.';
+  }catch(err){if(epoch===authEpoch)output.textContent='Read-only cloud review unavailable: '+String(err.message||err).slice(0,150)}
+  finally{button.disabled=false}
+ });
  $('autoWorkoutSyncNow').addEventListener('click',()=>{scheduleWorkoutSync(0)});
  $('autoWorkoutRecover').addEventListener('click',async()=>{
   const button=$('autoWorkoutRecover'),output=$('autoWorkoutSyncStatus');
