@@ -1,0 +1,53 @@
+name: MYLIFTCOACH iPhone Coach recap layout review (no deployment)
+on:
+  push:
+    branches: [fix/iphone-coach-recap-fullscreen-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recap-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check JavaScript and Coach recap layout contract
+        run: |
+          node --check app.js
+          node --check offline-worker.js
+          node --test tests/coach-recap-fullscreen.test.cjs
+      - name: Run full offline regressions
+        run: node tests/run-all.js
+      - name: Checkout immutable original production base
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/workout-tracker
+          ref: 24b3e3a40076f8d6aeb6fe6c603068652b268351
+          path: original
+          persist-credentials: false
+      - name: Checkout immutable live cleanup release for rollback
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 3a0e9055cedcfd0df3822daa5f78ddfd3f5cf206
+          path: previous
+          persist-credentials: false
+      - name: Verify next release and exact live rollback without deploying
+        env:
+          MLC2_REPLACEMENT_PACKAGE: ${{ runner.temp }}/recap-package
+        run: |
+          set -euo pipefail
+          node review/production/package-update.cjs original previous "$MLC2_REPLACEMENT_PACKAGE"
+          node --test review/production/package-integration.test.cjs review/production/migration-preview.test.cjs review/production/pages-gate.test.cjs
+          test -f "$MLC2_REPLACEMENT_PACKAGE/replacement/coach-recap-fullscreen.css"
+          cmp "$MLC2_REPLACEMENT_PACKAGE/replacement/coach-recap-fullscreen.css" coach-recap-fullscreen.css
+          grep -Fq 'coach-recap-fullscreen.css?v=1' "$MLC2_REPLACEMENT_PACKAGE/replacement/index.html"
+          for file in index.html manifest.json sw.js; do
+            curl --fail --silent --show-error --location "https://gcfd8hy5mb-ai.github.io/workout-tracker/$file" -o "$MLC2_REPLACEMENT_PACKAGE/live-$file"
+            cmp "$MLC2_REPLACEMENT_PACKAGE/update-rollback/$file" "$MLC2_REPLACEMENT_PACKAGE/live-$file"
+          done
+          (cd "$MLC2_REPLACEMENT_PACKAGE/replacement" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum)
+# No publishing or Supabase writes.
