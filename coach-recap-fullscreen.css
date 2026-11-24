@@ -1,0 +1,94 @@
+/* MYLIFTCOACH 2.0: iPhone-only full-screen Coach completion recap.
+   Scope to this recap's existing markup, never to an in-progress workout,
+   sign-in dialog, or any other app modal. Keep approved teal/gold marble. */
+@media (max-width: 760px) {
+  #modal:has(#modalContent > .live-coach-box) {
+    inset: 0;
+    height: 100dvh;
+    width: 100%;
+    padding: 0 !important;
+    display: flex;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    background: #052d33 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: hidden;
+  }
+
+  #modal:has(#modalContent > .live-coach-box) > .modal-panel {
+    box-sizing: border-box;
+    display: block;
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: calc(66px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: #f7eddb !important;
+    background: #06464b url("./assets/approved-vertical-marble-sharp.webp?v=11") center top / cover no-repeat !important;
+    box-shadow: none !important;
+  }
+
+  #modal:has(#modalContent > .live-coach-box) #closeModal {
+    position: fixed !important;
+    z-index: 3;
+    top: calc(13px + env(safe-area-inset-top)) !important;
+    right: 19px !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    border: 1px solid #edcc8f !important;
+    background: #06383d !important;
+    color: #f7dfa9 !important;
+    font-size: 28px !important;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  #modal:has(#modalContent > .live-coach-box) #modalContent {
+    width: 100%;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  #modal:has(#modalContent > .live-coach-box) #modalContent > .live-coach-box {
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 26px 22px !important;
+    border: 1px solid #e6c286 !important;
+    border-radius: 20px !important;
+    background: linear-gradient(150deg, #08484d 0%, #062f36 100%) !important;
+    box-shadow: 0 14px 38px rgba(0, 18, 23, .45) !important;
+  }
+
+  #modal:has(#modalContent > .live-coach-box) .live-coach-title strong {
+    display: block;
+    color: #f8ddac !important;
+    font-size: clamp(20px, 5vw, 27px) !important;
+    line-height: 1.3 !important;
+  }
+
+  #modal:has(#modalContent > .live-coach-box) .live-coach-box p {
+    color: #e2efea !important;
+    font-size: 15px !important;
+    line-height: 1.65 !important;
+    margin: 15px 0 !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #modal:has(#modalContent > .live-coach-box) *,
+    #modal:has(#modalContent > .live-coach-box) *::before,
+    #modal:has(#modalContent > .live-coach-box) *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
