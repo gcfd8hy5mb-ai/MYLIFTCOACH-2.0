@@ -1755,7 +1755,7 @@ function bind(){
    link.href=url;link.download='MYLIFTCOACH-private-8-test-workouts-'+new Date().toISOString().slice(0,10)+'.json';
    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
    reviewedTestCleanup={...inspected,owner,epoch};
-   status.textContent='Backup download started: exactly '+inspected.count+' test workouts / '+inspected.sets+' sets. Save the JSON in Files before confirming deletion. Nothing has been deleted.';
+   status.textContent='Backup download started: '+inspected.count+' workouts / '+inspected.sets+' sets. Review each one before deletion: '+inspected.rows.map(item=>String(item.payload.title||'Untitled').slice(0,65)+' ('+String(item.payload.created||'').slice(0,10)+', '+item.payload.sets.length+' sets)').join(' · ')+'. Save the JSON in Files before confirming deletion. Nothing has been deleted.';
    $('confirmTestHistoryCleanup').disabled=false;
   }catch(err){if(epoch===authEpoch)status.textContent='Cleanup not permitted: '+String(err.message||err).slice(0,190)}
   finally{button.disabled=false;testCleanupBusy=false}
