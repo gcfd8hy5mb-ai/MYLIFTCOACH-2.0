@@ -92,3 +92,6 @@
     }
   }
 }
+
+/* Explicitly respect the modal's closed state even when the recap remains mounted. */
+#modal[hidden] { display: none !important; }
