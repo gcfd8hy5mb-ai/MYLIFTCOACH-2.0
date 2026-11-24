@@ -29,4 +29,35 @@ jobs:
           grep -F './sync/test-history-cleanup.js?v=1' index.html
           grep -F './app.js?v=52' index.html
           grep -F "prefix + '72'" offline-worker.js
+      - name: Checkout original read-only production base
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/workout-tracker
+          ref: 24b3e3a40076f8d6aeb6fe6c603068652b268351
+          path: original
+          persist-credentials: false
+      - name: Checkout the exact currently approved production recovery baseline
+        uses: actions/checkout@v4
+        with:
+          repository: gcfd8hy5mb-ai/MYLIFTCOACH-2.0
+          ref: 79c7a3d413aae0ed90a16c36693e3027b7519dbd
+          path: previous
+          persist-credentials: false
+      - name: Verify protected cleanup production package without deploying
+        env:
+          MLC2_PACKAGE: ${{ runner.temp }}/cleanup-package
+        run: |
+          set -euo pipefail
+          node review/production/package-update.cjs original previous "$MLC2_PACKAGE"
+          node --test review/production/package-integration.test.cjs review/production/migration-preview.test.cjs review/production/pages-gate.test.cjs
+          test -f "$MLC2_PACKAGE/replacement/sync/test-history-cleanup.js"
+          cmp "$MLC2_PACKAGE/replacement/sync/test-history-cleanup.js" sync/test-history-cleanup.js
+          test -f "$MLC2_PACKAGE/update-rollback/app.js"
+          for file in index.html manifest.json sw.js; do
+            curl --fail --silent --show-error --location "https://gcfd8hy5mb-ai.github.io/workout-tracker/$file" -o "$MLC2_PACKAGE/live-$file"
+            cmp "$MLC2_PACKAGE/update-rollback/$file" "$MLC2_PACKAGE/live-$file"
+          done
+          node --check "$MLC2_PACKAGE/replacement/app.js"
+          node --check "$MLC2_PACKAGE/replacement/sw.js"
+          (cd "$MLC2_PACKAGE/replacement" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum)
 # No production write, cloud access, or GitHub Pages deployment permissions.
