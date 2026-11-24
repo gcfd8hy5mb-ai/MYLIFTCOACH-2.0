@@ -1,0 +1,24 @@
+name: MYLIFTCOACH iPhone Coach recap layout review (no deployment)
+on:
+  push:
+    branches: [fix/iphone-coach-recap-fullscreen-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recap-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check JavaScript and Coach recap layout contract
+        run: |
+          node --check app.js
+          node --check offline-worker.js
+          node --test tests/coach-recap-fullscreen.test.cjs
+      - name: Run full offline regressions
+        run: node tests/run-all.js
+# No publishing or Supabase writes.
