@@ -51,6 +51,7 @@ const tests=[
  'supabase-transport.test.cjs',
  'aux-data.test.cjs',
  'account-program-transfer.test.cjs',
+ 'test-history-cleanup.test.cjs',
  'completed-workout-bridge.test.cjs',
  'account-workout-store.test.cjs',
  'verified-auth.test.cjs',
