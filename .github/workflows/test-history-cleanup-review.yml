@@ -46,6 +46,7 @@ jobs:
       - name: Verify protected cleanup production package without deploying
         env:
           MLC2_PACKAGE: ${{ runner.temp }}/cleanup-package
+          MLC2_REPLACEMENT_PACKAGE: ${{ runner.temp }}/cleanup-package
         run: |
           set -euo pipefail
           node review/production/package-update.cjs original previous "$MLC2_PACKAGE"
