@@ -1725,6 +1725,74 @@ function bind(){
  $('restPause').addEventListener('click',()=>{restPaused=!restPaused;updateRestClock()});
  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)closeModal()});
+ let reviewedTestCleanup=null,testCleanupBusy=false;
+ function testCleanupEngine(owner,epoch){
+  const verifier=window.MLC2VerifiedAuth.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,getSession:()=>sessionRefresh.sessionFor(owner),fetcher:fetch,enabled:true});
+  const transport=window.MLC2SupabaseTransport.create({baseUrl:BACKEND,publishableKey:PUBLIC_KEY,fetcher:fetch,enabled:true,getVerifiedAuth:()=>verifier.verify(owner)});
+  return window.MLC2TestHistoryCleanup.create({owner,storage:localStorage,accountStore:window.MLC2AccountWorkouts,
+   transport,verify:id=>verifier.verify(id),active:()=>epoch===authEpoch&&owner===verifiedOwnerId&&account?.id===owner?owner:null});
+ }
+ $('previewTestHistoryCleanup').addEventListener('click',async()=>{
+  const owner=verifiedOwnerId,epoch=authEpoch,status=$('testHistoryCleanupStatus');
+  reviewedTestCleanup=null;$('confirmTestHistoryCleanup').disabled=true;
+  if(!owner||owner!==account?.id){status.textContent='Sign in before reviewing test history.';return}
+  if(workoutSyncBusy||auxOperationBusy||testCleanupBusy){status.textContent='Finish the current cloud operation first.';return}
+  const button=$('previewTestHistoryCleanup');button.disabled=true;testCleanupBusy=true;
+  try{
+   const engine=testCleanupEngine(owner,epoch);
+   if(engine.hasPending()){
+    status.textContent='An earlier cleanup was interrupted. Confirm to resume only the already selected records.';
+    reviewedTestCleanup={status:'resume',owner,epoch};
+    $('confirmTestHistoryCleanup').disabled=false;
+    return;
+   }
+   const inspected=await engine.prepare();
+   if(epoch!==authEpoch||owner!==verifiedOwnerId)return;
+   if(inspected.status!=='ready')throw Error('Cleanup preview unavailable');
+   const backup=JSON.stringify(inspected.backup,null,2);
+   const blob=new Blob([backup],{type:'application/json'});
+   const url=URL.createObjectURL(blob),link=document.createElement('a');
+   link.href=url;link.download='MYLIFTCOACH-private-8-test-workouts-'+new Date().toISOString().slice(0,10)+'.json';
+   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   reviewedTestCleanup={...inspected,owner,epoch};
+   status.textContent='Backup download started: '+inspected.count+' workouts / '+inspected.sets+' sets. Review each one before deletion: '+inspected.rows.map(item=>String(item.payload.title||'Untitled').slice(0,65)+' ('+String(item.payload.created||'').slice(0,10)+', '+item.payload.sets.length+' sets)').join(' · ')+'. Save the JSON in Files before confirming deletion. Nothing has been deleted.';
+   $('confirmTestHistoryCleanup').disabled=false;
+  }catch(err){if(epoch===authEpoch)status.textContent='Cleanup not permitted: '+String(err.message||err).slice(0,190)}
+  finally{button.disabled=false;testCleanupBusy=false}
+ });
+ $('confirmTestHistoryCleanup').addEventListener('click',async()=>{
+  const plan=reviewedTestCleanup,owner=verifiedOwnerId,epoch=authEpoch,status=$('testHistoryCleanupStatus');
+  if(!plan||plan.owner!==owner||plan.epoch!==epoch||owner!==account?.id){status.textContent='Review this account again.';return}
+  if(workoutSyncBusy||auxOperationBusy||testCleanupBusy){status.textContent='Another sync operation is active. Try again.';return}
+  const message=plan.status==='resume'
+   ?'An earlier cleanup stopped partway through. Resume deleting only those original eight records?'
+   :'Have you saved the private JSON backup in Files? This permanently deletes your eight reviewed test workouts from this device AND your account cloud. Your plans, Coach settings and photos will stay.';
+  if(!confirm(message))return;
+  if(prompt('Type CLEAR 8 TEST WORKOUTS to confirm this account-only deletion:')!=='CLEAR 8 TEST WORKOUTS'){
+   status.textContent='Cancelled; no additional records deleted.';return;
+  }
+  if(!navigator.onLine){status.textContent='Online connection required. No cleanup started.';return}
+  const button=$('confirmTestHistoryCleanup');
+  button.disabled=true;testCleanupBusy=true;workoutSyncBusy=true;status.textContent='Deleting only the confirmed cloud test records. Do not close this app.';
+  try{
+   const result=await withAccountLock('journal',owner,epoch,()=>withAccountLock('history',owner,epoch,()=>{
+    const engine=testCleanupEngine(owner,epoch);
+    return plan.status==='resume'?engine.resume():engine.execute(plan);
+   }));
+   if(epoch!==authEpoch||owner!==verifiedOwnerId)return;
+   if(result.status!=='complete')throw Error('Cleanup was not fully verified');
+   reviewedTestCleanup=null;loadCurrentWorkouts();renderHome();renderProgress();renderHistory();renderCoach();
+   status.textContent='Verified: all eight cloud test workouts deleted and this installation history cleared. Five-day Coach settings and custom programs remain unchanged.';
+   setWorkoutSyncState('Test workout history cleared locally and in account cloud.');
+  }catch(err){
+   if(epoch===authEpoch&&owner===verifiedOwnerId){
+    status.textContent='Cleanup paused: '+String(err.message||err).slice(0,160)+'. Your backup and checkpoint are retained. Select Review and download test backup to resume safely.';
+    reviewedTestCleanup=null;
+   }
+  }finally{
+   button.disabled=true;testCleanupBusy=false;workoutSyncBusy=false;
+  }
+ });
  $('clearDemo').addEventListener('click',async()=>{
   const owner=verifiedOwnerId,epoch=authEpoch;
   const readHistory=()=>localStorage.getItem(window.MLC2AccountWorkouts.key(owner));

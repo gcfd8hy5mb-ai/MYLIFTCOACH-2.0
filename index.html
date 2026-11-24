@@ -353,7 +353,7 @@
 </details><details class="more-section">
  <summary><svg class="app-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span><strong>Privacy &amp; Security</strong><small>Local history and progress photos</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
  <div class="more-section-content"><div class="panel settings-panel"><h3>Your data</h3><p>Progress photos stay on this device. You can save a private copy from Daily Tracking.</p>
- <div class="setting-line"><div><strong>Local workout history</strong><p>Clearing affects workout history on this device for the current account or guest.</p></div><button id="clearDemo" type="button" class="button-outline">Clear local workout history</button></div></div><button type="button" class="button-outline" data-account-page="tracking">Manage progress photos</button></div>
+ <div class="setting-line"><div><strong>Clear the eight test workouts (device + cloud)</strong><p>For a verified account with exactly 8 completed test sessions and 48 logged sets. Preview and download a private backup first. This never removes custom workouts, saved programs, Coach settings or progress photos.</p></div><div><button id="previewTestHistoryCleanup" type="button" class="button-outline">Review and download test backup</button><button id="confirmTestHistoryCleanup" type="button" class="button-outline" disabled>Delete reviewed test workouts</button><p id="testHistoryCleanupStatus" role="status">No test workouts selected for deletion.</p></div></div><div class="setting-line"><div><strong>Local workout history</strong><p>Clearing affects workout history on this device for the current account or guest.</p></div><button id="clearDemo" type="button" class="button-outline">Clear local workout history</button></div></div><button type="button" class="button-outline" data-account-page="tracking">Manage progress photos</button></div>
 </details><details class="more-section">
  <summary><svg class="app-icon" aria-hidden="true"><use href="#i-book"></use></svg><span><strong>Help &amp; Support</strong><small>Exercise guidance and app information</small></span><span class="more-chevron" aria-hidden="true"></span></summary>
  <div class="more-section-content"><p id="phoneBuildMarker" class="mlc-schedule-note" role="status">MYLIFTCOACH 2.0 · iPhone beta</p>
@@ -449,12 +449,13 @@
 <script defer src="./sync/account-recovery.js?v=2"></script>
 <script defer src="./sync/account-draft-store.js?v=2"></script>
 <script defer src="./sync/automatic-workouts.js?v=6"></script>
+<script defer src="./sync/test-history-cleanup.js?v=1"></script>
 <script defer src="./sync/auxiliary-cloud.js?v=6"></script>
 <script defer src="./sync/program-transfer.js?v=1"></script>
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
 <script defer src="./sync/account-signup.js?v=2"></script>
-<script defer src="./app.js?v=51"></script>
+<script defer src="./app.js?v=52"></script>
 <script defer src="./offline-shell.js?v=4"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>
