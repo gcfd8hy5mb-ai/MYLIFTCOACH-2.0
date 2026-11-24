@@ -1,0 +1,32 @@
+name: MYLIFTCOACH protected test-history cleanup review (no deployment)
+on:
+  push:
+    branches: [feature/safe-test-workout-cleanup-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safe-cleanup-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate scripts
+        run: |
+          node --check app.js
+          node --check sync/test-history-cleanup.js
+          node --check sync/account-workout-store.js
+          node --check offline-worker.js
+      - name: Backup, verified deletion, interruption and account-separation tests
+        run: node --test tests/test-history-cleanup.test.cjs
+      - name: Full offline app regressions
+        run: node tests/run-all.js
+      - name: Verify deploy shell includes reviewed script
+        run: |
+          grep -F './sync/test-history-cleanup.js?v=1' index.html
+          grep -F './app.js?v=52' index.html
+          grep -F "prefix + '72'" offline-worker.js
+# No production write, cloud access, or GitHub Pages deployment permissions.
