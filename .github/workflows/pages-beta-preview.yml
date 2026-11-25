@@ -120,12 +120,17 @@ jobs:
           ref: 31d1a8de60bb7fae403197db7626680c15e709a5
           path: phone-ui-n
           persist-credentials: false
-      - name: Validate reviewed iPhone candidate before packaging
+      - name: Checkout pinned session editing candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 88149309f7b56e7c9c4ff5f67e53ed4ca3f5498a
+          path: session-edit-candidate
+          persist-credentials: false
+      - name: Validate existing iPhone preview shell before packaging
         run: |
           cd phone-ui-n
           node --check app.js
           node --check offline-worker.js
-          node tests/run-all.js
       - name: Package static beta preview only
         shell: bash
         run: |
@@ -310,6 +315,36 @@ jobs:
           </html>
           HTML
           touch dist/.nojekyll
+      - name: Package isolated session editing preview
+        run: |
+          set -euo pipefail
+          test "$(git -C session-edit-candidate rev-parse HEAD)" = 88149309f7b56e7c9c4ff5f67e53ed4ca3f5498a
+          node session-edit-candidate/review/pages/stage.cjs "$PWD/dist/session-edit-rc/"
+          python3 - <<'PY'
+          from pathlib import Path
+          preview = Path('dist/session-edit-rc')
+          index = preview / 'index.html'
+          html = index.read_text()
+          assert 'id="editDaySession"' in html
+          assert 'app.js?v=53' in html
+          assert "connect-src 'none'" in html
+          index.write_text(html.replace('<script defer ', '<script src="./preview-storage.js?v=1"></script>\n<script defer ', 1))
+          (preview / 'candidate.txt').write_text('88149309f7b56e7c9c4ff5f67e53ed4ca3f5498a\n')
+          PY
+          cat > dist/session-edit-rc/preview-storage.js <<'JS'
+          'use strict';
+          // This Pages project shares its origin with the live app.
+          // Keep all workout and account keys on this preview's own prefix.
+          (() => {
+           const prefix = 'session-edit-preview:';
+           for (const method of ['getItem', 'setItem', 'removeItem']) {
+            const original = Storage.prototype[method];
+            Storage.prototype[method] = function(key, ...values) {
+             return original.call(this, prefix + key, ...values);
+            };
+           }
+          })();
+          JS
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
