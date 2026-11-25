@@ -157,13 +157,3 @@
  .active-workout-scroll{padding:calc(env(safe-area-inset-top) + 58px) max(13px,env(safe-area-inset-right)) 12px max(13px,env(safe-area-inset-left))}
  #modal .active-set-entry input{font-size:16px!important}
 }
-#sessionEditor{width:min(94vw,460px);max-height:80dvh;overflow:auto;overscroll-behavior:contain;background:#052d34;color:#f7e7cb;border:1px solid #c6a86b;border-radius:14px;padding:16px}
-#sessionEditor::backdrop{background:rgba(3,32,38,.86)}
-#sessionEditor form{display:flex;flex-wrap:wrap;gap:8px}
-#sessionEditor form>p,#sessionEditor fieldset{width:100%}
-#sessionEditor fieldset{display:flex;align-items:end;flex-wrap:wrap;gap:6px;min-width:0;border:1px solid #688081;border-radius:8px;padding:8px}
-#sessionEditor label{display:grid;font-size:12px}
-#sessionEditor select,#sessionEditor input,#sessionEditor button{max-width:100%;min-height:44px;font-size:16px;border:1px solid #bda270;border-radius:8px;background:#07343b;color:#f4e3bd;padding:5px 9px}
-#sessionEditor input{width:70px}
-#sessionEditor button{min-width:44px}
-#sessionEditor button:disabled{opacity:.45}

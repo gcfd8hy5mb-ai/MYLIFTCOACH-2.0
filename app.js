@@ -492,7 +492,7 @@ function editSession(duringWorkout){
  const store=duringWorkout?activeDraftStore:window.MLC2AccountDraft.scope(localStorage,owner,{guarded:true});
  const draft=duringWorkout?null:unfinishedDraftFor(plan);
  const locked=new Set((duringWorkout?session.sets:draft?.sets||[]).map(set=>set.exerciseId));
- SessionEditor.show({plan,original,choices:window.MLC2Custom?.allPlans(plans)||plans,catalog:libraryExercises(),locked,
+ SessionEditor.show({plan,original,choices:window.MLC2Custom?.allPlans(plans)||plans,catalog:libraryExercises(),search:searchExercises,thumbnail:approvedThumbnail,fullImage:approvedFullImage,locked,
   save:config=>withAccountLock('history',owner,epoch,()=>{
    store.assertCurrent();
    if(localStorage.getItem(key)!==before)throw Error('Session changed in another window. Reopen the editor.');
@@ -891,6 +891,10 @@ function approvedFullImage(e){
  if(!d||d.status!=='approved'||typeof d.image!=='string')return '';
  return /^assets\/exercise-demonstrations\/[A-Za-z0-9._-]+\.webp$/.test(d.image)?'./'+d.image:'';
 }
+function searchExercises(catalog, query, group=''){
+ const search=query.trim().toLowerCase();
+ return catalog.filter(e=>(!group||e.group===group)&&(e.name+' '+e.group).toLowerCase().includes(search));
+}
 function renderLibrary(){
  const catalog=libraryExercises();
  const status=$('approvedMediaStatus');
@@ -901,7 +905,7 @@ function renderLibrary(){
   status.textContent=ready?approved+' approved exercise demonstrations · '+pending+' awaiting approved artwork':'Demonstration inventory not verified in this build; exercise instructions remain available.';
  }
  const query=$('exerciseSearch').value.trim().toLowerCase();
- const matches=libraryExercises().filter(e=>(!muscleFilter||e.group===muscleFilter)&&(e.name+' '+e.group).toLowerCase().includes(query));
+ const matches=searchExercises(catalog,query,muscleFilter);
  document.querySelectorAll('[data-muscle]').forEach(b=>b.classList.toggle('selected',b.dataset.muscle===muscleFilter));
  $('libraryGrid').innerHTML=matches.map(e=>{
   const image=approvedThumbnail(e);

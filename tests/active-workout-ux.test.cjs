@@ -46,7 +46,7 @@ test('active workout uses inline checkmark logging and preserves existing draft/
   assert.ok(app.includes(token),'missing workflow element: '+token);
  }
  assert.ok(html.includes('workout-active-ux.js?v=3'));
- assert.ok(html.includes('active-workout-ux.css?v=6'));
+ assert.ok(html.includes('active-workout-ux.css?v=7'));
  assert.ok(app.includes("if(autoRest&&$('autoRestToggle')?.checked)openRest(id)"));
  assert.ok(app.includes("betaView().mode==='pro'&&e.group!=='Cardio'"));
  assert.ok(app.includes("coach?.status==='ready'"));
