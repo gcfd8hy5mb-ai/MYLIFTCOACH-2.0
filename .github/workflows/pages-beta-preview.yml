@@ -123,7 +123,7 @@ jobs:
       - name: Checkout pinned session editing candidate
         uses: actions/checkout@v4
         with:
-          ref: 88149309f7b56e7c9c4ff5f67e53ed4ca3f5498a
+          ref: be38607761228b265fc18a6b63f798ab7f8511dc
           path: session-edit-candidate
           persist-credentials: false
       - name: Validate existing iPhone preview shell before packaging
@@ -318,7 +318,7 @@ jobs:
       - name: Package isolated session editing preview
         run: |
           set -euo pipefail
-          test "$(git -C session-edit-candidate rev-parse HEAD)" = 88149309f7b56e7c9c4ff5f67e53ed4ca3f5498a
+          test "$(git -C session-edit-candidate rev-parse HEAD)" = be38607761228b265fc18a6b63f798ab7f8511dc
           node session-edit-candidate/review/pages/stage.cjs "$PWD/dist/session-edit-rc/"
           python3 - <<'PY'
           from pathlib import Path
@@ -326,10 +326,10 @@ jobs:
           index = preview / 'index.html'
           html = index.read_text()
           assert 'id="editDaySession"' in html
-          assert 'app.js?v=53' in html
+          assert 'app.js?v=54' in html
           assert "connect-src 'none'" in html
           index.write_text(html.replace('<script defer ', '<script src="./preview-storage.js?v=1"></script>\n<script defer ', 1))
-          (preview / 'candidate.txt').write_text('88149309f7b56e7c9c4ff5f67e53ed4ca3f5498a\n')
+          (preview / 'candidate.txt').write_text('be38607761228b265fc18a6b63f798ab7f8511dc\n')
           PY
           cat > dist/session-edit-rc/preview-storage.js <<'JS'
           'use strict';
