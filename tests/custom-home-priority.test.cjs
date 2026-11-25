@@ -94,7 +94,7 @@ test('account scopes isolate a selected custom workout from guest and another si
 test('Home refuses to open a workout that differs from the displayed preview',()=>{
  const app=read('app.js');
  const start=app.indexOf('function workoutPreviewKey(');
- const end=app.indexOf('function openWorkout(id)',start);
+ const end=app.indexOf('function openWorkout(',start);
  const opened=[],notices=[];
  const planned={id:'same',title:'Workout',ids:['press']};
  const context={planned,opened,loadCurrentWorkouts(){},renderHome(){},renderWorkouts(){},

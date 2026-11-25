@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const app=fs.readFileSync('app.js','utf8');
-const start=app.indexOf('function openWorkoutForOwner(id){');
+const start=app.indexOf('function openWorkoutForOwner(id,preview=null,resumeId=null){');
 const end=app.indexOf(' const draftAPI=window.MLC2SessionDraft;',start);
 assert.ok(start>=0&&end>start,'Workout handoff source must remain available');
 const source=app.slice(start,end)+'\n}';

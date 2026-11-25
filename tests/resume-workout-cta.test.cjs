@@ -48,7 +48,7 @@ test('Resume labels appear on both Home and Today without resetting saved data',
 });
 
 test('Workout modal distinguishes restored draft from finish and save actions',()=>{
- assert.match(app,/const restoredSets=draftAPI\?\.resume\(draftStore,plan\)\|\|\[\]/);
+ assert.match(app,/const restoredSets=match\?draftAPI\?\.resume\(draftStore,plan,Date.now\(\),true\)/);
  assert.match(app,/Resumed workout · /);
  assert.match(app,/saved set/);
  assert.match(app,/Finish workout when you are done/);
@@ -57,7 +57,7 @@ test('Workout modal distinguishes restored draft from finish and save actions',(
  const style=fs.readFileSync('live-coach-workout.css','utf8');
  const html=fs.readFileSync('index.html','utf8');
  assert.match(style,/\.active-resume-confirmation/);
- assert.match(html,/app\.js\?v=52/);
+ assert.match(html,/app\.js\?v=53/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
 });
 

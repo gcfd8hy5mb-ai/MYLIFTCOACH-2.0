@@ -49,7 +49,7 @@ test('Approved teal/gold styling stays scoped to Workouts; active logger, login 
  assert.match(css,/#workouts \.workout-compact-card/);
  assert.match(css,/background:#04252d!important/);
  assert.match(css,/border:1px solid rgba\(213,176,109,\.65\)/);
- assert.ok(html.includes('active-workout-ux.css?v=5'));
+ assert.ok(html.includes('active-workout-ux.css?v=6'));
  assert.ok(html.includes('workout-auth-ux-fix.css?v=2'));
  assert.match(app,/queueWorkoutForSync\(entry\)/);
  assert.match(app,/window\.MLC2SessionDraft\.save\(draft,plan,next\)/);
@@ -88,5 +88,5 @@ test('weekday assignment labels are not inferred from the full preset catalog',(
  const css=read('compact-workouts.css');
  assert.match(css,/#workouts \.workout-other-presets/);
  assert.match(css,/#workouts \.workout-assigned-days/);
- assert.ok(html.includes('app.js?v=52'));
+ assert.ok(html.includes('app.js?v=53'));
 });

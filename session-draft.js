@@ -9,12 +9,12 @@
 const KEY='mlc2-active-session-v1',MAX_SETS=250,LEGACY_MAX_SETS=500,AGE=7*24*3600*1000;
 function validSet(s,ids){return s&&typeof s.exerciseId==='string'&&ids.includes(s.exerciseId)&&
  Number.isFinite(s.weight)&&s.weight>=0&&s.weight<=1500&&Number.isInteger(s.reps)&&s.reps>0&&s.reps<=100}
-function read(storage,now=Date.now()){
+function read(storage,now=Date.now(),includeExpired=false){
  try{
   const record=JSON.parse(storage.getItem(KEY)||'null');
   if(!record||(record.workoutId!==undefined&&!(typeof record.workoutId==='string'&&/^demo-[a-z0-9-]{1,100}$/.test(record.workoutId)))||record.version!==1||typeof record.planId!=='string'||!Array.isArray(record.ids)||!record.ids.length||
     new Set(record.ids).size!==record.ids.length||!Array.isArray(record.sets)||record.sets.length>LEGACY_MAX_SETS||
-    !Number.isFinite(record.savedAt)||record.savedAt>now+60000||now-record.savedAt>AGE||
+    !Number.isFinite(record.savedAt)||record.savedAt>now+60000||(!includeExpired&&now-record.savedAt>AGE)||
     !record.sets.every(s=>validSet(s,record.ids)))return null;
   return record;
  }catch{return null}
@@ -23,7 +23,7 @@ function capture(plan,sets,now=Date.now()){
  if(!plan||typeof plan.id!=='string'||!Array.isArray(plan.ids)||!plan.ids.length||plan.ids.length>40||
  new Set(plan.ids).size!==plan.ids.length||!Array.isArray(sets)||sets.length>MAX_SETS||
  !sets.every(s=>validSet(s,plan.ids)))throw Error('Invalid active workout draft');
- return {version:1,planId:plan.id,ids:[...plan.ids],title:String(plan.title||'Workout').slice(0,100),savedAt:now,...(plan.workoutId?{workoutId:plan.workoutId}:{}),sets:sets.map(s=>({exerciseId:s.exerciseId,weight:s.weight,reps:s.reps}))};
+ return {version:1,planId:plan.id,ids:[...plan.ids],title:String(plan.title||'Workout').slice(0,100),savedAt:now,...(plan.sessionDate?{sessionDate:plan.sessionDate,targets:structuredClone(plan.targets||{})}:{}),...(plan.workoutId?{workoutId:plan.workoutId}:{}),sets:sets.map(s=>({exerciseId:s.exerciseId,weight:s.weight,reps:s.reps}))};
 }
 function save(storage,plan,sets,now=Date.now()){
  const payload=JSON.stringify(capture(plan,sets,now));
@@ -31,8 +31,8 @@ function save(storage,plan,sets,now=Date.now()){
  if(storage.getItem(KEY)!==payload)throw Error('Draft storage could not be verified.');
  return true;
 }
-function resume(storage,plan,now=Date.now()){
- const saved=read(storage,now);
+function resume(storage,plan,now=Date.now(),includeExpired=false){
+ const saved=read(storage,now,includeExpired);
  if(!saved||saved.planId!==plan?.id||
   JSON.stringify(saved.ids)!==JSON.stringify(plan.ids))return null;
  return saved.sets.map(s=>({...s}));

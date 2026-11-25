@@ -9,7 +9,7 @@ const root=path.resolve(__dirname,'..');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const css=fs.readFileSync(path.join(root,'live-coach-workout.css'),'utf8');
-const start=app.indexOf('/* Strictly isolated, RAM-only Coach demo history'),end=app.indexOf('\nfunction openWorkout(id){',start);
+const start=app.indexOf('/* Strictly isolated, RAM-only Coach demo history'),end=app.indexOf('\nfunction openWorkout(',start);
 assert.ok(start>=0&&end>start,'Coach functions must be loaded before active workout');
 const source=app.slice(start,end);
 const plan={id:'custom-123',title:'My Custom Workout',ids:['chest-press']};
@@ -165,5 +165,5 @@ test('Active workout mounts Coach, uses existing draft and cloud paths, and avoi
  }
  assert.match(css,/\.live-coach-box/);
  assert.match(html,/live-coach-workout\.css\?v=12/);
- assert.match(html,/app\.js\?v=52/);
+ assert.match(html,/app\.js\?v=53/);
 });
