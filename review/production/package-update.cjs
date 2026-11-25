@@ -5,7 +5,7 @@ const path=require('node:path');
 const {execFileSync}=require('node:child_process');
 const {build}=require('./package.cjs');
 
-const liveCommit='2212d979d16834f071d630e32a93a9c38714d6eb';
+const liveCommit='be38607761228b265fc18a6b63f798ab7f8511dc';
 
 function prepareUpdate({candidate,previous,original,output}){
  const head=execFileSync('git',['-C',previous,'rev-parse','HEAD'],{encoding:'utf8'}).trim();

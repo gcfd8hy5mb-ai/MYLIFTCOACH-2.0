@@ -448,8 +448,11 @@ function setPage(next){if(!['welcome','home','workouts','library','progress','se
 // Compact Progress tabs navigate through the normal page router only; no data mutations.
 window.MLC2ProgressNavigate=next=>{if(next==='history'||next==='tracking')setPage(next)};
 function totalSets(){return demoSessions.reduce((n,x)=>n+x.sets.length,0)}
+function presetWorkouts(){
+ return plans.map(plan=>window.MLC2Custom?.applyOverride(plan)||plan);
+}
 function nextPlan(){
- const standard=window.MLC2WeeklySchedule?.resolve({presets:plans,
+ const standard=window.MLC2WeeklySchedule?.resolve({presets:presetWorkouts(),
   custom:window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[],
   sessionsCompleted:demoSessions.length,storage:planStorage()})||
   window.MLC2Custom?.currentPlan(plans,demoSessions.length)||plans[demoSessions.length%plans.length];
@@ -492,31 +495,63 @@ function editSession(duringWorkout){
  const store=duringWorkout?activeDraftStore:window.MLC2AccountDraft.scope(localStorage,owner,{guarded:true});
  const draft=duringWorkout?null:unfinishedDraftFor(plan);
  const locked=new Set((duringWorkout?session.sets:draft?.sets||[]).map(set=>set.exerciseId));
- SessionEditor.show({plan,original,choices:window.MLC2Custom?.allPlans(plans)||plans,catalog:libraryExercises(),search:searchExercises,thumbnail:approvedThumbnail,fullImage:approvedFullImage,locked,
-  save:config=>withAccountLock('history',owner,epoch,()=>{
+ const custom=window.MLC2Custom,choices=custom.allPlans(plans);
+ const versions=new Map(choices.filter(p=>p.id.startsWith('custom-')).map(p=>[p.id,JSON.stringify(p)]));
+ const overrideVersion=custom.overrideVersion();
+ const coachDays=plan.programDays||window.MLC2CoachPreferences?.read(localStorage,owner)?.days||4;
+ const persist=(config,options)=>{
    store.assertCurrent();
    if(localStorage.getItem(key)!==before)throw Error('Session changed in another window. Reopen the editor.');
    if(duringWorkout && (plan!==activePlan || $('finishWorkout').disabled))throw Error('Reopen the active workout.');
    const sets=duringWorkout?session.sets:draft?.sets||[];
    if(sets.some(set=>!config.ids.includes(set.exerciseId)))throw Error('An exercise with logged sets must stay in this workout.');
-   if(duringWorkout||draft){
-    const edited={...plan,...config,sessionDate:date,workoutId:duringWorkout?plan.workoutId:draft.workoutId};
-    window.MLC2SessionDraft.save(store,edited,sets);
-    if(duringWorkout){
-     const inputs=[...$('workoutLog').querySelectorAll('[data-weight],[data-reps]')].map(el=>[el.dataset.weight?'weight':'reps',el.dataset.weight||el.dataset.reps,el.value]);
-     Object.assign(activePlan,edited);renderWorkoutLog();
-     const coach=$('modalContent').querySelector('.live-coach-dropdown');
-     if(coach)coach.outerHTML=liveCoachPreview(activePlan);
-     for(const [kind,id,value] of inputs){
-      const field=$('workoutLog').querySelector('[data-'+kind+'="'+CSS.escape(id)+'"]');if(field)field.value=value;
-     }
-    }
-   }else{
-    if(SessionEditor.dateFor(nextHomeSession())!==date || nextHomeSession()?.id!==original.id)throw Error('Schedule changed. Reopen the editor.');
-    if(JSON.stringify(config)===JSON.stringify(SessionEditor.configuration(original)))localStorage.removeItem(key);
-    else localStorage.setItem(key,JSON.stringify({...config,planId:original.id}));
+   if(!duringWorkout){
+    const current=nextHomeSession();
+    if(SessionEditor.dateFor(current)!==date || current?.id!==original.id)
+     throw Error('Schedule changed. Reopen the editor.');
    }
-   renderHome();
+   const routineId=config.routineId||plan.id;
+   const edited={...plan,...config,routineId,sessionDate:date,workoutId:duringWorkout?plan.workoutId:draft?.workoutId};
+   const hasDraft=duringWorkout||draft;
+   const draftAPI=window.MLC2SessionDraft;
+   const sameAsScheduled=original&&routineId===original.id&&
+    JSON.stringify({...config,routineId:undefined})===JSON.stringify(SessionEditor.configuration(original));
+   const dayValue=sameAsScheduled || (options.mode==='permanent'&&routineId===original?.id)?null:
+    JSON.stringify({...config,routineId,planId:original?.id});
+   if(options.mode==='today'){
+    if(hasDraft)draftAPI.save(store,edited,sets);
+    else if(dayValue===null)localStorage.removeItem(key);
+    else localStorage.setItem(key,dayValue);
+   }else{
+    const routine=choices.find(p=>p.id===routineId) ||
+     (routineId===plan.id&&/^coach-auto-day-[1-5]$/.test(routineId)?{id:routineId,programDays:coachDays}:null);
+    const sessionChange=hasDraft?{key:window.MLC2AccountDraft.scopedKey(owner),
+     before:store.getItem(draftAPI.KEY),after:JSON.stringify(draftAPI.capture(edited,sets))}:
+     {key,before,after:dayValue};
+    custom.saveSessionRoutine({...options,routine,config,sessionChange,
+     expectedVersion:routineId.startsWith('custom-')?versions.get(routineId):overrideVersion});
+    if(duringWorkout)activeDraftStore=window.MLC2AccountDraft.scope(localStorage,owner,{guarded:true});
+   }
+   if(duringWorkout){
+    const inputs=[...$('workoutLog').querySelectorAll('[data-weight],[data-reps]')].map(el=>[el.dataset.weight?'weight':'reps',el.dataset.weight||el.dataset.reps,el.value]);
+    Object.assign(activePlan,edited);renderWorkoutLog();
+    const coach=$('modalContent').querySelector('.live-coach-dropdown');
+    if(coach)coach.outerHTML=liveCoachPreview(activePlan);
+    for(const [kind,id,value] of inputs){
+     const field=$('workoutLog').querySelector('[data-'+kind+'="'+CSS.escape(id)+'"]');if(field)field.value=value;
+    }
+   }
+   renderHome();renderWorkouts();if(page==='coaching')renderCoach();
+   if(options.mode!=='today')notice(options.mode==='new'?'New workout saved under Workouts.':'Future sessions updated.');
+ };
+ SessionEditor.show({plan,original,choices,catalog:libraryExercises(),search:searchExercises,thumbnail:approvedThumbnail,fullImage:approvedFullImage,locked,
+  weekdays:window.MLC2WeeklySchedule.DAYS,
+  save:(config,options)=>withAccountLock('history',owner,epoch,()=>{
+   if(options.mode==='today')return persist(config,options);
+   return custom.runPlanWrite(()=>{
+    if(verifiedOwnerId!==owner||authEpoch!==epoch)throw Error('Workout account changed.');
+    return persist(config,options);
+   });
   })
  });
 }
@@ -548,7 +583,7 @@ function unfinishedDraftFor(plan){
 function nextHomeSession(today=nextPlan()){
  if(today?.scheduleSource!=='rest')return today;
  const custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
- return window.MLC2WeeklySchedule?.nextTraining({storage:planStorage(),presets:plans,custom})||null;
+ return window.MLC2WeeklySchedule?.nextTraining({storage:planStorage(),presets:presetWorkouts(),custom})||null;
 }
 function renderHomeTrainingPlan(plan=nextPlan()){
  const store=planStorage();
@@ -648,8 +683,9 @@ function coachAutonomousPlan(){
  const generated=day?.exercises?.length?{id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
   description:'Coach-generated '+options.goal+' session'+(progress?' · Week '+progress.week+' of '+progress.totalWeeks:'')+'. Review exercises and loads before training.',
   kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day,programWeek:progress?.week||null}:null;
+ const personalized=window.MLC2Custom?.applyOverride(generated,proposal?.days?.length)||generated;
  const choice=window.MLC2ProgramSource?.choose({source:source||{mode:'generated',customId:''},
-  customPlans:programCustomOptions(),generated,completed})||null;
+  customPlans:programCustomOptions(),generated:personalized,completed})||null;
  return choice&&{...choice,programDays:proposal?.days?.length||null};
 }
 
@@ -790,7 +826,8 @@ function renderWorkouts(){
  const activeId=selected?.id||'';
  const ownerReady=!!verifiedOwnerId&&account?.id===verifiedOwnerId;
  const custom=(window.MLC2Custom?.allPlans(plans)||plans).filter(p=>p.id.startsWith('custom-'));
- const all=[...custom,...plans],scheduleOwner=verifiedOwnerId,scheduleEpoch=authEpoch;
+ const presets=presetWorkouts();
+ const all=[...custom,...presets],scheduleOwner=verifiedOwnerId,scheduleEpoch=authEpoch;
  const top=$('workoutTodayName'),meta=$('workoutTodayMeta'),source=$('workoutTodaySource');
  if(top)top.textContent=selected?.title||'Choose a workout';
  if(meta)meta.textContent=selected?.scheduleSource==='rest'?'Recovery day · No scheduled exercises':selected?selected.ids.length+' exercises · '+
@@ -814,7 +851,7 @@ function renderWorkouts(){
  if(guestStatus&&recoverable?.available>0)
   guestStatus.textContent=recoverable.available+' guest workout(s) available to copy to this verified account. Existing workouts will not be replaced.';
  window.MLC2WeeklySchedule?.render($('weeklySchedule'),{
-  presets:plans,custom,
+  presets,custom,
   storage:planStorage(),runWrite:work=>{
    return window.MLC2Custom.runPlanWrite(()=>{
     if(scheduleOwner!==verifiedOwnerId||scheduleEpoch!==authEpoch)throw Error('Workout account changed');
@@ -838,7 +875,7 @@ function renderWorkouts(){
  }
  const scheduled=all.filter(p=>scheduledDays.has(p.id));
  const unscheduledCustom=custom.filter(p=>!scheduledDays.has(p.id));
- const otherPresets=plans.filter(p=>!scheduledDays.has(p.id));
+ const otherPresets=presets.filter(p=>!scheduledDays.has(p.id));
  const section=(items,label,emptyMessage)=> {
   const cards=items.map(p=>{
    const imageExercise=(p.ids||[]).map(id=>libraryExercises().find(e=>e.id===id)).find(e=>e&&approvedThumbnail(e));
@@ -1245,7 +1282,7 @@ function openWorkoutForOwner(id,preview=null,resumeId=null){
  }
  let plan=selected||(freshCoach?.id===id?freshCoach:null);
  if(requested)
-  plan={id,title:requested.title,description:'Unfinished session',ids:requested.ids,targets:requested.targets||{}};
+  plan={id,title:requested.title,description:'Unfinished session',ids:requested.ids,targets:requested.targets||{},routineId:requested.routineId,programDays:requested.programDays};
  if(preview && plan){
   const current=homeConfiguration(nextHomeSession());
   if(workoutPreviewKey(current)!==workoutPreviewKey(preview)){notice('Session changed. Review the Home outline.');return}
@@ -1267,7 +1304,7 @@ function openWorkoutForOwner(id,preview=null,resumeId=null){
  if(other&&!match){
   if(!confirm('An unfinished workout has '+other.sets.length+' saved sets. Start this session and discard that saved draft?'))return;
  }
- if(match)plan={...plan,title:other.title||plan.title,ids:[...other.ids],targets:other.targets||plan.targets,sessionDate:other.sessionDate||SessionEditor.dateFor(plan)};
+ if(match)plan={...plan,title:other.title||plan.title,ids:[...other.ids],targets:other.targets||plan.targets,routineId:other.routineId||plan.routineId,programDays:other.programDays||plan.programDays,sessionDate:other.sessionDate||SessionEditor.dateFor(plan)};
  const restoredSets=match?draftAPI?.resume(draftStore,plan,Date.now(),true)||[]:[];
  const workoutId=(match&&other?.workoutId)||'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
  activePlan={...plan,workoutId,sessionDate:plan.sessionDate||SessionEditor.dateFor(plan)};activeDraftStore=draftStore;activeDraftOwner=workoutStartedOwner;

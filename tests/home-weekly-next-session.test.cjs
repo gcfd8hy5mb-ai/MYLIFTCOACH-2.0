@@ -41,12 +41,12 @@ test('Home next-session card and CTA are clickable even while Today is an explic
  assert.ok(html.includes('id="homeNextSession"'));
  assert.ok(html.includes('id="homeNextSessionTitle"'));
  assert.ok(html.includes('home-weekly-session.css?v=1'));
- assert.ok(html.includes('weekly-workout-schedule.js?v=7'));
+ assert.ok(html.includes('weekly-workout-schedule.js?v=8'));
  assert.ok(app.includes("upcoming=homeConfiguration(nextHomeSession(scheduled))"));
  assert.ok(app.includes("'todayStart').disabled=$('homeNextSession').disabled=!upcoming"));
  assert.ok(app.includes("startPreviewWorkout(event.currentTarget,nextHomeSession)"));
  assert.ok(app.includes("if(today?.scheduleSource!=='rest')return today"));
- assert.ok(app.includes("nextTraining({storage:planStorage(),presets:plans,custom})"));
+ assert.ok(app.includes("nextTraining({storage:planStorage(),presets:presetWorkouts(),custom})"));
  assert.match(css,/cursor:pointer/);
  assert.match(css,/:focus-visible/);
 });

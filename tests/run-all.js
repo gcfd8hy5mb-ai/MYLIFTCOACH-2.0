@@ -35,6 +35,7 @@ const tests=[
  'final-coach-weekly-integration.test.cjs',
  'active-workout-ux.test.cjs',
  'edited-session.test.cjs',
+ 'permanent-session.test.cjs',
  'workout-auth-ux-fix.test.cjs',
  'mobile-header-cleanup.test.cjs',
  'more-page.test.cjs',

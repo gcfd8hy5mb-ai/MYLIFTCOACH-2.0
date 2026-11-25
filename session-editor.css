@@ -86,3 +86,12 @@ body:has(#sessionEditor[open]){overflow:hidden}
  #sessionEditor .session-editor-thumb{width:60px;height:60px;flex-basis:60px}
  .session-editor-card-head,.session-editor-result{gap:9px}
 }
+
+.session-editor-save-options,.session-editor-copy-fields{display:grid;gap:6px;margin-bottom:6px}
+.session-editor-copy-fields{grid-template-columns:1fr 1fr;margin-bottom:0}
+.session-editor-copy-fields small{grid-column:1/-1;color:#c7dcd5}
+.session-editor-input{
+ width:100%;min-width:0;min-height:44px;padding:7px 8px;
+ background:#082a31;color:#fff0cf;border:1px solid #c8a56d99;border-radius:9px;font-size:16px;
+}
+@media(max-width:375px){.session-editor-copy-fields{grid-template-columns:1fr}}

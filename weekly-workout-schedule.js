@@ -55,7 +55,7 @@ function resolve({presets=[],custom=[],sessionsCompleted=0,storage,date=new Date
  const scheduled=paused?null:plans.find(p=>p.id===read(storage)[String(currentDay)]);
  if(scheduled)return {...scheduled,scheduleSource:'weekly'};
  if(!paused&&state?.activeId)return {id:'unscheduled-day',title:'No workout scheduled',description:'No workout is assigned to this day.',kind:'Rest',ids:[],scheduleSource:'rest'};
- const fallback=custom.find(p=>!p.coachSaved)||presets[sessionsCompleted%presets.length]||plans[0];
+ const fallback=custom.find(p=>!p.coachSaved&&!p.editorCopy)||presets[sessionsCompleted%presets.length]||plans[0];
  return {...fallback,scheduleSource:'default'};
 }
 /* Returns the next scheduled training workout, skipping explicit rest days.

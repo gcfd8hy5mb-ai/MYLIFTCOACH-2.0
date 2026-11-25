@@ -6,10 +6,10 @@ let owner=null,ownerGeneration=0,closeEditor=null;
 const validOwner=o=>typeof o==='string'&&/^[a-zA-Z0-9_-]{1,128}$/.test(o);
 function setOwner(nextOwner){if(nextOwner!==null&&!validOwner(nextOwner))throw Error('Verified owner required');if(nextOwner!==owner){ownerGeneration++;closeEditor?.();window.MLC2FullWeekBuilder?.forceClose?.()}owner=nextOwner}
 const scoped=key=>owner===null?key:key+':user:'+owner;
-const JOURNAL='mlc2-plan-write-v1';
+const JOURNAL='mlc2-plan-write-v1', OVERRIDES='mlc2-workout-overrides-v1', MAX_CUSTOM=60;
 const PROGRAM_KEYS=['mlc2-goal-program-v1','mlc2-goal-program-source-v1','mlc2-estimated-calorie-goal-v1'];
 const TRANSFER_KEYS=['mlc2-auto-coach-preferences-v1','mlc2-weekly-goal-v1'];
-const planKeys=()=>[KEY,WEEK,TODAY,LIB,...PROGRAM_KEYS,...TRANSFER_KEYS].map(scoped);
+const planKeys=()=>[KEY,WEEK,TODAY,LIB,OVERRIDES,...PROGRAM_KEYS,...TRANSFER_KEYS].map(scoped);
 function writeVerified(key,value){
  if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);
  if(localStorage.getItem(key)!==value)throw Error('Workout changes were not retained.');
@@ -29,13 +29,19 @@ function settlePlanWrite(key,raw,changes,field){
  if(localStorage.getItem(key)!==raw)throw Error('Pending workout save changed.');
  writeVerified(key,null);
 }
+function sessionWriteKey(key){
+ const dayPrefix='mlc2-session-day-v1:'+(owner===null?'guest':'user:'+owner)+':';
+ if(typeof key!=='string')return false;
+ return key===window.MLC2AccountDraft?.scopedKey(owner) ||
+  (key.startsWith(dayPrefix)&&/^\d{4}-\d{2}-\d{2}$/.test(key.slice(dayPrefix.length)));
+}
 function recoverPlanWrite(){
  const key=scoped(JOURNAL),raw=localStorage.getItem(key);
  if(raw===null)return false;
  const journal=JSON.parse(raw),allowed=planKeys();
  if(!journal||!['after','before'].includes(journal.field)||!Array.isArray(journal.changes)||
-    journal.changes.length<1||journal.changes.length>allowed.length||
-    journal.changes.some(change=>!change||!allowed.includes(change.key)||
+    journal.changes.length<1||journal.changes.length>allowed.length+2||
+    journal.changes.some(change=>!change||(!allowed.includes(change.key)&&!sessionWriteKey(change.key))||
      ![change.before,change.after].every(value=>value===null||typeof value==='string'))||
     new Set(journal.changes.map(change=>change.key)).size!==journal.changes.length)
   throw Error('Pending workout save needs review.');
@@ -147,16 +153,16 @@ function read({forWrite=false}={}){
  const raw=localStorage.getItem(scoped(KEY));
  const a=raw===null?[]:JSON.parse(raw);
  if(forWrite){
-  if(!Array.isArray(a)||a.length>60||a.some(p=>!p||typeof p.id!=='string'||!/^custom-[a-z0-9-]{1,93}$/.test(p.id)||
+  if(!Array.isArray(a)||a.length>MAX_CUSTOM||a.some(p=>!p||typeof p.id!=='string'||!/^custom-[a-z0-9-]{1,93}$/.test(p.id)||
     !Array.isArray(p.ids)||p.ids.length<1||p.ids.length>40||new Set(p.ids).size!==p.ids.length||
     p.ids.some(id=>typeof id!=='string'||!byId(id)))||new Set(a.map(p=>p.id)).size!==a.length)
    throw Error('Saved workouts are unreadable. Nothing was changed.');
   // Keep all fields belonging to untouched plans, including older metadata.
   return a;
  }
- return Array.isArray(a)?a.slice(0,60).filter(p=>p&&typeof p.id==='string'&&p.id.startsWith('custom-')&&Array.isArray(p.ids)).map(p=>({
+ return Array.isArray(a)?a.slice(0,MAX_CUSTOM).filter(p=>p&&typeof p.id==='string'&&p.id.startsWith('custom-')&&Array.isArray(p.ids)).map(p=>({
   id:p.id,title:String(p.title||'My workout').slice(0,75),kind:'Custom',description:String(p.description||'Custom routine').slice(0,160),
-  ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40),coachSaved:p.coachSaved===true,
+  ids:[...new Set(p.ids.filter(id=>typeof id==='string'&&byId(id)))].slice(0,40),coachSaved:p.coachSaved===true,...(p.editorCopy===true?{editorCopy:true}:{}),
   targets:normalizeTargets(p.targets,p.ids)
  })).filter(p=>p.ids.length):[];
  }catch(error){if(forWrite)throw error;return []}
@@ -235,7 +241,7 @@ function saveFullWeek({title,days,expectedOwner=owner}){
   added.push(plan);nextSchedule[String(day)]=id;
  }
  if(!added.length)throw Error('Add at least one training day');
- if(existing.length+added.length>60)throw Error('Custom workout limit reached. Your existing routines were not changed.');
+ if(existing.length+added.length>MAX_CUSTOM)throw Error('Custom workout limit reached. Your existing routines were not changed.');
  if(!scheduleAPI.valid(nextSchedule))throw Error('Weekly program schedule is invalid');
  const plansKey=scoped(KEY),scheduleKey=scoped(WEEK),selectedKey=scoped(TODAY);
  const keys=[plansKey,scheduleKey,selectedKey,scoped(LIB)],prior=keys.map(k=>localStorage.getItem(k));
@@ -275,7 +281,7 @@ function recoverGuest(){
   owner=null;guest=read();
   previousChoice=localStorage.getItem(TODAY)||'';
  }finally{owner=before}
- const additions=guest.filter(p=>!seen.has(p.id)).slice(0,Math.max(0,60-existing.length));
+ const additions=guest.filter(p=>!seen.has(p.id)).slice(0,Math.max(0,MAX_CUSTOM-existing.length));
  if(!additions.length)return {added:0,preserved:existing.length,skipped:guest.length};
  // Never modify the guest key; never replace an account ID collision.
  const chosen=localStorage.getItem(scoped(TODAY));
@@ -298,7 +304,7 @@ function saveCoachDay(day){
   if(!Array.isArray(parsed))throw Error('Saved workouts are unreadable. Nothing was changed.');
  }
  const existing=read({forWrite:true});
- if(existing.length>=60)throw Error('Custom workout limit reached');
+ if(existing.length>=MAX_CUSTOM)throw Error('Custom workout limit reached');
  let id=newPlanId();
  while(existing.some(p=>p.id===id))id=newPlanId();
  const number=Number(day.day);
@@ -307,8 +313,76 @@ function saveCoachDay(day){
  persistPlans([plan,...existing]);
  return plan;
 }
-function allPlans(presets){return [...read(),...presets]}
-function currentPlan(presets,completed){const a=allPlans(presets);let id='';try{id=localStorage.getItem(scoped(TODAY))||''}catch{};return a.find(p=>p.id===id)||read().find(p=>!p.coachSaved)||presets[completed%presets.length]||a[0]}
+function readOverrides({forWrite=false}={}){
+ try{
+  const raw=localStorage.getItem(scoped(OVERRIDES));
+  if(raw===null)return {};
+  const data=JSON.parse(raw);
+  if(!window.MLC2AuxData.valid({kind:'workout-overrides'},data))throw Error('Saved workout preferences need review.');
+  return data;
+ }catch(error){if(forWrite)throw error;return {}}
+}
+function applyOverride(plan,splitDays){
+ if(!plan)return plan;
+ const key=splitDays?plan.id+'-split-'+splitDays:plan.id;
+ const overrides=readOverrides();
+ const edit=Object.hasOwn(overrides,key)?overrides[key]:null;
+ if(!edit||edit.ids.some(id=>!byId(id)))return plan;
+ const targets=Object.fromEntries(edit.ids.map(id=>[id,{...plan.targets?.[id],...edit.targets[id]}]));
+ return {...plan,ids:[...edit.ids],targets};
+}
+function saveSessionRoutine({mode,routine,config,name,weekday,sessionChange,expectedVersion}){
+ if(!['permanent','new'].includes(mode))throw Error('Choose how to save the workout.');
+ if(sessionChange&&!sessionWriteKey(sessionChange.key))throw Error('Workout account changed.');
+ if(!Array.isArray(config.ids)||!config.ids.length||config.ids.length>40||
+    new Set(config.ids).size!==config.ids.length||config.ids.some(id=>!byId(id)))
+  throw Error('The workout contains an unavailable or repeated exercise.');
+ if(config.ids.some(id=>config.targets?.[id]?.sets>TARGET_LIMITS.sets[1]))
+  throw Error('Saved workout targets allow up to '+TARGET_LIMITS.sets[1]+' sets per exercise.');
+ const ids=[...config.ids],targets=normalizeTargets(config.targets,ids);
+ const keyNames=[KEY,WEEK,TODAY,LIB,OVERRIDES],keys=keyNames.map(scoped);
+ const before=keys.map(key=>localStorage.getItem(key)),after=[...before];
+ let saved;
+ if(mode==='permanent'&&!routine)throw Error('The original workout is unavailable. Save a new workout instead.');
+ if(mode==='permanent'&&!routine.id.startsWith('custom-')){
+  if(before[4]!==expectedVersion)throw Error('Workout preferences changed. Reopen the editor and try again.');
+  const split=routine.programDays;
+  const id=routine.id.startsWith('coach-auto-day-')?routine.id+'-split-'+split:routine.id;
+  const overrides={...readOverrides({forWrite:true}),[id]:{ids,targets}};
+  if(!window.MLC2AuxData.valid({kind:'workout-overrides'},overrides))throw Error('Workout preferences could not be validated.');
+  after[4]=JSON.stringify(overrides);
+  saved=routine;
+ }else{
+  const current=read({forWrite:true});
+  if(mode==='permanent'){
+   const existing=current.find(p=>p.id===routine.id);
+   if(!existing||JSON.stringify(read().find(p=>p.id===routine.id))!==expectedVersion)
+    throw Error('This custom workout changed. Reopen the editor and try again.');
+   saved={...existing,ids,targets};
+   after[0]=JSON.stringify(current.map(p=>p.id===existing.id?saved:p));
+  }else{
+   const title=typeof name==='string'?name.trim():'';
+   if(!title||title.length>75)throw Error('Enter a workout name up to 75 characters.');
+   if(current.length>=MAX_CUSTOM)throw Error('Maximum '+MAX_CUSTOM+' custom workouts.');
+   let id=newPlanId();
+   while(current.some(p=>p.id===id))id=newPlanId();
+   saved={id,title,kind:'Custom',description:'Custom routine',editorCopy:true,ids,targets};
+   after[0]=JSON.stringify([...current,saved]);
+   if(weekday!==null&&weekday!==undefined){
+    if(!Number.isInteger(weekday)||weekday<0||weekday>6)throw Error('Choose a valid weekday.');
+    const library=window.MLC2ScheduleLibrary,store=stagedScheduleStore(keys,before);
+    library.edited(store,{...library.current(store),[weekday]:id},{preserveSelection:true});
+    for(let i=1;i<=3;i++)after[i]=store.getItem(keyNames[i]);
+   }
+  }
+ }
+ if(sessionChange){keys.push(sessionChange.key);before.push(sessionChange.before);after.push(sessionChange.after)}
+ commitPlanWrite(keys,before,after);
+ try{window.MLC2ScheduleAuxSync?.()}catch{}
+ return saved;
+}
+function allPlans(presets){return [...read(),...presets.map(plan=>applyOverride(plan))]}
+function currentPlan(presets,completed){const a=allPlans(presets);let id='';try{id=localStorage.getItem(scoped(TODAY))||''}catch{};return a.find(p=>p.id===id)||read().find(p=>!p.coachSaved&&!p.editorCopy)||a.find(p=>p.id===presets[completed%presets.length]?.id)||a[0]}
 function controls(p,currentId){
  const custom=p.id.startsWith('custom-');
  return '<div class="custom-plan-actions"><button type="button" data-custom-select="'+esc(p.id)+'">'+(currentId===p.id?'Selected for today ✓':'Use for today')+'</button>'+(p.coachSaved?'<button type="button" data-custom-schedule="'+esc(p.id)+'">Schedule</button>':'')+(custom?'<button type="button" data-custom-edit="'+esc(p.id)+'">Edit</button><button type="button" data-custom-delete="'+esc(p.id)+'">Delete</button>':'')+'</div>';
@@ -422,7 +496,7 @@ function openEditor(id,unused,onChanged){
     if(existing&&!plans.some(plan=>plan.id===existing.id))throw Error('This workout was deleted.');
     if(existing&&JSON.stringify(read().find(p=>p.id===id))!==original)
      throw Error('This workout changed in another window. Reopen it before editing.');
-    if(!existing&&plans.length>=60)throw Error('Maximum 60 custom workouts.');
+    if(!existing&&plans.length>=MAX_CUSTOM)throw Error('Maximum 60 custom workouts.');
     const currentSchedule=scheduleAPI?.read({getItem:key=>localStorage.getItem(scoped(key))})||{};
     const relevant=Object.keys({...initialSchedule,...currentSchedule}).filter(day=>
      days.includes(Number(day))||initialSchedule[day]===existing?.id||currentSchedule[day]===existing?.id);
@@ -501,5 +575,5 @@ function handleClick(e,onChanged,onSchedule){
  }
  return false;
 }
-window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveWithWeekdays,saveFullWeek,deleteCustomPlan,runPlanWrite,recoverPlanWrite,requireStablePlans,commitRecoveredPlans,transactProgram,transactScheduleLibrary,scheduleVersion:()=>localStorage.getItem(scoped(WEEK)),getOwner:()=>owner};
+window.MLC2Custom={allPlans,currentPlan,controls,openEditor,handleClick,setOwner,guestRecovery,recoverGuest,saveCoachDay,saveSessionRoutine,applyOverride,overrideVersion:()=>localStorage.getItem(scoped(OVERRIDES)),saveWithWeekdays,saveFullWeek,deleteCustomPlan,runPlanWrite,recoverPlanWrite,requireStablePlans,commitRecoveredPlans,transactProgram,transactScheduleLibrary,scheduleVersion:()=>localStorage.getItem(scoped(WEEK)),getOwner:()=>owner};
 })();

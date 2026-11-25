@@ -112,15 +112,15 @@
   store.setItem(SELECTED,''); // Coach becomes active without deleting weekly assignments.
   return state.profiles.find(x=>x.id===state.activeId)||null;
  }
- function edited(store,map){
+ function edited(store,map,{preserveSelection=false}={}){
   if(!validMap(map))throw Error('Weekly schedule is invalid.');
   let state=captureCurrent(read(store),current(store));
   if(state.activeId){
    state={...state,profiles:state.profiles.map(p=>p.id===state.activeId?{...p,days:{...map}}:p)};
   }
   store.setItem(WEEK,JSON.stringify(map));
-  store.setItem(KEY,JSON.stringify({...state,mode:'weekly'}));
-  store.setItem(SELECTED,'');
+  store.setItem(KEY,JSON.stringify({...state,mode:preserveSelection?state.mode:'weekly'}));
+  if(!preserveSelection)store.setItem(SELECTED,'');
  }
  function remove(store,id){
   const state=read(store);
