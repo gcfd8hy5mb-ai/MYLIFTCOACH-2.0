@@ -9,7 +9,7 @@ const SessionEditor = (() => {
   return 'mlc2-session-day-v1:' + (owner ? 'user:'+owner : 'guest') + ':' + date;
  }
  function configuration(plan) {
-  return {title:plan.title,ids:[...plan.ids],targets:structuredClone(plan.targets || {})};
+  return {title:plan.title,ids:[...plan.ids],targets:structuredClone(plan.targets || {}),...(plan.routineId?{routineId:plan.routineId}:{})};
  }
  function effective(plan, owner, draft) {
   if (!plan?.ids.length) return plan;
@@ -25,7 +25,7 @@ const SessionEditor = (() => {
   } catch { /* Keep the scheduled outline usable if device storage cannot be read. */ }
   return plan;
  }
- function show({plan, original, choices, catalog, search, thumbnail, fullImage, locked, save}) {
+ function show({plan, original, choices, catalog, search, thumbnail, fullImage, locked, weekdays, save}) {
   document.getElementById('sessionEditor')?.close();
   const opener = document.activeElement;
   const dialog = document.createElement('dialog');
@@ -34,9 +34,9 @@ const SessionEditor = (() => {
   const working = configuration(plan);
   const byId = new Map(catalog.map(row=>[row.id,row]));
   const date = original && dateFor(original);
-  const scope = !original ? 'Changes apply to this active workout only.' :
-   date === dateFor(null) ? 'Changes apply to today’s workout only.' :
-   'Changes apply to the selected day only.';
+  const scope = !original ? 'Editing this active workout.' :
+   date === dateFor(null) ? 'Editing today’s workout.' :
+   'Editing the selected day.';
   const make = (tag, className, label) => {
    const element = document.createElement(tag);
    element.className = className;
@@ -61,9 +61,34 @@ const SessionEditor = (() => {
   error.setAttribute('role','alert');
   const submit = make('button','button-primary',original?'Save session':'Save workout');
   submit.type = 'submit';
+  const saveOptions = make('div','session-editor-save-options');
+  const modeLabel = make('label','sr-only','Save options');
+  modeLabel.htmlFor='sessionSaveMode';
+  const mode = make('select','session-editor-input');
+  mode.id='sessionSaveMode';
+  for(const [value,label] of [['today','Save for today only'],['permanent','Update workout permanently'],['new','Save as new workout']])
+   mode.add(new Option(value==='today'&&original&&date!==dateFor(null)?'Save for selected day only':label,value));
+  const newDetails = make('div','session-editor-copy-fields');
+  newDetails.hidden=true;
+  const name = make('input','session-editor-input');
+  name.type='text';name.maxLength=75;name.placeholder='New workout name';name.setAttribute('aria-label','New workout name');
+  const weekday = make('select','session-editor-input');
+  weekday.setAttribute('aria-label','Assign weekday');
+  weekday.add(new Option('No schedule assignment',''));
+  weekdays.forEach((label,index)=>weekday.add(new Option('Assign '+label,String(index))));
+  const scheduleNote = make('small','','Assignment replaces the workout on that weekday in your weekly schedule.');
+  scheduleNote.hidden=true;
+  weekday.onchange=()=>{scheduleNote.hidden=weekday.value===''};
+  newDetails.append(name,weekday,scheduleNote);
+  mode.onchange=()=>{
+   newDetails.hidden=mode.value!=='new';
+   name.required=mode.value==='new';
+   submit.textContent=mode.value==='new'?'Save new workout':mode.value==='permanent'?'Update workout':original?'Save session':'Save workout';
+  };
+  saveOptions.append(modeLabel,mode,newDetails);
   const actions = make('div','session-editor-actions');
   actions.append(button('Cancel',()=>dialog.close()),submit);
-  footer.append(error,actions);
+  footer.append(error,saveOptions,actions);
   header.append(heading,subtitle);
   form.append(header,content,footer);
   dialog.append(form);
@@ -76,6 +101,7 @@ const SessionEditor = (() => {
    subtitle.textContent = description;
    subtitle.hidden = !description;
    footer.hidden = !!back;
+   name.disabled = !!back;
    submit.disabled = !!back || saving;
    content.replaceChildren();
    content.scrollTop = 0;
@@ -189,7 +215,7 @@ const SessionEditor = (() => {
    const summary = make('div','session-editor-summary');
    summary.append(make('h3','',working.title));
    const useWorkout = next=>{
-    Object.assign(working,configuration(next));
+    Object.assign(working,configuration(next),{routineId:next.routineId||next.id});
     returnToEditor();
    };
    if(original){
@@ -277,7 +303,8 @@ const SessionEditor = (() => {
    if(footer.hidden || saving)return;
    saving = submit.disabled = true;
    error.textContent = '';
-   try{await save(configuration(working));dialog.close()}
+   try{await save(configuration(working),{mode:mode.value,name:name.value,
+    weekday:weekday.value===''?null:Number(weekday.value)});dialog.close()}
    catch(e){error.textContent=e.message || 'Could not save changes.'}
    finally{saving = submit.disabled = false}
   };

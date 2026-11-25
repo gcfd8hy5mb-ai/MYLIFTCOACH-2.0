@@ -21,7 +21,8 @@
   {type:'goal',id:'coach-training-preferences-v1',key:'mlc2-auto-coach-preferences-v1',label:'Coach training preferences',kind:'coach-training-preferences',max:1},
   {type:'goal',id:'goal-calorie-estimate-v1',key:'mlc2-estimated-calorie-goal-v1',label:'Estimated calorie goal profile',kind:'calorie-estimate',max:1},
   {type:'goal',id:'goal-program-calendar-v1',key:'mlc2-goal-program-v1',label:'Fixed-duration fitness goal program',kind:'goal-program',max:1},
-  {type:'goal',id:'goal-program-source-v1',key:'mlc2-goal-program-source-v1',label:'Program workout source',kind:'goal-program-source',max:1}
+  {type:'goal',id:'goal-program-source-v1',key:'mlc2-goal-program-source-v1',label:'Program workout source',kind:'goal-program-source',max:1},
+  {type:'goal',id:'workout-overrides-v1',key:'mlc2-workout-overrides-v1',label:'Preset and Coach workout edits',kind:'workout-overrides',max:32}
  ]);
  const id='snapshot-v1',planId=/^[a-z0-9][a-z0-9-]{0,99}$/;
  const recordId=config=>config.id||id;
@@ -32,6 +33,19 @@
  }
  const equal=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
  function valid(config,payload){
+  if(config.kind==='workout-overrides'){
+   const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
+   const exerciseId=/^[a-z0-9][a-z0-9-]{0,99}$/;
+   const limits={sets:[1,20],reps:[1,100],weight:[0,1500],restSeconds:[0,1800]};
+   return object(payload)&&Object.keys(payload).length<=32&&Object.entries(payload).every(([id,edit])=>
+    planId.test(id)&&(!id.startsWith('coach-auto-')||/^coach-auto-day-[1-5]-split-[345]$/.test(id))&&
+    object(edit)&&Array.isArray(edit.ids)&&edit.ids.length>=1&&edit.ids.length<=40&&
+    new Set(edit.ids).size===edit.ids.length&&edit.ids.every(ex=>typeof ex==='string'&&exerciseId.test(ex))&&
+    object(edit.targets)&&Object.entries(edit.targets).every(([ex,target])=>
+     edit.ids.includes(ex)&&object(target)&&Object.entries(target).every(([field,n])=>
+      Object.hasOwn(limits,field)&&Number.isFinite(n)&&(field==='weight'||Number.isInteger(n))&&
+      n>=limits[field][0]&&n<=limits[field][1])));
+  }
   if(config.kind==='selected-workout')return typeof payload==='string'&&(payload===''||planId.test(payload));
   if(config.kind==='coach-weekly-goal')return Number.isInteger(payload)&&payload>=1&&payload<=7;
   if(config.kind==='weekly-schedule')
@@ -146,7 +160,7 @@
   }));
   const transactional=writePlans?actions.filter(change=>
    ['mlc2-custom-plans-v1','mlc2-weekly-schedule-v1','mlc2-schedule-library-v1','mlc2-selected-workout-v1',
-    'mlc2-goal-program-v1','mlc2-goal-program-source-v1','mlc2-estimated-calorie-goal-v1']
+    'mlc2-goal-program-v1','mlc2-goal-program-source-v1','mlc2-estimated-calorie-goal-v1','mlc2-workout-overrides-v1']
     .some(key=>change.key===key+':user:'+owner)):[];
   const written=[];
   try{

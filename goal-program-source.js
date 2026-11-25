@@ -37,7 +37,8 @@
   const count=Number.isSafeInteger(completed)&&completed>=0?completed:0;
   const selected=candidates.find(p=>p.id===source?.customId);
   // A pinned routine must never silently resolve to a different custom routine.
-  const custom=source?.customId?(selected||null):(candidates[count%candidates.length]||null);
+  const rotation=candidates.filter(p=>!p.editorCopy);
+  const custom=source?.customId?(selected||null):(rotation[count%rotation.length]||null);
   const generatedValid=generated&&Array.isArray(generated.ids)&&generated.ids.length?generated:null;
   if(source?.mode==='custom')return custom?{...custom,programSource:'custom'}:null;
   if(source?.mode==='mixed'){

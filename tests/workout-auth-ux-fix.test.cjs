@@ -27,7 +27,7 @@ test('workout cards, selection actions and weekly schedule share dark teal styli
  assert.ok(css.includes('background:#042b31!important'));
  assert.ok(css.includes('color:#f6e7c9!important'));
  assert.ok(html.includes('workout-auth-ux-fix.css?v=2'));
- assert.ok(html.includes('app.js?v=54'));
+ assert.ok(html.includes('app.js?v=55'));
 });
 test('login fix preserves verified Supabase sign-in workflow and workout cloud upload',()=>{
  assert.match(app,/authRequest\('token\?grant_type=password'/);

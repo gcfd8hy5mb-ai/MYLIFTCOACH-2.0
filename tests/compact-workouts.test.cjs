@@ -25,10 +25,10 @@ test('Today starts the selected workout, not a recalculated preset',()=>{
  assert.match(app,/\$\('workoutTodayChange'\)\.addEventListener\('click',\(\)=>setWorkoutTab\('routines'\)\)/);
 });
 test('Scheduled routines appear first while unused presets remain available for manual selection',()=>{
- assert.match(app,/const all=\[\.\.\.custom,\.\.\.plans\]/);
+ assert.match(app,/const all=\[\.\.\.custom,\.\.\.presets\]/);
  assert.match(app,/const weeklyMap=window\.MLC2WeeklySchedule\?\.read\(planStorage\(\)\)\|\|\{\}/);
  assert.match(app,/const scheduled=all\.filter\(p=>scheduledDays\.has\(p\.id\)\)/);
- assert.match(app,/const otherPresets=plans\.filter\(p=>!scheduledDays\.has\(p\.id\)\)/);
+ assert.match(app,/const otherPresets=presets\.filter\(p=>!scheduledDays\.has\(p\.id\)\)/);
  assert.match(app,/section\(scheduled,'Your scheduled workouts'/);
  assert.match(app,/otherPresets\.length\?'<details class="workout-other-presets"/);
  for(const x of ['data-custom-select','data-custom-edit','data-custom-delete','data-workout'])assert.ok(app.includes(x));
@@ -68,7 +68,7 @@ test('Today workout follows approved rich dark-teal card material, not the old l
 
 test('following the weekly schedule shows Today and visible confirmation',()=>{
  const schedule=read('weekly-workout-schedule.js');
- assert.ok(html.includes('weekly-workout-schedule.js?v=7'));
+ assert.ok(html.includes('weekly-workout-schedule.js?v=8'));
  assert.match(schedule,/onChanged\?\.\('follow',selected\)/);
  assert.match(schedule,/Following weekly schedule · Today:/);
  assert.match(schedule,/Manual selection active:/);
@@ -88,5 +88,5 @@ test('weekday assignment labels are not inferred from the full preset catalog',(
  const css=read('compact-workouts.css');
  assert.match(css,/#workouts \.workout-other-presets/);
  assert.match(css,/#workouts \.workout-assigned-days/);
- assert.ok(html.includes('app.js?v=54'));
+ assert.ok(html.includes('app.js?v=55'));
 });

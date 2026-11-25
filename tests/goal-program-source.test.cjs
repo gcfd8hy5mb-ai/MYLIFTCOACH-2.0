@@ -50,5 +50,5 @@ test('App links custom program mode to actual selected workout without overwriti
  assert.match(app,/let plan=selected\|\|\(freshCoach\?\.id===id\?freshCoach:null\)/);
  assert.match(html,/name="programSource"/);
  assert.match(html,/name="programCustom"/);
- assert.match(html,/goal-program-source\.js\?v=1/);
+ assert.match(html,/goal-program-source\.js\?v=2/);
 });

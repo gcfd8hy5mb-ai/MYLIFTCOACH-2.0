@@ -23,7 +23,7 @@ function capture(plan,sets,now=Date.now()){
  if(!plan||typeof plan.id!=='string'||!Array.isArray(plan.ids)||!plan.ids.length||plan.ids.length>40||
  new Set(plan.ids).size!==plan.ids.length||!Array.isArray(sets)||sets.length>MAX_SETS||
  !sets.every(s=>validSet(s,plan.ids)))throw Error('Invalid active workout draft');
- return {version:1,planId:plan.id,ids:[...plan.ids],title:String(plan.title||'Workout').slice(0,100),savedAt:now,...(plan.sessionDate?{sessionDate:plan.sessionDate,targets:structuredClone(plan.targets||{})}:{}),...(plan.workoutId?{workoutId:plan.workoutId}:{}),sets:sets.map(s=>({exerciseId:s.exerciseId,weight:s.weight,reps:s.reps}))};
+ return {version:1,planId:plan.id,ids:[...plan.ids],title:String(plan.title||'Workout').slice(0,100),savedAt:now,...(plan.sessionDate?{sessionDate:plan.sessionDate,targets:structuredClone(plan.targets||{}),...(plan.routineId?{routineId:plan.routineId}:{}),...([3,4,5].includes(plan.programDays)?{programDays:plan.programDays}:{})}:{}),...(plan.workoutId?{workoutId:plan.workoutId}:{}),sets:sets.map(s=>({exerciseId:s.exerciseId,weight:s.weight,reps:s.reps}))};
 }
 function save(storage,plan,sets,now=Date.now()){
  const payload=JSON.stringify(capture(plan,sets,now));
