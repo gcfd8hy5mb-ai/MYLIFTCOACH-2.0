@@ -9,7 +9,7 @@ test('Login opens the auth-specific fullscreen modal without changing workout mo
  assert.match(app,/function openSignIn\(\)/);
  assert.match(app,/\$\('modal'\)\.classList\.add\('auth-fullscreen'\)/);
  assert.match(app,/function closeModal\(refresh=true\)[\s\S]*?classList\.remove\('auth-fullscreen'\)/);
- assert.match(app,/function openWorkoutForOwner\(id\)\{\s*if\(activePlan\)return;\s*\$\('modal'\)\.classList\.remove\('auth-fullscreen'\)/);
+ assert.match(app,/function openWorkoutForOwner\(id,preview=null,resumeId=null\)\{\s*if\(activePlan\)return;\s*\$\('modal'\)\.classList\.remove\('auth-fullscreen'\)/);
  assert.match(css,/#modal\.auth-fullscreen/);
  assert.match(css,/height:100dvh!important/);
  assert.match(css,/max-height:100dvh!important/);
@@ -27,7 +27,7 @@ test('workout cards, selection actions and weekly schedule share dark teal styli
  assert.ok(css.includes('background:#042b31!important'));
  assert.ok(css.includes('color:#f6e7c9!important'));
  assert.ok(html.includes('workout-auth-ux-fix.css?v=2'));
- assert.ok(html.includes('app.js?v=52'));
+ assert.ok(html.includes('app.js?v=54'));
 });
 test('login fix preserves verified Supabase sign-in workflow and workout cloud upload',()=>{
  assert.match(app,/authRequest\('token\?grant_type=password'/);

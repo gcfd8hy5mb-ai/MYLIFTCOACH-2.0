@@ -35,8 +35,8 @@ test('static signup links preserve existing sign-in and iPhone offline shell',()
  const app=read('app.js'),html=read('index.html'),worker=read('offline-worker.js');
  for(const id of ['welcomeSignUp','authCreateAction'])assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(html,/sync\/account-signup\.js\?v=2/);
- assert.match(html,/app\.js\?v=52/);
- assert.match(worker,/app\.js\?v=52/);
+ assert.match(html,/app\.js\?v=54/);
+ assert.match(worker,/app\.js\?v=54/);
  assert.match(app,/function openSignUp\(\)/);
  assert.match(app,/MLC2Signup\.register\(/);
  assert.match(app,/authRequest\('token\?grant_type=password'/);

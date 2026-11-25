@@ -11,7 +11,7 @@ const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
 
 test('iPhone Coach recap stylesheet is loaded by the actual offline shell',()=>{
  assert.match(html,/href="\.\/coach-recap-fullscreen\.css\?v=1"/);
- assert.match(worker,/const cacheName = prefix \+ '73'/);
+ assert.match(worker,/const cacheName = prefix \+ '75'/);
  assert.match(app,/if\(betaView\(\)\.mode==='pro'\)openModal\(liveCoachRecap\(proposed\)\)/);
 });
 test('styling applies to the recap alone and fills the viewport, including safe areas',()=>{

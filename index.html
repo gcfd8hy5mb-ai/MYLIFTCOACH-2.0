@@ -27,7 +27,8 @@
 <link rel="stylesheet" href="./coach-readiness.css?v=1">
 <link rel="stylesheet" href="./body-progress.css?v=1">
 <link rel="stylesheet" href="./rich-teal-cards.css?v=8">
-<link rel="stylesheet" href="./active-workout-ux.css?v=5">
+<link rel="stylesheet" href="./active-workout-ux.css?v=7">
+<link rel="stylesheet" href="./session-editor.css?v=1">
 <link rel="stylesheet" href="./workout-auth-ux-fix.css?v=2">
 <link rel="stylesheet" href="./mobile-header-cleanup.css?v=1">
 <link rel="stylesheet" href="./compact-workouts.css?v=5">
@@ -118,7 +119,7 @@
   <div class="home-below-fold">
     <div class="section-top"><div><div class="eyebrow">YOUR TRAINING</div><h2>Training overview</h2></div></div>
     <div class="metrics"><article class="metric"><span>WORKOUTS LOGGED</span><strong id="metricWorkouts">0</strong><small>Demo sessions</small></article><article class="metric"><span>SETS COMPLETED</span><strong id="metricSets">0</strong><small>All sessions</small></article><article class="metric"><span>YOUR TRAINING PLAN</span><strong id="metricTrainingPlanDays">—</strong><small id="metricTrainingPlanType">No program selected</small></article></div>
-    <div class="home-grid"><article class="panel next-panel"><div class="panel-heading"><div><div class="eyebrow">YOUR NEXT SESSION</div><h3 id="homeNextSessionTitle">Session outline</h3></div><button id="homeNextSession" class="micro-tag home-next-session-action" type="button" aria-label="Open next scheduled workout">NEXT SESSION</button></div><div id="todayExercises" class="exercise-preview"></div><button id="todayStart" class="text-action" type="button">Begin this session <span>↗</span></button></article><article class="panel activity-panel"><div class="eyebrow">YOUR MOMENTUM</div><h3>Recently completed</h3><div id="recentActivity" class="recent-list"></div></article></div>
+    <div class="home-grid"><article class="panel next-panel"><div class="panel-heading"><div><div class="eyebrow">YOUR NEXT SESSION</div><h3 id="homeNextSessionTitle">Session outline</h3></div><button id="homeNextSession" class="micro-tag home-next-session-action" type="button" aria-label="Open next scheduled workout">NEXT SESSION</button></div><button type="button" class="button-outline" id="editDaySession">Edit session</button><button type="button" hidden class="text-action" id="resumeOtherSession">Resume unfinished workout</button><div id="todayExercises" class="exercise-preview"></div><button id="todayStart" class="text-action" type="button">Begin this session <span>↗</span></button></article><article class="panel activity-panel"><div class="eyebrow">YOUR MOMENTUM</div><h3>Recently completed</h3><div id="recentActivity" class="recent-list"></div></article></div>
     <p class="safety-note"><strong>Development preview.</strong> Demo workout entries stay in this browser. Original workout history remains unchanged.</p>
   </div>
  </section>
@@ -404,7 +405,8 @@
 <script defer src="./full-week-builder.js?v=4"></script>
 <script defer src="./weekly-workout-schedule.js?v=7"></script>
 <script defer src="./schedule-library.js?v=2"></script>
-<script defer src="./session-draft.js?v=2"></script>
+<script defer src="./session-editor.js?v=2"></script>
+<script defer src="./session-draft.js?v=3"></script>
 <script defer src="./workout-active-ux.js?v=3"></script>
 <script defer src="./progress-migration.js?v=1"></script>
 <script defer src="./progress-weekly-summary.js?v=1"></script>
@@ -456,7 +458,7 @@
 <script defer src="./beta-access.js?v=3"></script>
 <!-- Isolated account cloud sync is enabled only after verified sign-in in this unmerged integration candidate. No original production workout tables are modified. -->
 <script defer src="./sync/account-signup.js?v=2"></script>
-<script defer src="./app.js?v=52"></script>
+<script defer src="./app.js?v=54"></script>
 <script defer src="./offline-shell.js?v=4"></script>
 <script defer src="./active-exercise-guide.js?v=1"></script>
 <script defer src="./progress-compact.js?v=1"></script>

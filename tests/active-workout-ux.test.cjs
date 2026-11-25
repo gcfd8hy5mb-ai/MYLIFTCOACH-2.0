@@ -46,7 +46,7 @@ test('active workout uses inline checkmark logging and preserves existing draft/
   assert.ok(app.includes(token),'missing workflow element: '+token);
  }
  assert.ok(html.includes('workout-active-ux.js?v=3'));
- assert.ok(html.includes('active-workout-ux.css?v=5'));
+ assert.ok(html.includes('active-workout-ux.css?v=7'));
  assert.ok(app.includes("if(autoRest&&$('autoRestToggle')?.checked)openRest(id)"));
  assert.ok(app.includes("betaView().mode==='pro'&&e.group!=='Cardio'"));
  assert.ok(app.includes("coach?.status==='ready'"));
@@ -60,7 +60,7 @@ test('approved marble workout styling keeps wallpaper fixed behind readable card
  assert.match(css,/background-image:linear-gradient\(rgba\(1,24,29,\.24\),rgba\(1,23,29,\.36\)\)/);
  assert.match(css,/#modal \.active-log-card\{\s*background:#063238!important/);
  assert.match(css,/background:#052d34!important/);
- assert.match(css,/height:100dvh!important/);
+ assert.match(css,/height:min\(100dvh,var\(--workout-height,100dvh\)\)!important/);
  assert.match(css,/overflow-y:auto!important/);
  assert.match(css,/env\(safe-area-inset-bottom\)/);
  assert.ok(!app.includes('demoSessions=[]; // styling change'),'workout data must remain intact');
@@ -78,7 +78,7 @@ test('blank, null and future weights never prefill the next workout',()=>{
 test('active workout close control stays beneath iPhone status area and keeps the original exit action',()=>{
  const css=fs.readFileSync(path.join(__dirname,'..','active-workout-ux.css'),'utf8');
  assert.match(css,/#modal\.workout-close-overlay > \.modal-close\{[\s\S]*?position:fixed!important/);
- assert.match(css,/top:max\(72px, calc\(env\(safe-area-inset-top, 0px\) \+ 14px\)\)!important/);
+ assert.match(css,/top:max\(12px, env\(safe-area-inset-top, 0px\)\)!important/);
  assert.match(css,/width:48px!important/);
  assert.match(css,/height:48px!important/);
  assert.match(app,/modal\.appendChild\(close\)/);
