@@ -604,7 +604,7 @@ function renderHomeTrainingPlan(plan=nextPlan()){
  const profile=state?.profiles.find(p=>p.id===state.activeId);
  let count='',name='No program selected';
  if(state?.mode==='coach'||(!assigned.length&&plan?.scheduleSource==='program')){
-  const coachDays=plan?.scheduleSource==='program'?plan.programDays:null;
+  const coachDays=plan?.programDays??null;
   const configuredDays=coachDays??window.MLC2CoachPreferences?.read(localStorage,verifiedOwnerId)?.days;
   if(Number.isInteger(configuredDays)&&configuredDays>=1&&configuredDays<=7)count=configuredDays+'-day';
   name='Coach Program';
@@ -757,7 +757,8 @@ function renderAutonomousCoach(){
   names.join(' · ')+' — '+preferences.days+' training days per cycle. Your chosen workout above is unchanged.'+
   (phaseAdvice?.status==='ready'?' '+coachAdviceText(phaseAdvice):'');
  start.dataset.workoutPreview=workoutPreviewKey(coachAutonomousDraft);
- start.disabled=false;
+ start.disabled=!coachAutonomousDraft.ids.length;
+ if(start.disabled)details.textContent=coachAutonomousDraft.description;
 }
 
 let pendingCoachSchedule=null;
@@ -1258,7 +1259,7 @@ function applyCoachWeight(id){
 }
 
 function workoutPreviewKey(plan){
- return plan?JSON.stringify([plan.id,plan.title,plan.ids,plan.programWeek,plan.ids.map(id=>{
+ return plan?JSON.stringify([plan.id,plan.title,plan.ids,plan.programWeek,SessionEditor.dateFor(plan),plan.ids.map(id=>{
   const target=plan.targets?.[id];
   return [target?.sets,target?.reps,target?.weight,target?.restSeconds];
  })]):'';
@@ -1289,7 +1290,7 @@ function openWorkoutForOwner(id,preview=null,resumeId=null){
  // A Coach recommendation is ephemeral: never trust a cached plan after
  // account, beta entitlement, training preferences, or history changes.
  const selected=(window.MLC2Custom?.allPlans(plans)||plans).find(x=>x.id===id);
- const freshCoach=!selected&&betaView().mode==='pro'?coachAutonomousPlan():null;
+ const freshCoach=!selected&&betaView().mode==='pro'?(preview?nextHomeSession():coachAutonomousPlan()):null;
  const requested=resumeId?pendingWorkout():null;
  if(resumeId && (!requested || requested.planId!==id || (requested.workoutId||requested.planId)!==resumeId)){
   renderHome();notice('The saved workout changed. Review the latest session.');return;
