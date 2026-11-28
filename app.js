@@ -679,7 +679,8 @@ function coachAutonomousPlan(){
  const source=program?window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program):null;
  const completed=program?programCompletedCount(program,source):sessions.filter(row=>
   typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
- const day=proposal?.status==='ready'?proposal.days[completed%proposal.days.length]:null;
+ const weekday=(new Date().getDay()+6)%7;
+ const day=proposal?.status==='ready'?proposal.days[weekday]||null:null;
  const generated=day?.exercises?.length?{id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
   description:'Coach-generated '+options.goal+' session'+(progress?' · Week '+progress.week+' of '+progress.totalWeeks:'')+'. Review exercises and loads before training.',
   kind:'Coach',ids:day.exercises.map(e=>e.id),day:day.day,programWeek:progress?.week||null}:null;
