@@ -460,7 +460,7 @@ function nextPlan(){
  if(standard?.scheduleSource==='manual'||standard?.scheduleSource==='weekly'||standard?.scheduleSource==='rest')return standard;
  if(window.MLC2ScheduleLibrary?.active(planStorage())?.mode==='coach'){
   const coach=coachAutonomousPlan();
-  if(coach){coachAutonomousDraft=coach;return {...coach,scheduleSource:'program'}}
+  if(coach){coachAutonomousDraft=coach;return {...coach,scheduleSource:coach.scheduleSource||'program'}}
   return {id:'coach-unavailable',title:'No Coach session available',description:'Choose a saved weekly program or check your Coach settings.',ids:[],scheduleSource:'rest'};
  }
  if(betaView().mode!=='pro')return standard;
@@ -471,7 +471,7 @@ function nextPlan(){
  const proposal=coachAutonomousPlan();
  if(!proposal)return standard;
  coachAutonomousDraft=proposal; // Let the Home start action resolve a generated session.
- return {...proposal,scheduleSource:'program'};
+ return {...proposal,scheduleSource:proposal.scheduleSource||'program'};
 }
 function pendingWorkout(){
  try{
@@ -582,6 +582,15 @@ function unfinishedDraftFor(plan){
    scheduled workout that can actually be started. Never rewrites the schedule. */
 function nextHomeSession(today=nextPlan()){
  if(today?.scheduleSource!=='rest')return today;
+ if(today.id==='coach-rest-day'){
+  const date=new Date();
+  for(let offset=1;offset<=7;offset++){
+   const next=new Date(date);next.setDate(date.getDate()+offset);
+   const plan=coachAutonomousPlan(next,true);
+   if(plan?.ids?.length)return {...plan,scheduleSource:'program',daysAhead:offset,scheduledWeekday:next.getDay()};
+  }
+  return null;
+ }
  const custom=window.MLC2Custom?.allPlans(plans).filter(p=>p.id.startsWith('custom-'))||[];
  return window.MLC2WeeklySchedule?.nextTraining({storage:planStorage(),presets:presetWorkouts(),custom})||null;
 }
@@ -665,7 +674,7 @@ function setWorkoutTab(tab){
 /* Automatic Coach proposal: generated from the catalog and completed sessions.
    A user's selected custom/scheduled workout is never changed by this proposal. */
 let coachAutonomousDraft=null;
-function coachAutonomousPlan(){
+function coachAutonomousPlan(date=new Date(),allowUpcoming=false){
  if(betaView().mode!=='pro'||!window.MLC2ProgramBuilder)return null;
  const sessions=coachEvidence(),catalog=libraryExercises();
  // Four days is a transparent starting default; training preferences are not inferred.
@@ -679,7 +688,11 @@ function coachAutonomousPlan(){
  const source=program?window.MLC2ProgramSource?.read(localStorage,verifiedOwnerId,program):null;
  const completed=program?programCompletedCount(program,source):sessions.filter(row=>
   typeof row.planId==='string'&&row.planId.startsWith('coach-auto-day-')).length;
- const weekday=(new Date().getDay()+6)%7;
+ const weekday=(date.getDay()+6)%7;
+ if(proposal?.status==='ready'&&proposal.days.length&&weekday>=proposal.days.length){
+  if(allowUpcoming)return null;
+  return {id:'coach-rest-day',title:'Rest day',description:'Recovery day on your Coach program.',ids:[],kind:'Rest',scheduleSource:'rest',programDays:proposal.days.length};
+ }
  const day=proposal?.status==='ready'?proposal.days[weekday]||null:null;
  const generated=day?.exercises?.length?{id:'coach-auto-day-'+day.day,title:'Coach · Day '+day.day,
   description:'Coach-generated '+options.goal+' session'+(progress?' · Week '+progress.week+' of '+progress.totalWeeks:'')+'. Review exercises and loads before training.',
