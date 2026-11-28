@@ -1,0 +1,14 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const source=fs.readFileSync(require('node:path').join(__dirname,'../app.js'),'utf8');
+const start=source.indexOf('const weekday=(date.getDay()+6)%7;');
+const end=source.indexOf('const generated=',start);
+assert.ok(start>=0&&end>start);
+const select=vm.runInNewContext('(function(date,proposal,completed,allowUpcoming=false){'+source.slice(start,end)+'return day;})');
+const proposal=n=>({status:'ready',days:Array.from({length:n},(_,i)=>({day:i+1}))});
+test('Friday remains Day 5 after two completed sessions',()=>assert.equal(select(new Date(2026,10,27,12),proposal(5),2).day,5));
+test('calendar days independent of completion count',()=>{for(let i=0;i<5;i++)for(const completed of [0,2,5,20])assert.equal(select(new Date(2026,10,23+i,12),proposal(5),completed).day,i+1)});
+test('weekend rest and Monday reset',()=>{for(const d of [28,29]){assert.equal(select(new Date(2026,10,d,12),proposal(5),2).scheduleSource,'rest');assert.equal(select(new Date(2026,10,d,12),proposal(5),2,true),null)}assert.equal(select(new Date(2026,10,30,12),proposal(5),2).day,1)});
+test('shorter splits use Monday-first calendar',()=>{for(const n of [2,3,4]){assert.equal(select(new Date(2026,10,22+n,12),proposal(n),0).day,n);assert.equal(select(new Date(2026,10,23+n,12),proposal(n),0).scheduleSource,'rest')}});
